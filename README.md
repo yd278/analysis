@@ -10,16 +10,15 @@ Much of the material in this text is duplicated in Lean's standard math library 
 
 Currently formalized sections:
 
-TODO: update links
-
-- [Section 2.1: The Peano axioms](https://teorth.github.io/estimate_tools/docs/EstimateTools/analysis/Section_2_1.html)
-- [Section 2.2: Addition](https://teorth.github.io/estimate_tools/docs/EstimateTools/analysis/Section_2_2.html)
-- [Section 2.3: Multiplication](https://teorth.github.io/estimate_tools/docs/EstimateTools/analysis/Section_2_3.html)
-- [Chapter 2 epilogue: Isomorphism with the Mathlib natural numbers](https://teorth.github.io/estimate_tools/docs/EstimateTools/analysis/Section_2_epilogue.html)
-- [Section 3.1: Set theory fundamentals](https://teorth.github.io/estimate_tools/docs/EstimateTools/analysis/Section_3_1.html)
-- [Section 4.1: The integers](https://teorth.github.io/estimate_tools/docs/EstimateTools/analysis/Section_4_1.html)
+- [Section 2.1: The Peano axioms](https://teorth.github.io/Analysis/Section_2_1.html)
+- [Section 2.2: Addition](https://teorth.github.io/estimate_tools/docs/Analysis/Section_2_2.html)
+- [Section 2.3: Multiplication](https://teorth.github.io/estimate_tools/docs/Analysis/Section_2_3.html)
+- [Chapter 2 epilogue: Isomorphism with the Mathlib natural numbers](https://teorth.github.io/Analysis/Section_2_epilogue.html)
+- [Section 3.1: Set theory fundamentals](https://teorth.github.io/Analysis/Section_3_1.html)
+- [Section 4.1: The integers](https://teorth.github.io/Analysis/Section_4_1.html)
 
 Other resources:
+- [Web page for this project](https://teorth.github.io/Analysis/)
 - [How to run a project in Lean locally](https://leanprover-community.github.io/install/project.html).
 - [The natural number game](https://adam.math.hhu.de/)
 - [The Lean community](https://leanprover-community.github.io/)
