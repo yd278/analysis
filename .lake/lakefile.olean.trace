@@ -1,4 +1,4 @@
-{"platform": "x86_64-w64-windows-gnu",
- "options": {"env": "dev"},
- "leanHash": "81b85203c90439fb7d7e0cec32130d62d8cb7a2e",
- "configHash": "6340299173675207443"}
+{"platform": "arm64-apple-darwin23.6.0",
+ "options": {},
+ "leanHash": "6caaee842e9495688c1567e78c0e68dbb96942aa",
+ "configHash": "12887607946536925685"}

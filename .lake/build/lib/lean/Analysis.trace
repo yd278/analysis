@@ -1,24 +1,5 @@
 {"log":
  [{"message":
-   ".> LEAN_PATH=C:\\Users\\teort\\OneDrive\\Documents\\GitHub\\analysis\\.lake\\packages\\Cli\\.lake\\build\\lib\\lean;C:\\Users\\teort\\OneDrive\\Documents\\GitHub\\analysis\\.lake\\packages\\batteries\\.lake\\build\\lib\\lean;C:\\Users\\teort\\OneDrive\\Documents\\GitHub\\analysis\\.lake\\packages\\Qq\\.lake\\build\\lib\\lean;C:\\Users\\teort\\OneDrive\\Documents\\GitHub\\analysis\\.lake\\packages\\aesop\\.lake\\build\\lib\\lean;C:\\Users\\teort\\OneDrive\\Documents\\GitHub\\analysis\\.lake\\packages\\proofwidgets\\.lake\\build\\lib\\lean;C:\\Users\\teort\\OneDrive\\Documents\\GitHub\\analysis\\.lake\\packages\\importGraph\\.lake\\build\\lib\\lean;C:\\Users\\teort\\OneDrive\\Documents\\GitHub\\analysis\\.lake\\packages\\LeanSearchClient\\.lake\\build\\lib\\lean;C:\\Users\\teort\\OneDrive\\Documents\\GitHub\\analysis\\.lake\\packages\\plausible\\.lake\\build\\lib\\lean;C:\\Users\\teort\\OneDrive\\Documents\\GitHub\\analysis\\.lake\\packages\\mathlib\\.lake\\build\\lib\\lean;C:\\Users\\teort\\OneDrive\\Documents\\GitHub\\analysis\\.lake\\build\\lib\\lean c:\\Users\\teort\\.elan\\toolchains\\leanprover--lean4---v4.20.0-rc5\\bin\\lean.exe -Dpp.unicode.fun=true C:\\Users\\teort\\OneDrive\\Documents\\GitHub\\analysis\\Analysis.lean -R C:\\Users\\teort\\OneDrive\\Documents\\GitHub\\analysis -o C:\\Users\\teort\\OneDrive\\Documents\\GitHub\\analysis\\.lake\\build\\lib\\lean\\Analysis.olean -i C:\\Users\\teort\\OneDrive\\Documents\\GitHub\\analysis\\.lake\\build\\lib\\lean\\Analysis.ilean -c C:\\Users\\teort\\OneDrive\\Documents\\GitHub\\analysis\\.lake\\build\\ir\\Analysis.c --json",
+   ".> LEAN_PATH=././.lake/packages/Cli/.lake/build/lib/lean:././.lake/packages/aesop/.lake/build/lib/lean:././.lake/packages/LeanSearchClient/.lake/build/lib/lean:././.lake/packages/batteries/.lake/build/lib/lean:././.lake/packages/importGraph/.lake/build/lib/lean:././.lake/packages/mathlib/.lake/build/lib/lean:././.lake/packages/plausible/.lake/build/lib/lean:././.lake/packages/proofwidgets/.lake/build/lib/lean:././.lake/packages/Qq/.lake/build/lib/lean:././.lake/packages/checkdecls/.lake/build/lib/lean:././.lake/build/lib/lean /Users/justinasher/.elan/toolchains/leanprover--lean4---v4.19.0/bin/lean -Dpp.unicode.fun=true ././././Analysis.lean -R ./././. -o ././.lake/build/lib/lean/Analysis.olean -i ././.lake/build/lib/lean/Analysis.ilean -c ././.lake/build/ir/Analysis.c --json",
    "level": "trace"}],
- "inputs":
- [["Analysis:deps",
-   [["deps",
-     [["analysis/Analysis:extraDep", [["@analysis:extraDep", "1723"]]],
-      ["import oleans",
-       [["Analysis.Basic:olean",
-         [["Analysis.Basic:deps", "12720339749678921893"],
-          ["C:\\Users\\teort\\OneDrive\\Documents\\GitHub\\analysis\\.lake\\build\\lib\\lean\\Analysis\\Basic.olean",
-           "7315997903229704946"]]]]]]],
-    ["libs",
-     [["import dynlibs", "1723"],
-      ["package external libraries", "1723"],
-      ["module dynlibs", "1723"],
-      ["module plugins", "1723"]]]]],
-  ["Lean 4.20.0, commit 81b85203c90439fb7d7e0cec32130d62d8cb7a2e",
-   "11339845437623234285"],
-  ["Module.leanArgs: #[-Dpp.unicode.fun=true]", "16183078925686905371"],
-  ["C:\\Users\\teort\\OneDrive\\Documents\\GitHub\\analysis\\Analysis.lean",
-   "10375135602450083280"]],
- "depHash": "3413088908296226798"}
+ "depHash": "17690064015668051170"}

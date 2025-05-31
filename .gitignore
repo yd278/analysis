@@ -1,0 +1,12 @@
+# Lean 4
+# Compiled files and directories
+.lake/
+build/
+
+# IDE files
+.vscode/
+
+# Editor specific files
+.DS_Store
+*.swp
+*.swo
