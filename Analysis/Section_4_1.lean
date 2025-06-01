@@ -50,7 +50,7 @@ abbrev Int := Quotient PreInt.instSetoid
 
 abbrev Int.formalDiff (a b:ℕ)  : Int := Quotient.mk PreInt.instSetoid ⟨ a,b ⟩
 
-infix:70 " — " => Int.formalDiff
+infix:100 " — " => Int.formalDiff
 
 /-- Definition 4.1.1 (Integers) -/
 theorem Int.eq (a b c d:ℕ): a — b = c — d ↔ a + d = c + b := by
