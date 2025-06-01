@@ -109,5 +109,37 @@ abbrev Rat.eventuallySteady (ε: ℚ) (s: Section_5_1.Sequence) : Prop := ∃ N,
 
 namespace Section_5_1
 
+lemma Rat.eventuallySteady_def (ε: ℚ) (s: Sequence) :
+  ε.eventuallySteady s ↔ ∃ N, (N ≥ s.n₀) ∧ ε.steady (s.from N) := by rfl
+
+/-- Example 5.1.7 -/
+lemma Sequence.ex_5_1_7_a : ¬ (0.1:ℚ).steady ((fun n:ℕ ↦ (n+1:ℚ)⁻¹ ):Sequence) := by sorry
+
+lemma Sequence.ex_5_1_7_b : (0.1:ℚ).steady (((fun n:ℕ ↦ (n+1:ℚ)⁻¹ ):Sequence).from 10) := by sorry
+
+lemma Sequence.ex_5_1_7_c : (0.1:ℚ).eventuallySteady ((fun n:ℕ ↦ (n+1:ℚ)⁻¹ ):Sequence) := by sorry
+
+lemma Sequence.ex_5_1_7_d {ε:ℚ} (hε:ε>0) : ε.eventuallySteady ((fun n:ℕ ↦ if n=0 then (10:ℚ) else (0:ℚ) ):Sequence) := by sorry
+
+abbrev Sequence.isCauchy (s:Sequence) : Prop := ∀ (ε:ℚ), (ε > 0 → (ε.eventuallySteady s))
+
+lemma Sequence.isCauchy_def (s:Sequence) :
+  s.isCauchy ↔ ∀ (ε:ℚ), (ε > 0 → ε.eventuallySteady s) := by rfl
+
+lemma Sequence.isCauchy_of_coe (a:ℕ → ℚ) : (a:Sequence).isCauchy ↔ ∀ (ε:ℚ), ε > 0 → ∃ N, ∀ j k, j ≥ N ∧ k ≥ N → dist (a j) (a k) ≤ ε := by sorry
+
+noncomputable def Sequence.sqrt_two : Sequence := (fun n:ℕ ↦ ((⌊ (Real.sqrt 2)*10^n ⌋ / 10^n):ℚ))
+
+/-- Example 5.1.10.  (This requires extensive familiarity with Mathlib's API for the real numbers. )-/
+theorem Sequence.ex_5_1_10_a : (1:ℚ).steady Sequence.sqrt_two := by sorry
+
+/-- Example 5.1.10.  (This requires extensive familiarity with Mathlib's API for the real numbers. )-/
+theorem Sequence.ex_5_1_10_b : (0.1:ℚ).steady (Sequence.sqrt_two.from 1) := by sorry
+
+theorem Sequence.ex_5_1_10_c : (0.1:ℚ).eventuallySteady Sequence.sqrt_two := by sorry
+
+/-- Proposition 5.1.11 -/
+theorem Sequence.harmonic_steady : ((fun n:ℕ ↦ (1:ℚ)/(n+1)):Sequence).isCauchy := by
+  sorry -- TODO
 
 end Section_5_1
