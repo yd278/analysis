@@ -105,7 +105,7 @@ lemma Sequence.from_extend (a:Sequence) {n₁ n:ℤ} (hn: n ≥ n₁) :
 end Section_5_1
 
 /-- Definition 5.1.6 (Eventually ε-steady) -/
-abbrev Rat.eventallySteady (ε: ℚ) (s: Section_5_1.Sequence) : Prop := ∃ N, (N ≥ s.n₀) ∧ ε.steady (s.from N)
+abbrev Rat.eventuallySteady (ε: ℚ) (s: Section_5_1.Sequence) : Prop := ∃ N, (N ≥ s.n₀) ∧ ε.steady (s.from N)
 
 namespace Section_5_1
 
