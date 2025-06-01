@@ -24,7 +24,7 @@ structure PreInt where
   minuend : ℕ
   subtrahend : ℕ
 
-/-- Exercise 4.1 -/
+/-- Exercise 4.1.1 -/
 instance PreInt.instSetoid : Setoid PreInt where
   r := fun a b ↦ a.minuend + b.subtrahend = b.minuend + a.subtrahend
   iseqv := {
@@ -50,7 +50,7 @@ abbrev Int := Quotient PreInt.instSetoid
 
 abbrev Int.formalDiff (a b:ℕ)  : Int := Quotient.mk PreInt.instSetoid ⟨ a,b ⟩
 
-infix:100 " — " => Int.formalDiff
+infix:70 " — " => Int.formalDiff
 
 /-- Definition 4.1.1 (Integers) -/
 theorem Int.eq (a b c d:ℕ): a — b = c — d ↔ a + d = c + b := by

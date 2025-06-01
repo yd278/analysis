@@ -31,14 +31,10 @@ Some technical notes:
 
 namespace Chapter3
 
-structure Set where
-  val:Type  -- dummy data
-
-structure Object where
-  val:Type  -- dummy data
-
 /-- Some of the axioms of Zermelo-Frankel theory with atoms  -/
 class SetTheory where
+  Set : Type
+  Object : Type
   set_to_object : Set ↪ Object
   mem : Object → Set → Prop
   emptyset: Set
@@ -55,6 +51,7 @@ class SetTheory where
   nat : Set
   nat_equiv : ℕ ≃ Subtype (fun x ↦ mem x nat)
 
+export SetTheory (Set Object)
 
 -- This instance implicitly imposes (some of) the axioms of Zermelo-Frankel set theory with atoms.
 variable [SetTheory]
@@ -261,7 +258,7 @@ theorem Set.ssubset_trans (A B C:Set) (hAB:A ⊂ B) (hBC:B ⊂ C) : A ⊂ C := b
 /-- This defines the subtype `A.toSubtype` for any `A:Set`.  To produce an element `x'` of this subtype, use `⟨ x, hx ⟩`, where `x:Object` and `hx:x ∈ A`.  The object `x` associated to a subtype element `x'` is recovered as `x.val`, and the property `hx` that `x` belongs to `A` is recovered as `x.property`-/
 abbrev Set.toSubtype (A:Set) := Subtype (fun x ↦ x ∈ A)
 
-instance : CoeSort (Set) (Type 1) where
+instance : CoeSort (Set) (Type) where
   coe := fun A => A.toSubtype
 
 /-- Elements of a set (implicitly coerced to a subtype) are also elements of the set (with respect to the membership operation of the set theory). -/
