@@ -22,27 +22,28 @@ structure Sequence where
 
 lemma Sequence.mk_eq (n₀:ℤ) (a: { n // n ≥ n₀ } → ℚ) : Sequence.mk n₀ a = ⟨ n₀, a ⟩ := by rfl
 
-abbrev Sequence.mk_nat (a:ℕ → ℚ) : Sequence :=
-  Sequence.mk 0 (fun n ↦ a (n:ℤ).toNat)
+/-- Functions from ℕ to ℚ can be thought of as sequences. -/
+instance Sequence.instCoe : Coe (ℕ → ℚ) Sequence :=
+  ⟨ fun a ↦ Sequence.mk 0 (fun n ↦ a (n:ℤ).toNat) ⟩
 
-/-- It is convenient to extend sequences by zero, to become functions on all of ℤ.  Unfortunately this extension isn't quite injective, so we cannot use the machinery of `Funlike`. -/
+/-- It is convenient to extend sequences by zero, to become functions on all of ℤ.  Unfortunately this extension isn't quite injective, so we cannot use the machinery of `FunLike`.  (One could use the machinery of `Function.extend`, however.) -/
 abbrev Sequence.extend (s: Sequence) (n:ℤ) : ℚ := if h : n ≥ s.n₀ then s.a ⟨n, h⟩ else 0
 
 lemma Sequence.extend_mk {n n₀:ℤ} (a: { n // n ≥ n₀ } → ℚ) (h: n ≥ n₀) : (Sequence.mk n₀ a).extend n = a ⟨ n, h ⟩ := by simp [Sequence.extend, h]
 
-lemma Sequence.extend_mk_nat (n:ℕ) (a: ℕ → ℚ) : (Sequence.mk_nat a).extend n = a n := by simp [Sequence.extend]
+lemma Sequence.extend_coe (n:ℕ) (a: ℕ → ℚ) : (a:Sequence).extend n = a n := by simp [Sequence.extend]
 
 /-- Example 5.1.2 -/
-abbrev Sequence.squares : Sequence := Sequence.mk_nat (fun n ↦ n^2)
+abbrev Sequence.squares : Sequence := ((fun n:ℕ ↦ (n^2:ℚ)):Sequence)
 
 /-- Example 5.1.2 -/
-example (n:ℕ) : Sequence.squares.extend n = n^2 := Sequence.extend_mk_nat _ _
+example (n:ℕ) : Sequence.squares.extend n = n^2 := Sequence.extend_coe _ _
 
 /-- Example 5.1.2 -/
-abbrev Sequence.three : Sequence := Sequence.mk_nat (fun _ ↦ 3)
+abbrev Sequence.three : Sequence := ((fun (_:ℕ) ↦ (3:ℚ)):Sequence)
 
 /-- Example 5.1.2 -/
-example (n:ℕ) : Sequence.three.extend n = 3 := Sequence.extend_mk_nat _ _
+example (n:ℕ) : Sequence.three.extend n = 3 := Sequence.extend_coe _ (fun (_:ℕ) ↦ (3:ℚ))
 
 /-- Example 5.1.2 -/
 abbrev Sequence.squares_from_three : Sequence := Sequence.mk 3 (fun n ↦ n^2)
@@ -70,5 +71,43 @@ lemma Rat.steady_def' (ε: ℚ) (s: Sequence) :
     sorry
   intro h n m
   sorry
+
+/-- Example 5.1.5 -/
+example : (1:ℚ).steady ((fun n:ℕ ↦ if Even n then (1:ℚ) else (0:ℚ)):Sequence) := by sorry
+
+/-- Example 5.1.5 -/
+example : ¬ (0.5:ℚ).steady ((fun n:ℕ ↦ if Even n then (1:ℚ) else (0:ℚ)):Sequence) := by sorry
+
+/-- Example 5.1.5 -/
+example : (0.1:ℚ).steady ((fun n:ℕ ↦ (10:ℚ) ^ (-(n:ℤ)-1) ):Sequence) := by sorry
+
+/-- Example 5.1.5 -/
+example : ¬(0.01:ℚ).steady ((fun n:ℕ ↦ (10:ℚ) ^ (-(n:ℤ)-1) ):Sequence) := by sorry
+
+/-- Example 5.1.5 -/
+example (ε:ℚ) : ¬ ε.steady ((fun n:ℕ ↦ (2 ^ (n+1):ℚ) ):Sequence) := by sorry
+
+/-- Example 5.1.5 -/
+example (ε:ℚ) (hε: ε>0) : ε.steady ((fun _:ℕ ↦ (2:ℚ) ):Sequence) := by sorry
+
+example : (10:ℚ).steady ((fun n:ℕ ↦ if n = 0 then (10:ℚ) else (0:ℚ)):Sequence) := by sorry
+
+example (ε:ℚ) (hε:ε<10):  ¬ ε.steady ((fun n:ℕ ↦ if n = 0 then (10:ℚ) else (0:ℚ)):Sequence) := by sorry
+
+/-- a.from n₁ starts `a:Sequence` from `n₁`.  It is intended for use when `n₁ \geq n₀`, but returns the "junk" value of the original sequence `a` otherwise. -/
+abbrev Sequence.from (a:Sequence) (n₁:ℤ) : Sequence :=
+  Sequence.mk (max a.n₀ n₁) (fun ⟨ n, hn ⟩ ↦ a.a ⟨ n, (le_max_left _ _).trans hn ⟩)
+
+lemma Sequence.from_extend (a:Sequence) {n₁ n:ℤ} (hn: n ≥ n₁) :
+  (a.from n₁).extend n = a.extend n := by
+  simp [Sequence.from, Sequence.extend, hn]
+
+end Section_5_1
+
+/-- Definition 5.1.6 (Eventually ε-steady) -/
+abbrev Rat.eventallySteady (ε: ℚ) (s: Section_5_1.Sequence) : Prop := ∃ N, (N ≥ s.n₀) ∧ ε.steady (s.from N)
+
+namespace Section_5_1
+
 
 end Section_5_1
