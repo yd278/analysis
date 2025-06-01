@@ -9,8 +9,8 @@ I have attempted to make the translation as faithful a paraphrasing as possible 
 
 Main constructions and results of this section:
 
-- A type `Chapter3.Set` of sets
-- A type `Chapter3.Object` of objects
+- A type `Chapter3.SetTheory.Set` of sets
+- A type `Chapter3.SetTheory.Object` of objects
 - An axiom that every set is (or can be coerced into) an object
 - The empty set `∅`, singletons `{y}`, and pairs `{y,z}` (and more general finite tuples), with their attendant axioms
 - Pairwise union `X ∪ Y`, and their attendant axioms
@@ -25,7 +25,7 @@ The other axioms of Zermelo-Frankel set theory are discussed in later sections.
 Some technical notes:
 - Mathlib of course has its own notion of a `Set`, which is not compatible with the notion `Chapter3.Set` defined here, though we will try to make the notations match as much as possible.  This causes some notational conflict: for instance, one may need to explicitly specify `(∅:Chapter3.Set)` instead of just `∅` to indicate that one is using the `Chapter3.Set` version of the empty set, rather than the Mathlib version of the empty set, and similarly for other notation defined here.
 - In Analysis I, we chose to work with an "impure" set theory, in which there could be more `Object`s than just `Set`s.  In the type theory of Lean, this requires treating `Chapter3.Set` and `Chapter3.Object` as distinct types. Occasionally this means we have to use a coercion `X.toObject` of a `Chapter3.Set` `X` to make into a `Chapter3.Object`: this is mostly needed when manipulating sets of sets.
-- After this chapter is concluded, the notion of a `Chapter3.Set` will be deprecated in favor of the standard Mathlib notion of a `Set` (or more precisely of the type `Set X` of a set in a given type `X`).  However, due to various technical incompatibilities between set theory and type theory, we will not attempt to create any sort of equivalence between these two notions of sets.  (As such, this makes this entire chapter optional from the point of view of the rest of the book, though we retain it for pedagogical purposes.)
+- After this chapter is concluded, the notion of a `Chapter3.SetTheory.Set` will be deprecated in favor of the standard Mathlib notion of a `Set` (or more precisely of the type `Set X` of a set in a given type `X`).  However, due to various technical incompatibilities between set theory and type theory, we will not attempt to create any sort of equivalence between these two notions of sets.  (As such, this makes this entire chapter optional from the point of view of the rest of the book, though we retain it for pedagogical purposes.)
 -/
 
 
