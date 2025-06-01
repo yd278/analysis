@@ -12,7 +12,7 @@ Main constructions and results of this section:
 
 - Definition of the "Section 4.1" integers, `Section_4_1.Int`, as formal differences `a — b` of natural numbers `a b:ℕ`, up to equivalence.  (This is a quotient of a scaffolding type `Section_4_1.PreInt`, which consists of formal differences without any equivalence imposed.)
 
-- addition, multiplication, and negation of these integers, as well as an embedding of ℕ
+- ring operations and order these integers, as well as an embedding of ℕ
 
 - Equivalence with the Mathlib integers `_root_.Int` (or `ℤ`), which we will use going forward.
 
@@ -64,7 +64,7 @@ theorem Int.eq_diff (n:Int) : ∃ a b, n = a — b := by
   use a, b; rfl
 
 /-- Lemma 4.1.3 (Addition well-defined) -/
-instance Int.add_inst : Add Int where
+instance Int.instAdd : Add Int where
   add := Quotient.lift₂ (fun ⟨ a, b ⟩ ⟨ c, d ⟩ ↦ (a+c) — (b+d) ) (by
     intro ⟨ a, b ⟩ ⟨ c, d ⟩ ⟨ a', b' ⟩ ⟨ c', d' ⟩ h1 h2
     simp [Setoid.r] at *
@@ -94,7 +94,7 @@ theorem Int.mul_congr {a b c d a' b' c' d' : ℕ} (h1: a — b = a' — b') (h2:
   (a*c+b*d) — (a*d+b*c) = (a'*c'+b'*d') — (a'*d'+b'*c') := by
   rw [Int.mul_congr_left a b a' b' c d h1, Int.mul_congr_right a' b' c d c' d' h2]
 
-instance Int.mul_inst : Mul Int where
+instance Int.instMul : Mul Int where
   mul := Quotient.lift₂ (fun ⟨ a, b ⟩ ⟨ c, d ⟩ ↦ (a * c + b * d) — (a * d + b * c)) (by
     intro ⟨ a, b ⟩ ⟨ c, d ⟩ ⟨ a', b' ⟩ ⟨ c', d' ⟩ h1 h2
     simp at h1 h2
@@ -104,10 +104,10 @@ instance Int.mul_inst : Mul Int where
 /-- Definition 4.1.2 (Multiplication of integers) -/
 theorem Int.mul_eq (a b c d:ℕ) : a — b * c — d = (a*c+b*d) — (a*d+b*c) := Quotient.lift₂_mk _ _ _ _
 
-instance Int.ofnat_inst {n:ℕ} : OfNat Int n where
+instance Int.instOfNat {n:ℕ} : OfNat Int n where
   ofNat := n — 0
 
-instance Int.natCast_inst : NatCast Int where
+instance Int.instNatCast : NatCast Int where
   natCast n := n — 0
 
 theorem Int.ofNat_eq (n:ℕ) : ofNat(n) = n — 0 := rfl
@@ -134,7 +134,7 @@ example : 3 = 4 — 1 := by
   rw [Int.ofNat_eq, Int.eq]
 
 /-- Definition 4.1.4 (Negation of integers) / Exercise 4.1.2 -/
-instance Int.neg_inst : Neg Int where
+instance Int.instNeg : Neg Int where
   neg := Quotient.lift (fun ⟨ a, b ⟩ ↦ b — a) (by
     sorry)
 
@@ -182,11 +182,16 @@ theorem Int.not_pos_neg (x:Int) : x.isPos ∧ x.isNeg → False := by
   linarith
 
 /-- Proposition 4.1.6 (laws of algebra) / Exercise 4.1.4 -/
-instance Int.addGroup_inst : AddGroup Int :=
+instance Int.instAddGroup : AddGroup Int :=
 AddGroup.ofLeftAxioms (by sorry) (by sorry) (by sorry)
 
 /-- Proposition 4.1.6 (laws of algebra) / Exercise 4.1.4 -/
-instance Int.monoid_inst : Monoid Int where
+instance Int.instAddCommGroup : AddCommGroup Int where
+  add_comm := by sorry
+
+/-- Proposition 4.1.6 (laws of algebra) / Exercise 4.1.4 -/
+instance Int.instCommMonoid : CommMonoid Int where
+  mul_comm := by sorry
   mul_assoc := by
     -- This proof is written to follow the structure of the original text.
     intro x y z
@@ -201,9 +206,7 @@ instance Int.monoid_inst : Monoid Int where
   mul_one := by sorry
 
 /-- Proposition 4.1.6 (laws of algebra) / Exercise 4.1.4 -/
-instance Int.commRing_inst : CommRing Int where
-  add_comm := by sorry
-  mul_comm := by sorry
+instance Int.instCommRing : CommRing Int where
   left_distrib := by sorry
   right_distrib := by sorry
   zero_mul := by sorry
@@ -221,12 +224,16 @@ theorem Int.mul_eq_zero {a b:Int} (h: a * b = 0) : a = 0 ∨ b = 0 := by sorry
 theorem Int.mul_right_cancel₀ (a b c:Int) (h: a*c = b*c) (hc: c ≠ 0) : a = b := by sorry
 
 /-- Definition 4.1.10 (Ordering of the integers) -/
-instance Int.LE_inst : LE Int where
+instance Int.instLE : LE Int where
   le := fun n m ↦ ∃ a:ℕ, m = n + a
 
 /-- Definition 4.1.10 (Ordering of the integers) -/
-instance Int.LT_inst : LT Int where
+instance Int.instLT : LT Int where
   lt := fun n m ↦ (∃ a:ℕ, m = n + a) ∧ n ≠ m
+
+theorem Int.le_iff (n m:Int) : n ≤ m ↔ ∃ a:ℕ, m = n + a := by rfl
+
+theorem Int.lt_iff (n m:Int): n < m ↔ (∃ a:ℕ, m = n + a) ∧ n ≠ m := by rfl
 
 /-- Lemma 4.1.11(a) (Properties of order) / Exercise 4.1.7 -/
 theorem Int.gt_iff (a b:Int) : a > b ↔ ∃ n:ℕ, n ≠ 0 ∧ a = b + n := by sorry
@@ -260,7 +267,7 @@ instance Int.decidableRel : DecidableRel (· ≤ · : Int → Int → Prop) := b
   sorry
 
 /-- (Not from textbook) Int has the structure of a linear ordering. -/
-instance Int.linearOrder : LinearOrder Int where
+instance Int.instLinearOrder : LinearOrder Int where
   le_refl := sorry
   le_trans := sorry
   lt_iff_le_not_le := sorry

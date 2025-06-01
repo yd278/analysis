@@ -9,7 +9,7 @@ I have attempted to make the translation as faithful a paraphrasing as possible 
 
 Main constructions and results of this section:
 
-- Definition of the "Chapter 2" natural numbers, `Chapter2.Nat`
+- Definition of the "Chapter 2" natural numbers, `Chapter2.Nat`. (In the book, the natural numbers are treated in a purely axiomatic fashion, as a type that obeys the Peano axioms; but here we take advantage of Lean's native inductive types to explicitly construct a version of the natural numbers that obey those axioms.  One could also proceed more axiomatically, as is done in Section 3 for set theory, but we leave this as an exercise for the reader.)
 - Establishment of the Peano axioms for `Chapter2.Nat`
 - Recursive definitions for `Chapter2.Nat`
 
