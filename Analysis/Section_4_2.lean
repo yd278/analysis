@@ -58,4 +58,55 @@ instance Rat.add_inst : Add Rat where
       _ = _ := by ring
   )
 
+/-- Definition 4.2.2 (Addition of rationals) -/
+theorem Rat.add_eq (a c:ℤ) {b d:ℤ} (hb: b ≠ 0) (hd: d ≠ 0) :(a // b) + (c // d) = (a*d + b*c) // (b*d) := by
+  convert Quotient.lift₂_mk _ _ _ _
+  all_goals simp [hb, hd]
+
+/-- Lemma 4.2.3 (Multiplication well-defined) -/
+instance Rat.mul_inst : Mul Rat where
+  mul := Quotient.lift₂ (fun ⟨ a, b, h1 ⟩ ⟨ c, d, h2 ⟩ ↦ (a*c) // (b*d)) (by sorry)
+
+/-- Definition 4.2.2 (Multiplication of rationals) -/
+theorem Rat.mul_eq (a c:ℤ) {b d:ℤ} (hb: b ≠ 0) (hd: d ≠ 0) :(a // b) * (c // d) = (a*c) // (b*d) := by
+  convert Quotient.lift₂_mk _ _ _ _
+  all_goals simp [hb, hd]
+
+/-- Lemma 4.2.3 (Negation well-defined) -/
+instance Rat.neg_inst : Neg Rat where
+  neg := Quotient.lift (fun ⟨ a, b, h1 ⟩ ↦ (-a) // b) (by sorry)
+
+/-- Definition 4.2.2 (Negation of rationals) -/
+theorem Rat.neg_eq (a:ℤ) (hb: b ≠ 0) : - (a // b) = (-a) // b := by
+  convert Quotient.lift_mk _ _ _
+  all_goals simp [hb]
+
+/-- Embedding the integers in the rationals -/
+instance Rat.instIntCast : IntCast Rat where
+  intCast := fun a ↦ a // 1
+
+instance Rat.instNatCast : NatCast Rat where
+  natCast := fun n ↦ (n:ℤ) // 1
+
+instance Rat.instOfNat : OfNat Rat n where
+  ofNat := (n:ℤ) // 1
+
+theorem Rat.coe_Int_eq (a:ℤ) : (a:Rat) = a // 1 := by
+  rfl
+
+theorem Rat.coe_Nat_eq (n:ℕ) : (n:Rat) = n // 1 := by
+  rfl
+
+theorem Rat.of_Nat_eq (n:ℕ) : (ofNat(n):Rat) = (ofNat(n):Nat) // 1 := by
+  rfl
+
+lemma Rat.sum_of_int (a b:ℤ) : (a:Rat) + (b:Rat) = (a+b:ℤ) := by sorry
+
+lemma Rat.mul_of_int (a b:ℤ) : (a:Rat) * (b:Rat) = (a*b:ℤ) := by sorry
+
+lemma Rat.neg_of_int (a:ℤ) : - (a:Rat) = (-a:ℤ) := by
+  rfl
+
+
+
 end Section_4_2

@@ -86,7 +86,7 @@ theorem SetTheory.Set.ext_iff (X Y: Set) : X = Y ↔ ∀ x, x ∈ X ↔ x ∈ Y 
   . intro h; subst h; simp
   . intro h; apply ext; exact h
 
-instance SetTheory.Set.empty_inst : EmptyCollection Set where
+instance SetTheory.Set.instEmpty : EmptyCollection Set where
   emptyCollection := SetTheory.emptyset
 
 /-- Axiom 3.3 (empty set).  Note: one may have to explicitly cast ∅ to Set due to Mathlib's existing set theory notation. -/
@@ -109,7 +109,7 @@ lemma SetTheory.Set.nonempty_def {X:Set} (h: X ≠ ∅) : ∃ x, x ∈ X := by
   replace claim := ext claim
   contradiction
 
-instance SetTheory.Set.singleton_inst : Singleton Object Set where
+instance SetTheory.Set.instSingleton : Singleton Object Set where
   singleton := SetTheory.singleton
 
 /-- Axiom 3.3(a) (singleton).  Note one may have to explicitly cast {a} to Set due to Mathlib's existing set theory notation. -/
@@ -117,13 +117,13 @@ theorem SetTheory.Set.mem_singleton (x a:Object) : x ∈ ({a}:Set) ↔ x = a := 
   exact SetTheory.singleton_axiom x a
 
 
-instance SetTheory.Set.union_pair_inst: Union Set where
+instance SetTheory.Set.instUnion : Union Set where
   union := SetTheory.union_pair
 
 /-- Axiom 3.4 (Pairwise union)-/
 theorem SetTheory.Set.mem_union (x:Object) (X Y:Set) : x ∈ (X ∪ Y) ↔ (x ∈ X ∨ x ∈ Y) := SetTheory.union_pair_axiom X Y x
 
-instance SetTheory.Set.insert_inst : Insert Object Set where
+instance SetTheory.Set.instInsert : Insert Object Set where
   insert := fun x X ↦ {x} ∪ X
 
 /-- Axiom 3.3(b) (pair).  Note that one often has to cast {a,b} to Set -/
@@ -215,11 +215,11 @@ theorem SetTheory.Set.triple_eq (a b c:Object) : {a,b,c} = ({a}:Set) ∪ {b,c} :
 theorem SetTheory.Set.pair_union_pair (a b c:Object) : ({a,b}:Set) ∪ {b,c} = {a,b,c} := sorry
 
 /-- Definition 3.1.14.   -/
-instance SetTheory.Set.subset_inst : HasSubset Set where
+instance SetTheory.Set.uinstSubset : HasSubset Set where
   Subset := fun X Y ↦ ∀ x, x ∈ X → x ∈ Y
 
 /-- Definition 3.1.14.  Note that the strict subset operation in Mathlib is denoted `⊂` rather than `⊊`. -/
-instance SetTheory.Set.strict_subset_inst : HasSSubset Set where
+instance SetTheory.Set.instSSubset : HasSSubset Set where
   SSubset := fun X Y ↦ X ⊆ Y ∧ X ≠ Y
 
 /-- Definition 3.1.14. -/
@@ -291,7 +291,7 @@ theorem SetTheory.Set.specify_subset {A:Set} (P: A → Prop) : A.specify P ⊆ A
 /-- This exercise may require some understanding of how  subtypes are implemented in Lean. -/
 theorem SetTheory.Set.specify_congr {A A':Set} (hAA':A = A') {P: A → Prop} {P': A' → Prop} (hPP': (x:Object) → (h:x ∈ A) → (h':x ∈ A') → P ⟨ x, h⟩ ↔ P' ⟨ x, h'⟩ ) : A.specify P = A'.specify P' := by sorry
 
-instance SetTheory.Set.intersection_inst : Inter Set where
+instance SetTheory.Set.instIntersection : Inter Set where
   inter := fun X Y ↦ X.specify (fun x ↦ x.val ∈ Y)
 
 /-- Definition 3.1.22 (Intersections) -/
@@ -304,7 +304,7 @@ theorem SetTheory.Set.mem_inter (x:Object) (X Y:Set) : x ∈ (X ∩ Y) ↔ (x �
   intro ⟨ hX, hY ⟩
   exact (specification_axiom' (fun x ↦ x.val ∈ Y) ⟨ x,hX⟩).mpr hY
 
-instance SetTheory.Set.sdiff_inst : SDiff Set where
+instance SetTheory.Set.instSDiff : SDiff Set where
   sdiff := fun X Y ↦ X.specify (fun x ↦ x.val ∉ Y)
 
 /-- Definition 3.1.26 (Difference sets) -/
@@ -352,7 +352,7 @@ theorem SetTheory.Set.compl_union {A B X:Set} (hAX: A ⊆ X) (hBX: B ⊆ X) : X 
 theorem SetTheory.Set.compl_inter {A B X:Set} (hAX: A ⊆ X) (hBX: B ⊆ X) : X \ (A ∩ B) = (X \ A) ∪ (X \ B) := by sorry
 
 /-- Not from textbook: sets form a distributive lattice. -/
-instance SetTheory.Set.distribLattice_inst : DistribLattice Set where
+instance SetTheory.Set.instDistribLattice : DistribLattice Set where
   le := (· ⊆ ·)
   le_refl := subset_self
   le_trans := subset_trans
@@ -372,7 +372,7 @@ instance SetTheory.Set.distribLattice_inst : DistribLattice Set where
     exact subset_self _
 
 /-- Sets have a minimal element.  -/
-instance SetTheory.Set.orderBot_inst : OrderBot Set where
+instance SetTheory.Set.instOrderBot : OrderBot Set where
   bot := ∅
   bot_le := empty_subset
 
@@ -392,19 +392,19 @@ def SetTheory.Set.nat_equiv : ℕ ≃ Nat := SetTheory.nat_equiv
 
 -- Below are some API for handling coercions.  This may not be the optimal way to set things up.
 
-instance SetTheory.Set.ofnat_inst {n:ℕ} : OfNat Nat n where
+instance SetTheory.Set.instOfNat {n:ℕ} : OfNat Nat n where
   ofNat := nat_equiv n
 
-instance SetTheory.Set.natCast_inst : NatCast Nat where
+instance SetTheory.Set.instNatCast : NatCast Nat where
   natCast n := nat_equiv n
 
 instance SetTheory.Set.toNat : Coe Nat ℕ where
   coe n := nat_equiv.symm n
 
-instance SetTheory.Object.natCast_inst : NatCast Object where
+instance SetTheory.Object.instNatCast : NatCast Object where
   natCast n := (n:Nat).val
 
-instance SetTheory.Object.ofnat_inst {n:ℕ} : OfNat Object n where
+instance SetTheory.Object.instOfNat {n:ℕ} : OfNat Object n where
   ofNat := ((n:Nat):Object)
 
 @[simp]

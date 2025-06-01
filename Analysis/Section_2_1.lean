@@ -26,7 +26,7 @@ inductive Nat where
 deriving Repr, DecidableEq  -- this allows `decide` to work on `Nat`
 
 /-- Axiom 2.1 (0 is a natural number) -/
-instance Nat.zero_inst : Zero Nat := ⟨ Nat.zero ⟩
+instance Nat.instZero : Zero Nat := ⟨ Nat.zero ⟩
 #check (0:Nat)
 
 /- Axiom 2.2 (Successor of a natural number is a natural number) -/
@@ -35,10 +35,10 @@ postfix:100 "++" => Nat.succ
 
 
 /-- Definition 2.1.3 (Definition of the numerals 0, 1, 2, etc.). Note: to avoid ambiguity, one may need to use explicit casts such as (0:Nat), (1:Nat), etc. to refer to this Chapter's version of the natural numbers. -/
-instance Nat.ofnat_inst {n:_root_.Nat} : OfNat Nat n where
+instance Nat.instOfNat {n:_root_.Nat} : OfNat Nat n where
   ofNat := _root_.Nat.rec 0 (fun _ n ↦ n++) n
 
-instance Nat.one_inst : One Nat := ⟨ 1 ⟩
+instance Nat.instOne : One Nat := ⟨ 1 ⟩
 lemma zero_succ : 0++ = 1 := by rfl
 #check (1:Nat)
 
