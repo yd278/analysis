@@ -15,7 +15,7 @@ Note: to avoid notational conflict, we are using the standard Mathlib definition
 -/
 
 
-/-- This definition needs to be made outside of the Section 4.3 namespace for technical reasons -/
+/-- This definition needs to be made outside of the Section 4.3 namespace for technical reasons. -/
 def Rat.close (ε : ℚ) (x y:ℚ) := |x-y| ≤ ε
 
 
