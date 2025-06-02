@@ -181,6 +181,64 @@ theorem Sequence.harmonic_steady : (Sequence.mk 1 (fun n ↦ (1:ℚ)/n)).isCauch
   . exact le_of_lt hN
   simp at hN' ⊢; assumption
 
+abbrev BoundedBy {n:ℕ} (a: Fin n → ℚ) (M:ℚ) : Prop :=
+  ∀ i, |a i| ≤ M
 
+/-- Definition 5.1.12 (bounded sequences).  Here we start sequences from 0 rather than 1 to align better with Mathlib conventions. -/
+lemma BoundedBy_def {n:ℕ} (a: Fin n → ℚ) (M:ℚ) :
+  BoundedBy a M ↔ ∀ i, |a i| ≤ M := by rfl
+
+abbrev Sequence.BoundedBy (s:Sequence) (M:ℚ) : Prop :=
+  ∀ n, |s.a n| ≤ M
+
+/-- Definition 5.1.12 (bounded sequences) -/
+lemma Sequence.BoundedBy_def (s:Sequence) (M:ℚ) :
+  s.BoundedBy M ↔ ∀ n, |s.a n| ≤ M := by rfl
+
+abbrev Sequence.isBounded (s:Sequence) : Prop := ∃ M, M ≥ 0 ∧ s.BoundedBy M
+
+/-- Definition 5.1.12 (bounded sequences) -/
+lemma Sequence.isBounded_def (s:Sequence) :
+  s.isBounded ↔ ∃ M, M ≥ 0 ∧ s.BoundedBy M := by rfl
+
+/-- Example 5.1.13 -/
+example : BoundedBy ![1,-2,3,-4] 4 := by sorry
+
+/-- Example 5.1.13 -/
+example : ¬ ((fun n:ℕ ↦ (-1)^n * (n+1:ℚ)):Sequence).isBounded := by sorry
+
+/-- Example 5.1.13 -/
+example : ((fun n:ℕ ↦ (-1:ℚ)^n):Sequence).isBounded := by sorry
+
+/-- Example 5.1.13 -/
+example : ¬ ((fun n:ℕ ↦ (-1:ℚ)^n):Sequence).isCauchy := by sorry
+
+/-- Lemma 5.1.14 -/
+lemma bounded_of_finite {n:ℕ} (a: Fin n → ℚ) : ∃ M, M ≥ 0 ∧  BoundedBy a M := by
+  -- this proof is written to follow the structure of the original text.
+  induction' n with n hn
+  . use 0
+    simp [BoundedBy_def]
+  set a' : Fin n → ℚ := fun m ↦ a m
+  obtain ⟨ M, hpos, hM ⟩ := hn a'
+  have h1 : BoundedBy a' (M + |a n|) := by
+    intro m
+    apply (hM m).trans
+    simp
+  have h2 : |a n| ≤ M + |a n| := by simp [hpos]
+  use M + |a n|
+  constructor
+  . positivity
+  intro m
+  rcases Fin.eq_castSucc_or_eq_last m with hm | hm
+  . obtain ⟨ j, hj ⟩ := hm
+    convert h1 j
+    simp [hj]
+  convert h2
+  simp [hm]
+
+/-- Lemma 5.1.15 (Cauchy sequences are bounded) / Exercise 5.1.1 -/
+lemma Sequence.isBounded_of_isCauchy (s:Sequence) (h: s.isCauchy) : s.isBounded := by
+  sorry
 
 end Section_5_1
