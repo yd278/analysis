@@ -20,6 +20,7 @@ class CauchySequence extends Sequence where
   zero : n₀ = 0
   cauchy : toSequence.isCauchy
 
+/-- A sequence starting at zero that is Cauchy, can be viewed as a Cauchy sequence.-/
 abbrev CauchySequence.mk' {a:ℕ → ℚ} (ha: (a:Sequence).isCauchy) : CauchySequence where
   n₀ := 0
   seq := (a:Sequence).seq
@@ -29,17 +30,21 @@ abbrev CauchySequence.mk' {a:ℕ → ℚ} (ha: (a:Sequence).isCauchy) : CauchySe
   zero := rfl
   cauchy := ha
 
-lemma CauchySequence.coe_eq {a:ℕ → ℚ} (ha: (a:Sequence).isCauchy) : (CauchySequence.mk' ha).toSequence = (a:Sequence) := by rfl
+lemma CauchySequence.coe_eq {a:ℕ → ℚ} (ha: (a:Sequence).isCauchy) : (mk' ha).toSequence = (a:Sequence) := by rfl
 
 instance CauchySequence.instCoeFun : CoeFun CauchySequence (fun _ ↦ ℕ → ℚ) where
   coe := fun a n ↦ a.toSequence (n:ℤ)
 
-lemma CauchySequence.coe_coe {a:ℕ → ℚ} (ha: (a:Sequence).isCauchy) : CauchySequence.mk' ha = a := by rfl
+lemma CauchySequence.coe_coe {a:ℕ → ℚ} (ha: (a:Sequence).isCauchy) : mk' ha = a := by rfl
 
 /-- Proposition 5.3.3 / Exercise 5.3.1 -/
 instance CauchySequence.instSetoid : Setoid CauchySequence where
   r := fun a b ↦ Sequence.equiv a b
-  iseqv := sorry
+  iseqv := {
+     refl := sorry
+     symm := sorry
+     trans := sorry
+  }
 
 
 
