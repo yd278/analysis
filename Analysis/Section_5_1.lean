@@ -15,58 +15,72 @@ Main constructions and results of this section:
 
 namespace Chapter5
 
-/-- Definition 5.1.1 (Sequence) -/
+/-- Definition 5.1.1 (Sequence). To avoid some technicalities involving dependent types, we extend sequences by zero to the left of the starting point `n₀`. -/
 structure Sequence where
   n₀ : ℤ
-  a : { n // n ≥ n₀ } → ℚ
+  seq : ℤ → ℚ
+  vanish : ∀ n, n < n₀ → seq n = 0
 
-lemma Sequence.mk_eq (n₀:ℤ) (a: { n // n ≥ n₀ } → ℚ) : Sequence.mk n₀ a = ⟨ n₀, a ⟩ := by rfl
+/-- Sequence can be thought of as functions from ℤ to ℚ. -/
+instance Sequence.instCoeFun : CoeFun Sequence (fun _ ↦ ℤ → ℚ) where
+  coe := fun a ↦ a.seq
 
 /-- Functions from ℕ to ℚ can be thought of as sequences. -/
-instance Sequence.instCoe : Coe (ℕ → ℚ) Sequence :=
-  ⟨ fun a ↦ Sequence.mk 0 (fun n ↦ a (n:ℤ).toNat) ⟩
+instance Sequence.instCoe : Coe (ℕ → ℚ) Sequence where
+  coe := fun a ↦ {
+    n₀ := 0
+    seq := fun n ↦ if n ≥ 0 then a n.toNat else 0
+    vanish := by
+      intro n hn
+      simp [hn]
+  }
 
-/-- It is convenient to extend sequences by zero, to become functions on all of ℤ.  Unfortunately this extension isn't quite injective, so we cannot use the machinery of `FunLike`.  (One could use the machinery of `Function.extend`, however.) -/
-abbrev Sequence.extend (s: Sequence) (n:ℤ) : ℚ := if h : n ≥ s.n₀ then s.a ⟨n, h⟩ else 0
+abbrev Sequence.mk' (n₀:ℤ) (a: { n // n ≥ n₀ } → ℚ) : Sequence where
+  n₀ := n₀
+  seq := fun n ↦ if h : n ≥ n₀ then a ⟨n, h⟩ else 0
+  vanish := by
+    intro n hn
+    simp [hn]
 
-lemma Sequence.extend_mk {n n₀:ℤ} (a: { n // n ≥ n₀ } → ℚ) (h: n ≥ n₀) : (Sequence.mk n₀ a).extend n = a ⟨ n, h ⟩ := by simp [Sequence.extend, h]
+
+lemma Sequence.eval_mk {n n₀:ℤ} (a: { n // n ≥ n₀ } → ℚ) (h: n ≥ n₀) : (Sequence.mk' n₀ a) n = a ⟨ n, h ⟩ := by simp [seq, h]
 
 @[simp]
-lemma Sequence.extend_coe (n:ℕ) (a: ℕ → ℚ) : (a:Sequence).extend n = a n := by simp [Sequence.extend]
+lemma Sequence.eval_coe (n:ℕ) (a: ℕ → ℚ) : (a:Sequence) n = a n := by simp [seq]
 
 /-- Example 5.1.2 -/
 abbrev Sequence.squares : Sequence := ((fun n:ℕ ↦ (n^2:ℚ)):Sequence)
 
 /-- Example 5.1.2 -/
-example (n:ℕ) : Sequence.squares.extend n = n^2 := Sequence.extend_coe _ _
+example (n:ℕ) : Sequence.squares n = n^2 := Sequence.eval_coe _ _
 
 /-- Example 5.1.2 -/
 abbrev Sequence.three : Sequence := ((fun (_:ℕ) ↦ (3:ℚ)):Sequence)
 
 /-- Example 5.1.2 -/
-example (n:ℕ) : Sequence.three.extend n = 3 := Sequence.extend_coe _ (fun (_:ℕ) ↦ (3:ℚ))
+example (n:ℕ) : Sequence.three n = 3 := Sequence.eval_coe _ (fun (_:ℕ) ↦ (3:ℚ))
 
 /-- Example 5.1.2 -/
-abbrev Sequence.squares_from_three : Sequence := Sequence.mk 3 (fun n ↦ n^2)
+abbrev Sequence.squares_from_three : Sequence := mk' 3 (fun n ↦ n^2)
 
 /-- Example 5.1.2 -/
-example (n:ℤ) (hn: n ≥ 3) : Sequence.squares_from_three.extend n = n^2 := Sequence.extend_mk _ hn
+example (n:ℤ) (hn: n ≥ 3) : Sequence.squares_from_three n = n^2 := Sequence.eval_mk _ hn
 
 -- need to temporarily leave the `Chapter5` namespace to introduce the following notation
 
 end Chapter5
 
-abbrev Rat.steady (ε: ℚ) (s: Chapter5.Sequence) : Prop :=
-  ∀ n m, ε.close (s.a n) (s.a m)
+abbrev Rat.steady (ε: ℚ) (a: Chapter5.Sequence) : Prop :=
+  ∀ n m, ε.close (a n) (a m)
 
 namespace Chapter5
 
-lemma Rat.steady_def (ε: ℚ) (s: Sequence) :
-  ε.steady s ↔ ∀ n m, ε.close (s.a n) (s.a m) := by rfl
+lemma Rat.steady_def (ε: ℚ) (a: Sequence) :
+  ε.steady a ↔ ∀ n m, ε.close (a n) (a m) := by rfl
 
-lemma Rat.steady_def' (ε: ℚ) (s: Sequence) :
-  ε.steady s ↔ ∀ n m, n ≥ s.n₀ ∧ m ≥ s.n₀ → ε.close (s.extend n) (s.extend m) := by
-  rw [Rat.steady_def]
+lemma Rat.steady_def' (ε: ℚ) (a: Sequence) :
+  ε.steady a ↔ ∀ n m, n ≥ a.n₀ ∧ m ≥ a.n₀ → ε.close (a n) (a m) := by
+  rw [steady_def]
   constructor
   . intro h n m ⟨ hn, hm ⟩
     sorry
@@ -95,23 +109,25 @@ example : (10:ℚ).steady ((fun n:ℕ ↦ if n = 0 then (10:ℚ) else (0:ℚ)):S
 
 example (ε:ℚ) (hε:ε<10):  ¬ ε.steady ((fun n:ℕ ↦ if n = 0 then (10:ℚ) else (0:ℚ)):Sequence) := by sorry
 
-/-- a.from n₁ starts `a:Sequence` from `n₁`.  It is intended for use when `n₁ \geq n₀`, but returns the "junk" value of the original sequence `a` otherwise. -/
+/-- a.from n₁ starts `a:Sequence` from `n₁`.  It is intended for use when `n₁ ≥ n₀`, but returns the "junk" value of the original sequence `a` otherwise. -/
 abbrev Sequence.from (a:Sequence) (n₁:ℤ) : Sequence :=
-  Sequence.mk (max a.n₀ n₁) (fun ⟨ n, hn ⟩ ↦ a.a ⟨ n, (le_max_left _ _).trans hn ⟩)
+  mk' (max a.n₀ n₁) (fun n ↦ a (n:ℤ))
 
-lemma Sequence.from_extend (a:Sequence) {n₁ n:ℤ} (hn: n ≥ n₁) :
-  (a.from n₁).extend n = a.extend n := by
-  simp [Sequence.from, Sequence.extend, hn]
+lemma Sequence.from_eval (a:Sequence) {n₁ n:ℤ} (hn: n ≥ n₁) :
+  (a.from n₁) n = a n := by
+  simp [Sequence.from, seq, hn]
+  intro h
+  exact (a.vanish n h).symm
 
 end Chapter5
 
 /-- Definition 5.1.6 (Eventually ε-steady) -/
-abbrev Rat.eventuallySteady (ε: ℚ) (s: Chapter5.Sequence) : Prop := ∃ N, (N ≥ s.n₀) ∧ ε.steady (s.from N)
+abbrev Rat.eventuallySteady (ε: ℚ) (a: Chapter5.Sequence) : Prop := ∃ N, (N ≥ a.n₀) ∧ ε.steady (a.from N)
 
 namespace Chapter5
 
-lemma Rat.eventuallySteady_def (ε: ℚ) (s: Sequence) :
-  ε.eventuallySteady s ↔ ∃ N, (N ≥ s.n₀) ∧ ε.steady (s.from N) := by rfl
+lemma Rat.eventuallySteady_def (ε: ℚ) (a: Sequence) :
+  ε.eventuallySteady a ↔ ∃ N, (N ≥ a.n₀) ∧ ε.steady (a.from N) := by rfl
 
 /-- Example 5.1.7 -/
 lemma Sequence.ex_5_1_7_a : ¬ (0.1:ℚ).steady ((fun n:ℕ ↦ (n+1:ℚ)⁻¹ ):Sequence) := by sorry
@@ -122,27 +138,27 @@ lemma Sequence.ex_5_1_7_c : (0.1:ℚ).eventuallySteady ((fun n:ℕ ↦ (n+1:ℚ)
 
 lemma Sequence.ex_5_1_7_d {ε:ℚ} (hε:ε>0) : ε.eventuallySteady ((fun n:ℕ ↦ if n=0 then (10:ℚ) else (0:ℚ) ):Sequence) := by sorry
 
-abbrev Sequence.isCauchy (s:Sequence) : Prop := ∀ (ε:ℚ), (ε > 0 → (ε.eventuallySteady s))
+abbrev Sequence.isCauchy (a:Sequence) : Prop := ∀ (ε:ℚ), (ε > 0 → (ε.eventuallySteady a))
 
-lemma Sequence.isCauchy_def (s:Sequence) :
-  s.isCauchy ↔ ∀ (ε:ℚ), (ε > 0 → ε.eventuallySteady s) := by rfl
+lemma Sequence.isCauchy_def (a:Sequence) :
+  a.isCauchy ↔ ∀ (ε:ℚ), (ε > 0 → ε.eventuallySteady a) := by rfl
 
 lemma Sequence.isCauchy_of_coe (a:ℕ → ℚ) : (a:Sequence).isCauchy ↔ ∀ (ε:ℚ), ε > 0 → ∃ N, ∀ j k, j ≥ N ∧ k ≥ N → Section_4_3.dist (a j) (a k) ≤ ε := by sorry
 
-lemma Sequence.isCauchy_of_mk {n₀:ℤ} (a: {n // n ≥ n₀} → ℚ) : (Sequence.mk n₀ a).isCauchy ↔ ∀ (ε:ℚ), ε > 0 → ∃ N, N ≥ n₀ ∧ ∀ j k, j ≥ N ∧ k ≥ N → Section_4_3.dist ((Sequence.mk n₀ a).extend j) ((Sequence.mk n₀ a).extend k) ≤ ε := by sorry
+lemma Sequence.isCauchy_of_mk {n₀:ℤ} (a: {n // n ≥ n₀} → ℚ) : (mk' n₀ a).isCauchy ↔ ∀ (ε:ℚ), ε > 0 → ∃ N, N ≥ n₀ ∧ ∀ j k, j ≥ N ∧ k ≥ N → Section_4_3.dist (mk' n₀ a j) (mk' n₀ a k) ≤ ε := by sorry
 
 noncomputable def Sequence.sqrt_two : Sequence := (fun n:ℕ ↦ ((⌊ (Real.sqrt 2)*10^n ⌋ / 10^n):ℚ))
 
 /-- Example 5.1.10.  (This requires extensive familiarity with Mathlib's API for the real numbers. )-/
-theorem Sequence.ex_5_1_10_a : (1:ℚ).steady Sequence.sqrt_two := by sorry
+theorem Sequence.ex_5_1_10_a : (1:ℚ).steady sqrt_two := by sorry
 
 /-- Example 5.1.10.  (This requires extensive familiarity with Mathlib's API for the real numbers. )-/
-theorem Sequence.ex_5_1_10_b : (0.1:ℚ).steady (Sequence.sqrt_two.from 1) := by sorry
+theorem Sequence.ex_5_1_10_b : (0.1:ℚ).steady (sqrt_two.from 1) := by sorry
 
-theorem Sequence.ex_5_1_10_c : (0.1:ℚ).eventuallySteady Sequence.sqrt_two := by sorry
+theorem Sequence.ex_5_1_10_c : (0.1:ℚ).eventuallySteady sqrt_two := by sorry
 
 /-- Proposition 5.1.11 -/
-theorem Sequence.harmonic_steady : (Sequence.mk 1 (fun n ↦ (1:ℚ)/n)).isCauchy := by
+theorem Sequence.harmonic_steady : (mk' 1 (fun n ↦ (1:ℚ)/n)).isCauchy := by
   -- This is proof is probably longer than it needs to be; there should be a shorter proof that is still in the spirit of  the proof in the book.
   rw [isCauchy_of_mk (fun n ↦ (1:ℚ)/n)]
   intro ε hε
@@ -173,7 +189,7 @@ theorem Sequence.harmonic_steady : (Sequence.mk 1 (fun n ↦ (1:ℚ)/n)).isCauch
   have hdist : Section_4_3.dist ((1:ℚ)/j) ((1:ℚ)/k) ≤ (1:ℚ)/N := by
     rw [Section_4_3.dist_eq, abs_le']
     constructor <;> linarith
-  simp [Sequence.extend, hj'''', hk'''']
+  simp [seq, hj'''', hk'''']
   convert hdist.trans _ using 2
   . simp
   . simp
@@ -188,18 +204,18 @@ abbrev BoundedBy {n:ℕ} (a: Fin n → ℚ) (M:ℚ) : Prop :=
 lemma BoundedBy_def {n:ℕ} (a: Fin n → ℚ) (M:ℚ) :
   BoundedBy a M ↔ ∀ i, |a i| ≤ M := by rfl
 
-abbrev Sequence.BoundedBy (s:Sequence) (M:ℚ) : Prop :=
-  ∀ n, |s.a n| ≤ M
+abbrev Sequence.BoundedBy (a:Sequence) (M:ℚ) : Prop :=
+  ∀ n, |a n| ≤ M
 
 /-- Definition 5.1.12 (bounded sequences) -/
-lemma Sequence.BoundedBy_def (s:Sequence) (M:ℚ) :
-  s.BoundedBy M ↔ ∀ n, |s.a n| ≤ M := by rfl
+lemma Sequence.BoundedBy_def (a:Sequence) (M:ℚ) :
+  a.BoundedBy M ↔ ∀ n, |a n| ≤ M := by rfl
 
-abbrev Sequence.isBounded (s:Sequence) : Prop := ∃ M, M ≥ 0 ∧ s.BoundedBy M
+abbrev Sequence.isBounded (a:Sequence) : Prop := ∃ M, M ≥ 0 ∧ a.BoundedBy M
 
 /-- Definition 5.1.12 (bounded sequences) -/
-lemma Sequence.isBounded_def (s:Sequence) :
-  s.isBounded ↔ ∃ M, M ≥ 0 ∧ s.BoundedBy M := by rfl
+lemma Sequence.isBounded_def (a:Sequence) :
+  a.isBounded ↔ ∃ M, M ≥ 0 ∧ a.BoundedBy M := by rfl
 
 /-- Example 5.1.13 -/
 example : BoundedBy ![1,-2,3,-4] 4 := by sorry
@@ -238,7 +254,7 @@ lemma bounded_of_finite {n:ℕ} (a: Fin n → ℚ) : ∃ M, M ≥ 0 ∧  Bounded
   simp [hm]
 
 /-- Lemma 5.1.15 (Cauchy sequences are bounded) / Exercise 5.1.1 -/
-lemma Sequence.isBounded_of_isCauchy (s:Sequence) (h: s.isCauchy) : s.isBounded := by
+lemma Sequence.isBounded_of_isCauchy (a:Sequence) (h: a.isCauchy) : a.isBounded := by
   sorry
 
 end Chapter5

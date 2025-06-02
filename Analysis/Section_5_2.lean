@@ -15,14 +15,14 @@ Main constructions and results of this section:
 -/
 
 
-abbrev Rat.close_seq (ε: ℚ) (a b: Chapter5.Sequence) : Prop := ∀ n, n ≥ a.n₀ → n ≥ b.n₀ → ε.close (a.extend n) (b.extend n)
+abbrev Rat.close_seq (ε: ℚ) (a b: Chapter5.Sequence) : Prop := ∀ n, n ≥ a.n₀ → n ≥ b.n₀ → ε.close (a n) (b n)
 
 abbrev Rat.eventually_close (ε: ℚ) (a b: Chapter5.Sequence) : Prop := ∃ N, ε.close_seq (a.from N) (b.from N)
 
 namespace Chapter5
 
 /-- Definition 5.2.1 ($ε$-close sequences) -/
-lemma Rat.close_seq_def (ε: ℚ) (a b: Sequence) : ε.close_seq a b ↔ ∀ n, n ≥ a.n₀ → n ≥ b.n₀ → ε.close (a.extend n) (b.extend n) := by rfl
+lemma Rat.close_seq_def (ε: ℚ) (a b: Sequence) : ε.close_seq a b ↔ ∀ n, n ≥ a.n₀ → n ≥ b.n₀ → ε.close (a n) (b n) := by rfl
 
 /-- Example 5.2.2 -/
 example : (0.1:ℚ).close_seq ((fun n:ℕ ↦ ((-1)^n:ℚ)):Sequence)
