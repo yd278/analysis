@@ -51,7 +51,7 @@ theorem Rat.eq (a c:ℤ) {b d:ℤ} (hb: b ≠ 0) (hd: d ≠ 0): a // b = c // d 
 theorem Rat.eq_diff (n:Rat) : ∃ a b, b ≠ 0 ∧ n = a // b := by
   apply Quot.ind _ n; intro ⟨ a, b, h ⟩
   use a, b; refine ⟨ h, ?_ ⟩
-  simp [Rat.formalDiv, h]
+  simp [formalDiv, h]
   rfl
 
 
@@ -132,14 +132,14 @@ instance Rat.addGroup_inst : AddGroup Rat :=
 AddGroup.ofLeftAxioms (by
   -- this proof is written to follow the structure of the original text.
   intro x y z
-  obtain ⟨ a, b, hb , rfl ⟩ := Rat.eq_diff x
-  obtain ⟨ c, d, hd , rfl ⟩ := Rat.eq_diff y
-  obtain ⟨ e, f, hf , rfl ⟩ := Rat.eq_diff z
+  obtain ⟨ a, b, hb , rfl ⟩ := eq_diff x
+  obtain ⟨ c, d, hd , rfl ⟩ := eq_diff y
+  obtain ⟨ e, f, hf , rfl ⟩ := eq_diff z
   have hbd : b*d ≠ 0 := Int.mul_ne_zero hb hd
   have hdf : d*f ≠ 0 := Int.mul_ne_zero hd hf
   have hbdf : b*d*f ≠ 0 := Int.mul_ne_zero hbd hf
 
-  rw [Rat.add_eq _ _ hb hd, Rat.add_eq _ _ hbd hf, Rat.add_eq _ _ hd hf, Rat.add_eq _ _ hb hdf, ←mul_assoc b d f, Rat.eq _ _ hbdf hbdf]
+  rw [add_eq _ _ hb hd, add_eq _ _ hbd hf, add_eq _ _ hd hf, add_eq _ _ hb hdf, ←mul_assoc b d f, eq _ _ hbdf hbdf]
   ring
 )
  (by sorry) (by sorry)
@@ -173,9 +173,9 @@ theorem Rat.coe_Rat_eq (a:ℤ) {b:ℤ} (hb: b ≠ 0) : (a/b:ℚ) = a // b := by
   set den :ℤ := (q.den:ℤ)
   have hden : den ≠ 0 := by simp [den, q.den_nz]
   change num // den = a // b
-  rw [Rat.eq _ _ hden hb]
+  rw [eq _ _ hden hb]
   qify
-  have hq : num / den = q := Rat.num_div_den q
+  have hq : num / den = q := num_div_den q
   rw [div_eq_div_iff _ _] at hq
   . exact hq
   . simp [hden]
@@ -196,9 +196,9 @@ instance Rat.instField : Field Rat where
     set num := q.num
     set den := q.den
     have hden : (den:ℤ) ≠ 0 := by simp [den, q.den_nz]
-    rw [← Rat.num_div_den q]
-    convert Rat.coe_Rat_eq _ hden
-    rw [Rat.coe_Int_eq, Rat.coe_Nat_eq, Rat.div_eq, Rat.inv_eq, Rat.mul_eq, Rat.eq]
+    rw [← num_div_den q]
+    convert coe_Rat_eq _ hden
+    rw [coe_Int_eq, coe_Nat_eq, div_eq, inv_eq, mul_eq, eq]
     . simp [num]
     all_goals simp [hden, den, q.den_nz]
   qsmul := _

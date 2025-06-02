@@ -75,7 +75,7 @@ instance Int.instAdd : Add Int where
 
 /-- Lemma 4.1.3 (Multiplication well-defined) -/
 theorem Int.mul_congr_left (a b a' b' c d : ℕ) (h: a — b = a' — b') : (a*c+b*d) — (a*d+b*c) = (a'*c+b'*d) — (a'*d+b'*c) := by
-  simp only [Int.eq] at h ⊢
+  simp only [eq] at h ⊢
   calc
     _ = c*(a+b') + d*(a'+b) := by ring
     _ = c*(a'+b) + d*(a+b') := by rw [h]
@@ -83,7 +83,7 @@ theorem Int.mul_congr_left (a b a' b' c d : ℕ) (h: a — b = a' — b') : (a*c
 
 /-- Lemma 4.1.3 (Multiplication well-defined) -/
 theorem Int.mul_congr_right (a b c d c' d' : ℕ) (h: c — d = c' — d') : (a*c+b*d) — (a*d+b*c) = (a*c'+b*d') — (a*d'+b*c') := by
-  simp only [Int.eq] at h ⊢
+  simp only [eq] at h ⊢
   calc
     _ = a*(c+d') + b*(c'+d) := by ring
     _ = a*(c'+d) + b*(c+d') := by rw [h]
@@ -92,13 +92,13 @@ theorem Int.mul_congr_right (a b c d c' d' : ℕ) (h: c — d = c' — d') : (a*
 /-- Lemma 4.1.3 (Multiplication well-defined) -/
 theorem Int.mul_congr {a b c d a' b' c' d' : ℕ} (h1: a — b = a' — b') (h2: c — d = c' — d') :
   (a*c+b*d) — (a*d+b*c) = (a'*c'+b'*d') — (a'*d'+b'*c') := by
-  rw [Int.mul_congr_left a b a' b' c d h1, Int.mul_congr_right a' b' c d c' d' h2]
+  rw [mul_congr_left a b a' b' c d h1, mul_congr_right a' b' c d c' d' h2]
 
 instance Int.instMul : Mul Int where
   mul := Quotient.lift₂ (fun ⟨ a, b ⟩ ⟨ c, d ⟩ ↦ (a * c + b * d) — (a * d + b * c)) (by
     intro ⟨ a, b ⟩ ⟨ c, d ⟩ ⟨ a', b' ⟩ ⟨ c', d' ⟩ h1 h2
     simp at h1 h2
-    convert Int.mul_congr _ _ <;> simpa
+    convert mul_congr _ _ <;> simpa
     )
 
 /-- Definition 4.1.2 (Multiplication of integers) -/
@@ -120,13 +120,13 @@ theorem Int.natCast_ofNat (n:ℕ) : ((ofNat(n):ℕ): Int) = ofNat(n) := by rfl
 @[simp]
 theorem Int.ofNat_inj (n m:ℕ) :
     (ofNat(n) : Int) = (ofNat(m) : Int) ↔ ofNat(n) = ofNat(m) := by
-      simp only [Int.ofNat_eq, Int.eq, add_zero]
+      simp only [ofNat_eq, eq, add_zero]
       rfl
 
 @[simp]
 theorem Int.natCast_inj (n m:ℕ) :
     (n : Int) = (m : Int) ↔ n = m := by
-      simp only [Int.natCast_eq, Int.eq, add_zero]
+      simp only [natCast_eq, eq, add_zero]
 
 example : 3 = 3 — 0 := by rfl
 
@@ -148,37 +148,37 @@ abbrev Int.isNeg (x:Int) : Prop := ∃ (n:ℕ), n > 0 ∧ x = -n
 /-- Lemma 4.1.5 (trichotomy of integers )-/
 theorem Int.trichotomous (x:Int) : x = 0 ∨ x.isPos ∨ x.isNeg := by
   -- This proof is slightly modified from that in the original text.
-  obtain ⟨ a, b, rfl ⟩ := Int.eq_diff x
+  obtain ⟨ a, b, rfl ⟩ := eq_diff x
   have := _root_.trichotomous (r := LT.lt) a b
   rcases this with h_lt | h_eq | h_gt
   . obtain ⟨ c,rfl ⟩ := Nat.exists_eq_add_of_lt h_lt
     right; right; refine ⟨ c+1, ?_, ?_ ⟩
     . linarith
-    simp_rw [Int.natCast_eq, Int.neg_eq, Int.eq]
+    simp_rw [natCast_eq, neg_eq, eq]
     abel
-  . left; simp_rw [h_eq, Int.ofNat_eq, Int.eq, add_zero, zero_add]
+  . left; simp_rw [h_eq, ofNat_eq, eq, add_zero, zero_add]
   obtain ⟨ c, rfl ⟩ := Nat.exists_eq_add_of_lt h_gt
   right; left; refine ⟨ c+1, ?_, ?_ ⟩
   . linarith
-  simp_rw [Int.natCast_eq, Int.eq]
+  simp_rw [natCast_eq, eq]
   abel
 
 /-- Lemma 4.1.5 (trichotomy of integers )-/
 theorem Int.not_pos_zero (x:Int) : x = 0 ∧ x.isPos → False := by
   rintro ⟨ rfl, ⟨ n, hn, hn' ⟩ ⟩
-  simp [←Int.natCast_ofNat] at hn'
+  simp [←natCast_ofNat] at hn'
   linarith
 
 /-- Lemma 4.1.5 (trichotomy of integers )-/
 theorem Int.not_neg_zero (x:Int) : x = 0 ∧ x.isNeg → False := by
   rintro ⟨ rfl, ⟨ n, hn, hn' ⟩ ⟩
-  simp_rw [←Int.natCast_ofNat, Int.natCast_eq, Int.neg_eq, Int.eq] at hn'
+  simp_rw [←natCast_ofNat, natCast_eq, neg_eq, eq] at hn'
   linarith
 
 /-- Lemma 4.1.5 (trichotomy of integers )-/
 theorem Int.not_pos_neg (x:Int) : x.isPos ∧ x.isNeg → False := by
   rintro ⟨ ⟨ n, hn, rfl ⟩, ⟨ m, hm, hm' ⟩ ⟩
-  simp_rw [Int.natCast_eq,Int.neg_eq, Int.eq] at hm'
+  simp_rw [natCast_eq, neg_eq, eq] at hm'
   linarith
 
 /-- Proposition 4.1.6 (laws of algebra) / Exercise 4.1.4 -/
@@ -195,10 +195,10 @@ instance Int.instCommMonoid : CommMonoid Int where
   mul_assoc := by
     -- This proof is written to follow the structure of the original text.
     intro x y z
-    obtain ⟨ a, b, rfl ⟩ := Int.eq_diff x
-    obtain ⟨ c, d, rfl ⟩ := Int.eq_diff y
-    obtain ⟨ e, f, rfl ⟩ := Int.eq_diff z
-    simp_rw [Int.mul_eq]
+    obtain ⟨ a, b, rfl ⟩ := eq_diff x
+    obtain ⟨ c, d, rfl ⟩ := eq_diff y
+    obtain ⟨ e, f, rfl ⟩ := eq_diff z
+    simp_rw [mul_eq]
     congr 1
     . ring
     ring
@@ -296,12 +296,12 @@ abbrev Int.equivInt : Int ≃ ℤ where
 
 /-- Not in textbook: equivalence preserves order -/
 abbrev Int.equivInt_order : Int ≃o ℤ where
-  toEquiv := Int.equivInt
+  toEquiv := equivInt
   map_rel_iff' := by sorry
 
 /-- Not in textbook: equivalence preserves ring operations -/
 abbrev Int.equivInt_ring : Int ≃+* ℤ where
-  toEquiv := Int.equivInt
+  toEquiv := equivInt
   map_add' := by sorry
   map_mul' := by sorry
 
