@@ -26,7 +26,7 @@ structure PreRat where
 
 /-- Exercise 4.2.1 -/
 instance PreRat.instSetoid : Setoid PreRat where
-  r := fun a b ↦ a.numerator * b.denominator = b.numerator * a.denominator
+  r a b := a.numerator * b.denominator = b.numerator * a.denominator
   iseqv := {
     refl := by sorry
     symm := by sorry
@@ -91,10 +91,10 @@ theorem Rat.neg_eq (a:ℤ) (hb: b ≠ 0) : - (a // b) = (-a) // b := by
 
 /-- Embedding the integers in the rationals -/
 instance Rat.instIntCast : IntCast Rat where
-  intCast := fun a ↦ a // 1
+  intCast a := a // 1
 
 instance Rat.instNatCast : NatCast Rat where
-  natCast := fun n ↦ (n:ℤ) // 1
+  natCast n := (n:ℤ) // 1
 
 instance Rat.instOfNat : OfNat Rat n where
   ofNat := (n:ℤ) // 1
@@ -165,7 +165,7 @@ instance Rat.instCommRing : CommRing Rat where
   natCast_succ := by sorry
 
 instance Rat.instRatCast : RatCast Rat where
-  ratCast := fun q ↦ q.num // q.den
+  ratCast q := q.num // q.den
 
 theorem Rat.coe_Rat_eq (a:ℤ) {b:ℤ} (hb: b ≠ 0) : (a/b:ℚ) = a // b := by
   set q := (a/b:ℚ)
@@ -207,7 +207,7 @@ instance Rat.instField : Field Rat where
 example : (3//4) / (5//6) = 9 // 10 := by sorry
 
 def Rat.coe_int_hom : ℤ →+* Rat where
-  toFun := fun n ↦ (n:Rat)
+  toFun n := (n:Rat)
   map_zero' := by rfl
   map_one' := by rfl
   map_add' := by sorry
@@ -215,7 +215,7 @@ def Rat.coe_int_hom : ℤ →+* Rat where
 
 /-- (Not from textbook) The textbook rationals are isomorphic (as a field) to the Mathlib rationals -/
 def Rat.equiv_rat : ℚ ≃+* Rat where
-  toFun := fun n ↦ (n:Rat)
+  toFun n := (n:Rat)
   invFun := by sorry
   map_add' := by sorry
   map_mul' := by sorry
@@ -242,11 +242,11 @@ theorem Rat.not_pos_and_neg (x:Rat) : ¬(x.isPos ∧ x.isNeg) := by sorry
 
 /-- Definition 4.2.8 (Ordering of the rationals) -/
 instance Rat.instLT : LT Rat where
-  lt := fun x y ↦ (x-y).isNeg
+  lt x y := (x-y).isNeg
 
 /-- Definition 4.2.8 (Ordering of the rationals) -/
 instance Rat.instLE : LE Rat where
-  le := fun x y ↦ (x < y) ∨ (x = y)
+  le x y := (x < y) ∨ (x = y)
 
 theorem Rat.lt_iff (x y:Rat) : x < y ↔ (x-y).isNeg := by rfl
 theorem Rat.le_iff (x y:Rat) : x ≤ y ↔ (x < y) ∨ (x = y) := by rfl

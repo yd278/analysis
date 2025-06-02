@@ -23,7 +23,7 @@ lemma Chapter2.Nat.succ_toNat (n : Chapter2.Nat) : (n++).toNat = n.toNat + 1 := 
 
 abbrev Chapter2.Nat.equivNat : Chapter2.Nat ≃ ℕ where
   toFun := Chapter2.Nat.toNat
-  invFun := fun n ↦ (n:Chapter2.Nat)
+  invFun n := (n:Chapter2.Nat)
   left_inv n := by
     induction' n with n hn
     . rfl

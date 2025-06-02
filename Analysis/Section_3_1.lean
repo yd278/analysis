@@ -59,7 +59,7 @@ variable [SetTheory]
 
 /-- Definition 3.1.1 (objects can be elements of sets) -/
 instance objects_mem_sets : Membership Object Set where
-  mem := fun X x ↦ SetTheory.mem x X
+  mem X x := SetTheory.mem x X
 
 /-- Axiom 3.1 (Sets are objects)-/
 instance sets_are_objects : Coe Set Object where
@@ -124,7 +124,7 @@ instance SetTheory.Set.instUnion : Union Set where
 theorem SetTheory.Set.mem_union (x:Object) (X Y:Set) : x ∈ (X ∪ Y) ↔ (x ∈ X ∨ x ∈ Y) := SetTheory.union_pair_axiom X Y x
 
 instance SetTheory.Set.instInsert : Insert Object Set where
-  insert := fun x X ↦ {x} ∪ X
+  insert x X := {x} ∪ X
 
 /-- Axiom 3.3(b) (pair).  Note that one often has to cast {a,b} to Set -/
 theorem SetTheory.Set.pair_eq (a b:Object) : ({a,b}:Set) = {a} ∪ {b} := by rfl
@@ -216,11 +216,11 @@ theorem SetTheory.Set.pair_union_pair (a b c:Object) : ({a,b}:Set) ∪ {b,c} = {
 
 /-- Definition 3.1.14.   -/
 instance SetTheory.Set.uinstSubset : HasSubset Set where
-  Subset := fun X Y ↦ ∀ x, x ∈ X → x ∈ Y
+  Subset X Y := ∀ x, x ∈ X → x ∈ Y
 
 /-- Definition 3.1.14.  Note that the strict subset operation in Mathlib is denoted `⊂` rather than `⊊`. -/
 instance SetTheory.Set.instSSubset : HasSSubset Set where
-  SSubset := fun X Y ↦ X ⊆ Y ∧ X ≠ Y
+  SSubset X Y := X ⊆ Y ∧ X ≠ Y
 
 /-- Definition 3.1.14. -/
 theorem SetTheory.Set.subset_def (X Y:Set) : X ⊆ Y ↔ ∀ x, x ∈ X → x ∈ Y := by rfl
@@ -259,7 +259,7 @@ theorem SetTheory.Set.ssubset_trans (A B C:Set) (hAB:A ⊂ B) (hBC:B ⊂ C) : A 
 abbrev SetTheory.Set.toSubtype (A:Set) := Subtype (fun x ↦ x ∈ A)
 
 instance : CoeSort (Set) (Type) where
-  coe := fun A => A.toSubtype
+  coe A := A.toSubtype
 
 /-- Elements of a set (implicitly coerced to a subtype) are also elements of the set (with respect to the membership operation of the set theory). -/
 lemma SetTheory.Set.subtype_property (A:Set) (x:A) : x.val ∈ A := x.property
@@ -292,7 +292,7 @@ theorem SetTheory.Set.specify_subset {A:Set} (P: A → Prop) : A.specify P ⊆ A
 theorem SetTheory.Set.specify_congr {A A':Set} (hAA':A = A') {P: A → Prop} {P': A' → Prop} (hPP': (x:Object) → (h:x ∈ A) → (h':x ∈ A') → P ⟨ x, h⟩ ↔ P' ⟨ x, h'⟩ ) : A.specify P = A'.specify P' := by sorry
 
 instance SetTheory.Set.instIntersection : Inter Set where
-  inter := fun X Y ↦ X.specify (fun x ↦ x.val ∈ Y)
+  inter X Y := X.specify (fun x ↦ x.val ∈ Y)
 
 /-- Definition 3.1.22 (Intersections) -/
 theorem SetTheory.Set.mem_inter (x:Object) (X Y:Set) : x ∈ (X ∩ Y) ↔ (x ∈ X ∧ x ∈ Y) := by
@@ -305,7 +305,7 @@ theorem SetTheory.Set.mem_inter (x:Object) (X Y:Set) : x ∈ (X ∩ Y) ↔ (x �
   exact (specification_axiom' (fun x ↦ x.val ∈ Y) ⟨ x,hX⟩).mpr hY
 
 instance SetTheory.Set.instSDiff : SDiff Set where
-  sdiff := fun X Y ↦ X.specify (fun x ↦ x.val ∉ Y)
+  sdiff X Y := X.specify (fun x ↦ x.val ∉ Y)
 
 /-- Definition 3.1.26 (Difference sets) -/
 theorem SetTheory.Set.mem_sdiff (x:Object) (X Y:Set) : x ∈ (X \ Y) ↔ (x ∈ X ∧ x ∉ Y) := by
