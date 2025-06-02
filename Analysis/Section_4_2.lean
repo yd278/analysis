@@ -175,7 +175,7 @@ theorem Rat.coe_Rat_eq (a:ℤ) {b:ℤ} (hb: b ≠ 0) : (a/b:ℚ) = a // b := by
   change num // den = a // b
   rw [eq _ _ hden hb]
   qify
-  have hq : num / den = q := num_div_den q
+  have hq : num / den = q := Rat.num_div_den q
   rw [div_eq_div_iff _ _] at hq
   . exact hq
   . simp [hden]
@@ -196,7 +196,7 @@ instance Rat.instField : Field Rat where
     set num := q.num
     set den := q.den
     have hden : (den:ℤ) ≠ 0 := by simp [den, q.den_nz]
-    rw [← num_div_den q]
+    rw [← Rat.num_div_den q]
     convert coe_Rat_eq _ hden
     rw [coe_Int_eq, coe_Nat_eq, div_eq, inv_eq, mul_eq, eq]
     . simp [num]
