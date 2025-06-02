@@ -39,7 +39,9 @@ theorem abs_of_zero : abs 0 = 0 := by rfl
 theorem abs_eq_abs (x: ℚ) : abs x = |x| := by
   sorry
 
-/-- Definition 4.2 (Distance).  Here we use the Mathlib notion of distance.  -/
+abbrev dist (x y : ℚ) := |x - y|
+
+/-- Definition 4.2 (Distance).  We avoid the Mathlib notion of distance here because it is real-valued.  -/
 theorem dist_eq (x y: ℚ) : dist x y = |x-y| := by simp [Rat.dist_eq]
 
 /-- Proposition 4.3.3(a) / Exercise 4.3.1 -/

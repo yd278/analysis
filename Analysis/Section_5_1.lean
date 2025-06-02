@@ -31,6 +31,7 @@ abbrev Sequence.extend (s: Sequence) (n:ℤ) : ℚ := if h : n ≥ s.n₀ then s
 
 lemma Sequence.extend_mk {n n₀:ℤ} (a: { n // n ≥ n₀ } → ℚ) (h: n ≥ n₀) : (Sequence.mk n₀ a).extend n = a ⟨ n, h ⟩ := by simp [Sequence.extend, h]
 
+@[simp]
 lemma Sequence.extend_coe (n:ℕ) (a: ℕ → ℚ) : (a:Sequence).extend n = a n := by simp [Sequence.extend]
 
 /-- Example 5.1.2 -/
@@ -126,7 +127,9 @@ abbrev Sequence.isCauchy (s:Sequence) : Prop := ∀ (ε:ℚ), (ε > 0 → (ε.ev
 lemma Sequence.isCauchy_def (s:Sequence) :
   s.isCauchy ↔ ∀ (ε:ℚ), (ε > 0 → ε.eventuallySteady s) := by rfl
 
-lemma Sequence.isCauchy_of_coe (a:ℕ → ℚ) : (a:Sequence).isCauchy ↔ ∀ (ε:ℚ), ε > 0 → ∃ N, ∀ j k, j ≥ N ∧ k ≥ N → dist (a j) (a k) ≤ ε := by sorry
+lemma Sequence.isCauchy_of_coe (a:ℕ → ℚ) : (a:Sequence).isCauchy ↔ ∀ (ε:ℚ), ε > 0 → ∃ N, ∀ j k, j ≥ N ∧ k ≥ N → Section_4_3.dist (a j) (a k) ≤ ε := by sorry
+
+lemma Sequence.isCauchy_of_mk {n₀:ℤ} (a: {n // n ≥ n₀} → ℚ) : (Sequence.mk n₀ a).isCauchy ↔ ∀ (ε:ℚ), ε > 0 → ∃ N, N ≥ n₀ ∧ ∀ j k, j ≥ N ∧ k ≥ N → Section_4_3.dist ((Sequence.mk n₀ a).extend j) ((Sequence.mk n₀ a).extend k) ≤ ε := by sorry
 
 noncomputable def Sequence.sqrt_two : Sequence := (fun n:ℕ ↦ ((⌊ (Real.sqrt 2)*10^n ⌋ / 10^n):ℚ))
 
@@ -139,7 +142,45 @@ theorem Sequence.ex_5_1_10_b : (0.1:ℚ).steady (Sequence.sqrt_two.from 1) := by
 theorem Sequence.ex_5_1_10_c : (0.1:ℚ).eventuallySteady Sequence.sqrt_two := by sorry
 
 /-- Proposition 5.1.11 -/
-theorem Sequence.harmonic_steady : ((fun n:ℕ ↦ (1:ℚ)/(n+1)):Sequence).isCauchy := by
-  sorry -- TODO
+theorem Sequence.harmonic_steady : (Sequence.mk 1 (fun n ↦ (1:ℚ)/n)).isCauchy := by
+  -- This is proof is probably longer than it needs to be; there should be a shorter proof that is still in the spirit of  the proof in the book.
+  rw [isCauchy_of_mk (fun n ↦ (1:ℚ)/n)]
+  intro ε hε
+  have : ∃ N:ℕ, N > 1/ε := exists_nat_gt (1 / ε)
+  obtain ⟨ N, hN ⟩ := this
+  use N
+  have hN' : (N:ℤ) > 0 := by
+    have : (1/ε) > 0 := by positivity
+    replace hN := this.trans hN
+    simp at hN ⊢; assumption
+  constructor
+  . simp at hN' ⊢; linarith
+  intro j k ⟨ hj, hk ⟩
+  have hj' : (j:ℚ) ≥ 0 := by simp; linarith
+  have hj'' : (1:ℚ)/j ≤ (1:ℚ)/N := by
+    gcongr
+    . simp at hN' ⊢; assumption
+    . simp at hj ⊢; qify at hj; assumption
+  have hj''' : (1:ℚ)/j ≥ 0 := by positivity
+  have hj'''' : j ≥ 1 := by simp at hj'; linarith
+  have hk' : (k:ℚ) ≥ 0 := by simp; linarith
+  have hk'' : (1:ℚ)/k ≤ (1:ℚ)/N := by
+    gcongr
+    . simp at hN' ⊢; assumption
+    . simp at hk ⊢; qify at hk; assumption
+  have hk''' : (1:ℚ)/k ≥ 0 := by positivity
+  have hk'''' : k ≥ 1 := by simp at hk'; linarith
+  have hdist : Section_4_3.dist ((1:ℚ)/j) ((1:ℚ)/k) ≤ (1:ℚ)/N := by
+    rw [Section_4_3.dist_eq, abs_le']
+    constructor <;> linarith
+  simp [Sequence.extend, hj'''', hk'''']
+  convert hdist.trans _ using 2
+  . simp
+  . simp
+  rw [div_le_iff₀, mul_comm, ←div_le_iff₀ hε]
+  . exact le_of_lt hN
+  simp at hN' ⊢; assumption
+
+
 
 end Section_5_1
