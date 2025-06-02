@@ -115,7 +115,7 @@ theorem close_between {ε x y z w:ℚ} (hxy: ε.close x y) (hyz: ε.close x z) (
 theorem close_mul_right {ε x y z:ℚ} (hε: ε ≥ 0) (hxy: ε.close x y) : (ε*|z|).close (x * z) (y * z) := by sorry
 
 /-- Proposition 4.3.7(h) / Exercise 4.3.2 -/
-theorem close_mul_mul {ε δ x y z w:ℚ} (hε: ε ≥ 0) (hδ: δ ≥ 0) (hxy: ε.close x y) (hzw: δ.close z w) : (ε*|z|+δ*|x|+ε*δ).close (x * z) (y * w) := by
+theorem close_mul_mul {ε δ x y z w:ℚ} (hε: ε ≥ 0) (hxy: ε.close x y) (hzw: δ.close z w) : (ε*|z|+δ*|x|+ε*δ).close (x * z) (y * w) := by
   -- The proof is written to follow the structure of the original text.
   set a := y-x
   have ha : y = x + a := by simp [a]
