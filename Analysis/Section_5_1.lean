@@ -16,6 +16,7 @@ Main constructions and results of this section:
 namespace Chapter5
 
 /-- Definition 5.1.1 (Sequence). To avoid some technicalities involving dependent types, we extend sequences by zero to the left of the starting point `n₀`. -/
+@[ext]
 structure Sequence where
   n₀ : ℤ
   seq : ℤ → ℚ
