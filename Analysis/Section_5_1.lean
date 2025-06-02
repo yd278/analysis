@@ -13,7 +13,7 @@ Main constructions and results of this section:
 
 -/
 
-namespace Section_5_1
+namespace Chapter5
 
 /-- Definition 5.1.1 (Sequence) -/
 structure Sequence where
@@ -52,14 +52,14 @@ abbrev Sequence.squares_from_three : Sequence := Sequence.mk 3 (fun n ↦ n^2)
 /-- Example 5.1.2 -/
 example (n:ℤ) (hn: n ≥ 3) : Sequence.squares_from_three.extend n = n^2 := Sequence.extend_mk _ hn
 
--- need to temporarily leave the `Section_5_1` namespace to introduce the following notation
+-- need to temporarily leave the `Chapter5` namespace to introduce the following notation
 
-end Section_5_1
+end Chapter5
 
-abbrev Rat.steady (ε: ℚ) (s: Section_5_1.Sequence) : Prop :=
+abbrev Rat.steady (ε: ℚ) (s: Chapter5.Sequence) : Prop :=
   ∀ n m, ε.close (s.a n) (s.a m)
 
-namespace Section_5_1
+namespace Chapter5
 
 lemma Rat.steady_def (ε: ℚ) (s: Sequence) :
   ε.steady s ↔ ∀ n m, ε.close (s.a n) (s.a m) := by rfl
@@ -103,12 +103,12 @@ lemma Sequence.from_extend (a:Sequence) {n₁ n:ℤ} (hn: n ≥ n₁) :
   (a.from n₁).extend n = a.extend n := by
   simp [Sequence.from, Sequence.extend, hn]
 
-end Section_5_1
+end Chapter5
 
 /-- Definition 5.1.6 (Eventually ε-steady) -/
-abbrev Rat.eventuallySteady (ε: ℚ) (s: Section_5_1.Sequence) : Prop := ∃ N, (N ≥ s.n₀) ∧ ε.steady (s.from N)
+abbrev Rat.eventuallySteady (ε: ℚ) (s: Chapter5.Sequence) : Prop := ∃ N, (N ≥ s.n₀) ∧ ε.steady (s.from N)
 
-namespace Section_5_1
+namespace Chapter5
 
 lemma Rat.eventuallySteady_def (ε: ℚ) (s: Sequence) :
   ε.eventuallySteady s ↔ ∃ N, (N ≥ s.n₀) ∧ ε.steady (s.from N) := by rfl
@@ -241,4 +241,4 @@ lemma bounded_of_finite {n:ℕ} (a: Fin n → ℚ) : ∃ M, M ≥ 0 ∧  Bounded
 lemma Sequence.isBounded_of_isCauchy (s:Sequence) (h: s.isCauchy) : s.isBounded := by
   sorry
 
-end Section_5_1
+end Chapter5

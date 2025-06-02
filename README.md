@@ -18,7 +18,9 @@ Currently formalized sections:
 - [Section 4.1: The integers](https://teorth.github.io/analysis/docs/Analysis/Section_4_1.html)
 - [Section 4.2: The rationals](https://teorth.github.io/analysis/docs/Analysis/Section_4_2.html)
 - [Section 4.3: Absolute value and exponentiation](https://teorth.github.io/analysis/docs/Analysis/Section_4_3.html)
-- [Section 5.1: Cauchy sequences](https://teorth.github.io/analysis/docs/Analysis/Section_5_1.html)
+- [Section 5.1: Cauchy sequences of rationals](https://teorth.github.io/analysis/docs/Analysis/Section_5_1.html)
+- [Section 5.2: Equivalent Cauchy sequences](https://teorth.github.io/analysis/docs/Analysis/Section_5_2.html)
+
 
 Other resources:
 - [Web page for this project](https://teorth.github.io/Analysis/)
