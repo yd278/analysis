@@ -23,7 +23,7 @@ Currently formalized sections:
 Other resources:
 - [Web page for this project](https://teorth.github.io/Analysis/)
 - [Web page for the book](https://terrytao.wordpress.com/books/analysis-i/)
--- [Springer edition](https://link.springer.com/book/10.1007/978-981-19-7261-4)
+  - [Springer edition](https://link.springer.com/book/10.1007/978-981-19-7261-4)
 - [How to run a project in Lean locally](https://leanprover-community.github.io/install/project.html).
 - [The natural number game](https://adam.math.hhu.de/)
 - [The Lean community](https://leanprover-community.github.io/)
