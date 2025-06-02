@@ -26,7 +26,7 @@ structure PreInt where
 
 /-- Exercise 4.1.1 -/
 instance PreInt.instSetoid : Setoid PreInt where
-  r := fun a b ↦ a.minuend + b.subtrahend = b.minuend + a.subtrahend
+  r a b := a.minuend + b.subtrahend = b.minuend + a.subtrahend
   iseqv := {
     refl := by sorry
     symm := by sorry
@@ -225,11 +225,11 @@ theorem Int.mul_right_cancel₀ (a b c:Int) (h: a*c = b*c) (hc: c ≠ 0) : a = b
 
 /-- Definition 4.1.10 (Ordering of the integers) -/
 instance Int.instLE : LE Int where
-  le := fun n m ↦ ∃ a:ℕ, m = n + a
+  le n m := ∃ a:ℕ, m = n + a
 
 /-- Definition 4.1.10 (Ordering of the integers) -/
 instance Int.instLT : LT Int where
-  lt := fun n m ↦ (∃ a:ℕ, m = n + a) ∧ n ≠ m
+  lt n m := (∃ a:ℕ, m = n + a) ∧ n ≠ m
 
 theorem Int.le_iff (n m:Int) : n ≤ m ↔ ∃ a:ℕ, m = n + a := by rfl
 

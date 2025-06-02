@@ -136,11 +136,11 @@ lemma uniq_succ_eq (a:Nat) (ha: a.isPos) : ∃! b, b++ = a := by
 
 /-- Definition 2.2.11 (Ordering of the natural numbers) -/
 instance Nat.instLE : LE Nat where
-  le := fun n m ↦ ∃ a:Nat, m = n + a
+  le n m := ∃ a:Nat, m = n + a
 
 /-- Definition 2.2.11 (Ordering of the natural numbers) -/
 instance Nat.instLT : LT Nat where
-  lt := fun n m ↦ (∃ a:Nat, m = n + a) ∧ n ≠ m
+  lt n m := (∃ a:Nat, m = n + a) ∧ n ≠ m
 
 lemma Nat.le_iff (n m:Nat) : n ≤ m ↔ ∃ a:Nat, m = n + a := by rfl
 
@@ -249,9 +249,9 @@ instance Nat.decidableRel : DecidableRel (· ≤ · : Nat → Nat → Prop) := b
 /-- (Not from textbook) Nat has the structure of a linear ordering. -/
 instance Nat.linearOrder : LinearOrder Nat where
   le_refl := ge_refl
-  le_trans := fun a b c hab hbc ↦ ge_trans hbc hab
+  le_trans a b c hab hbc := ge_trans hbc hab
   lt_iff_le_not_le := sorry
-  le_antisymm := fun a b hab hba ↦ ge_antisymm hba hab
+  le_antisymm a b hab hba := ge_antisymm hba hab
   le_total := sorry
   toDecidableLE := decidableRel
 
