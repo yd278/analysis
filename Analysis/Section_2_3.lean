@@ -21,45 +21,45 @@ namespace Chapter2
 abbrev Nat.mul (n m : Nat) : Nat := Nat.recurse (fun _ prod ↦ prod + m) 0 n
 
 instance Nat.instMul : Mul Nat where
-  mul := Nat.mul
+  mul := mul
 
 /-- Definition 2.3.1 (Multiplication of natural numbers) -/
-theorem zero_mul (m: Nat) : 0 * m = 0 := recurse_zero (fun _ prod ↦ prod+m) _
+theorem Nat.zero_mul (m: Nat) : 0 * m = 0 := recurse_zero (fun _ prod ↦ prod+m) _
 
 /-- Definition 2.3.1 (Multiplication of natural numbers) -/
-theorem succ_mul (n m: Nat) : (n++) * m = n * m + m := recurse_succ (fun _ prod ↦ prod+m) _ _
+theorem Nat.succ_mul (n m: Nat) : (n++) * m = n * m + m := recurse_succ (fun _ prod ↦ prod+m) _ _
 
-theorem one_mul' (m: Nat) : 1 * m = 0 + m := by
+theorem Nat.one_mul' (m: Nat) : 1 * m = 0 + m := by
   rw [←zero_succ, succ_mul, zero_mul]
 
-theorem one_mul (m: Nat) : 1 * m = m := by
+theorem Nat.one_mul (m: Nat) : 1 * m = m := by
   rw [one_mul', zero_add]
 
-theorem two_mul (m: Nat) : 2 * m = 0 + m + m := by
+theorem Nat.two_mul (m: Nat) : 2 * m = 0 + m + m := by
   rw [←one_succ, succ_mul, one_mul']
 
 /-- Lemma 2.3.2 (Multiplication is commutative) / Exercise 2.3.1 -/
-lemma mul_comm (n m: Nat) : n * m = m * n := by
+lemma Nat.mul_comm (n m: Nat) : n * m = m * n := by
   sorry
 
-theorem mul_one (m: Nat) : m * 1 = m := by
+theorem Nat.mul_one (m: Nat) : m * 1 = m := by
   rw [mul_comm, one_mul]
 
-lemma mul_zero (n: Nat) : n * 0 = 0 := by
+lemma Nat.mul_zero (n: Nat) : n * 0 = 0 := by
   rw [mul_comm, zero_mul]
 
-lemma mul_succ (n m:Nat) : n * m++ = n * m + n := by
+lemma Nat.mul_succ (n m:Nat) : n * m++ = n * m + n := by
   rw [mul_comm, succ_mul, mul_comm]
 
 /-- Lemma 2.3.3 (Positive natural numbers have no zero divisors) / Exercise 2.3.2 -/
-lemma mul_eq_zero_iff (n m: Nat) : n * m = 0 ↔ n = 0 ∨ m = 0 := by
+lemma Nat.mul_eq_zero_iff (n m: Nat) : n * m = 0 ↔ n = 0 ∨ m = 0 := by
   sorry
 
-lemma pos_mul_pos {n m: Nat} (h₁: n.isPos) (h₂: m.isPos) : (n * m).isPos := by
+lemma Nat.pos_mul_pos {n m: Nat} (h₁: n.isPos) (h₂: m.isPos) : (n * m).isPos := by
   sorry
 
 /-- Proposition 2.3.4 (Distributive law)-/
-theorem mul_add (a b c: Nat) : a * (b + c) = a * b + a * c := by
+theorem Nat.mul_add (a b c: Nat) : a * (b + c) = a * b + a * c := by
   -- This proof is written to follow the structure of the original text.
   revert c; apply induction
   . rw [add_zero]
@@ -69,11 +69,11 @@ theorem mul_add (a b c: Nat) : a * (b + c) = a * b + a * c := by
   rw [mul_succ, ←add_assoc, ←habc]
 
 /-- Proposition 2.3.4 (Distributive law)-/
-theorem add_mul (a b c: Nat) : (a + b)*c = a*c + b*c := by
+theorem Nat.add_mul (a b c: Nat) : (a + b)*c = a*c + b*c := by
   simp only [mul_comm, mul_add]
 
 /-- Proposition 2.3.5 (Multiplication is associative) / Exercise 2.3.3 -/
-theorem mul_assoc (a b c: Nat) : (a * b) * c = a * (b * c) := by
+theorem Nat.mul_assoc (a b c: Nat) : (a * b) * c = a * (b * c) := by
   sorry
 
 /-- (Not from textbook)  Nat is a commutative semiring. -/
@@ -88,7 +88,7 @@ instance Nat.instCommSemiring : CommSemiring Nat where
   mul_comm := mul_comm
 
 /-- Proposition 2.3.6 (Multiplication preserves order) -/
-theorem mul_lt_mul_of_pos_right {a b c: Nat} (h: a < b) (hc: c.isPos) : a * c < b * c := by
+theorem Nat.mul_lt_mul_of_pos_right {a b c: Nat} (h: a < b) (hc: c.isPos) : a * c < b * c := by
   -- This proof is written to follow the structure of the original text.
   rw [lt_iff_add_pos] at h
   obtain ⟨ d, hdpos, hd ⟩ := h
@@ -99,20 +99,20 @@ theorem mul_lt_mul_of_pos_right {a b c: Nat} (h: a < b) (hc: c.isPos) : a * c < 
   use d*c
 
 /-- Proposition 2.3.6 (Multiplication preserves order) -/
-theorem mul_gt_mul_of_pos_right {a b c: Nat} (h: a > b) (hc: c.isPos) : a * c > b * c := mul_lt_mul_of_pos_right h hc
+theorem Nat.mul_gt_mul_of_pos_right {a b c: Nat} (h: a > b) (hc: c.isPos) : a * c > b * c := mul_lt_mul_of_pos_right h hc
 
 /-- Proposition 2.3.6 (Multiplication preserves order) -/
-theorem mul_lt_mul_of_pos_left {a b c: Nat} (h: a < b) (hc: c.isPos) : c * a < c * b := by
+theorem Nat.mul_lt_mul_of_pos_left {a b c: Nat} (h: a < b) (hc: c.isPos) : c * a < c * b := by
   simp [mul_comm]
   exact mul_lt_mul_of_pos_right h hc
 
 /-- Proposition 2.3.6 (Multiplication preserves order) -/
-theorem mul_gt_mul_of_pos_left {a b c: Nat} (h: a > b) (hc: c.isPos) : c * a > c * b := mul_lt_mul_of_pos_left h hc
+theorem Nat.mul_gt_mul_of_pos_left {a b c: Nat} (h: a > b) (hc: c.isPos) : c * a > c * b := mul_lt_mul_of_pos_left h hc
 
 
 
 /-- Corollary 2.3.7 (Cancellation law) -/
-lemma mul_cancel_right {a b c: Nat} (h: a * c = b * c) (hc: c.isPos) : a = b := by
+lemma Nat.mul_cancel_right {a b c: Nat} (h: a * c = b * c) (hc: c.isPos) : a = b := by
   -- This proof is written to follow the structure of the original text.
   have := trichotomous a b
   rcases this with hlt | heq | hgt
@@ -132,7 +132,7 @@ instance Nat.isOrderedRing : IsOrderedRing Nat where
 
 
 /-- Proposition 2.3.9 (Euclid's division lemma) / Exercise 2.3.5 -/
-theorem exists_div_mod (n :Nat) {q: Nat} (hq: q.isPos) : ∃ m r: Nat, 0 ≤ r ∧ r < q ∧ n = m * q + r := by
+theorem Nat.exists_div_mod (n :Nat) {q: Nat} (hq: q.isPos) : ∃ m r: Nat, 0 ≤ r ∧ r < q ∧ n = m * q + r := by
   sorry
 
 /-- Definition 2.3.11 (Exponentiation for natural numbers) -/
@@ -142,13 +142,13 @@ instance Nat.instPow : HomogeneousPow Nat where
   pow := Nat.pow
 
 /-- Definition 2.3.11 (Exponentiation for natural numbers) -/
-theorem zero_pow_zero : (0:Nat) ^ 0 = 1 := recurse_zero (fun _ prod ↦ prod * 0) _
+theorem Nat.zero_pow_zero : (0:Nat) ^ 0 = 1 := recurse_zero (fun _ prod ↦ prod * 0) _
 
 /-- Definition 2.3.11 (Exponentiation for natural numbers) -/
-theorem zero_pow_succ (m n: Nat) : (m:Nat) ^ n++ = m^n * m := recurse_succ (fun _ prod ↦ prod * m) _ _
+theorem Nat.zero_pow_succ (m n: Nat) : (m:Nat) ^ n++ = m^n * m := recurse_succ (fun _ prod ↦ prod * m) _ _
 
 /-- Exercise 2.3.4-/
-theorem sq_add_eq (a b: Nat) : (a + b) ^ 2 = a ^ 2 + 2 * a * b + b ^ 2 := by
+theorem Nat.sq_add_eq (a b: Nat) : (a + b) ^ 2 = a ^ 2 + 2 * a * b + b ^ 2 := by
   sorry
 
 

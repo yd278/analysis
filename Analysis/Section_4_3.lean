@@ -116,7 +116,7 @@ theorem close_mul_right {ε x y z:ℚ} (hε: ε ≥ 0) (hxy: ε.close x y) : (ε
 
 /-- Proposition 4.3.7(h) / Exercise 4.3.2 -/
 theorem close_mul_mul {ε δ x y z w:ℚ} (hε: ε ≥ 0) (hxy: ε.close x y) (hzw: δ.close z w) : (ε*|z|+δ*|x|+ε*δ).close (x * z) (y * w) := by
-  -- The proof is written to follow the structure of the original text.
+  -- The proof is written to follow the structure of the original text, though on formalization it was revealed that the hypothesis δ ≥ 0 was unnecessary.
   set a := y-x
   have ha : y = x + a := by simp [a]
   have haε: |a| ≤ ε := by rwa [close_symm, close_iff] at hxy
