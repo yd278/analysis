@@ -163,19 +163,19 @@ theorem Int.trichotomous (x:Int) : x = 0 ∨ x.isPos ∨ x.isNeg := by
   simp_rw [natCast_eq, eq]
   abel
 
-/-- Lemma 4.1.5 (trichotomy of integers )-/
+/-- Lemma 4.1.5 (trichotomy of integers)-/
 theorem Int.not_pos_zero (x:Int) : x = 0 ∧ x.isPos → False := by
   rintro ⟨ rfl, ⟨ n, hn, hn' ⟩ ⟩
   simp [←natCast_ofNat] at hn'
   linarith
 
-/-- Lemma 4.1.5 (trichotomy of integers )-/
+/-- Lemma 4.1.5 (trichotomy of integers)-/
 theorem Int.not_neg_zero (x:Int) : x = 0 ∧ x.isNeg → False := by
   rintro ⟨ rfl, ⟨ n, hn, hn' ⟩ ⟩
   simp_rw [←natCast_ofNat, natCast_eq, neg_eq, eq] at hn'
   linarith
 
-/-- Lemma 4.1.5 (trichotomy of integers )-/
+/-- Lemma 4.1.5 (trichotomy of integers)-/
 theorem Int.not_pos_neg (x:Int) : x.isPos ∧ x.isNeg → False := by
   rintro ⟨ ⟨ n, hn, rfl ⟩, ⟨ m, hm, hm' ⟩ ⟩
   simp_rw [natCast_eq, neg_eq, eq] at hm'
@@ -262,7 +262,7 @@ theorem Int.not_gt_and_eq (a b:Int) : ¬ (a > b ∧ a = b):= by sorry
 /-- Lemma 4.1.11(f) (Order trichotomy) / Exercise 4.1.7 -/
 theorem Int.not_lt_and_eq (a b:Int) : ¬ (a < b ∧ a = b):= by sorry
 
-/-- (Not from textbook) The order is decidable.  This exercise is only recommended for Lean experts. -/
+/-- (Not from textbook) The order is decidable.  This exercise is only recommended for Lean experts.  -/
 instance Int.decidableRel : DecidableRel (· ≤ · : Int → Int → Prop) := by
   sorry
 
@@ -289,7 +289,8 @@ theorem Int.sq_nonneg' (n:Int) : ∃ (m:Nat), n*n = m := by sorry
 
 /-- Not in textbook: create an equivalence between Int and ℤ.  This requires some familiarity with the API for Mathlib's version of the integers. -/
 abbrev Int.equivInt : Int ≃ ℤ where
-  toFun := sorry
+  toFun := Quotient.lift (fun ⟨ a, b ⟩ ↦ a - b) (by
+    sorry)
   invFun := sorry
   left_inv n := sorry
   right_inv n := sorry

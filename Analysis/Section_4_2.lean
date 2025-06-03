@@ -302,6 +302,24 @@ instance Rat.instIsStrictOrderedRing : IsStrictOrderedRing Rat where
 theorem Rat.mul_lt_mul_right_of_neg (x y z:Rat) (hxy: x < y) (hz: z.isNeg) : x * z > y * z := by sorry
 
 
+/-- Not in textbook: create an equivalence between Rat and ℚ.  This requires some familiarity with the API for Mathlib's version of the rationals. -/
+abbrev Rat.equivRat : Rat ≃ ℚ where
+  toFun := Quotient.lift (fun ⟨ a, b, h ⟩ ↦ a / b) (by
+    sorry)
+  invFun := sorry
+  left_inv n := sorry
+  right_inv n := sorry
+
+/-- Not in textbook: equivalence preserves order -/
+abbrev Rat.equivRat_order : Rat ≃o ℚ where
+  toEquiv := equivRat
+  map_rel_iff' := by sorry
+
+/-- Not in textbook: equivalence preserves ring operations -/
+abbrev Rat.equivRat_ring : Rat ≃+* ℚ where
+  toEquiv := equivRat
+  map_add' := by sorry
+  map_mul' := by sorry
 
 
 
