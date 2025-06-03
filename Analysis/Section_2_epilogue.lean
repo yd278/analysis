@@ -128,7 +128,7 @@ abbrev Equiv.fromNat (P : PeanoAxioms) : Equiv Mathlib.Nat P where
 
 abbrev Equiv.mk' (P Q : PeanoAxioms) : Equiv P Q := by sorry
 
-theorem PeanoAxioms.Equiv.uniq {P Q : PeanoAxioms} (equiv1 equiv2 : PeanoAxioms.Equiv P Q) : equiv1 = equiv2 := by
+theorem Equiv.uniq {P Q : PeanoAxioms} (equiv1 equiv2 : PeanoAxioms.Equiv P Q) : equiv1 = equiv2 := by
   sorry
 
 /-- A sample result: recursion is well-defined on any structure obeying the Peano axioms-/
