@@ -38,18 +38,20 @@ theorem Nat.one_mul (m: Nat) : 1 * m = m := by
 theorem Nat.two_mul (m: Nat) : 2 * m = 0 + m + m := by
   rw [←one_succ, succ_mul, one_mul']
 
+/-- This lemma will be useful to prove Lemma 2.3.2. -/
+lemma Nat.mul_zero (n: Nat) : n * 0 = 0 := by
+  sorry
+
+/-- This lemma will be useful to prove Lemma 2.3.2. -/
+lemma Nat.mul_succ (n m:Nat) : n * m++ = n * m + n := by
+  sorry
+
 /-- Lemma 2.3.2 (Multiplication is commutative) / Exercise 2.3.1 -/
 lemma Nat.mul_comm (n m: Nat) : n * m = m * n := by
   sorry
 
 theorem Nat.mul_one (m: Nat) : m * 1 = m := by
   rw [mul_comm, one_mul]
-
-lemma Nat.mul_zero (n: Nat) : n * 0 = 0 := by
-  rw [mul_comm, zero_mul]
-
-lemma Nat.mul_succ (n m:Nat) : n * m++ = n * m + n := by
-  rw [mul_comm, succ_mul, mul_comm]
 
 /-- Lemma 2.3.3 (Positive natural numbers have no zero divisors) / Exercise 2.3.2 -/
 lemma Nat.mul_eq_zero_iff (n m: Nat) : n * m = 0 ↔ n = 0 ∨ m = 0 := by
