@@ -276,7 +276,7 @@ theorem Rat.add_lt_add_right (x y z:Rat) (hxy: x < y) : x + z < y + z := by sorr
 /-- Proposition 4.2.9(e) (positive multiplication preserves order) / Exercise 4.2.5 -/
 theorem Rat.mul_lt_mul_right (x y z:Rat) (hxy: x < y) (hz: z.isPos) : x * z < y * z := by sorry
 
-/-- (Not from textbook) The order is decidable.  This exercise is only recommended for Lean experts. -/
+/-- (Not from textbook) The order is decidable.  This exercise is only recommended for Lean experts.  Alternatively, one can establish this fact in classical logic via `classical; exact Classical.decRel _` -/
 instance Rat.decidableRel : DecidableRel (· ≤ · : Rat → Rat → Prop) := by
   sorry
 

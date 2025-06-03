@@ -262,7 +262,7 @@ theorem Int.not_gt_and_eq (a b:Int) : ¬ (a > b ∧ a = b):= by sorry
 /-- Lemma 4.1.11(f) (Order trichotomy) / Exercise 4.1.7 -/
 theorem Int.not_lt_and_eq (a b:Int) : ¬ (a < b ∧ a = b):= by sorry
 
-/-- (Not from textbook) The order is decidable.  This exercise is only recommended for Lean experts.  -/
+/-- (Not from textbook) The order is decidable.  This exercise is only recommended for Lean experts. Alternatively, one can establish this fact in classical logic via `classical; exact Classical.decRel _`.  -/
 instance Int.decidableRel : DecidableRel (· ≤ · : Int → Int → Prop) := by
   sorry
 

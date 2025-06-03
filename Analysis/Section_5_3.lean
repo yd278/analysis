@@ -1,5 +1,7 @@
 import Mathlib.Tactic
 import Analysis.Section_5_2
+import Mathlib.Algebra.Group.MinimalAxioms
+
 
 /-!
 # Analysis I, Section 5.3
@@ -222,10 +224,107 @@ theorem Real.ratCast_def (q:ℚ) : (q:Real) = LIM (fun _ ↦ q) := by
   rw [LIM_def]
   rfl
 
+/-- Exercise 5.3.3 -/
+@[simp]
+theorem Real.ratCast_inj (q r:ℚ) : (q:Real) = (r:Real) ↔ q = r := by
+  sorry
+
 instance Real.instOfNat {n:ℕ} : OfNat Real n where
   ofNat := ((n:ℚ):Real)
 
 instance Real.instNatCast : NatCast Real where
   natCast n := ((n:ℚ):Real)
+
+instance Real.instIntCast : IntCast Real where
+  intCast n := ((n:ℚ):Real)
+
+theorem Real.add_of_ratCast (a b:ℚ) : (a:Real) + (b:Real) = (a+b:ℚ) := by sorry
+
+theorem Real.mul_of_ratCast (a b:ℚ) : (a:Real) * (b:Real) = (a*b:ℚ) := by sorry
+
+noncomputable instance Real.instNeg : Neg Real where
+  neg := fun x ↦ ((-1:ℚ):Real) * x
+
+theorem Real.neg_of_ratCast (a:ℚ) : -(a:Real) = (-a:ℚ) := by sorry
+
+/-- It may be possible to omit the Cauchy sequence hypothesis here. -/
+theorem Real.neg_of_LIM (a:ℕ → ℚ) (ha: (a:Sequence).isCauchy) : -LIM a = LIM (-a) := by sorry
+
+/-- Proposition 5.3.11 -/
+noncomputable instance Real.addGroup_inst : AddGroup Real :=
+AddGroup.ofLeftAxioms (by sorry) (by sorry) (by sorry)
+
+theorem Real.sub_eq_add_neg (x y:Real) : x - y = x + (-y) :=  rfl
+
+/-- It may be possible to omit the Cauchy sequence hypothesis here. -/
+theorem Real.sub_of_LIM (a b:ℕ → ℚ) (ha: (a:Sequence).isCauchy) (hb: (b:Sequence).isCauchy) :
+  LIM a - LIM b = LIM (a - b) := by sorry
+
+/-- Proposition 5.3.12 (laws of algebra) -/
+noncomputable instance Real.instAddCommGroup : AddCommGroup Real where
+  add_comm := by sorry
+
+/-- Proposition 5.3.12 (laws of algebra) -/
+noncomputable instance Real.instCommMonoid : CommMonoid Real where
+  mul_comm := by sorry
+  mul_assoc := by sorry
+  one_mul := by sorry
+  mul_one := by sorry
+
+/-- Proposition 5.3.12 (laws of algebra) -/
+noncomputable instance Real.instCommRing : CommRing Real where
+  left_distrib := by sorry
+  right_distrib := by sorry
+  zero_mul := by sorry
+  mul_zero := by sorry
+  mul_assoc := by sorry
+  natCast_succ := by sorry
+  intCast_negSucc := by sorry
+
+abbrev Real.ratCast_hom : ℚ →+* Real where
+  toFun := RatCast.ratCast
+  map_zero' := by sorry
+  map_one' := by sorry
+  map_add' := by sorry
+  map_mul' := by sorry
+
+/-- Definition 5.3.12 (sequences bounded away from zero).  Sequences are indexed to start from zero as this is more convenient for Mathlib purposes. -/
+abbrev bounded_away_zero (a:ℕ → ℚ) : Prop :=
+  ∃ (c:ℚ), c > 0 ∧ ∀ n, |a n| ≥ c
+
+theorem bounded_away_zero_def (a:ℕ → ℚ) : bounded_away_zero a ↔
+  ∃ (c:ℚ), c > 0 ∧ ∀ n, |a n| ≥ c := by rfl
+
+/-- Examples 5.3.13 -/
+example : bounded_away_zero (fun n ↦ (-1)^n) := by sorry
+
+/-- Examples 5.3.13 -/
+example : ¬ bounded_away_zero (fun n ↦ 10^(-(n:ℤ)-1)) := by sorry
+
+/-- Examples 5.3.13 -/
+example : ¬ bounded_away_zero (fun n ↦ 1 - 10^(-(n:ℤ))) := by sorry
+
+/-- Examples 5.3.13 -/
+example : bounded_away_zero (fun n ↦ 10^(n+1)) := by sorry
+
+/-- Examples 5.3.13 -/
+example : ((fun (n:ℕ) ↦ (10:ℚ)^(n+1)):Sequence).isBounded := by sorry
+
+/-- Lemma 5.3.14 -/
+theorem bounded_away_zero_of_nonzero {x:Real} (hx: x ≠ 0) : ∃ a:ℕ → ℚ, (a:Sequence).isCauchy ∧ x = LIM a := by
+  -- This proof is written to follow the structure of the original text.
+  sorry -- TODO
+
+/-- Lemma 5.3.15 -/
+theorem inv_of_bounded_away_zero_cauchy {a:ℕ → ℚ} (ha: bounded_away_zero a) (ha_cauchy: (a:Sequence).isCauchy) :
+  ((a⁻¹:ℕ → ℚ):Sequence).isCauchy := by
+  -- This proof is written to follow the structure of the original text.
+  sorry -- TODO
+
+/-- Lemma 5.3.17 (Reciprocation is well-defined) -/
+theorem inv_of_equiv {a b:ℕ → ℚ} (ha: bounded_away_zero a) (ha_cauchy: (a:Sequence).isCauchy) (hb: bounded_away_zero b) (hb_cauchy: (b:Sequence).isCauchy) (hlim: LIM a = LIM b) :
+  LIM a⁻¹ = LIM b⁻¹ := by
+  -- This proof is written to follow the structure of the original text.
+  sorry -- TODO
 
 end Chapter5
