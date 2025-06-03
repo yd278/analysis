@@ -2,7 +2,7 @@ import Mathlib.Tactic
 import Analysis.Section_5_2
 
 /-!
-# Analysis I, Section 5.2
+# Analysis I, Section 5.3
 
 I have attempted to make the translation as faithful a paraphrasing as possible of the original text.  When there is a choice between a more idiomatic Lean solution and a more faithful translation, I have generally chosen the latter.  In particular, there will be places where the Lean code could be "golfed" to be more elegant and idiomatic, but I have consciously avoided doing so.
 
@@ -222,10 +222,10 @@ theorem Real.ratCast_def (q:ℚ) : (q:Real) = LIM (fun _ ↦ q) := by
   rw [LIM_def]
   rfl
 
+instance Real.instOfNat {n:ℕ} : OfNat Real n where
+  ofNat := ((n:ℚ):Real)
 
-
-
-
-
+instance Real.instNatCast : NatCast Real where
+  natCast n := ((n:ℚ):Real)
 
 end Chapter5
