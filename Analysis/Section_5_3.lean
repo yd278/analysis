@@ -140,7 +140,20 @@ theorem Sequence.add_cauchy {a b:ℕ → ℚ}  (ha: (a:Sequence).isCauchy) (hb: 
 /--Lemma 5.3.7 (Sum of equivalent sequences is equivalent)-/
 theorem Sequence.add_equiv_left {a a':ℕ → ℚ} (b:ℕ → ℚ) (haa': Sequence.equiv a a') :
   Sequence.equiv (a + b) (a' + b) := by
-  sorry
+  -- This proof is written to follow the structure of the original text.
+  rw [equiv_def] at haa' ⊢
+  obtain ⟨ ε, hε, haa' ⟩ := haa'
+  use ε, hε
+  rw [Rat.eventually_close_def] at haa' ⊢
+  obtain ⟨ N, haa' ⟩ := haa'
+  use N
+  rw [Rat.close_seq_def] at haa' ⊢
+  simp at haa' ⊢
+  intro n hn hN _ _
+  replace haa' := haa' n hn hN hn hN
+  simp [hn, hN] at haa' ⊢
+  convert Section_4_3.add_close haa' (Section_4_3.close_refl (b n.toNat))
+  simp
 
 /--Lemma 5.3.7 (Sum of equivalent sequences is equivalent)-/
 theorem Sequence.add_equiv_right {b b':ℕ → ℚ} (a:ℕ → ℚ) (hbb': Sequence.equiv b b') :
@@ -201,6 +214,13 @@ noncomputable instance Real.mul_inst : Mul Real where
       exact b'.cauchy
       )
 
+instance Real.instRatCast : RatCast Real where
+  ratCast := fun q ↦
+    Quotient.mk _ (CauchySequence.mk' (a := fun _ ↦ q) (Sequence.isCauchy_of_const q))
+
+theorem Real.ratCast_def (q:ℚ) : (q:Real) = LIM (fun _ ↦ q) := by
+  rw [LIM_def]
+  rfl
 
 
 

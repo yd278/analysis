@@ -51,10 +51,10 @@ example : (0.01:ℚ).eventually_close ((fun n:ℕ ↦ (1:ℚ)+10^(-(n:ℤ)-1)):S
 
 /-- Definition 5.2.6 (Equivalent sequences) -/
 abbrev Sequence.equiv (a b: ℕ → ℚ) : Prop :=
-  ∃ (ε:ℚ), ε > 0 → ε.eventually_close (a:Sequence) (b:Sequence)
+  ∃ (ε:ℚ), ε > 0 ∧ ε.eventually_close (a:Sequence) (b:Sequence)
 
 /-- Definition 5.2.6 (Equivalent sequences) -/
-lemma Sequence.equiv_def (a b: ℕ → ℚ) : equiv a b ↔ ∃ (ε:ℚ), ε > 0 → ε.eventually_close (a:Sequence) (b:Sequence) := by rfl
+lemma Sequence.equiv_def (a b: ℕ → ℚ) : equiv a b ↔ ∃ (ε:ℚ), ε > 0 ∧ ε.eventually_close (a:Sequence) (b:Sequence) := by rfl
 
 /-- Definition 5.2.6 (Equivalent sequences) -/
 lemma Sequence.equiv_iff (a b: ℕ → ℚ) : equiv a b ↔ ∀ ε > 0, ∃ N, ∀ n ≥ N, |a n - b n| ≤ ε := by sorry

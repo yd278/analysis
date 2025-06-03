@@ -90,6 +90,8 @@ example : ¬ (0.01:ℚ).close (0.99:ℚ) (1.01:ℚ) := by sorry
 /-- Examples 4.3.6 -/
 example (ε : ℚ) (hε : ε > 0) : ε.close 2 2 := by sorry
 
+theorem close_refl (x:ℚ) : (0:ℚ).close x x := by sorry
+
 /-- Proposition 4.3.7(a) / Exercise 4.3.2 -/
 theorem eq_if_close (x y:ℚ) : x = y ↔ ∀ ε:ℚ, ε > 0 → ε.close x y := by sorry
 
