@@ -80,6 +80,7 @@ def Chapter2.Nat : PeanoAxioms where
   succ_cancel := Chapter2.Nat.succ_cancel
   induction := Chapter2.Nat.induction
 
+/-- The Mathlib natural numbers obey the Peano axioms. -/
 def Mathlib.Nat : PeanoAxioms where
   Nat := ℕ
   zero := 0
@@ -88,14 +89,15 @@ def Mathlib.Nat : PeanoAxioms where
   succ_cancel := Nat.succ_inj.mp
   induction _ := Nat.rec
 
+/-- One can map the Mathlib natural numbers into any other structure obeying the Peano axioms. -/
 abbrev natCast (P : PeanoAxioms) : ℕ → P.Nat := fun n ↦ match n with
   | Nat.zero => P.zero
   | Nat.succ n => P.succ (natCast P n)
 
-theorem natCast_injective (P : PeanoAxioms) : Function.Injective (natCast P) := by
+theorem natCast_injective (P : PeanoAxioms) : Function.Injective P.natCast  := by
   sorry
 
-theorem natCast_surjective (P : PeanoAxioms) : Function.Surjective (natCast P) := by
+theorem natCast_surjective (P : PeanoAxioms) : Function.Surjective P.natCast := by
   sorry
 
 /-- The notion of an equivalence between two structures obeying the Peano axioms -/
@@ -115,7 +117,12 @@ abbrev Equiv.trans (equiv1 : Equiv P Q) (equiv2 : Equiv Q R) : Equiv P R where
   equiv_succ n := by sorry
 
 abbrev Equiv.fromNat (P : PeanoAxioms) : Equiv Mathlib.Nat P where
-  equiv := by sorry
+  equiv := {
+    toFun := P.natCast
+    invFun := by sorry
+    left_inv := by sorry
+    right_inv := by sorry
+  }
   equiv_zero := by sorry
   equiv_succ n := by sorry
 
