@@ -145,10 +145,10 @@ instance Nat.instPow : HomogeneousPow Nat where
 theorem Nat.zero_pow_zero : (0:Nat) ^ 0 = 1 := recurse_zero (fun _ prod ↦ prod * 0) _
 
 /-- Definition 2.3.11 (Exponentiation for natural numbers) -/
-theorem Nat.zero_pow_succ (m n: Nat) : (m:Nat) ^ n++ = m^n * m := recurse_succ (fun _ prod ↦ prod * m) _ _
+theorem Nat.pow_succ (m n: Nat) : (m:Nat) ^ n++ = m^n * m := recurse_succ (fun _ prod ↦ prod * m) _ _
 
 /-- Exercise 2.3.4-/
-theorem Nat.sq_add_eq (a b: Nat) : (a + b) ^ 2 = a ^ 2 + 2 * a * b + b ^ 2 := by
+theorem Nat.sq_add_eq (a b: Nat) : (a + b) ^ (2 : Nat) = a ^ (2 : Nat) + 2 * a * b + b ^ (2 : Nat) := by
   sorry
 
 
