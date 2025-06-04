@@ -23,8 +23,8 @@ Currently formalized sections:
 - [Section 5.3: Construction of the real numbers](https://teorth.github.io/analysis/docs/Analysis/Section_5_3.html)
 
 
-Other links relating to this project:
-- [Web page for this project](https://teorth.github.io/Analysis/)
+Other resources:
+- [Web page for this project](https://teorth.github.io/analysis/)
 - [Web page for the book](https://terrytao.wordpress.com/books/analysis-i/)
   - [Springer edition](https://link.springer.com/book/10.1007/978-981-19-7261-4)
 - [Blog post announcing this project](https://terrytao.wordpress.com/2025/05/31/a-lean-companion-to-analysis-i/), Terence Tao, May 31 2025.
