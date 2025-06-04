@@ -19,7 +19,7 @@ Note: at the end of this Chapter, the `Chapter2.Nat` class will be deprecated in
 
 namespace Chapter2
 
-/-- Assumption 2.6 (Existence of natural numbers) -/
+/-- Assumption 2.6 (Existence of natural numbers).  Here we use an explicit construction of the natural numbers (using an inductive type).  For a more axiomatic approach, see the epilogue to this chapter. -/
 inductive Nat where
 | zero : Nat
 | succ : Nat → Nat
@@ -29,7 +29,7 @@ deriving Repr, DecidableEq  -- this allows `decide` to work on `Nat`
 instance Nat.instZero : Zero Nat := ⟨ zero ⟩
 #check (0:Nat)
 
-/- Axiom 2.2 (Successor of a natural number is a natural number) -/
+/-- Axiom 2.2 (Successor of a natural number is a natural number) -/
 postfix:100 "++" => Nat.succ
 #check (fun n ↦ n++)
 
