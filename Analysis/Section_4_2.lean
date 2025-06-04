@@ -127,6 +127,10 @@ lemma Rat.inv_eq (a:ℤ) (hb: b ≠ 0) : (a // b)⁻¹ = b // a := by
   convert Quotient.lift_mk _ _ _
   all_goals simp [hb]
 
+@[simp]
+theorem Rat.inv_zero : (0:Rat)⁻¹ = 0 := by
+  rfl
+
 /-- Proposition 4.2.4 (laws of algebra) / Exercise 4.2.3 -/
 instance Rat.addGroup_inst : AddGroup Rat :=
 AddGroup.ofLeftAxioms (by

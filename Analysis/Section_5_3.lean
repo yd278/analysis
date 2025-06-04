@@ -183,6 +183,14 @@ noncomputable instance Real.add_inst : Add Real where
       exact b'.cauchy
       )
 
+/-- Definition 5.3.4 (Addition of reals) -/
+theorem Real.add_of_LIM {a b:ℕ → ℚ} (ha: (a:Sequence).isCauchy) (hb: (b:Sequence).isCauchy) :
+  LIM a + LIM b = LIM (a + b) := by
+  have hab := Sequence.add_cauchy ha hb
+  simp_rw [LIM_def ha, LIM_def hb, LIM_def hab]
+  convert Quotient.liftOn₂_mk _ _ _ _
+  rw [dif_pos _]
+
 /--Proposition 5.3.10 (Product of Cauchy sequences is Cauchy)-/
 theorem Sequence.mul_cauchy {a b:ℕ → ℚ}  (ha: (a:Sequence).isCauchy) (hb: (b:Sequence).isCauchy) : (a * b:Sequence).isCauchy := by
   sorry
@@ -217,6 +225,13 @@ noncomputable instance Real.mul_inst : Mul Real where
       . exact a'.cauchy
       exact b'.cauchy
       )
+
+theorem Real.mul_of_LIM {a b:ℕ → ℚ} (ha: (a:Sequence).isCauchy) (hb: (b:Sequence).isCauchy) :
+  LIM a * LIM b = LIM (a * b) := by
+  have hab := Sequence.mul_cauchy ha hb
+  simp_rw [LIM_def ha, LIM_def hb, LIM_def hab]
+  convert Quotient.liftOn₂_mk _ _ _ _
+  rw [dif_pos _]
 
 instance Real.instRatCast : RatCast Real where
   ratCast := fun q ↦
@@ -343,29 +358,22 @@ theorem Real.bounded_away_zero_of_nonzero {x:Real} (hx: x ≠ 0) : ∃ a:ℕ →
     linarith
   rw[(LIM_eq_LIM ha hb).mpr not_hard]
 
-/-- This result was not explicitly stated in the text, but is needed in the theory. -/
+/-- This result was not explicitly stated in the text, but is needed in the theory. It's a good exercise, so I'm setting it as such. -/
 theorem Real.lim_of_bounded_away_zero {a:ℕ → ℚ} (ha: bounded_away_zero a) (ha_cauchy: (a:Sequence).isCauchy) :
   LIM a ≠ 0 := by
-   unfold bounded_away_zero at ha
-   contrapose! ha
-   rw [←LIM_zero, LIM_eq_LIM ha_cauchy, Sequence.equiv_def] at ha
-   intro ε hε
-   replace ha := ha (ε/2) (half_pos hε)
-   . rw [Rat.eventually_close_iff (ε/2) a (fun _ ↦ 0)] at ha
-     obtain ⟨ N, ha ⟩ := ha
-     replace ha := ha N (le_refl _)
-     use N
-     simp at ha
-     linarith
-   convert Sequence.isCauchy_of_const 0
+   sorry
+
+theorem Real.bounded_away_zero_nonzero {a:ℕ → ℚ} (ha: bounded_away_zero a) (n: ℕ) : a n ≠ 0 := by
+   obtain ⟨ c, hc, ha ⟩ := ha
+   replace ha := ha n; contrapose! ha; simp [ha, hc]
 
 /-- Lemma 5.3.15 -/
 theorem Real.inv_of_bounded_away_zero_cauchy {a:ℕ → ℚ} (ha: bounded_away_zero a) (ha_cauchy: (a:Sequence).isCauchy) :
   ((a⁻¹:ℕ → ℚ):Sequence).isCauchy := by
   -- This proof is written to follow the structure of the original text.
+  have ha' (n:ℕ) : a n ≠ 0 := bounded_away_zero_nonzero ha n
   rw [bounded_away_zero_def] at ha
   obtain ⟨ c, hc, ha ⟩ := ha
-  have ha' (n:ℕ) : a n ≠ 0 := by replace ha := ha n; contrapose! ha; simp [ha, hc]
   simp_rw [Sequence.isCauchy_of_coe, Section_4_3.dist_eq] at ha_cauchy ⊢
   intro ε hε
   replace ha_cauchy := ha_cauchy (c^2 * ε) (by positivity)
@@ -394,7 +402,24 @@ theorem Real.inv_of_bounded_away_zero_cauchy {a:ℕ → ℚ} (ha: bounded_away_z
 theorem Real.inv_of_equiv {a b:ℕ → ℚ} (ha: bounded_away_zero a) (ha_cauchy: (a:Sequence).isCauchy) (hb: bounded_away_zero b) (hb_cauchy: (b:Sequence).isCauchy) (hlim: LIM a = LIM b) :
   LIM a⁻¹ = LIM b⁻¹ := by
   -- This proof is written to follow the structure of the original text.
-  sorry -- TODO
+  set P := LIM a⁻¹ * LIM a * LIM b⁻¹
+  have ha' (n:ℕ) : a n ≠ 0 := bounded_away_zero_nonzero ha n
+  have hb' (n:ℕ) : b n ≠ 0 := bounded_away_zero_nonzero hb n
+  have hainv_cauchy := Real.inv_of_bounded_away_zero_cauchy ha ha_cauchy
+  have hbinv_cauchy := Real.inv_of_bounded_away_zero_cauchy hb hb_cauchy
+  have haainv_cauchy := Sequence.mul_cauchy hainv_cauchy ha_cauchy
+  have habinv_cauchy := Sequence.mul_cauchy hainv_cauchy hb_cauchy
+  have claim1 : P = LIM b⁻¹ := by
+    unfold P
+    rw [mul_of_LIM hainv_cauchy ha_cauchy, mul_of_LIM haainv_cauchy hbinv_cauchy]
+    rcongr n
+    simp [ha' n]
+  have claim2 : P = LIM a⁻¹ := by
+    unfold P
+    rw [hlim, mul_of_LIM hainv_cauchy hb_cauchy, mul_of_LIM habinv_cauchy hbinv_cauchy]
+    rcongr n
+    simp [hb' n]
+  simp [←claim1, ←claim2]
 
 open Classical in
 /-- Definition 5.3.16 (Reciprocation of real numbers).  Requires classical logic because we need to assign a "junk" value to the inverse of 0.  -/
@@ -407,5 +432,41 @@ theorem Real.inv_def {a:ℕ → ℚ} (h: bounded_away_zero a) (hc: (a:Sequence).
   set hb := bounded_away_zero_of_nonzero hx
   simp only [instInv, ne_eq, Classical.dite_not, hx, ↓reduceDIte, Pi.inv_apply]
   apply inv_of_equiv hb.choose_spec.2.1 hb.choose_spec.1 h hc hb.choose_spec.2.2.symm
+
+@[simp]
+theorem Real.inv_zero : (0:Real)⁻¹ = 0 := by
+  simp [Inv.inv]
+
+theorem Real.self_mul_inv {x:Real} (hx: x ≠ 0) : x * x⁻¹ = 1 := by
+  sorry
+
+theorem Real.inv_mul_self {x:Real} (hx: x ≠ 0) : x * x⁻¹ = 1 := by
+  sorry
+
+theorem Real.inv_of_ratCast (q:ℚ) : (q:Real)⁻¹ = (q⁻¹:ℚ) := by
+  sorry
+
+/-- Default definition of division -/
+noncomputable instance Real.instDivInvMonoid : DivInvMonoid Real where
+
+theorem Real.div_eq (x y:Real) : x/y = x * y⁻¹ := by rfl
+
+noncomputable instance Real.instField : Field Real where
+  exists_pair_ne := by sorry
+  mul_inv_cancel := by sorry
+  inv_zero := by sorry
+  ratCast_def := by sorry
+  qsmul := _
+  nnqsmul := _
+
+theorem Real.mul_right_cancel₀ {x y z:Real} (hz: z ≠ 0) (h: x * z = y * z) : x = y := by sorry
+
+theorem Real.mul_right_nocancel : ¬ ∀ (x y z:Real), (hz: z = 0) → (x * z = y * z) → x = y := by sorry
+
+/-- Exercise 5.3.4 -/
+theorem Real.equiv_of_bounded {a b:ℕ → ℚ} (ha: (a:Sequence).isBounded) (hab: Sequence.equiv a b) : (b:Sequence).isBounded := by sorry
+
+/-- Exercise 5.3.5 -/
+theorem Real.LIM_of_harmonic : LIM (fun n ↦ 1/n) = 0 := by sorry
 
 end Chapter5
