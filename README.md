@@ -23,13 +23,28 @@ Currently formalized sections:
 - [Section 5.3: Construction of the real numbers](https://teorth.github.io/analysis/docs/Analysis/Section_5_3.html)
 
 
-Other resources:
+Other links relating to this project:
 - [Web page for this project](https://teorth.github.io/Analysis/)
 - [Web page for the book](https://terrytao.wordpress.com/books/analysis-i/)
   - [Springer edition](https://link.springer.com/book/10.1007/978-981-19-7261-4)
+- [Blog post announcing this project](https://terrytao.wordpress.com/2025/05/31/a-lean-companion-to-analysis-i/), Terence Tao, May 31 2025.
+- [Lean Zulip discussion about this project](https://leanprover.zulipchat.com/#narrow/channel/113488-general/topic/Lean.20companion.20to.20.22Analysis.20I.22.20-.20discussion/with/521458888)
+
+General Lean resources:
 - [How to run a project in Lean locally](https://leanprover-community.github.io/install/project.html)
 - [The natural number game](https://adam.math.hhu.de/)
 - [The Lean community](https://leanprover-community.github.io/)
-- [Mathematics in Lean](https://leanprover-community.github.io/mathematics_in_lean/)
-- [Blog post announcing this project](https://terrytao.wordpress.com/2025/05/31/a-lean-companion-to-analysis-i/), Terence Tao, May 31 2025.
-- [Lean Zulip discussion about this project](https://leanprover.zulipchat.com/#narrow/channel/113488-general/topic/Lean.20companion.20to.20.22Analysis.20I.22.20-.20discussion/with/521458888)
+- [The Lean community Zulip chat](https://leanprover.zulipchat.com/)
+- [Lean4 questions in Proof Stack Exchange](https://proofassistants.stackexchange.com/questions/tagged/lean4)
+- [Mathematics in Lean](https://leanprover-community.github.io/mathematics_in_lean/)  - Lean textbook by Jeremy Avigad and Patrick Massot
+- [The mechanics of proof](https://hrmacbeth.github.io/math2001/) - introductory Lean textbook by Heather Macbeth
+- [Mathlib documentation](https://leanprover-community.github.io/mathlib4_docs/)
+  - [Moogle](https://moogle-morphlabs.vercel.app/) - semantic search engine for Mathlib
+  - [Loogle](https://loogle.lean-lang.org/) - expression matching search engine for Mathlib
+  - [List of Mathlib tactics](https://github.com/haruhisa-enomoto/mathlib4-all-tactics/blob/main/all-tactics.md)
+- [Common Lean pitfalls](https://github.com/nielsvoss/lean-pitfalls)
+- [My Youtube channel](https://www.youtube.com/@TerenceTao27) has some demonstrations of various Lean formalization, using a variety of tools. 
+- A [broader list](https://docs.google.com/document/d/1kD7H4E28656ua8jOGZ934nbH2HcBLyxcRgFDduH5iQ0) of AI and formal mathematics resources.
+
+
+More resource suggestions welcome!
