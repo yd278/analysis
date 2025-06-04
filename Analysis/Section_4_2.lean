@@ -255,6 +255,8 @@ instance Rat.instLE : LE Rat where
 theorem Rat.lt_iff (x y:Rat) : x < y ↔ (x-y).isNeg := by rfl
 theorem Rat.le_iff (x y:Rat) : x ≤ y ↔ (x < y) ∨ (x = y) := by rfl
 
+theorem Rat.gt_iff (x y:Rat) : x > y ↔ (x-y).isPos := by sorry
+theorem Rat.ge_iff (x y:Rat) : x ≥ y ↔ (x > y) ∨ (x = y) := by sorry
 
 /-- Proposition 4.2.9(a) (order trichotomy) / Exercise 4.2.5 -/
 theorem Rat.trichotomous' (x y z:Rat) : x > y ∨ x < y ∨ x = y := by sorry
@@ -272,13 +274,13 @@ theorem Rat.not_lt_and_eq (x y:Rat) : ¬ (x < y ∧ x = y):= by sorry
 theorem Rat.antisymm (x y:Rat) : x < y ↔ (y - x).isPos := by sorry
 
 /-- Proposition 4.2.9(c) (order is transitive) / Exercise 4.2.5 -/
-theorem Rat.lt_trans (x y z:Rat) (hxy: x < y) (hyz: y < z) : x < z := by sorry
+theorem Rat.lt_trans {x y z:Rat} (hxy: x < y) (hyz: y < z) : x < z := by sorry
 
 /-- Proposition 4.2.9(d) (addition preserves order) / Exercise 4.2.5 -/
-theorem Rat.add_lt_add_right (x y z:Rat) (hxy: x < y) : x + z < y + z := by sorry
+theorem Rat.add_lt_add_right {x y:Rat} (z:Rat) (hxy: x < y) : x + z < y + z := by sorry
 
 /-- Proposition 4.2.9(e) (positive multiplication preserves order) / Exercise 4.2.5 -/
-theorem Rat.mul_lt_mul_right (x y z:Rat) (hxy: x < y) (hz: z.isPos) : x * z < y * z := by sorry
+theorem Rat.mul_lt_mul_right {x y z:Rat} (hxy: x < y) (hz: z.isPos) : x * z < y * z := by sorry
 
 /-- (Not from textbook) The order is decidable.  This exercise is only recommended for Lean experts.  Alternatively, one can establish this fact in classical logic via `classical; exact Classical.decRel _` -/
 instance Rat.decidableRel : DecidableRel (· ≤ · : Rat → Rat → Prop) := by

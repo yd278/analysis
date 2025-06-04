@@ -58,8 +58,18 @@ theorem Real.trichotomous (x:Real) : x = 0 ∨ x.isPos ∨ x.isNeg := by sorry
 /-- Proposition 5.4.4 (basic properties of positive reals) / Exercise 5.4.1 -/
 theorem Real.not_zero_pos (x:Real) : ¬ (x = 0 ∧ x.isPos) := by sorry
 
+theorem Real.nonzero_of_pos {x:Real} (hx: x.isPos) : x ≠ 0 := by
+    have := not_zero_pos x
+    simp [hx] at this ⊢
+    assumption
+
 /-- Proposition 5.4.4 (basic properties of positive reals) / Exercise 5.4.1 -/
 theorem Real.not_zero_neg (x:Real) : ¬ (x = 0 ∧ x.isNeg) := by sorry
+
+theorem Real.nonzero_of_neg {x:Real} (hx: x.isNeg) : x ≠ 0 := by
+    have := not_zero_neg x
+    simp [hx] at this ⊢
+    assumption
 
 /-- Proposition 5.4.4 (basic properties of positive reals) / Exercise 5.4.1 -/
 theorem Real.not_pos_neg (x:Real) : ¬ (x.isPos ∧ x.isNeg) := by sorry
@@ -101,4 +111,103 @@ theorem Real.abs_of_zero : Real.abs 0 = 0 := by
   have hneg: ¬ (0:Real).isNeg := by have := Real.not_zero_neg 0; simp only [true_and] at this; assumption
   simp [Real.abs, hpos, hneg]
 
+/-- Definition 5.4.6 (Ordering of the reals) -/
+instance Real.instLT : LT Real where
+  lt x y := (x-y).isNeg
 
+/-- Definition 5.4.6 (Ordering of the reals) -/
+instance Real.instLE : LE Real where
+  le x y := (x < y) ∨ (x = y)
+
+theorem Real.lt_iff (x y:Real) : x < y ↔ (x-y).isNeg := by rfl
+theorem Real.le_iff (x y:Real) : x ≤ y ↔ (x < y) ∨ (x = y) := by rfl
+
+theorem Real.gt_iff (x y:Real) : x > y ↔ (x-y).isPos := by sorry
+theorem Real.ge_iff (x y:Real) : x ≥ y ↔ (x > y) ∨ (x = y) := by sorry
+
+theorem Real.lt_of_coe (q q':ℚ): q < q' ↔ (q:Real) < (q':Real) := by sorry
+
+theorem Real.gt_of_coe (q q':ℚ): q > q' ↔ (q:Real) > (q':Real) := Real.lt_of_coe _ _
+
+/-- Proposition 5.4.7(a) (order trichotomy) / Exercise 5.4.2 -/
+theorem Real.trichotomous' (x y z:Real) : x > y ∨ x < y ∨ x = y := by sorry
+
+/-- Proposition 5.4.7(a) (order trichotomy) / Exercise 5.4.2 -/
+theorem Real.not_gt_and_lt (x y:Real) : ¬ (x > y ∧ x < y):= by sorry
+
+/-- Proposition 5.4.7(a) (order trichotomy) / Exercise 5.4.2 -/
+theorem Real.not_gt_and_eq (x y:Real) : ¬ (x > y ∧ x = y):= by sorry
+
+/-- Proposition 5.4.7(a) (order trichotomy) / Exercise 5.4.2 -/
+theorem Real.not_lt_and_eq (x y:Real) : ¬ (x < y ∧ x = y):= by sorry
+
+/-- Proposition 5.4.7(b) (order is anti-symmetric) / Exercise 5.4.2 -/
+theorem Real.antisymm (x y:Real) : x < y ↔ (y - x).isPos := by sorry
+
+/-- Proposition 5.4.7(c) (order is transitive) / Exercise 5.4.2 -/
+theorem Real.lt_trans {x y z:Real} (hxy: x < y) (hyz: y < z) : x < z := by sorry
+
+/-- Proposition 5.4.7(d) (addition preserves order) / Exercise 5.4.2 -/
+theorem Real.add_lt_add_right {x y:Real} (z:Real) (hxy: x < y) : x + z < y + z := by sorry
+
+/-- Proposition 5.4.7(e) (positive multiplication preserves order) / Exercise 5.4.2 -/
+theorem Real.mul_lt_mul_right {x y z:Real} (hxy: x < y) (hz: z.isPos) : x * z < y * z := by
+  rw [antisymm] at hxy ⊢
+  convert pos_mul hxy hz using 1
+  ring
+
+/-- Proposition 5.4.7(e) (positive multiplication preserves order) / Exercise 5.4.2 -/
+theorem Real.mul_le_mul_left {x y z:Real} (hxy: x ≤ y) (hz: z.isPos) : z * x ≤ z * y := by sorry
+
+theorem Real.mul_pos_neg {x y:Real} (hx: x.isPos) (hy: y.isNeg) : (x * y).isNeg := by
+  sorry
+
+/-- (Not from textbook) Real has the structure of a linear ordering.  The order is not computable, and so classical logic is required to impose decidability.-/
+noncomputable instance Real.instLinearOrder : LinearOrder Real where
+  le_refl := sorry
+  le_trans := sorry
+  lt_iff_le_not_le := sorry
+  le_antisymm := sorry
+  le_total := sorry
+  toDecidableLE := by
+    classical
+    exact Classical.decRel _
+
+/-- Proposition 5.4.8 -/
+theorem Real.inv_of_pos {x:Real} (hx: x.isPos) : x⁻¹.isPos := by
+  have hnon: x ≠ 0 := nonzero_of_pos hx
+  have hident := inv_mul_self hnon
+  have hinv_non: x⁻¹ ≠ 0 := by contrapose! hident; simp [hident]
+  have hnonneg : ¬ x⁻¹.isNeg := by
+    intro h
+    have := mul_pos_neg hx h
+    have id : -(1:Real) = (-1:ℚ) := by simp
+    simp only [hident, neg_iff_pos_of_neg, id, pos_of_coe] at this
+    linarith
+  have trich := Real.trichotomous x⁻¹
+  simp [hinv_non, hnonneg] at trich
+  assumption
+
+theorem Real.inv_of_gt {x y:Real} (hx: x.isPos) (hy: y.isPos) (hxy: x > y) : x⁻¹ < y⁻¹ := by
+  have hxnon: x ≠ 0 := nonzero_of_pos hx
+  have hynon: y ≠ 0 := nonzero_of_pos hy
+  have hxinv : x⁻¹.isPos := inv_of_pos hx
+  have hyinv : y⁻¹.isPos := inv_of_pos hy
+  by_contra! this
+  have : (1:Real) > 1 := calc
+    1 = x * x⁻¹ := (inv_mul_self hxnon).symm
+    _ > y * x⁻¹ := mul_lt_mul_right hxy hxinv
+    _ ≥ y * y⁻¹ := mul_le_mul_left this hy
+    _ = _ := inv_mul_self hynon
+  simp at this
+
+/-- (Not from textbook) Real has the structure of a strict ordered ring. -/
+instance Real.instIsStrictOrderedRing : IsStrictOrderedRing Real where
+  add_le_add_left := by sorry
+  add_le_add_right := by sorry
+  mul_lt_mul_of_pos_left := by sorry
+  mul_lt_mul_of_pos_right := by sorry
+  le_of_add_le_add_left := by sorry
+  zero_le_one := by sorry
+
+  
