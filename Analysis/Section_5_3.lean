@@ -363,7 +363,32 @@ theorem Real.lim_of_bounded_away_zero {a:ℕ → ℚ} (ha: bounded_away_zero a) 
 theorem Real.inv_of_bounded_away_zero_cauchy {a:ℕ → ℚ} (ha: bounded_away_zero a) (ha_cauchy: (a:Sequence).isCauchy) :
   ((a⁻¹:ℕ → ℚ):Sequence).isCauchy := by
   -- This proof is written to follow the structure of the original text.
-  sorry -- TODO
+  rw [bounded_away_zero_def] at ha
+  obtain ⟨ c, hc, ha ⟩ := ha
+  have ha' (n:ℕ) : a n ≠ 0 := by replace ha := ha n; contrapose! ha; simp [ha, hc]
+  simp_rw [Sequence.isCauchy_of_coe, Section_4_3.dist_eq] at ha_cauchy ⊢
+  intro ε hε
+  replace ha_cauchy := ha_cauchy (c^2 * ε) (by positivity)
+  obtain ⟨ N, ha_cauchy ⟩ := ha_cauchy
+  use N
+  intro n m ⟨hn, hm⟩
+  replace ha_cauchy := ha_cauchy n m ⟨hn, hm⟩
+  calc
+    _ = |(a m - a n) / (a m * a n)| := by
+      congr
+      field_simp [ha' m, ha' n]
+      simp [mul_comm]
+    _ ≤ |a m - a n| / c^2 := by
+      rw [abs_div, abs_mul, sq]
+      gcongr
+      . exact ha m
+      exact ha n
+    _ = |a n - a m| / c^2 := by
+      rw [abs_sub_comm]
+    _ ≤ (c^2 * ε) / c^2 := by
+      gcongr
+    _ = ε := by
+      field_simp [hc]
 
 /-- Lemma 5.3.17 (Reciprocation is well-defined) -/
 theorem Real.inv_of_equiv {a b:ℕ → ℚ} (ha: bounded_away_zero a) (ha_cauchy: (a:Sequence).isCauchy) (hb: bounded_away_zero b) (hb_cauchy: (b:Sequence).isCauchy) (hlim: LIM a = LIM b) :
