@@ -129,6 +129,9 @@ theorem Real.lt_of_coe (q q':ℚ): q < q' ↔ (q:Real) < (q':Real) := by sorry
 
 theorem Real.gt_of_coe (q q':ℚ): q > q' ↔ (q:Real) > (q':Real) := Real.lt_of_coe _ _
 
+theorem Real.isPos_iff (x:Real) : x.isPos ↔ x > 0 := by sorry
+theorem Real.isNeg_iff (x:Real) : x.isNeg ↔ x < 0 := by sorry
+
 /-- Proposition 5.4.7(a) (order trichotomy) / Exercise 5.4.2 -/
 theorem Real.trichotomous' (x y z:Real) : x > y ∨ x < y ∨ x = y := by sorry
 
@@ -223,5 +226,86 @@ theorem Real.LIM_mono_fail : ∃ (a b:ℕ → ℚ), (a:Sequence).isCauchy ∧ (b
   use (fun n ↦ 1 + 1/(n:ℚ))
   use (fun n ↦ 1 - 1/(n:ℚ))
   sorry
+
+/-- Proposition 5.4.12 (Bounding reals by rationals) -/
+theorem Real.exists_rat_le {x:Real} (hx: x.isPos) : ∃ q:ℚ, q > 0 ∧ (q:Real) ≤ x := by sorry -- TODO
+
+/-- Proposition 5.4.12 (Bounding reals by rationals) -/
+theorem Real.exists_nat_ge {x:Real} (hx: x.isPos) : ∃ n:ℕ, x < (n:Real) := by sorry -- TODO
+
+/-- Corollary 5.4.13 (Archimedean property ) -/
+theorem Real.le_mul {ε:Real} (hε: ε.isPos) (x:Real) : ∃ M, M > 0 ∧ M * ε > x := by
+  sorry -- TODO
+
+/-- Proposition 5.4.14 -/
+theorem Real.rat_between {x y:Real} (hxy: x < y} : ∃ q:ℚ, x < (q:Real) ∧ (q:Real) < y := by sorry
+
+/-- Exercise 5.4.3 -/
+theorem Real.floor_exist (x:Real) : ∃ n:ℤ, (n:Real) ≤ x ∧ x < (n:Real)+1 := by sorry
+
+/-- Exercise 5.4.4 -/
+theorem Real.exist_inv_nat_le {x:Real} (hx: x.isPos) : ∃ N, N>0 ∧ (N:Real)⁻¹ < x := by sorry
+
+/-- Exercise 5.4.6 -/
+theorem Real.dist_lt_iff (ε x y:Real) : |x-y| < ε ↔ y-ε < x ∧ x < y+ε := by sorry
+
+/-- Exercise 5.4.6 -/
+theorem Real.dist_le_iff (ε x y:Real) : |x-y| ≤ ε ↔ y-ε ≤ x ∧ x ≤ y+ε := by sorry
+
+/-- Exercise 5.4.7 -/
+theorem Real.le_add_eps_iff (x y:Real) : ∀ ε > 0, x ≤ y+ε ↔ x ≤ y := by sorry
+
+/-- Exercise 5.4.7 -/
+theorem Real.dist_le_eps_iff (x y:Real) : ∀ ε > 0, |x-y| ≤ ε ↔ x = y := by sorry
+
+/-- Exercise 5.4.8 -/
+theorem Real.LIM_of_le {x:Real} {a:ℕ → ℚ} (hcauchy: (a:Sequence).isCauchy) (h: ∀ n, a n ≤ x) : LIM a ≤ x := by sorry
+
+/-- Exercise 5.4.8 -/
+theorem Real.LIM_of_ge {x:Real} {a:ℕ → ℚ} (hcauchy: (a:Sequence).isCauchy) (h: ∀ n, a n ≥ x) : LIM a ≥ x := by sorry
+
+theorem Real.max_eq (x y:Real) : max x y = (if x ≥ y then x else y) :=  max_def' x y
+
+theorem Real.min_eq (x y:Real) : min x y = (if x ≤ y then x else y) := rfl
+
+/-- Exercise 5.4.9 -/
+theorem Real.neg_max (x y:Real) : max x y = - min (-x) (-y) := by sorry
+
+/-- Exercise 5.4.9 -/
+theorem Real.neg_min (x y:Real) : min x y = - max (-x) (-y) := by sorry
+
+/-- Exercise 5.4.9 -/
+theorem Real.max_comm (x y:Real) : max x y = max y x := by sorry
+
+/-- Exercise 5.4.9 -/
+theorem Real.max_self (x:Real) : max x x = x := by sorry
+
+/-- Exercise 5.4.9 -/
+theorem Real.max_add (x y z:Real) : max (x + z) (y + z) = max x y + z := by sorry
+
+/-- Exercise 5.4.9 -/
+theorem Real.max_mul (x y :Real) {z:Real} (hz: z.isPos) : max (x * z) (y * z) = max x y * z := by sorry
+
+/- What happens if z is negative? -/
+
+/-- Exercise 5.4.9 -/
+theorem Real.min_comm (x y:Real) : min x y = min y x := by sorry
+
+/-- Exercise 5.4.9 -/
+theorem Real.min_self (x:Real) : min x x = x := by sorry
+
+/-- Exercise 5.4.9 -/
+theorem Real.min_add (x y z:Real) : min (x + z) (y + z) = min x y + z := by sorry
+
+/-- Exercise 5.4.9 -/
+theorem Real.min_mul (x y :Real) {z:Real} (hz: z.isPos) : min (x * z) (y * z) = min x y * z := by sorry
+
+/-- Exercise 5.4.9 -/
+theorem Real.inv_max {x y :Real} (hx:x.isPos) (hy:y.isPos) : (max x y)⁻¹ = min x⁻¹ y⁻¹ := by sorry
+
+/-- Exercise 5.4.9 -/
+theorem Real.inv_min {x y :Real} (hx:x.isPos) (hy:y.isPos) : (min x y)⁻¹ = max x⁻¹ y⁻¹ := by sorry
+
+
 
 end Chapter5
