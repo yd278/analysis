@@ -210,4 +210,18 @@ instance Real.instIsStrictOrderedRing : IsStrictOrderedRing Real where
   le_of_add_le_add_left := by sorry
   zero_le_one := by sorry
 
-  
+/-- Proposition 5.4.9 (The non-negative reals are closed)-/
+theorem Real.LIM_of_nonneg {a: ℕ → ℚ} (ha: ∀ n, a n ≥ 0) (hcauchy: (a:Sequence).isCauchy) : LIM a ≥ 0 := by
+  sorry --TODO
+
+/-- Corollary 5.4.10 -/
+theorem Real.LIM_mono {a b:ℕ → ℚ} (ha: (a:Sequence).isCauchy) (hb: (b:Sequence).isCauchy) (hmono: ∀ n, a n ≤ b n) : LIM a ≤ LIM b := by
+  sorry --TODO
+
+/-- Remark 5.4.11 --/
+theorem Real.LIM_mono_fail : ∃ (a b:ℕ → ℚ), (a:Sequence).isCauchy ∧ (b:Sequence).isCauchy ∧ ¬ (∀ n, a n > b n) ∧ ¬ LIM a > LIM b := by
+  use (fun n ↦ 1 + 1/(n:ℚ))
+  use (fun n ↦ 1 - 1/(n:ℚ))
+  sorry
+
+end Chapter5
