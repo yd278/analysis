@@ -13,7 +13,7 @@ def theme : Theme := { Theme.default with
           <meta charset="UTF-8"/>
           <title>{{ (← param (α := String) "title") }} " — Verso "</title>
           <link rel="stylesheet" href="/static/style.css"/>
-          <script>"window.__versoSiteRoot=\"/analysis-book/\""</script>
+          <script>"window.__versoSiteRoot=\"/analysis/\""</script>
           {{← builtinHeader }}
         </head>
         <body>
