@@ -42,3 +42,12 @@ header,
 div.main {
     margin-left: 16em;
 }
+
+code span {
+    font-family: "Source Code Pro" "Noto sans mono", monospace;
+    font-size: 15px;
+}
+
+body {
+    font-family: "Source Sans 3","Helvetica Neue","Segoe UI","Roboto",Arial,sans-serif;
+}
