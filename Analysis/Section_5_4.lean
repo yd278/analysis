@@ -52,6 +52,10 @@ abbrev Real.isPos (x:Real) : Prop := ∃ a:ℕ → ℚ, bounded_away_pos a ∧ (
 
 abbrev Real.isNeg (x:Real) : Prop := ∃ a:ℕ → ℚ, bounded_away_neg a ∧ (a:Sequence).isCauchy ∧ x = LIM a
 
+theorem Real.isPos_def (x:Real) : Real.isPos x ↔ ∃ a:ℕ → ℚ, bounded_away_pos a ∧ (a:Sequence).isCauchy ∧ x = LIM a := by rfl
+
+theorem Real.isNeg_def (x:Real) : Real.isNeg x ↔ ∃ a:ℕ → ℚ, bounded_away_neg a ∧ (a:Sequence).isCauchy ∧ x = LIM a := by rfl
+
 /-- Proposition 5.4.4 (basic properties of positive reals) / Exercise 5.4.1 -/
 theorem Real.trichotomous (x:Real) : x = 0 ∨ x.isPos ∨ x.isNeg := by sorry
 
@@ -215,11 +219,41 @@ instance Real.instIsStrictOrderedRing : IsStrictOrderedRing Real where
 
 /-- Proposition 5.4.9 (The non-negative reals are closed)-/
 theorem Real.LIM_of_nonneg {a: ℕ → ℚ} (ha: ∀ n, a n ≥ 0) (hcauchy: (a:Sequence).isCauchy) : LIM a ≥ 0 := by
-  sorry --TODO
+  -- This proof is written to follow the structure of the original text.
+  by_contra! hlim
+  set x := LIM a
+  rw [←isNeg_iff, isNeg_def] at hlim
+  obtain ⟨ b, hb, hb_cauchy, hlim ⟩ := hlim
+  rw [bounded_away_neg_def] at hb
+  obtain ⟨ c, cpos, hb ⟩ := hb
+  have claim1 : ∀ n, ¬ (c/2).close (a n) (b n) := by
+    intro n
+    replace ha := ha n
+    replace hb := hb n
+    simp [Section_4_3.close_iff]
+    calc
+      _ < c := by linarith
+      _ ≤ a n - b n := by linarith
+      _ ≤ _ := le_abs_self _
+  have claim2 : ¬ (c/2).eventually_close (a:Sequence) (b:Sequence) := by
+    contrapose! claim1
+    rw [Rat.eventually_close_iff] at claim1
+    obtain ⟨ N, claim1 ⟩ := claim1
+    replace claim1 := claim1 N (le_refl _)
+    use N
+    rwa [Section_4_3.close_iff]
+  have claim3 : ¬ Sequence.equiv a b := by
+    contrapose! claim2
+    rw [Sequence.equiv_def] at claim2
+    exact claim2 (c/2) (half_pos cpos)
+  simp_rw [x, LIM_eq_LIM hcauchy hb_cauchy] at hlim
+  contradiction
 
 /-- Corollary 5.4.10 -/
 theorem Real.LIM_mono {a b:ℕ → ℚ} (ha: (a:Sequence).isCauchy) (hb: (b:Sequence).isCauchy) (hmono: ∀ n, a n ≤ b n) : LIM a ≤ LIM b := by
-  sorry --TODO
+  have := LIM_of_nonneg (a := b - a) (by intro n; simp [hmono n]) (sub_of_cauchy ha hb)
+  rw [←Real.sub_of_LIM hb ha] at this
+  linarith
 
 /-- Remark 5.4.11 --/
 theorem Real.LIM_mono_fail : ∃ (a b:ℕ → ℚ), (a:Sequence).isCauchy ∧ (b:Sequence).isCauchy ∧ ¬ (∀ n, a n > b n) ∧ ¬ LIM a > LIM b := by
@@ -285,8 +319,7 @@ theorem Real.max_add (x y z:Real) : max (x + z) (y + z) = max x y + z := by sorr
 
 /-- Exercise 5.4.9 -/
 theorem Real.max_mul (x y :Real) {z:Real} (hz: z.isPos) : max (x * z) (y * z) = max x y * z := by sorry
-
-/- What happens if z is negative? -/
+/- Additional exercise: What happens if z is negative? -/
 
 /-- Exercise 5.4.9 -/
 theorem Real.min_comm (x y:Real) : min x y = min y x := by sorry

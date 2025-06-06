@@ -272,14 +272,18 @@ theorem Real.neg_of_ratCast (a:ℚ) : -(a:Real) = (-a:ℚ) := by sorry
 /-- It may be possible to omit the Cauchy sequence hypothesis here. -/
 theorem Real.neg_of_LIM (a:ℕ → ℚ) (ha: (a:Sequence).isCauchy) : -LIM a = LIM (-a) := by sorry
 
+theorem Real.neg_of_cauchy (a:ℕ → ℚ) (ha: (a:Sequence).isCauchy) : ((-a:ℕ → ℚ):Sequence).isCauchy := by sorry
+
+
 /-- Proposition 5.3.11 -/
 noncomputable instance Real.addGroup_inst : AddGroup Real :=
 AddGroup.ofLeftAxioms (by sorry) (by sorry) (by sorry)
 
 theorem Real.sub_eq_add_neg (x y:Real) : x - y = x + (-y) :=  rfl
 
-/-- It may be possible to omit the Cauchy sequence hypothesis here. -/
-theorem Real.sub_of_LIM (a b:ℕ → ℚ) (ha: (a:Sequence).isCauchy) (hb: (b:Sequence).isCauchy) :
+theorem Real.sub_of_cauchy {a b:ℕ → ℚ} (ha: (a:Sequence).isCauchy) (hb: (b:Sequence).isCauchy) : ((a-b:ℕ → ℚ):Sequence).isCauchy := by sorry
+
+theorem Real.sub_of_LIM {a b:ℕ → ℚ} (ha: (a:Sequence).isCauchy) (hb: (b:Sequence).isCauchy) :
   LIM a - LIM b = LIM (a - b) := by sorry
 
 /-- Proposition 5.3.12 (laws of algebra) -/
