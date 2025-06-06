@@ -195,6 +195,8 @@ theorem Real.inv_of_pos {x:Real} (hx: x.isPos) : x⁻¹.isPos := by
   simp [hinv_non, hnonneg] at trich
   assumption
 
+theorem Real.div_of_pos {x y:Real} (hx: x.isPos) (hy: y.isPos) : (x/y).isPos := by sorry
+
 theorem Real.inv_of_gt {x y:Real} (hx: x.isPos) (hy: y.isPos) (hxy: x > y) : x⁻¹ < y⁻¹ := by
   have hxnon: x ≠ 0 := nonzero_of_pos hx
   have hynon: y ≠ 0 := nonzero_of_pos hy
@@ -251,7 +253,8 @@ theorem Real.LIM_of_nonneg {a: ℕ → ℚ} (ha: ∀ n, a n ≥ 0) (hcauchy: (a:
 
 /-- Corollary 5.4.10 -/
 theorem Real.LIM_mono {a b:ℕ → ℚ} (ha: (a:Sequence).isCauchy) (hb: (b:Sequence).isCauchy) (hmono: ∀ n, a n ≤ b n) : LIM a ≤ LIM b := by
-  have := LIM_of_nonneg (a := b - a) (by intro n; simp [hmono n]) (sub_of_cauchy ha hb)
+  -- This proof is written to follow the structure of the original text.
+  have := LIM_of_nonneg (a := b - a) (by intro n; simp [hmono n]) (sub_of_cauchy hb ha)
   rw [←Real.sub_of_LIM hb ha] at this
   linarith
 
@@ -262,17 +265,57 @@ theorem Real.LIM_mono_fail : ∃ (a b:ℕ → ℚ), (a:Sequence).isCauchy ∧ (b
   sorry
 
 /-- Proposition 5.4.12 (Bounding reals by rationals) -/
-theorem Real.exists_rat_le {x:Real} (hx: x.isPos) : ∃ q:ℚ, q > 0 ∧ (q:Real) ≤ x := by sorry -- TODO
-
-/-- Proposition 5.4.12 (Bounding reals by rationals) -/
-theorem Real.exists_nat_ge {x:Real} (hx: x.isPos) : ∃ n:ℕ, x < (n:Real) := by sorry -- TODO
+theorem Real.exists_rat_le_and_nat_ge {x:Real} (hx: x.isPos) : (∃ q:ℚ, q > 0 ∧ (q:Real) ≤ x) ∧ ∃ N:ℕ, x < (N:Real) := by
+  -- This proof is written to follow the structure of the original text.
+  rw [isPos_def] at hx
+  obtain ⟨ a, hbound, hcauchy, heq ⟩ := hx
+  have := Sequence.isBounded_of_isCauchy hcauchy
+  rw [bounded_away_pos_def] at hbound
+  rw [Sequence.isBounded_def] at this
+  obtain ⟨ q, hq, hbound ⟩ := hbound
+  obtain ⟨ r, hr, this ⟩ := this
+  simp [Sequence.BoundedBy_def] at this
+  constructor
+  . refine ⟨ q, hq, ?_ ⟩
+    convert LIM_mono _ hcauchy hbound
+    . exact Real.ratCast_def q
+    exact Sequence.isCauchy_of_const q
+  obtain ⟨ N, hN  ⟩ := exists_nat_gt r
+  use N
+  calc
+    x ≤ r := by
+      rw [Real.ratCast_def r]
+      convert LIM_mono hcauchy _ _
+      . exact Sequence.isCauchy_of_const r
+      intro n
+      replace this := this n
+      simp at this
+      exact (le_abs_self _).trans this
+    _ < ((N:ℚ):Real) := by simp [←Real.lt_of_coe,hN]
+    _ = N := by rfl
 
 /-- Corollary 5.4.13 (Archimedean property ) -/
-theorem Real.le_mul {ε:Real} (hε: ε.isPos) (x:Real) : ∃ M, M > 0 ∧ M * ε > x := by
-  sorry -- TODO
+theorem Real.le_mul {ε:Real} (hε: ε.isPos) (x:Real) : ∃ M:ℕ, M > 0 ∧ M * ε > x := by
+  -- This proof is written to follow the structure of the original text.
+  rcases trichotomous x with hx | hx | hx
+  . use 1; rw [isPos_iff] at hε; simp [hx, hε]
+  . obtain ⟨ N, hN ⟩ := (exists_rat_le_and_nat_ge (div_of_pos hx hε)).2
+    set M := N+1
+    refine ⟨ M, by positivity, ?_ ⟩
+    replace hN : x/ε < M := hN.trans (by simp [M])
+    replace hN := mul_lt_mul_right hN hε
+    simp
+    convert hN
+    rw [isPos_iff] at hε
+    field_simp
+  use 1
+  rw [isPos_iff] at hε
+  rw [isNeg_iff] at hx
+  simp [hx]
+  linarith
 
-/-- Proposition 5.4.14 -/
-theorem Real.rat_between {x y:Real} (hxy: x < y} : ∃ q:ℚ, x < (q:Real) ∧ (q:Real) < y := by sorry
+/-- Proposition 5.4.14 / Exercise 5.4.5 -/
+theorem Real.rat_between {x y:Real} (hxy: x < y) : ∃ q:ℚ, x < (q:Real) ∧ (q:Real) < y := by sorry
 
 /-- Exercise 5.4.3 -/
 theorem Real.floor_exist (x:Real) : ∃ n:ℤ, (n:Real) ≤ x ∧ x < (n:Real)+1 := by sorry

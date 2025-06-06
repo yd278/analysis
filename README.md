@@ -25,6 +25,7 @@ Currently formalized sections:
 - [Section 5.1: Cauchy sequences of rationals](https://teorth.github.io/analysis/docs/Analysis/Section_5_1.html)
 - [Section 5.2: Equivalent Cauchy sequences](https://teorth.github.io/analysis/docs/Analysis/Section_5_2.html)
 - [Section 5.3: Construction of the real numbers](https://teorth.github.io/analysis/docs/Analysis/Section_5_3.html)
+- [Section 5.4: Ordering the reals](https://teorth.github.io/analysis/docs/Analysis/Section_5_4.html)
 
 
 Other resources:

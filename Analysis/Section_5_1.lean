@@ -255,7 +255,7 @@ lemma bounded_of_finite {n:ℕ} (a: Fin n → ℚ) : ∃ M, M ≥ 0 ∧  Bounded
   simp [hm]
 
 /-- Lemma 5.1.15 (Cauchy sequences are bounded) / Exercise 5.1.1 -/
-lemma Sequence.isBounded_of_isCauchy (a:Sequence) (h: a.isCauchy) : a.isBounded := by
+lemma Sequence.isBounded_of_isCauchy {a:Sequence} (h: a.isCauchy) : a.isBounded := by
   sorry
 
 end Chapter5
