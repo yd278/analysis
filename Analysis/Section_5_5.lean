@@ -65,8 +65,39 @@ theorem Real.LUB_exist {E: Set Real} (hE: Set.Nonempty E) (hbound: ∃ M, M ∈ 
   set x₀ := Set.Nonempty.some hE
   have hx₀ : x₀ ∈ E := Set.Nonempty.some_mem hE
   have claim1 (n:ℕ) : ∃! m:ℤ, (((m:ℚ) / (n+1):ℚ):Real) ∈ upperBounds E ∧ ¬ (((m:ℚ) / (n+1) - 1 / (n+1):ℚ):Real) ∈ upperBounds E := by
+    set ε := ((1/(n+1):ℚ):Real)
+    have hpos : ε.isPos := by
+      simp [isPos_iff, ε, ←lt_of_coe]
+      positivity
     apply existsUnique_of_exists_of_unique
-    . sorry -- TODO
+    . obtain ⟨ M, hbound ⟩ := hbound
+      obtain ⟨ K, _, hK ⟩ := le_mul hpos M
+      obtain ⟨ L', _, hL ⟩ := le_mul hpos (-x₀)
+      set L := -(L':ℤ)
+      have claim1_1 : L * ε < x₀ := by
+        simp [L]; linarith
+      have claim1_2 : L * ε ∉ upperBounds E := by
+        contrapose! claim1_1
+        rw [upperBound_def] at claim1_1
+        exact claim1_1 _ hx₀
+      have claim1_3 : (K:Real) > (L:Real) := by
+        contrapose! claim1_2
+        replace claim1_2 := mul_le_mul_left claim1_2 hpos
+        simp_rw [mul_comm] at claim1_2
+        replace claim1_2 := lt_of_lt_of_le hK claim1_2
+        exact upperBound_upper (le_of_lt claim1_2) hbound
+      have claim1_4 : ∃ m:ℤ, L < m ∧ m ≤ K ∧ m*ε ∈ upperBounds E ∧ ¬ (m-1)*ε ∈ upperBounds E := by
+        -- Exercise 5.5.2
+        sorry
+      obtain ⟨ m, _, _, hm, hm' ⟩ := claim1_4
+      use m
+      have : (m/(n+1):ℚ) = m*ε := by
+        simp [ε,mul_of_ratCast]
+        field_simp
+      constructor
+      . convert hm
+      convert hm'
+      simp [sub_of_ratCast, this, sub_mul, ε]
     -- Exercise 5.5.3
     sorry
   set m : ℕ → ℤ := fun n ↦ (claim1 n).exists.choose
