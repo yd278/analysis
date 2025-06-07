@@ -72,28 +72,57 @@ theorem Real.LUB_exist {E: Set Real} (hE: Set.Nonempty E) (hbound: ∃ M, M ∈ 
   set m : ℕ → ℤ := fun n ↦ (claim1 n).exists.choose
   set a : ℕ → ℚ := fun n ↦ (m n:ℚ) / (n+1)
   set b : ℕ → ℚ := fun n ↦ 1 / (n+1)
+  have hb : (b:Sequence).isCauchy := Cauchy_of_harmonic
   have hm1 (n:ℕ) : (a n:Real) ∈ upperBounds E := (claim1 n).exists.choose_spec.1
   have hm2 (n:ℕ) : ¬ ((a - b) n: Real) ∈ upperBounds E := (claim1 n).exists.choose_spec.2
   have claim2 (N:ℕ) : ∀ n ≥ N, ∀ n' ≥ N, |a n - a n'| ≤ 1 / (N+1) := by
-    sorry -- TODO
+    intro n hn n' hn'
+    rw [abs_le]
+    constructor
+    . specialize hm1 n; specialize hm2 n'
+      have bound1 : ((a-b) n') < a n := by
+        rw [lt_of_coe]
+        contrapose! hm2
+        exact upperBound_upper hm2 hm1
+      have bound2 : ((a-b) n') = a n' - 1 / (n'+1) := by simp [b]
+      have bound3 : 1/((n':ℚ)+1) ≤ 1/(N+1) := by gcongr
+      linarith
+    specialize hm1 n'; specialize hm2 n
+    have bound1 : ((a-b) n) < a n' := by
+      rw [lt_of_coe]
+      contrapose! hm2
+      exact upperBound_upper hm2 hm1
+    have bound2 : ((a-b) n) = a n - 1 / (n+1) := by simp [b]
+    have bound3 : 1/((n+1):ℚ) ≤ 1/(N+1) := by gcongr
+    -- weirdly, `linarith` times out here
+    rw [bound2] at bound1
+    apply le_of_lt (lt_of_lt_of_le _ bound3)
+    rwa [sub_lt_comm]
   have claim3 : (a:Sequence).isCauchy := by
     -- Exercise 5.5.4
     sorry
   set S := LIM a
   have claim4 : S = LIM (a - b) := by
-    sorry -- TODO
+    have : LIM b = 0 := LIM_of_harmonic
+    simp [←sub_of_LIM claim3 hb, S, this]
   use S
-  simp_rw [isLUB_def, upperBound_def]
+  rw [isLUB_def, upperBound_def]
   constructor
   . intro x hx
     change LIM a ≥ x
     apply Real.LIM_of_ge claim3
     intro n
-    replace hm1 := hm1 n
+    specialize hm1 n
     rw [upperBound_def] at hm1
     exact hm1 x hx
-  intro M' hM'
-  sorry -- TODO
+  intro y hy
+  have claim5 (n:ℕ) : y ≥ (a-b) n := by
+    contrapose! hm2
+    use n
+    exact upperBound_upper (le_of_lt hm2) hy
+  rw [claim4]
+  apply LIM_of_le _ claim5
+  exact sub_of_cauchy claim3 hb
 
 
 end Chapter5
