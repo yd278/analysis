@@ -345,8 +345,13 @@ theorem Real.inf_neg {E: Set Real} {M:Real} (h: IsLUB E M) : IsGLB (-E) (-M) := 
 /-- Exercise 5.5.5 -/
 theorem Real.irrat_between {x y:Real} (hxy: x < y) : ∃ z, x < z ∧ z < y ∧ ¬ ∃ q:ℚ, z = (q:Real) := by sorry
 
+/- Use the notion of supremum in this section to define a Mathlib `sSup` operation -/
+noncomputable instance Real.inst_SupSet : SupSet Real where
+  sSup E := ((ExtendedReal.sup E):Real)
 
-
+/-- Use the `sSup` operation to build a conditionally complete lattice structure on `Real`-/
+noncomputable instance Real.inst_conditionallyCompleteLattice : ConditionallyCompleteLattice Real := conditionallyCompleteLatticeOfsSup Real (fun _ _ ↦ Set.Finite.bddAbove (by norm_num)) (fun _ _ ↦ Set.Finite.bddBelow (by norm_num))
+(by intro E hbound hnon; exact ExtendedReal.sup_of_bounded hnon hbound)
 
 
 end Chapter5
