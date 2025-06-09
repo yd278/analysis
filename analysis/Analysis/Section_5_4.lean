@@ -201,7 +201,6 @@ theorem Real.inv_of_gt {x y:Real} (hx: x.isPos) (hy: y.isPos) (hxy: x > y) : x�
   have hxnon: x ≠ 0 := nonzero_of_pos hx
   have hynon: y ≠ 0 := nonzero_of_pos hy
   have hxinv : x⁻¹.isPos := inv_of_pos hx
-  have hyinv : y⁻¹.isPos := inv_of_pos hy
   by_contra! this
   have : (1:Real) > 1 := calc
     1 = x * x⁻¹ := (inv_mul_self hxnon).symm
