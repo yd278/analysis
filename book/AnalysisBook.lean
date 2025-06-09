@@ -55,7 +55,6 @@ def_literate_page sec51 from Analysis.Section_5_1 in "../analysis" as "Cauchy se
 def_literate_page sec52 from Analysis.Section_5_2 in "../analysis" as "Equivalent Cauchy sequences"
 def_literate_page sec53 from Analysis.Section_5_3 in "../analysis" as "The construction of the real numbers"
 def_literate_page sec54 from Analysis.Section_5_4 in "../analysis" as "Ordering the reals"
-def_literate_page sec55 from Analysis.Section_5_5 in "../analysis" as "The least upper bound property"
 
 def demoSite : Site := site AnalysisBook.Home /
   static "static" ← "./static_files"
@@ -71,7 +70,6 @@ def demoSite : Site := site AnalysisBook.Home /
   "sec52" sec52
   "sec53" sec53
   "sec54" sec54
-  "sec55" sec55
 
 
 def main := blogMain theme demoSite
