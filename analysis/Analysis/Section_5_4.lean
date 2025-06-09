@@ -137,7 +137,7 @@ theorem Real.isPos_iff (x:Real) : x.isPos ↔ x > 0 := by sorry
 theorem Real.isNeg_iff (x:Real) : x.isNeg ↔ x < 0 := by sorry
 
 /-- Proposition 5.4.7(a) (order trichotomy) / Exercise 5.4.2 -/
-theorem Real.trichotomous' (x y z:Real) : x > y ∨ x < y ∨ x = y := by sorry
+theorem Real.trichotomous' (x y:Real) : x > y ∨ x < y ∨ x = y := by sorry
 
 /-- Proposition 5.4.7(a) (order trichotomy) / Exercise 5.4.2 -/
 theorem Real.not_gt_and_lt (x y:Real) : ¬ (x > y ∧ x < y):= by sorry
