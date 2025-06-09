@@ -107,8 +107,9 @@ To build the project's web page after [installing Lean](https://www.lean-lang.or
 % lake build
 % cd ../
 % cd book/
-% lake exe analysis-book
+% lake exe analysis-book --docgen-url="<url>"
 % cd ../
 ```
+where `<url>` is `http://localhost:8000/analysis/docs` for the local setup. 
 
 After this, `book/_site/` contains the project's web page.
