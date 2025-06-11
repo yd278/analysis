@@ -116,5 +116,85 @@ theorem Sequence.is_eventuallySteady_of_rat (ε:ℚ) (a: Chapter5.Sequence) : ε
 theorem Sequence.isCauchy_of_rat (a: Chapter5.Sequence) : a.isCauchy ↔ (a:Sequence).isCauchy := by
   sorry -- TODO
 
+end Chapter6
+
+/-- Definition 6.1.5 -/
+abbrev Real.close_seq (ε: ℝ) (a: Chapter6.Sequence) (L:ℝ) : Prop := ∀ n ≥ a.m, ε.close (a n) L
+
+/-- Definition 6.1.5 -/
+theorem Real.close_seq_def (ε: ℝ) (a: Chapter6.Sequence) (L:ℝ) :
+  ε.close_seq a L ↔ ∀ n ≥ a.m, dist (a n) L ≤ ε := by rfl
+
+/-- Definition 6.1.5 -/
+abbrev Real.eventually_close (ε: ℝ) (a: Chapter6.Sequence) (L:ℝ) : Prop := ∃ N ≥ a.m, ε.close_seq (a.from N) L
+
+/-- Definition 6.1.5 -/
+theorem Real.eventually_close_def (ε: ℝ) (a: Chapter6.Sequence) (L:ℝ) :
+  ε.eventually_close a L ↔ ∃ N, (N ≥ a.m) ∧ ε.close_seq (a.from N) L := by rfl
+
+namespace Chapter6
+
+abbrev Sequence.tendsTo (a:Sequence) (L:ℝ) : Prop :=
+  ∀ ε > (0:ℝ), ε.eventually_close a L
+
+theorem Sequence.tendsTo_def (a:Sequence) (L:ℝ) :
+  a.tendsTo L ↔ ∀ ε > (0:ℝ), ε.eventually_close a L := by rfl
+
+/-- Exercise 6.1.2 -/
+theorem Sequence.tendsTo_iff (a:Sequence) (L:ℝ) :
+  a.tendsTo L ↔ ∀ ε > 0, ∃ N, ∀ n ≥ N, |a n - L| ≤ ε := by sorry
+
+noncomputable abbrev seq_6_1_6 : Sequence := (fun (n:ℕ) ↦ 1-(10:ℝ)^(-(n:ℤ)-1):Sequence)
+
+/-- Examples 6.1.6 -/
+example : (0.1:ℝ).close_seq seq_6_1_6 1 := by sorry
+
+/-- Examples 6.1.6 -/
+example : ¬ (0.01:ℝ).close_seq seq_6_1_6 1 := by sorry
+
+/-- Examples 6.1.6 -/
+example : (0.01:ℝ).eventually_close seq_6_1_6 1 := by sorry
+
+/-- Examples 6.1.6 -/
+example : seq_6_1_6.tendsTo 1 := by sorry
+
+/-- Proposition 6.1.7 (Uniqueness of limits) -/
+theorem Sequence.tendsTo_unique (a:Sequence) {L L':ℝ} (h:L ≠ L') : ¬ a.tendsTo L ∧ a.tendsTo L' := by sorry -- TODO
+
+/-- Definition 6.1.8 -/
+abbrev Sequence.convergent (a:Sequence) : Prop := ∃ L, a.tendsTo L
+
+/-- Definition 6.1.8 -/
+theorem Sequence.convergent_def (a:Sequence) : a.convergent ↔ ∃ L, a.tendsTo L := by rfl
+
+/-- Definition 6.1.8 -/
+abbrev Sequence.divergent (a:Sequence) : Prop := ¬ a.convergent
+
+/-- Definition 6.1.8 -/
+theorem Sequence.divergent_def (a:Sequence) : a.divergent ↔ ¬ a.convergent := by rfl
+
+open Classical in
+/-- Definition 6.1.8.  We give the limit of a sequence the junk value of 0 if it is not convergent. -/
+noncomputable abbrev lim (a:Sequence) : ℝ := if h: a.convergent then h.choose else 0
+
+/-- Definition 6.1.8-/
+theorem Sequence.lim_def {a:Sequence} (h: a.convergent) : a.tendsTo (lim a) := by
+  unfold lim
+  simp [h]
+  convert h.choose_spec
+
+/-- Definition 6.1.8-/
+theorem Sequence.lim_eq {a:Sequence} {L:ℝ} (h: a.tendsTo L) : lim a = L := by
+  by_contra! eq
+  replace eq := a.tendsTo_unique eq
+  have : a.convergent := by rw [convergent_def]; use L
+  replace this := lim_def this
+  tauto
+
+
+
+
+
+
 
 end Chapter6
