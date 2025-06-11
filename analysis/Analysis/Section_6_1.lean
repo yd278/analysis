@@ -159,6 +159,12 @@ abbrev Real.eventually_close (ε: ℝ) (a: Chapter6.Sequence) (L:ℝ) : Prop := 
 theorem Real.eventually_close_def (ε: ℝ) (a: Chapter6.Sequence) (L:ℝ) :
   ε.eventually_close a L ↔ ∃ N, (N ≥ a.m) ∧ ε.close_seq (a.from N) L := by rfl
 
+theorem Real.close_seq_mono {a: Chapter6.Sequence} {ε₁ ε₂: ℝ} (hε: ε₁ ≤ ε₂) (hclose: ε₁.close_seq a L) :
+  ε₂.close_seq a L := by sorry
+
+theorem Real.eventually_close_mono {a: Chapter6.Sequence} {ε₁ ε₂: ℝ} (hε: ε₁ ≤ ε₂) (hclose: ε₁.eventually_close a L) :
+  ε₂.eventually_close a L := by sorry
+
 namespace Chapter6
 
 abbrev Sequence.tendsTo (a:Sequence) (L:ℝ) : Prop :=
@@ -186,7 +192,32 @@ example : (0.01:ℝ).eventually_close seq_6_1_6 1 := by sorry
 example : seq_6_1_6.tendsTo 1 := by sorry
 
 /-- Proposition 6.1.7 (Uniqueness of limits) -/
-theorem Sequence.tendsTo_unique (a:Sequence) {L L':ℝ} (h:L ≠ L') : ¬ a.tendsTo L ∧ a.tendsTo L' := by sorry -- TODO
+theorem Sequence.tendsTo_unique (a:Sequence) {L L':ℝ} (h:L ≠ L') : ¬ (a.tendsTo L ∧ a.tendsTo L') := by
+  -- This proof is written to follow the structure of the original text.
+  by_contra this
+  obtain ⟨ hL, hL' ⟩ := this
+  replace h : L - L' ≠ 0 := by contrapose! h; linarith
+  set ε := |L-L'| / 3
+  have hε : ε > 0 := by positivity
+  rw [tendsTo_iff] at hL hL'
+  specialize hL ε hε
+  obtain ⟨ N, hN ⟩ := hL
+  specialize hL' ε hε
+  obtain ⟨ M, hM ⟩ := hL'
+  set n := max N M
+  specialize hN n (le_max_left N M)
+  specialize hM n (le_max_right N M)
+  have : |L-L'| ≤ 2 * |L-L'|/3 := calc
+    _ = dist L L' := by rw [Real.dist_eq]
+    _ ≤ dist L (a.seq n) + dist (a.seq n) L' := dist_triangle _ _ _
+    _ ≤ ε + ε := by
+      rw [←Real.dist_eq] at hN hM
+      rw [dist_comm] at hN
+      gcongr
+    _ = 2 * |L-L'|/3 := by
+      simp [ε]; ring
+  have pos : |L-L'| > 0 := by positivity
+  linarith
 
 /-- Definition 6.1.8 -/
 abbrev Sequence.convergent (a:Sequence) : Prop := ∃ L, a.tendsTo L
