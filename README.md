@@ -47,6 +47,7 @@ In order to align the formalization with Mathlib conventions, a small number of 
   - _Section 6.4: Limsup, Liminf, and limit points (planned)_
   - _Section 6.5: Some standard limits (planned)_
   - _Section 6.6: Subsequences (planned)_
+  - _Chapter 6 epilogue: Connections with Mathlib limits (planned)_
 - Chapter 7: Series
   - _Section 7.1: Finite series (planned)_
   - _Section 7.2: Infinite series (planned)_
