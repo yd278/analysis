@@ -265,7 +265,7 @@ instance Sequence.inst_add : Add Sequence where
 /-- Theorem 6.1.19(a) (limit laws) -/
 theorem Sequence.lim_add {a b:Sequence} (ha: a.convergent) (hb: b.convergent)   :
   (a + b).convergent ∧ lim (a + b) = lim a + lim b := by
-  sorry 
+  sorry
 
 instance Sequence.inst_mul : Mul Sequence where
   mul a b := {
@@ -282,6 +282,113 @@ theorem Sequence.lim_mul {a b:Sequence} (ha: a.convergent) (hb: b.convergent)   
   (a * b).convergent ∧ lim (a * b) = lim a * lim b := by
   sorry
 
+
+instance Sequence.inst_smul : SMul ℝ Sequence where
+  smul c a := {
+    m := a.m
+    seq := fun (n:ℤ) ↦ c * a n
+    vanish := by
+      intro n hn
+      simp [a.vanish n hn]
+  }
+
+/-- Theorem 6.1.19(c) (limit laws) -/
+theorem Sequence.lim_smul (c:ℝ) {a:Sequence} (ha: a.convergent) :
+  (c • a).convergent ∧ lim (c • a) = c * lim a := by
+  sorry
+
+instance Sequence.inst_sub : Sub Sequence where
+  sub a b := {
+    m := max a.m b.m
+    seq := fun (n:ℤ) ↦ if n ≥ max a.m b.m then a n - b n else 0
+    vanish := by
+      intro n hn
+      rw [lt_iff_not_ge] at hn
+      simp [hn]
+  }
+
+/-- Theorem 6.1.19(d) (limit laws) -/
+theorem Sequence.lim_sub {a b:Sequence} (ha: a.convergent) (hb: b.convergent)   :
+  (a - b).convergent ∧ lim (a - b) = lim a - lim b := by
+  sorry
+
+noncomputable instance Sequence.inst_inv : Inv Sequence where
+  inv a := {
+    m := a.m
+    seq := fun (n:ℤ) ↦ (a n)⁻¹
+    vanish := by
+      intro n hn
+      simp [a.vanish n hn]
+  }
+
+/-- Theorem 6.1.19(e) (limit laws) -/
+theorem Sequence.lim_inv {a:Sequence} (ha: a.convergent) (hnon: lim a ≠ 0)   :
+  (a⁻¹).convergent ∧ lim (a⁻¹) = (lim a)⁻¹ := by
+  sorry
+
+noncomputable instance Sequence.inst_div : Div Sequence where
+  div a b := {
+    m := max a.m b.m
+    seq := fun (n:ℤ) ↦ if n ≥ max a.m b.m then a n / b n else 0
+    vanish := by
+      intro n hn
+      rw [lt_iff_not_ge] at hn
+      simp [hn]
+  }
+
+/-- Theorem 6.1.19(f) (limit laws) -/
+theorem Sequence.lim_div {a b:Sequence} (ha: a.convergent) (hb: b.convergent) (hnon: lim b ≠ 0)   :
+  (a / b).convergent ∧ lim (a / b) = lim a / lim b := by
+  sorry
+
+instance Sequence.inst_max : Max Sequence where
+  max a b := {
+    m := max a.m b.m
+    seq := fun (n:ℤ) ↦ if n ≥ max a.m b.m then max (a n) (b n) else 0
+    vanish := by
+      intro n hn
+      rw [lt_iff_not_ge] at hn
+      simp [hn]
+  }
+
+/-- Theorem 6.1.19(g) (limit laws) -/
+theorem Sequence.lim_max {a b:Sequence} (ha: a.convergent) (hb: b.convergent) (hnon: lim b ≠ 0)   :
+  (max a b).convergent ∧ lim (max a b) = max (lim a) (lim b) := by
+  sorry
+
+instance Sequence.inst_min : Min Sequence where
+  min a b := {
+    m := max a.m b.m
+    seq := fun (n:ℤ) ↦ if n ≥ max a.m b.m then min (a n) (b n) else 0
+    vanish := by
+      intro n hn
+      rw [lt_iff_not_ge] at hn
+      simp [hn]
+  }
+
+/-- Theorem 6.1.19(h) (limit laws) -/
+theorem Sequence.lim_min {a b:Sequence} (ha: a.convergent) (hb: b.convergent) (hnon: lim b ≠ 0)   :
+  (min a b).convergent ∧ lim (min a b) = min (lim a) (lim b) := by
+  sorry
+
+/-- Exercise 6.1.1 -/
+theorem Sequence.mono_if {a: ℕ → ℝ} (ha: ∀ n, a (n+1) > a n) {n m:ℕ} (hnm: m > n) : a m > a n := by sorry
+
+/-- Exercise 6.1.3 -/
+theorem Sequence.tendsTo_of_from {a: Sequence} {c:ℝ} (m:ℤ) : a.tendsTo c ↔ (a.from m).tendsTo c := by sorry
+
+/-- Exercise 6.1.4 -/
+theorem Sequence.tendsTo_of_shift {a: Sequence} {c:ℝ} (k:ℕ) : a.tendsTo c ↔ (Sequence.mk' a.m (fun n : {n // n ≥ a.m} ↦ a (n+k))).tendsTo c := by sorry
+
+/-- Exercise 6.1.7 -/
+theorem Sequence.isBounded_of_rat (a: Chapter5.Sequence) : a.isBounded ↔ (a:Sequence).isBounded := by sorry
+
+/-- Exercise 6.1.9 -/
+theorem Sequence.lim_div_fail : ∃ a b, a.convergent ∧ b.convergent ∧ lim b = 0 ∧ ¬ ((a / b).convergent ∧ lim (a / b) = lim a / lim b) := by
+  sorry
+
+/-- Exercise 6.1.10 -/
+theorem Chapter5.Sequence.isCauchy_iff (a:Chapter5.Sequence) : a.isCauchy ↔ ∀ ε > (0:ℝ), ∃ N ≥ a.n₀, ∀ n ≥ N, ∀ m ≥ N, |a n - a m| ≤ ε := by sorry
 
 
 
