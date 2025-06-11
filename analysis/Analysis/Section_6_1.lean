@@ -197,6 +197,7 @@ theorem Sequence.tendsTo_unique (a:Sequence) {L L':ℝ} (h:L ≠ L') : ¬ (a.ten
   by_contra this
   obtain ⟨ hL, hL' ⟩ := this
   replace h : L - L' ≠ 0 := by contrapose! h; linarith
+  replace h : |L-L'| > 0 := by positivity
   set ε := |L-L'| / 3
   have hε : ε > 0 := by positivity
   rw [tendsTo_iff] at hL hL'
@@ -216,7 +217,6 @@ theorem Sequence.tendsTo_unique (a:Sequence) {L L':ℝ} (h:L ≠ L') : ¬ (a.ten
       gcongr
     _ = 2 * |L-L'|/3 := by
       simp [ε]; ring
-  have pos : |L-L'| > 0 := by positivity
   linarith
 
 /-- Definition 6.1.8 -/
@@ -258,8 +258,31 @@ a.tendsTo L ↔ a.convergent ∧ lim a = L := by
 
 /-- Proposition 6.1.11 -/
 theorem Sequence.lim_harmonic : ((fun (n:ℕ) ↦ (n+1:ℝ)⁻¹):Sequence).convergent ∧ lim ((fun (n:ℕ) ↦ (n+1:ℝ)⁻¹):Sequence) = 0 := by
-  rw [←lim_eq]
-  sorry --TODO
+  -- This proof is written to follow the structure of the original text.
+  rw [←lim_eq, tendsTo_iff]
+  intro ε hε
+  have : ∃ (N:ℤ), N > 1/ε := exists_int_gt (1 / ε)
+  obtain ⟨ N, hN ⟩ := this
+  use N
+  intro n hn
+  have hNpos : (N:ℝ) > 0 := by apply LT.lt.trans _ hN; positivity
+  simp at hNpos
+  have hnpos : n ≥ 0 := by linarith
+  simp [hnpos, abs_inv]
+  calc
+    _ ≤ (N:ℝ)⁻¹ := by
+      rw [inv_le_inv₀ (by positivity) (by positivity)]
+      calc
+        _ ≤ (n:ℝ) := by simp [hn]
+        _ = (n.toNat:ℤ) := by simp [hnpos]
+        _ = n.toNat := rfl
+        _ ≤ (n.toNat:ℝ) + 1 := by linarith
+        _ ≤ _ := le_abs_self _
+    _ ≤ ε := by
+      rw [inv_le_comm₀ (by positivity) (by positivity)]
+      apply le_of_lt
+      rw [gt_iff_lt, ←inv_eq_one_div _] at hN
+      assumption
 
 /-- Proposition 6.1.12 / Exercise 6.1.5 -/
 theorem Sequence.Cauchy_of_convergent {a:Sequence} (h:a.convergent) : a.isCauchy := by
