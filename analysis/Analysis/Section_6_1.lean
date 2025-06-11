@@ -1,5 +1,7 @@
 import Mathlib.Tactic
 import Analysis.Section_5_1
+import Analysis.Section_5_3
+import Analysis.Section_5_epilogue
 
 /-!
 # Analysis I, Section 6.1
@@ -108,6 +110,9 @@ instance Chapter5.Sequence.inst_coe_sequence : Coe Chapter5.Sequence Sequence  w
       simp [this]
   }
 
+@[simp]
+theorem Chapter5.coe_sequence_eval (a: Chapter5.Sequence) (n:ℤ) : (a:Sequence) n = (a n:ℝ) := rfl
+
 theorem Sequence.is_steady_of_rat (ε:ℚ) (a: Chapter5.Sequence) : ε.steady a ↔ (ε:ℝ).steady (a:Sequence) := by sorry
 
 theorem Sequence.is_eventuallySteady_of_rat (ε:ℚ) (a: Chapter5.Sequence) : ε.eventuallySteady a ↔ (ε:ℝ).eventuallySteady (a:Sequence) := by sorry
@@ -184,15 +189,98 @@ theorem Sequence.lim_def {a:Sequence} (h: a.convergent) : a.tendsTo (lim a) := b
   convert h.choose_spec
 
 /-- Definition 6.1.8-/
-theorem Sequence.lim_eq {a:Sequence} {L:ℝ} (h: a.tendsTo L) : lim a = L := by
-  by_contra! eq
-  replace eq := a.tendsTo_unique eq
-  have : a.convergent := by rw [convergent_def]; use L
-  replace this := lim_def this
-  tauto
+theorem Sequence.lim_eq {a:Sequence} {L:ℝ} :
+a.tendsTo L ↔ a.convergent ∧ lim a = L := by
+  constructor
+  . intro h
+    by_contra! eq
+    have : a.convergent := by rw [convergent_def]; use L
+    replace eq := a.tendsTo_unique (eq this)
+    replace this := lim_def this
+    tauto
+  intro ⟨ h, h' ⟩
+  convert lim_def h
+  rw [h']
 
 
+/-- Proposition 6.1.11 -/
+theorem Sequence.lim_harmonic : ((fun (n:ℕ) ↦ (n+1:ℝ)⁻¹):Sequence).convergent ∧ lim ((fun (n:ℕ) ↦ (n+1:ℝ)⁻¹):Sequence) = 0 := by
+  rw [←lim_eq]
+  sorry --TODO
 
+/-- Proposition 6.1.12 / Exercise 6.1.5 -/
+theorem Sequence.Cauchy_of_convergent {a:Sequence} (h:a.convergent) : a.isCauchy := by
+  sorry
+
+/-- Example 6.1.13 -/
+example : ¬ (0.1:ℝ).eventuallySteady ((fun n ↦ (-1:ℝ)^n):Sequence) := by sorry
+
+/-- Example 6.1.13 -/
+example : ¬ ((fun n ↦ (-1:ℝ)^n):Sequence).isCauchy := by sorry
+
+/-- Example 6.1.13 -/
+example : ¬ ((fun n ↦ (-1:ℝ)^n):Sequence).convergent := by sorry
+
+/-- Proposition 6.1.15 / Exercise 6.1.6 (Formal limits are genuine limits)-/
+theorem Sequence.lim_eq_LIM {a:ℕ → ℚ} (h: (a:Chapter5.Sequence).isCauchy) : ((a:Chapter5.Sequence):Sequence).tendsTo (Chapter5.Real.equivR (Chapter5.LIM a)) := by sorry
+
+/-- Definition 6.1.16 -/
+abbrev Sequence.BoundedBy (a:Sequence) (M:ℝ) : Prop :=
+  ∀ n, |a n| ≤ M
+
+/-- Definition 6.1.16 -/
+lemma Sequence.BoundedBy_def (a:Sequence) (M:ℝ) :
+  a.BoundedBy M ↔ ∀ n, |a n| ≤ M := by rfl
+
+/-- Definition 6.1.16 -/
+abbrev Sequence.isBounded (a:Sequence) : Prop := ∃ M ≥ 0, a.BoundedBy M
+
+/-- Definition 6.1.16 -/
+lemma Sequence.isBounded_def (a:Sequence) :
+  a.isBounded ↔ ∃ M ≥ 0, a.BoundedBy M := by rfl
+
+theorem Sequence.bounded_of_cauchy {a:Sequence} (h: a.isCauchy) : a.isBounded := by
+  sorry
+
+/-- Corollary 6.1.17 -/
+theorem Sequence.bounded_of_convergent {a:Sequence} (h: a.convergent) : a.isBounded := by
+  sorry
+
+/-- Example 6.1.18 -/
+example : ¬ ((fun (n:ℕ) ↦ (n+1:ℝ)):Sequence).isBounded := by sorry
+
+/-- Example 6.1.18 -/
+example : ¬ ((fun (n:ℕ) ↦ (n+1:ℝ)):Sequence).convergent := by sorry
+
+instance Sequence.inst_add : Add Sequence where
+  add a b := {
+    m := max a.m b.m
+    seq := fun (n:ℤ) ↦ if n ≥ max a.m b.m then a n + b n else 0
+    vanish := by
+      intro n hn
+      rw [lt_iff_not_ge] at hn
+      simp [hn]
+  }
+
+/-- Theorem 6.1.19(a) (limit laws) -/
+theorem Sequence.lim_add {a b:Sequence} (ha: a.convergent) (hb: b.convergent)   :
+  (a + b).convergent ∧ lim (a + b) = lim a + lim b := by
+  sorry 
+
+instance Sequence.inst_mul : Mul Sequence where
+  mul a b := {
+    m := max a.m b.m
+    seq := fun (n:ℤ) ↦ if n ≥ max a.m b.m then a n * b n else 0
+    vanish := by
+      intro n hn
+      rw [lt_iff_not_ge] at hn
+      simp [hn]
+  }
+
+/-- Theorem 6.1.19(b) (limit laws) -/
+theorem Sequence.lim_mul {a b:Sequence} (ha: a.convergent) (hb: b.convergent)   :
+  (a * b).convergent ∧ lim (a * b) = lim a * lim b := by
+  sorry
 
 
 
