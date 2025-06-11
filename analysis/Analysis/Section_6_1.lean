@@ -1,4 +1,5 @@
 import Mathlib.Tactic
+import Analysis.Section_5_1
 
 /-!
 # Analysis I, Section 6.1
@@ -27,7 +28,7 @@ namespace Chapter6
 structure Sequence where
   m : ℤ
   seq : ℤ → ℝ
-  vanish : ∀ n, n < m → seq n = 0
+  vanish : ∀ n < m, seq n = 0
 
 /-- Sequences can be thought of as functions from ℤ to ℝ. -/
 instance Sequence.instCoeFun : CoeFun Sequence (fun _ ↦ ℤ → ℝ) where
@@ -97,7 +98,23 @@ lemma Sequence.isCauchy_of_coe (a:ℕ → ℝ) : (a:Sequence).isCauchy ↔ ∀ �
 
 lemma Sequence.isCauchy_of_mk {n₀:ℤ} (a: {n // n ≥ n₀} → ℝ) : (mk' n₀ a).isCauchy ↔ ∀ ε > 0, ∃ N ≥ n₀, ∀ j ≥ N, ∀ k ≥ N, dist (mk' n₀ a j) (mk' n₀ a k) ≤ ε := by sorry
 
+instance Chapter5.Sequence.inst_coe_sequence : Coe Chapter5.Sequence Sequence  where
+  coe := fun a ↦ {
+    m := a.n₀
+    seq := fun n ↦ ((a n):ℝ)
+    vanish := by
+      intro n hn
+      have := a.vanish n hn
+      simp [this]
+  }
 
+theorem Sequence.is_steady_of_rat (ε:ℚ) (a: Chapter5.Sequence) : ε.steady a ↔ (ε:ℝ).steady (a:Sequence) := by sorry
+
+theorem Sequence.is_eventuallySteady_of_rat (ε:ℚ) (a: Chapter5.Sequence) : ε.eventuallySteady a ↔ (ε:ℝ).eventuallySteady (a:Sequence) := by sorry
+
+/-- Proposition 6.1.4 -/
+theorem Sequence.isCauchy_of_rat (a: Chapter5.Sequence) : a.isCauchy ↔ (a:Sequence).isCauchy := by
+  sorry -- TODO
 
 
 end Chapter6

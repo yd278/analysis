@@ -20,7 +20,7 @@ namespace Chapter5
 structure Sequence where
   n₀ : ℤ
   seq : ℤ → ℚ
-  vanish : ∀ n, n < n₀ → seq n = 0
+  vanish : ∀ n < n₀, seq n = 0
 
 /-- Sequences can be thought of as functions from ℤ to ℚ. -/
 instance Sequence.instCoeFun : CoeFun Sequence (fun _ ↦ ℤ → ℚ) where
