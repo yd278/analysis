@@ -86,6 +86,11 @@ abbrev Real.eventuallySteady (ε: ℝ) (a: Chapter6.Sequence) : Prop := ∃ N �
 lemma Real.eventuallySteady_def (ε: ℝ) (a: Chapter6.Sequence) :
   ε.eventuallySteady a ↔ ∃ N, (N ≥ a.m) ∧ ε.steady (a.from N) := by rfl
 
+theorem Real.steady_mono {a: Chapter6.Sequence} {ε₁ ε₂: ℝ} (hε: ε₁ ≤ ε₂) (hsteady: ε₁.steady a) :
+  ε₂.steady a := by sorry
+
+theorem Real.eventuallySteady_mono {a: Chapter6.Sequence} {ε₁ ε₂: ℝ} (hε: ε₁ ≤ ε₂) (hsteady: ε₁.eventuallySteady a) :
+  ε₂.eventuallySteady a := by sorry
 
 namespace Chapter6
 
@@ -119,7 +124,24 @@ theorem Sequence.is_eventuallySteady_of_rat (ε:ℚ) (a: Chapter5.Sequence) : ε
 
 /-- Proposition 6.1.4 -/
 theorem Sequence.isCauchy_of_rat (a: Chapter5.Sequence) : a.isCauchy ↔ (a:Sequence).isCauchy := by
-  sorry -- TODO
+  -- This proof is written to follow the structure of the original text.
+  constructor
+  swap
+  . intro h
+    rw [isCauchy_def] at h
+    rw [Chapter5.Sequence.isCauchy_def]
+    intro ε hε
+    specialize h (ε:ℝ) (by positivity)
+    rwa [is_eventuallySteady_of_rat]
+  intro h
+  rw [Chapter5.Sequence.isCauchy_def] at h
+  rw [isCauchy_def]
+  intro ε hε
+  have : ∃ ε' > (0:ℚ), ε' < ε := exists_pos_rat_lt hε
+  obtain ⟨ ε', hε', hlt ⟩ := this
+  specialize h ε' hε'
+  rw [is_eventuallySteady_of_rat] at h
+  exact Real.eventuallySteady_mono (le_of_lt hlt) h
 
 end Chapter6
 
