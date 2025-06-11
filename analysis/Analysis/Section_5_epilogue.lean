@@ -115,15 +115,12 @@ lemma Real.equivR_iff (x : Real) (y : ℝ) : y = Real.equivR x ↔ y.toCut = x.t
   simp only [equivR, Equiv.trans_apply, ←Equiv.apply_eq_iff_eq_symm_apply]
   rfl
 
-/-- The isomorphism preserves order -/
-noncomputable abbrev Real.equivR_order : Real ≃o ℝ where
-  toEquiv := equivR
-  map_rel_iff' := by sorry
-
-/-- The isomorphism preserves ring operations -/
-noncomputable abbrev Real.equivR_ring : Real ≃+* ℝ where
+/-- The isomorphism preserves order and ring operations -/
+noncomputable abbrev Real.equivR_ordered_ring : Real ≃+*o ℝ where
   toEquiv := equivR
   map_add' := by sorry
   map_mul' := by sorry
+  map_le_map_iff' := by sorry
+
 
 end Chapter5
