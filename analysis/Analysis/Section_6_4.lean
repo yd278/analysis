@@ -135,7 +135,18 @@ theorem Sequence.lt_liminf_bounds {a:Sequence} {y:EReal} (h: y < a.liminf) : ∃
 
 /-- Proposition 6.4.12(b) -/
 theorem Sequence.lt_limsup_bounds {a:Sequence} {x:EReal} (h: x < a.limsup) {N:ℤ} (hN: N ≥ a.m) : ∃ n ≥ N, a n > x := by
-  sorry -- TODO
+  -- This proof is written to follow the structure of the original text.
+  unfold Sequence.limsup at h
+  have hx : x < a.upperseq N := by
+    apply lt_of_lt_of_le h (sInf_le _)
+    simp; use N
+  unfold Sequence.upperseq at hx
+  replace hx := Sequence.exists_between_lt_sup hx
+  obtain ⟨ n, hn, hxn, _ ⟩ := hx
+  simp [Sequence.from, hN] at hn
+  use n, hn
+  convert gt_iff_lt.mpr hxn using 1
+  simp [hn, hN.trans hn]
 
 /-- Proposition 6.4.12(b) -/
 theorem Sequence.gt_liminf_bounds {a:Sequence} {x:EReal} (h: x > a.liminf) {N:ℤ} (hN: N ≥ a.m) : ∃ n ≥ N, a n < x := by
@@ -163,7 +174,7 @@ theorem Sequence.limit_point_of_limsup {a:Sequence} {L_plus:ℝ} (h: a.limsup = 
 theorem Sequence.limit_point_of_liminf {a:Sequence} {L_minus:ℝ} (h: a.liminf = L_minus) : a.limit_point L_minus := by
   sorry
 
-/-- Proposition 6.4.12(e) / Exercise 6.4.3 -/
+/-- Proposition 6.4.12(f) / Exercise 6.4.3 -/
 theorem Sequence.tendsTo_iff_eq_limsup_liminf {a:Sequence} (c:ℝ) :
   a.tendsTo c ↔ a.liminf = c ∧ a.limsup = c := by
   sorry
@@ -215,7 +226,93 @@ theorem Sequence.tendsTo_zero_iff (a:Sequence) :
 /-- Theorem 6.4.18 (Completeness of the reals) -/
 theorem Sequence.Cauchy_iff_convergent (a:Sequence) :
   a.isCauchy ↔ a.convergent := by
-  sorry -- TODO
+  -- This proof is written to follow the structure of the original text.
+  refine ⟨ ?_, Cauchy_of_convergent ⟩
+  intro h
+  have hbound := bounded_of_cauchy h
+  obtain ⟨ M, hMpos, hbound ⟩ := hbound
+  unfold Sequence.BoundedBy at hbound
+  have hlimsup_bound : a.limsup ≤ M := by
+    apply a.limsup_le_sup.trans
+    apply sup_le_upper
+    intro n hN
+    simp
+    exact (le_abs_self _).trans (hbound n)
+  have hliminf_bound : -M ≤ a.liminf := by
+    apply LE.le.trans _ a.inf_le_liminf
+    apply inf_ge_lower
+    intro n hN
+    simp [←EReal.coe_neg]
+    rw [neg_le]
+    exact (neg_le_abs _).trans (hbound n)
+  have hL_minus : ∃ L_minus:ℝ, a.liminf = L_minus := by
+    use a.liminf.toReal
+    apply (EReal.coe_toReal _ _).symm
+    . replace hlimsup_bound := a.liminf_le_limsup.trans hlimsup_bound
+      contrapose! hlimsup_bound
+      simp [hlimsup_bound]
+    contrapose! hliminf_bound
+    simp [hliminf_bound, ←EReal.coe_neg]
+  have hL_plus : ∃ L_plus:ℝ, a.limsup = L_plus := by
+    use a.limsup.toReal
+    apply (EReal.coe_toReal _ _).symm
+    . contrapose! hlimsup_bound
+      simp [hlimsup_bound]
+    replace hliminf_bound := hliminf_bound.trans a.liminf_le_limsup
+    contrapose! hliminf_bound
+    simp [hliminf_bound, ←EReal.coe_neg]
+  obtain ⟨ L_minus, hL_minus ⟩ := hL_minus
+  obtain ⟨ L_plus, hL_plus ⟩ := hL_plus
+  use L_minus
+  rw [tendsTo_iff_eq_limsup_liminf]
+  simp [hL_minus, hL_plus]
+  have hlow : 0 ≤ L_plus - L_minus := by
+    have := a.liminf_le_limsup
+    simp [hL_minus, hL_plus] at this
+    linarith
+  have hup (ε:ℝ) (hε: ε>0) : L_plus - L_minus ≤ 2*ε := by
+    specialize h ε hε
+    obtain ⟨ N, hN, hsteady ⟩ := h
+    unfold Real.steady Real.close at hsteady
+    have hN0 : N ≥ (a.from N).m := by
+      simp [Sequence.from, hN]
+    have hN1 : (a.from N).seq N = a.seq N := by
+      simp [Sequence.from, hN]
+    have h1 : (a N - ε:ℝ) ≤ (a.from N).inf := by
+      apply inf_ge_lower
+      intro n hn
+      specialize hsteady n hn N hN0
+      rw [ge_iff_le, EReal.coe_le_coe_iff]
+      rw [Real.dist_eq, hN1, abs_le'] at hsteady
+      linarith
+    have h2 : (a.from N).inf ≤ L_minus := by
+      simp_rw [←hL_minus, Sequence.liminf, Sequence.lowerseq]
+      apply le_sSup
+      simp; use N
+    have h3 : (a.from N).sup ≤ (a N + ε:ℝ) := by
+      apply sup_le_upper
+      intro n hn
+      specialize hsteady n hn N hN0
+      rw [EReal.coe_le_coe_iff]
+      rw [Real.dist_eq, hN1, abs_le'] at hsteady
+      linarith
+    have h4 : L_plus ≤ (a.from N).sup := by
+      simp_rw [←hL_plus, Sequence.limsup, Sequence.upperseq]
+      apply sInf_le
+      simp; use N
+    replace h1 := h1.trans h2
+    replace h4 := h4.trans h3
+    rw [EReal.coe_le_coe_iff] at h1 h4
+    linarith
+  rcases le_iff_lt_or_eq.mp hlow with hlow | hlow
+  . specialize hup ((L_plus - L_minus)/3) (by positivity)
+    linarith
+  linarith
+
+
+
+
+
 
 /-- Exercise 6.4.6 -/
 theorem Sequence.sup_not_strict_mono : ∃ (a b:ℕ → ℝ), (∀ n, a n < b n) ∧ (a:Sequence).sup ≠ (b:Sequence).sup := by
@@ -229,10 +326,8 @@ theorem Sequence.not_tendsTo_real_iff : ¬ ∀ (a:Sequence) (x:ℝ), a.tendsTo x
   sorry
 
 /-- This definition is needed for Exercises 6.4.8 and 6.4.9. -/
-abbrev Sequence.extended_limit_point (a:Sequence) (x:EReal) : Prop := match x with
-  | EReal.real r => a.limit_point r
-  | EReal.negInfty => ¬ a.bddBelow
-  | EReal.posInfty => ¬ a.bddAbove
+abbrev Sequence.extended_limit_point (a:Sequence) (x:EReal) : Prop := if x = ⊤ then ¬ a.bddAbove else if x = ⊥ then ¬ a.bddBelow else a.limit_point x.toReal
+
 
 /-- Exercise 6.4.8 -/
 theorem Sequence.extended_limit_point_of_limsup (a:Sequence) : a.extended_limit_point a.limsup := by sorry
@@ -245,7 +340,7 @@ theorem Sequence.extended_limit_point_le_limsup {a:Sequence} {L:EReal} (h:a.exte
 theorem Sequence.extended_limit_point_ge_liminf {a:Sequence} {L:EReal} (h:a.extended_limit_point L): L ≥ a.liminf := by sorry
 
 /-- Exercise 6.4.9 -/
-theorem Sequence.exists_three_limit_points : ∃ a, ∀ (L:EReal), a.extended_limit_point L ↔ L = ⊥ ∨ L = 0 ∨ L = ⊤ := by sorry
+theorem Sequence.exists_three_limit_points : ∃ a:Sequence, ∀ L:EReal, a.extended_limit_point L ↔ L = ⊥ ∨ L = 0 ∨ L = ⊤ := by sorry
 
 /-- Exercise 6.4.10 -/
 theorem Sequence.limit_points_of_limit_points {a b:Sequence} {c:ℝ} (hab: ∀ n ≥ b.m, a.limit_point (b n)) (hbc: b.limit_point c) : a.limit_point c := by sorry
