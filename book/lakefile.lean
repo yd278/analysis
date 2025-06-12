@@ -36,6 +36,11 @@ def sections := #[
   (`Analysis.Section_5_2, "Equivalent Cauchy sequences"),
   (`Analysis.Section_5_3, "The construction of the real numbers"),
   (`Analysis.Section_5_4, "Ordering the reals"),
+  (`Analysis.Section_5_5, "The least upper bound property"),
+  (`Analysis.Section_5_epilogue, "Equivalence of reals"),
+  (`Analysis.Section_6_1, "The Extended real number system"),
+  (`Analysis.Section_6_2, "Suprema and Infima of sequences"),
+  (`Analysis.Section_6_3, "Limpsup, Liminf, and limit points"),
 ]
 
 /--
@@ -113,7 +118,7 @@ target genLib (pkg) : Unit := do
     addTrace (← computeTrace <| TextFilePath.mk jsonFile)
 
     -- The module itself contains the literate page
-    let contents := s!"import AnalysisBook.LiterateModule\n\nanalysis_page {declName} from {module} as {repr title}\n"
+    let contents := s!"import AnalysisBook.LiterateModule\n\nset_option maxHeartbeats 1000000\n\nanalysis_page {declName} from {module} as {repr title}\n"
     addPureTrace contents "contents"
 
     buildFileUnlessUpToDate' mod.leanFile do

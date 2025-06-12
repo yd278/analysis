@@ -57,6 +57,11 @@ def demoSite : Site := site AnalysisBook.Home /
   "sec52" Book.Analysis.Section_5_2
   "sec53" Book.Analysis.Section_5_3
   "sec54" Book.Analysis.Section_5_4
+  "sec55" Book.Analysis.Section_5_5
+  "sec5e" Book.Analysis.Section_5_epilogue
+  "sec61" Book.Analysis.Section_6_1
+  "sec62" Book.Analysis.Section_6_2
+  "sec63" Book.Analysis.Section_6_3
 
 def baseUrl := "https://teorth.github.io/analysis/docs/"
 
