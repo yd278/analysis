@@ -142,6 +142,29 @@ partial def docFromModAndTerms
           }
         | other =>
           addBlock (← ofBlock tms other)
+          -- Only convert doccomments if the option is turned on
+    | ``declaration | `lemma =>
+      match code with
+      | .seq s =>
+        -- Find the index corresponding to the docComment
+        let docCommentIdx := s.findIdx? (fun
+          | (.token ⟨.docComment, _⟩) => true
+          | _ => false)
+        match docCommentIdx with
+        | some i =>
+          let codeBefore ← ``(Block.other
+            (BlockExt.highlightedCode `name $(quote (Highlighted.seq s[:i]))) Array.mkArray0)
+          let some ⟨mdBlocks⟩ := MD4Lean.parse (← getDocCommentString s[i]!)
+            | throwError m!"Failed to parse Markdown: {← getDocCommentString s[i]!}"
+          let docCommentBlocks ← mdBlocks.mapM (fun b => ofBlock tms b)
+          let codeAfter ←``(Block.other (BlockExt.highlightedCode `name $(quote (Highlighted.seq s[i+1:]))) Array.mkArray0)
+          let blocks := #[codeBefore] ++ docCommentBlocks ++ #[codeAfter]
+          addBlock (← ``(Block.other (BlockExt.htmlDiv "declaration") #[$blocks,*]))
+        | none =>
+          -- No docComment attached to declaration, render definition as usual
+          addBlock (← ``(Block.other (BlockExt.highlightedCode `name $(quote code)) Array.mkArray0))
+      | _ => addBlock (← ``(Block.other (BlockExt.highlightedCode `name $(quote code)) Array.mkArray0))
+
     | ``eval | ``evalBang | ``reduceCmd | ``print | ``printAxioms | ``printEqns | ``«where» | ``version | ``synth | ``check =>
       addBlock (← ``(Block.other (BlockExt.highlightedCode `name $(quote code)) Array.mkArray0))
       if let some (k, msg) := getFirstMessage code then
