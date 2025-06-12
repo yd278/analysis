@@ -123,6 +123,6 @@ To build the project's web page after [installing Lean](https://www.lean-lang.or
 % lake exe analysis-book
 % cd ../
 ```
-where `<url>` is `http://localhost:8000/analysis/docs` for the local setup. 
 
-After this, `book/_site/` contains the project's web page.
+After this, `book/_site/` contains the project's web page. 
+This can be served as a webpage by executing `python3 serve.py`
