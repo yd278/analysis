@@ -65,6 +65,7 @@ theorem Chapter6.Sequence.converges_iff_Tendsto (a: ℕ → ℝ) : (a:Sequence).
 instance inst_real_complete : CauSeq.IsComplete ℝ norm := by
   convert Real.instIsCompleteAbs
 
+/-- Identification with `CauSeq.lim` -/
 theorem Chapter6.Sequence.lim_eq_CauSeq_lim (a:ℕ → ℝ) (ha: (a:Sequence).isCauchy) :
     Chapter6.lim (a:Sequence) = CauSeq.lim  ⟨ a, (Cauchy_iff_CauSeq a).mp ha⟩ := by
   have h1 := CauSeq.tendsto_limit ⟨ a, (Cauchy_iff_CauSeq a).mp ha⟩
@@ -73,3 +74,80 @@ theorem Chapter6.Sequence.lim_eq_CauSeq_lim (a:ℕ → ℝ) (ha: (a:Sequence).is
   by_contra! h
   replace h := (a:Sequence).tendsTo_unique h
   tauto
+
+/-- Identification with `Bornology.IsBounded` -/
+theorem Chapter6.Sequence.isBounded_iff_isBounded_range (a:ℕ → ℝ): (a:Sequence).isBounded ↔ Bornology.IsBounded (Set.range a) := by
+  simp [isBounded_def, BoundedBy_def, Metric.isBounded_iff]
+  constructor
+  . intro h
+    obtain ⟨ M, hM, h ⟩ := h
+    use 2*M
+    intro n m
+    calc
+      _ = |a n - a m| := Real.dist_eq _ _
+      _ ≤ |a n| + |a m| := abs_sub _ _
+      _ ≤ M + M := by gcongr; convert h n; convert h m
+      _ = _ := by ring
+  intro h
+  obtain ⟨ C, h ⟩ := h
+  have : C ≥ 0 := by
+    specialize h 0 0
+    simp at h
+    assumption
+  refine ⟨ C + |a 0|, by positivity, ?_ ⟩
+  intro n
+  by_cases hn: n ≥ 0
+  all_goals simp [hn]
+  . calc
+      _ ≤ |a n.toNat - a 0| + |a 0| := by
+        convert abs_add_le _ _
+        . abel
+        infer_instance
+      _ ≤ C + |a 0| := by gcongr; rw [←Real.dist_eq]; convert h n.toNat 0
+  positivity
+
+theorem Chapter6.Sequence.sup_eq_sSup (a:ℕ → ℝ): (a:Sequence).sup = sSup (Set.range (fun n ↦ (a n:EReal))) := by sorry
+
+theorem Chapter6.Sequence.inf_eq_sInf (a:ℕ → ℝ): (a:Sequence).inf = sInf (Set.range (fun n ↦ (a n:EReal))) := by sorry
+
+theorem Chapter6.Sequence.bddAbove_iff (a:ℕ → ℝ): (a:Sequence).bddAbove ↔ BddAbove (Set.range a) := by sorry
+
+theorem Chapter6.Sequence.bddBelow_iff (a:ℕ → ℝ): (a:Sequence).bddBelow ↔ BddBelow (Set.range a) := by sorry
+
+theorem Chapter6.Sequence.Monotone_iff (a:ℕ → ℝ): (a:Sequence).isMonotone ↔ Monotone a := by sorry
+
+theorem Chapter6.Sequence.Antitone_iff (a:ℕ → ℝ): (a:Sequence).isAntitone ↔ Antitone a := by sorry
+
+/-- Identification with `Filter.MapClusterPt` -/
+theorem Chapter6.Sequence.limit_point_iff (a:ℕ → ℝ) (L:ℝ) : (a:Sequence).limit_point L ↔ MapClusterPt L Filter.atTop a := by
+  simp_rw [limit_point_def, mapClusterPt_iff_frequently, Filter.frequently_atTop, Metric.mem_nhds_iff]
+  constructor
+  . intro h s hs N
+    obtain ⟨ ε, hε, hεs ⟩ := hs
+    specialize h (ε/2) (half_pos hε) N (by positivity)
+    obtain ⟨ n, hn1, hn2 ⟩ := h
+    have hn : n ≥ 0 := LE.le.trans (by positivity) hn1
+    refine ⟨ n.toNat, ?_, ?_ ⟩
+    . rwa [ge_iff_le, Int.le_toNat hn]
+    apply hεs
+    simp [Real.dist_eq, hn] at hn2 ⊢
+    linarith
+  intro h ε hε N hN
+  specialize h (Metric.ball L ε) ⟨ ε, hε, fun ⦃a⦄ a ↦ a ⟩ N.toNat
+  obtain ⟨ n, hn1, hn2 ⟩ := h
+  have hn : n ≥ 0 := by positivity
+  refine ⟨ n, ?_, ?_ ⟩
+  . rwa [ge_iff_le, ←Int.toNat_le]
+  simp [Real.dist_eq, hn] at hn2 ⊢
+  linarith
+
+/-- Identification with `Filter.limsup` -/
+theorem Chapter6.Sequence.limsup_eq (a:ℕ → ℝ) : (a:Sequence).limsup = Filter.limsup (fun n ↦ (a n:EReal)) Filter.atTop := by
+  simp_rw [Filter.limsup_eq, Filter.eventually_atTop]
+  sorry
+
+/-- Identification with `Filter.liminf` -/
+theorem Chapter6.Sequence.liminf_eq (a:ℕ → ℝ) : (a:Sequence).liminf = Filter.liminf (fun n ↦ (a n:EReal)) Filter.atTop := by
+  simp_rw [Filter.liminf_eq, Filter.eventually_atTop]
+  sorry
+
