@@ -8,6 +8,8 @@ I have attempted to make the translation as faithful a paraphrasing as possible 
 
 Main constructions and results of this section:
 
+- Some standard limits, including limits of sequences of the form 1/n^α, x^n, and x^(1/n).
+
 -/
 
 namespace Chapter6
