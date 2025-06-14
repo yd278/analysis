@@ -38,3 +38,4 @@ Currently formalized sections:
 - [Section 6.5: Some standard limits](./sec65/)
 - [Section 6.6: Subsequences](./sec66/)
 - [Section 6 epilogue: Connections with Mathlib limits](./sec6e/)
+- [Section 7.1: Finite series](./sec71/)
