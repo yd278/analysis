@@ -10,6 +10,7 @@ Technical note: it is convenient in Lean to extend finite sequences (usually by 
 Main constructions and results of this section:
 
 - API for summation over finite sets (encoded using Mathlib's `Finset` type), using the `Finset.sum` method and the `∑ n ∈ A, f n` notation.
+- Fubini's theorem for finite series 
 
 -/
 
@@ -273,6 +274,16 @@ theorem finite_series_comm {XX YY:Type*} (X: Finset XX) (Y: Finset YY) (f: XX ×
 
 
 -- Exercise 7.1.3 : develop as many analogues as you can of the above theory for finite products instead of finite sums.
+
+#check Nat.factorial_zero
+#check Nat.factorial_succ
+
+/-- Exercise 7.1.4.  Note: there may be some technicalities passing back and forth between natural numbers and integers.  Look into the tactics `zify`, `norm_cast`, and `omega` -/
+theorem binomial_theorem (x y:ℝ) (n:ℕ) : (x + y)^n = ∑ j ∈ Icc (0:ℤ) n, n.factorial / (j.toNat.factorial * (n-j).toNat.factorial) * x^k * y^(n - k) := by sorry
+
+/-- Exercise 7.1.5 -/
+theorem lim_of_finite_series {X:Type*} [Fintype X] (a: X → ℕ → ℝ) (L : X → ℝ) (h: ∀ x, Filter.Tendsto (a x) Filter.atTop (nhds (L x))) : Filter.Tendsto (fun n ↦ ∑ x, a x n) Filter.atTop (nhds (∑ x, L x)) := by sorry
+
 
 
 end Finset
