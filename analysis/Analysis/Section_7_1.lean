@@ -191,12 +191,12 @@ theorem finite_series_of_singleton {X':Type*} (f: X' → ℝ) (x₀:X') : ∑ i 
 theorem finite_series_of_fintype {X':Type*} (f: X' → ℝ) (X: Finset X') : ∑ x ∈ X, f x = ∑ x:X, f x.val := (sum_coe_sort X f).symm
 
 /-- Proposition 7.1.11(c) / Exercise 7.1.2 -/
-theorem map_finite_series {X:Type} [Fintype X] [Fintype Y] (f: X → ℝ) {g:Y → X} (hg: Function.Bijective g) : ∑ x, f x = ∑ y, f (g y) := by sorry
+theorem map_finite_series {X:Type*} [Fintype X] [Fintype Y] (f: X → ℝ) {g:Y → X} (hg: Function.Bijective g) : ∑ x, f x = ∑ y, f (g y) := by sorry
 
 -- Proposition 7.1.11(d) is `rfl` in our formalism and is therefore omitted.
 
 /-- Proposition 7.1.11(e) / Exercise 7.1.2 -/
-theorem finite_series_of_disjoint_union {Z:Type*} (X Y: Finset Z) (hdisj: Disjoint X Y) (f: Z → ℝ) : ∑ z ∈ X ∪ Y, f z = ∑ z ∈ X, f z + ∑ z ∈ Y, f z := by sorry
+theorem finite_series_of_disjoint_union {Z:Type*} {X Y: Finset Z} (hdisj: Disjoint X Y) (f: Z → ℝ) : ∑ z ∈ X ∪ Y, f z = ∑ z ∈ X, f z + ∑ z ∈ Y, f z := by sorry
 
 /-- Proposition 7.1.11(f) / Exercise 7.1.2 -/
 theorem finite_series_of_add {X':Type*} (f g: X' → ℝ) (X: Finset X') : ∑ x ∈ X, (f + g) x = ∑ x ∈ X, f x + ∑ x ∈ X, g x := by sorry
@@ -210,6 +210,69 @@ theorem finite_series_of_le' {X':Type*} (f g: X' → ℝ) (X: Finset X') (h: ∀
 /-- Proposition 7.1.11(i) / Exercise 7.1.2 -/
 theorem abs_finite_series_le' {X':Type*} (f: X' → ℝ) (X: Finset X') : |∑ x ∈ X, f x| ≤ ∑ x ∈ X, |f x| := by sorry
 
+/-- Lemma 7.1.13 --/
+theorem finite_series_of_finite_series {XX YY:Type*} (X: Finset XX) (Y: Finset YY) (f: XX × YY → ℝ) : ∑ x ∈ X, ∑ y ∈ Y, f (x, y) = ∑ z ∈ Finset.product X Y, f z := by
+  generalize h: X.card = n
+  revert X
+  induction' n with n hn
+  . sorry
+  intro X hX
+  have hnon : X.Nonempty := by rw [←card_ne_zero]; linarith
+  obtain ⟨ x₀, hx₀ ⟩ := hnon.exists_mem
+  set X' := X.erase x₀
+  have hcard : X'.card = n := by simp [X', card_erase_of_mem hx₀, hX]
+  have hunion : X = X' ∪ {x₀} := by
+    ext x
+    by_cases h:x = x₀
+    all_goals simp [h,X', hx₀]
+  have hdisj : Disjoint X' {x₀} := by simp [X']
+  calc
+    _ = ∑ x ∈ X', ∑ y ∈ Y, f (x, y) + ∑ x ∈ {x₀}, ∑ y ∈ Y, f (x, y) := by
+      convert finite_series_of_disjoint_union hdisj _
+    _ = ∑ x ∈ X', ∑ y ∈ Y, f (x, y) + ∑ y ∈ Y, f (x₀, y) := by
+      rw [finite_series_of_singleton]
+    _ = ∑ z ∈ Finset.product X' Y, f z + ∑ y ∈ Y, f (x₀, y) := by rw [hn X' hcard]
+    _ = ∑ z ∈ Finset.product X' Y, f z + ∑ z ∈ Finset.product {x₀} Y, f z := by
+      congr 1
+      rw [finite_series_of_fintype, finite_series_of_fintype f]
+      set π : Finset.product {x₀} Y → Y := fun z ↦ ⟨ z.val.2, by obtain ⟨ z, hz ⟩ := z; simp at hz ⊢; obtain ⟨ a, ⟨ ha, rfl ⟩ ⟩ := hz; simp [ha] ⟩
+      have hπ : Function.Bijective π := by
+        constructor
+        . intro ⟨ ⟨ x, y ⟩, hz ⟩ ⟨ ⟨ x', y' ⟩, hz' ⟩ hzz'
+          simp [π] at hz hz' hzz' ⊢
+          simp [hzz', ←hz.2, ←hz'.2]
+        intro ⟨ y, hy ⟩
+        use ⟨ (x₀, y), by simp [hy] ⟩
+      convert map_finite_series _ hπ with z
+      obtain ⟨ ⟨ x, y ⟩, hz ⟩ := z
+      simp at hz ⊢; tauto
+    _ = _ := by
+      convert (finite_series_of_disjoint_union _ _).symm
+      . sorry
+      sorry
+
+/-- Corollary 7.1.14 (Fubini's theorem for finite series)-/
+theorem finite_series_refl {XX YY:Type*} (X: Finset XX) (Y: Finset YY) (f: XX × YY → ℝ) : ∑ z ∈ Finset.product X Y, f z =
+∑ z ∈ Finset.product Y X, f (z.2, z.1) := by
+  set h : Finset.product Y X → Finset.product X Y := fun z ↦ ⟨ (z.val.2, z.val.1), by obtain ⟨ z, hz ⟩ := z; simp at hz ⊢; tauto ⟩
+  have hh : Function.Bijective h := by
+    constructor
+    . intro ⟨ ⟨ y, x ⟩, hz ⟩ ⟨ ⟨ y', x' ⟩, hz' ⟩ hzz'
+      simp [h] at hz hz' hzz' ⊢
+      simp [hzz']
+    intro ⟨ z, hz ⟩
+    simp at hz
+    use ⟨ (z.2, z.1), by simp [hz] ⟩
+  rw [finite_series_of_fintype]
+  nth_rewrite 2 [finite_series_of_fintype]
+  convert map_finite_series _ hh with z
+
+theorem finite_series_comm {XX YY:Type*} (X: Finset XX) (Y: Finset YY) (f: XX × YY → ℝ) : ∑ x ∈ X, ∑ y ∈ Y, f (x, y) =
+∑ y ∈ Y, ∑ x ∈ X, f (x, y) := by
+  rw [finite_series_of_finite_series, finite_series_refl,  finite_series_of_finite_series _ _ (fun z ↦ f (z.2, z.1))]
+
+
+-- Exercise 7.1.3 : develop as many analogues as you can of the above theory for finite products instead of finite sums.
 
 
 end Finset
