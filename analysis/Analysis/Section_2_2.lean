@@ -242,12 +242,13 @@ theorem Nat.trichotomous (a b:Nat) : a < b ∨ a = b ∨ a > b := by
   have why : a++ > b := by sorry
   tauto
 
-/-- (Not from textbook) The order is decidable.  This exercise is only recommended for Lean experts. -/
-instance Nat.decidableRel : DecidableRel (· ≤ · : Nat → Nat → Prop) := by
-  sorry
+/-- (Advanced exercise, not from textbook) Establish the decidability of this order computably (without using the classical reasoning or the axiom of choice), thus allowing one to remove the `noncomputable` tag from this and subsequent definitions and instances.  This exercise is only recommended for Lean experts. -/
+noncomputable instance Nat.decidableRel : DecidableRel (· ≤ · : Nat → Nat → Prop) := by
+  classical
+  exact Classical.decRel _
 
 /-- (Not from textbook) Nat has the structure of a linear ordering. -/
-instance Nat.linearOrder : LinearOrder Nat where
+noncomputable instance Nat.linearOrder : LinearOrder Nat where
   le_refl := ge_refl
   le_trans a b c hab hbc := ge_trans hbc hab
   lt_iff_le_not_le := sorry
