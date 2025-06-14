@@ -10,7 +10,9 @@ Technical note: it is convenient in Lean to extend finite sequences (usually by 
 Main constructions and results of this section:
 
 - API for summation over finite sets (encoded using Mathlib's `Finset` type), using the `Finset.sum` method and the `∑ n ∈ A, f n` notation.
-- Fubini's theorem for finite series 
+- Fubini's theorem for finite series
+
+We do not attempt to replicate the full API for `Finset.sum` here, but in subsequent sections we shall make liberal use of this API.
 
 -/
 
