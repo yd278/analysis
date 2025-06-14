@@ -80,14 +80,14 @@ theorem finite_series_of_le {m n:ℤ}  {a b: ℤ → ℝ} (h: ∀ i, m ≤ i →
 #check sum_congr
 
 /-- Proposition 7.1.8.  There is an unfortunate hack here in that one needs to extend the expressions `f g i` and `f h i` outside of `Icc 1 n`, leading to a certain uglification of the code. -/
-theorem finite_series_of_rearrange {n:ℕ} {Y:Type*} (X: Finset Y) (hcard: X.card = n) (f: X → ℝ) (g h: Icc (1:ℤ) n → X) (hg: Function.Bijective g) (hh: Function.Bijective h) : ∑ i ∈ Icc (1:ℤ) n, (if hi:i ∈ Icc (1:ℤ) n then f (g ⟨ i, hi ⟩) else 0) = ∑ i ∈ Icc (1:ℤ) n, (if hi: i ∈ Icc (1:ℤ) n then f (h ⟨ i, hi ⟩) else 0) := by
+theorem finite_series_of_rearrange {n:ℕ} {X':Type*} (X: Finset X') (hcard: X.card = n) (f: X' → ℝ) (g h: Icc (1:ℤ) n → X) (hg: Function.Bijective g) (hh: Function.Bijective h) : ∑ i ∈ Icc (1:ℤ) n, (if hi:i ∈ Icc (1:ℤ) n then f (g ⟨ i, hi ⟩) else 0) = ∑ i ∈ Icc (1:ℤ) n, (if hi: i ∈ Icc (1:ℤ) n then f (h ⟨ i, hi ⟩) else 0) := by
   -- This proof is written to broadly follow the structure of the original text.
   revert X n
   intro n
   induction' n with n hn
   . simp [sum_of_empty (show 0 < 1 by norm_num) (fun _ ↦ 0)]
   -- A technical step: we extend g, h to the entire integers using a slightly artificial map π
-  intro X hX f g h hg hh
+  intro X hX g h hg hh
   set π : ℤ → Icc (1:ℤ) (n+1) := fun i ↦ if hi: i ∈ Icc (1:ℤ) (n+1) then ⟨ i, hi ⟩ else ⟨ 1, by simp ⟩
   have hπ (g : Icc (1:ℤ) (n+1) → X) : ∑ i ∈ Icc (1:ℤ) (n+1), (if hi:i ∈ Icc (1:ℤ) (n+1) then f (g ⟨ i, hi ⟩) else 0) = ∑ i ∈ Icc (1:ℤ) (n+1), f (g (π i)) := by
     apply sum_congr rfl _
@@ -144,7 +144,7 @@ theorem finite_series_of_rearrange {n:ℕ} {Y:Type*} (X: Finset Y) (hcard: X.car
     contrapose! hlt; linarith
   set gtil : Icc (1:ℤ) n → X.erase x := fun i ↦ ⟨ (g (π i)).val, by simp [mem_erase, Subtype.val_inj, g_ne_x] ⟩
   set htil : Icc (1:ℤ) n → X.erase x := fun i ↦ ⟨ (h' i).val, by simp [mem_erase, Subtype.val_inj, h'_ne_x] ⟩
-  set ftil : X.erase x → ℝ := fun y ↦ f ⟨ y.val, by obtain ⟨ y, hy ⟩ := y; simp at hy ⊢; tauto ⟩
+  set ftil : X.erase x → ℝ := fun y ↦ f y.val
   have why : Function.Bijective gtil := by sorry
   have why2 : Function.Bijective htil := by sorry
   calc
@@ -153,7 +153,7 @@ theorem finite_series_of_rearrange {n:ℕ} {Y:Type*} (X: Finset Y) (hcard: X.car
       intro i hi
       simp [hi, gtil, ftil]
     _ = ∑ i ∈ Icc (1:ℤ) n, if hi: i ∈ Icc (1:ℤ) n then ftil (htil ⟨ i, hi ⟩ ) else 0 := by
-      convert hn _ _ ftil gtil htil why why2
+      convert hn _ _ gtil htil why why2
       rw [Finset.card_erase_of_mem _, hX]
       . simp
       simp [x]
@@ -161,6 +161,54 @@ theorem finite_series_of_rearrange {n:ℕ} {Y:Type*} (X: Finset Y) (hcard: X.car
       apply sum_congr rfl _
       intro i hi
       simp [hi, htil, ftil]
+
+/-- This fact ensures that Definition 7.1.6 would be well-defined even if we did not appeal to the existing `Finset.sum` method. -/
+theorem exist_bijection {n:ℕ} {Y:Type*} (X: Finset Y) (hcard: X.card = n) : ∃ g: Icc (1:ℤ) n → X, Function.Bijective g := by
+  have : (Icc (1:ℤ) n).card = X.card := by simp [hcard]
+  replace this := Finset.equivOfCardEq this
+  use this
+  exact Equiv.bijective this
+
+/-- Definition 7.1.6 -/
+theorem finite_series_eq {n:ℕ} {Y:Type*} (X: Finset Y) (f: Y → ℝ) (g: Icc (1:ℤ) n → X) (hg: Function.Bijective g) : ∑ i ∈ X, f i = ∑ i ∈ Icc (1:ℤ) n, (if hi:i ∈ Icc (1:ℤ) n then f (g ⟨ i, hi ⟩) else 0) := by
+  symm
+  convert sum_bij (t:=X) (fun i hi ↦ g ⟨ i, hi ⟩ ) _ _ _ _
+  . intro i hi; simp [hi]
+  . intro i hi j hj h
+    simp [Subtype.val_inj, (Function.Bijective.injective hg).eq_iff] at h; assumption
+  . intro b hb
+    obtain ⟨ ⟨ i, hi ⟩, h ⟩ := (Function.Bijective.surjective hg) ⟨ b, hb ⟩
+    use i, hi; simp [h]
+  intro i hi; simp [hi]
+
+/-- Proposition 7.1.11(a) / Exercise 7.1.2 -/
+theorem finite_series_of_empty {X':Type*} (f: X' → ℝ) : ∑ i ∈ ∅, f i = 0 := by sorry
+
+/-- Proposition 7.1.11(b) / Exercise 7.1.2 -/
+theorem finite_series_of_singleton {X':Type*} (f: X' → ℝ) (x₀:X') : ∑ i ∈ {x₀}, f i = f x₀ := by sorry
+
+/-- A technical lemma relating a sum over a finset with a sum over a fintype.  Combines well with tools such as `map_finite_series` below. -/
+theorem finite_series_of_fintype {X':Type*} (f: X' → ℝ) (X: Finset X') : ∑ x ∈ X, f x = ∑ x:X, f x.val := (sum_coe_sort X f).symm
+
+/-- Proposition 7.1.11(c) / Exercise 7.1.2 -/
+theorem map_finite_series {X:Type} [Fintype X] [Fintype Y] (f: X → ℝ) {g:Y → X} (hg: Function.Bijective g) : ∑ x, f x = ∑ y, f (g y) := by sorry
+
+-- Proposition 7.1.11(d) is `rfl` in our formalism and is therefore omitted.
+
+/-- Proposition 7.1.11(e) / Exercise 7.1.2 -/
+theorem finite_series_of_disjoint_union {Z:Type*} (X Y: Finset Z) (hdisj: Disjoint X Y) (f: Z → ℝ) : ∑ z ∈ X ∪ Y, f z = ∑ z ∈ X, f z + ∑ z ∈ Y, f z := by sorry
+
+/-- Proposition 7.1.11(f) / Exercise 7.1.2 -/
+theorem finite_series_of_add {X':Type*} (f g: X' → ℝ) (X: Finset X') : ∑ x ∈ X, (f + g) x = ∑ x ∈ X, f x + ∑ x ∈ X, g x := by sorry
+
+/-- Proposition 7.1.11(g) / Exercise 7.1.2 -/
+theorem finite_series_of_const_mul {X':Type*} (f: X' → ℝ) (X: Finset X') (c:ℝ) : ∑ x ∈ X, c * f x = c * ∑ x ∈ X, f x := by sorry
+
+/-- Proposition 7.1.11(h) / Exercise 7.1.2 -/
+theorem finite_series_of_le' {X':Type*} (f g: X' → ℝ) (X: Finset X') (h: ∀ x ∈ X, f x ≤ g x) : ∑ x ∈ X, f x ≤ ∑ x ∈ X, g x := by sorry
+
+/-- Proposition 7.1.11(i) / Exercise 7.1.2 -/
+theorem abs_finite_series_le' {X':Type*} (f: X' → ℝ) (X: Finset X') : |∑ x ∈ X, f x| ≤ ∑ x ∈ X, |f x| := by sorry
 
 
 
