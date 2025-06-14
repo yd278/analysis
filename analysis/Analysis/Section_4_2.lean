@@ -283,12 +283,13 @@ theorem Rat.add_lt_add_right {x y:Rat} (z:Rat) (hxy: x < y) : x + z < y + z := b
 /-- Proposition 4.2.9(e) (positive multiplication preserves order) / Exercise 4.2.5 -/
 theorem Rat.mul_lt_mul_right {x y z:Rat} (hxy: x < y) (hz: z.isPos) : x * z < y * z := by sorry
 
-/-- (Not from textbook) The order is decidable.  This exercise is only recommended for Lean experts.  Alternatively, one can establish this fact in classical logic via `classical; exact Classical.decRel _` -/
-instance Rat.decidableRel : DecidableRel (· ≤ · : Rat → Rat → Prop) := by
-  sorry
+/-- (Advanced exercise, not from textbook) Establish the decidability of this order computably (without using the classical reasoning or the axiom of choice), thus allowing one to remove the `noncomputable` tag from this and subsequent definitions and instances.  This exercise is only recommended for Lean experts. -/
+noncomputable instance Rat.decidableRel : DecidableRel (· ≤ · : Rat → Rat → Prop) := by
+  classical
+  exact Classical.decRel _
 
 /-- (Not from textbook) Rat has the structure of a linear ordering. -/
-instance Rat.instLinearOrder : LinearOrder Rat where
+noncomputable instance Rat.instLinearOrder : LinearOrder Rat where
   le_refl := sorry
   le_trans := sorry
   lt_iff_le_not_le := sorry

@@ -265,12 +265,13 @@ theorem Int.not_gt_and_eq (a b:Int) : ¬ (a > b ∧ a = b):= by sorry
 /-- Lemma 4.1.11(f) (Order trichotomy) / Exercise 4.1.7 -/
 theorem Int.not_lt_and_eq (a b:Int) : ¬ (a < b ∧ a = b):= by sorry
 
-/-- (Not from textbook) The order is decidable.  This exercise is only recommended for Lean experts. Alternatively, one can establish this fact in classical logic via `classical; exact Classical.decRel _`.  -/
-instance Int.decidableRel : DecidableRel (· ≤ · : Int → Int → Prop) := by
-  sorry
+/-- (Advanced exercise, not from textbook) Establish the decidability of this order computably (without using the classical reasoning or the axiom of choice), thus allowing one to remove the `noncomputable` tag from this and subsequent definitions and instances.  This exercise is only recommended for Lean experts. -/
+noncomputable instance Int.decidableRel : DecidableRel (· ≤ · : Int → Int → Prop) := by
+  classical
+  exact Classical.decRel _
 
 /-- (Not from textbook) Int has the structure of a linear ordering. -/
-instance Int.instLinearOrder : LinearOrder Int where
+noncomputable instance Int.instLinearOrder : LinearOrder Int where
   le_refl := sorry
   le_trans := sorry
   lt_iff_le_not_le := sorry
