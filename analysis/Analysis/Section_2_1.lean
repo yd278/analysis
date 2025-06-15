@@ -49,7 +49,7 @@ lemma Nat.one_succ : 1++ = 2 := by rfl
 lemma Nat.two_succ : 2++ = 3 := by rfl
 #check (3:Nat)
 
-/-- Axiom 2.3 (0 is not the successor of any natural number) -/
+/-- Axiom 2.3 (0 is not the successor of any natural number).  Compare with Mathlib's `Nat.succ_ne_zero` -/
 theorem Nat.succ_ne (n:Nat) : n++ ≠ 0 := by
   by_contra h
   simp only [reduceCtorEq] at h
@@ -61,11 +61,11 @@ theorem Nat.four_ne : (4:Nat) ≠ 0 := by
   -- By axiom 2.3, 3++ is not zero.
   exact succ_ne _
 
-/-- Axiom 2.4 (Different natural numbers have different successors) -/
+/-- Axiom 2.4 (Different natural numbers have different successors).  Compare with Mathlib's `Nat.succ_inj` -/
 theorem Nat.succ_cancel {n m:Nat} (hnm: n++ = m++) : n = m := by
   rwa [succ.injEq] at hnm
 
-/-- Axiom 2.4 (Different natural numbers have different successors) -/
+/-- Axiom 2.4 (Different natural numbers have different successors).  Compare with Mathlib's `Nat.succ_ne_succ` -/
 theorem Nat.succ_ne_succ (n m:Nat) : n ≠ m → n++ ≠ m++ := by
   intro h
   contrapose! h
@@ -86,21 +86,22 @@ theorem Nat.six_ne_two : (6:Nat) ≠ 2 := by
 theorem Nat.six_ne_two' : (6:Nat) ≠ 2 := by
   decide
 
-/-- Axiom 2.5 (principle of mathematical induction). -/
+/-- Axiom 2.5 (principle of mathematical induction). The `induction` (or `induction'`) tactic in Mathlib serve as a substitute for this axiom. -/
 theorem Nat.induction (P : Nat → Prop) (hbase : P 0) (hind : ∀ n, P n → P (n++)) : ∀ n, P n := by
   intro n
   induction n with
   | zero => exact hbase
   | succ n ih => exact hind _ ih
 
+/-- Recursion.  Analogous to the inbuilt Mathlib method `Nat.rec` associated to the Mathlib natural numbers -/
 abbrev Nat.recurse (f: Nat → Nat → Nat) (c: Nat) : Nat → Nat := fun n ↦ match n with
 | 0 => c
 | n++ => f n (recurse f c n)
 
-/-- Proposition 2.1.16 (recursive definitions). -/
+/-- Proposition 2.1.16 (recursive definitions). Compare with Mathlib's `Nat.rec_zero`. -/
 theorem Nat.recurse_zero (f: Nat → Nat → Nat) (c: Nat) : Nat.recurse f c 0 = c := by rfl
 
-/-- Proposition 2.1.16 (recursive definitions). -/
+/-- Proposition 2.1.16 (recursive definitions). Compare with Mathlib's `Nat.rec_add_one`. -/
 theorem Nat.recurse_succ (f: Nat → Nat → Nat) (c: Nat) (n: Nat) : recurse f c (n++) = f n (recurse f c n) := by rfl
 
 /-- Proposition 2.1.16 (recursive definitions). -/
