@@ -19,6 +19,7 @@ Main constructions and results of this section:
 - The replacement `A.replace hP` of a set `A` via a predicate
 `P: A.toSubtype → Object → Prop` obeying a uniqueness condition `∀ x y y', P x y ∧ P x y' → y = y'`, and the axiom of replacement.
 - A bijective correspondence between the Mathlib natural numbers `ℕ` and a set `Chapter3.Nat : Chapter3.Set` (the axiom of infinity).
+- Connections with Mathlib's notion of a set
 
 The other axioms of Zermelo-Frankel set theory are discussed in later sections.
 
@@ -548,5 +549,53 @@ theorem SetTheory.Set.subset_diff_subset_counter : ∃ (A B A' B':Set), (A' ⊆ 
 
 /-- Exercise 3.1.13 -/
 theorem SetTheory.Set.singleton_iff (A:Set) (hA: A ≠ ∅) : ¬ ∃ B, B ⊂ A ↔ ∃ x, A = {x} := by sorry
+
+
+/- Now we introduce connections between this notion of a set, and Mathlib's notion.  The exercise below will acquiant you with the API for Mathlib's sets. -/
+
+instance SetTheory.Set.inst_coe_set : Coe Set (_root_.Set Object) where
+  coe X := { x | x ∈ X }
+
+/-- Injectivity of the coercion -/
+@[simp]
+theorem SetTheory.Set.coe_inj' (X Y:Set) : (X : _root_.Set Object) = (Y : _root_.Set Object) ↔ X = Y := by
+  constructor
+  . intro h; apply ext; intro x
+    apply_fun (fun S ↦ x ∈ S) at h
+    simp at h; assumption
+  intro h; subst h; rfl
+
+/-- Compatibility of the membership operation ∈ -/
+theorem SetTheory.Set.mem_coe (X:Set) (x:Object) : x ∈ (X : _root_.Set Object) ↔ x ∈ X := by
+  simp [Coe.coe]
+
+/-- Compatibility of the emptyset -/
+theorem SetTheory.Set.coe_empty : ((∅:Set) : _root_.Set Object) = ∅ := by sorry
+
+/-- Compatibility of subset -/
+theorem SetTheory.Set.coe_subset (X Y:Set) : (X : _root_.Set Object) ⊆ (Y : _root_.Set Object) ↔ X ⊆ Y := by sorry
+
+theorem SetTheory.Set.coe_ssubset (X Y:Set) : (X : _root_.Set Object) ⊂ (Y : _root_.Set Object) ↔ X ⊂ Y := by sorry
+
+/-- Compatibility of singleton -/
+theorem SetTheory.Set.coe_singleton (x: Object) : ({x} : _root_.Set Object) = {x} := by sorry
+
+/-- Compatibility of union -/
+theorem SetTheory.Set.coe_union (X Y: Set) : (X ∪ Y : _root_.Set Object) = (X : _root_.Set Object) ∪ (Y : _root_.Set Object) := by sorry
+
+/-- Compatibility of pair -/
+theorem SetTheory.Set.coe_pair (x y: Object) : ({x, y} : _root_.Set Object) = {x, y} := by sorry
+
+/-- Compatibility of subtype -/
+theorem SetTheory.Set.coe_subtype (X: Set) :  (X : _root_.Set Object) = X.toSubtype := by sorry
+
+/-- Compatibility of intersection -/
+theorem SetTheory.Set.coe_intersection (X Y: Set) : (X ∩ Y : _root_.Set Object) = (X : _root_.Set Object) ∩ (Y : _root_.Set Object) := by sorry
+
+/-- Compatibility of set difference-/
+theorem SetTheory.Set.coe_diff (X Y: Set) : (X \ Y : _root_.Set Object) = (X : _root_.Set Object) \ (Y : _root_.Set Object) := by sorry
+
+/-- Compatibility of disjointness -/
+theorem SetTheory.Set.coe_Disjoint (X Y: Set) : Disjoint (X : _root_.Set Object) (Y : _root_.Set Object) ↔ Disjoint X Y := by sorry
 
 end Chapter3
