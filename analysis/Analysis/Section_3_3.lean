@@ -25,7 +25,7 @@ structure Function (X Y: Set) where
 
 #check Function.mk
 
-/-- Converting a Chapter 3 function to a Mathlib function.  -/
+/-- Converting a Chapter 3 function to a Mathlib function. The Chapter 3 definition of a function was nonconstructive, so we have to use the axiom of choice here.  -/
 noncomputable instance Function.inst_coefn (X Y: Set)  : CoeFun (Function X Y) (fun _ ↦ X → Y) where
   coe := fun f x ↦ Classical.choose (f.unique x)
 
@@ -94,10 +94,35 @@ theorem SetTheory.Set.not_P_3_3_2b_existsUnique : ¬ ∀ x, ∃! y: nat, P_3_3_2
 abbrev SetTheory.Set.P_3_3_2c : (nat \ {(0:Object)}: Set) → nat → Prop := fun x y ↦ ((y+1:ℕ):Object) = x
 
 theorem SetTheory.Set.P_3_3_2c_existsUnique (x: (nat \ {(0:Object)}: Set)) : ∃! y: nat, P_3_3_2c x y := by
-  sorry -- TODO
+-- Some technical unpacking here due to the subtle distinctions between the `Object` type, sets converted to subtypes of `Object`, and subsets of those sets.
+  obtain ⟨ x, hx ⟩ := x
+  simp at hx
+  obtain ⟨ hx1, hx2⟩ := hx
+  set n := ((⟨ x, hx1 ⟩:nat):ℕ)
+  have : x = (n:nat) := by simp [n]
+  simp [P_3_3_2c, this, SetTheory.Object.ofnat_eq'] at hx2 ⊢
+  replace hx2 : n = (n-1) + 1 := by omega
+  apply ExistsUnique.intro ((n-1:ℕ):nat)
+  . simp [←hx2]
+  intro y hy
+  set m := (y:ℕ)
+  simp [←hy, m]
 
 abbrev SetTheory.Set.f_3_3_2c : Function (nat \ {(0:Object)}: Set) nat := Function.mk P_3_3_2c P_3_3_2c_existsUnique
 
 theorem SetTheory.Set.f_3_3_2c_eval (x: (nat \ {(0:Object)}: Set)) (y: nat) : y = f_3_3_2c x ↔ ((y+1:ℕ):Object) = x := Function.eval _ _ _
+
+/-- Create a version of anon-zero `n` inside `nat \ {0}` for any natural number n. -/
+abbrev SetTheory.Set.coe_nonzero (n:ℕ) (h: n ≠ 0): (nat \ {(0:Object)}: Set) := ⟨ ((n:ℕ):Object), by simp [SetTheory.Object.ofnat_eq',h]; rw [←SetTheory.Object.ofnat_eq]; exact Subtype.property _ ⟩
+
+theorem SetTheory.Set.f_3_3_2c_eval' (n: ℕ) : f_3_3_2c (coe_nonzero (n+1) (by positivity)) = n := by
+  symm; rw [f_3_3_2c_eval]; simp
+
+theorem SetTheory.Set.f_3_3_2c_eval'' : f_3_3_2c (coe_nonzero 4 (by positivity)) = 3 := by convert f_3_3_2c_eval' 3
+
+theorem SetTheory.Set.f_3_3_2c_eval''' (n:ℕ) : f_3_3_2c (coe_nonzero (2*n+3) (by positivity)) = (2*n+2:ℕ) := by convert f_3_3_2c_eval' (2*n+2)
+
+
+
 
 end Chapter3
