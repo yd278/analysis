@@ -189,7 +189,7 @@ infix:90 "○" => Function.comp
 
 theorem Function.comp_eval {X Y Z: Set} (g: Function Y Z) (f: Function X Y) (x: X) : (g ○ f) x = g (f x) := Function.eval_of _ _
 
-/-- Compatibility with Mathlib's composition operation -/
+/-- Compatibility with Mathlib's composition operation.  You may find the `ext` and `simp` tactics to be useful. -/
 theorem Function.comp_eq_comp {X Y Z: Set} (g: Function Y Z) (f: Function X Y) : (g ○ f).to_fn = g.to_fn ∘ f.to_fn := by sorry
 
 /-- Example 3.3.11 -/
@@ -222,7 +222,7 @@ theorem Function.one_to_one_iff {X Y: Set} (f: Function X Y) : f.one_to_one ↔ 
   apply forall_congr'; intro x'
   tauto
 
-/-- Compatibility with Mathlib's Function.Injective-/
+/-- Compatibility with Mathlib's `Function.Injective`.  You may wish to use the `unfold` tactic to understand Mathlib concepts such as `Function.Injective`. -/
 theorem Function.one_to_one_iff' {X Y: Set} (f: Function X Y) : f.one_to_one ↔ Function.Injective f.to_fn := by sorry
 
 /-- Example 3.3.15.  One half of the example requires the integers, and so is expressed using Mathlib functions instead of Chapter 3 functions. -/
