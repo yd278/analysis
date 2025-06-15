@@ -241,7 +241,7 @@ theorem SetTheory.Set.subset_self (A:Set) : A ⊆ A := by sorry
 theorem SetTheory.Set.empty_subset (A:Set) : ∅ ⊆ A := by sorry
 
 /-- Proposition 3.1.17 (Partial ordering by set inclusion) -/
-theorem SetTheory.Set.subset_trans (A B C:Set) (hAB:A ⊆ B) (hBC:B ⊆ C) : A ⊆ C := by
+theorem SetTheory.Set.subset_trans {A B C:Set} (hAB:A ⊆ B) (hBC:B ⊆ C) : A ⊆ C := by
   -- this proof is written to follow the structure of the original text.
   rw [subset_def]
   intro x hx
@@ -360,7 +360,7 @@ theorem SetTheory.Set.compl_inter {A B X:Set} (hAX: A ⊆ X) (hBX: B ⊆ X) : X 
 instance SetTheory.Set.instDistribLattice : DistribLattice Set where
   le := (· ⊆ ·)
   le_refl := subset_self
-  le_trans := subset_trans
+  le_trans := fun _ _ _ ↦ subset_trans
   le_antisymm := subset_antisymm
   inf := (· ∩ ·)
   sup := (· ∪ ·)

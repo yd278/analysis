@@ -9,6 +9,9 @@ I have attempted to make the translation as faithful a paraphrasing as possible 
 Main constructions and results of this section:
 
 - A notion of function, adapted to the set theory of Section 3.1
+
+Some of the examples in this section require constructs, such as the integers and real numbers, that have not yet been defined in this set theory framework.  In these cases, I have provided Mathlib substitute examples instead.
+
 -/
 
 namespace Chapter3
@@ -58,7 +61,7 @@ theorem Function.eval_of {X Y: Set} (f: X → Y) (x:X) : (Function.mk_fn f) x = 
   symm; rw [eval]
 
 
-/-- Example 3.3.2.  Due to the fact that `nat` and ℕ -/
+/-- Example 3.3.2.   -/
 abbrev P_3_3_2a : nat → nat → Prop := fun x y ↦ (y:ℕ) = (x:ℕ)+1
 
 theorem SetTheory.Set.P_3_3_2a_existsUnique (x: nat) : ∃! y: nat, P_3_3_2a x y := by
@@ -122,6 +125,245 @@ theorem SetTheory.Set.f_3_3_2c_eval'' : f_3_3_2c (coe_nonzero 4 (by positivity))
 
 theorem SetTheory.Set.f_3_3_2c_eval''' (n:ℕ) : f_3_3_2c (coe_nonzero (2*n+3) (by positivity)) = (2*n+2:ℕ) := by convert f_3_3_2c_eval' (2*n+2)
 
+/-- Example 3.3.3 is a little tricky to replicate with the current formalism as the real numbers have not been constructed yet.  Instead, I offer some Mathlib counterparts.  Of course, filling in these sorries will require using some Mathlib API, for instance for the nonnegative real class `NNReal`. -/
+example : ¬ ∃ f: ℝ → ℝ, ∀ x y, y = f x ↔ y^2 = x := by sorry
+
+example : ¬ ∃ f: NNReal → ℝ, ∀ x y, y = f x ↔ y^2 = x := by sorry
+
+example : ∃ f: NNReal → ℝ, ∀ x y, y = f x ↔ y^2 = x := by sorry
+
+
+/-- Example 3.3.4. The unused variable `_x` is underscored to avoid triggering a linter. -/
+abbrev SetTheory.Set.P_3_3_4 : nat → nat → Prop := fun _x y ↦ y = 7
+
+theorem SetTheory.Set.P_3_3_4_existsUnique (x: nat) : ∃! y: nat, P_3_3_4 x y := by
+  apply ExistsUnique.intro 7
+  all_goals simp [P_3_3_4]
+
+abbrev SetTheory.Set.f_3_3_4 : Function nat nat := Function.mk P_3_3_4 P_3_3_4_existsUnique
+
+theorem SetTheory.Set.f_3_3_4_eval (x: nat) : f_3_3_4 x = 7 := by
+  symm; rw [Function.eval]
+
+/-- Definition 3.3.7 (Equality of functions) -/
+theorem Function.eq_iff {X Y: Set} (f g: Function X Y) : f = g ↔ ∀ x: X, f x = g x := by
+  constructor
+  . intro h; simp [h]
+  intro h
+  ext x y
+  constructor
+  . intro hf
+    rwa [←Function.eval _ _ _, ←h x, Function.eval _ _ _]
+  intro hg
+  rwa [←Function.eval _ _ _, h x, Function.eval _ _ _]
+
+/-- Example 3.3.8 (simplified).  The second part of the example is tricky to replicate in this formalism, so a Mathlib substitute is offered instead. -/
+abbrev SetTheory.Set.f_3_3_8a : Function nat nat := Function.mk_fn (fun x ↦ (x^2 + 2*x + 1:ℕ))
+
+abbrev SetTheory.Set.f_3_3_8b : Function nat nat := Function.mk_fn (fun x ↦ ((x+1)^2:ℕ))
+
+theorem SetTheory.Set.f_3_3_8_eq : f_3_3_8a = f_3_3_8b := by
+  rw [Function.eq_iff]
+  intro x
+  rw [Function.eval_of, Function.eval_of]
+  set n := (x:ℕ)
+  simp; ring
+
+example : (fun x:NNReal ↦ (x:ℝ)) = (fun x:NNReal ↦ |(x:ℝ)|) := by sorry
+
+example : (fun x:ℝ ↦ (x:ℝ)) ≠ (fun x:ℝ ↦ |(x:ℝ)|) := by sorry
+
+/-- Example 3.3.9 -/
+abbrev SetTheory.Set.f_3_3_9 (X:Set) : Function (∅:Set) X := Function.mk (fun _ _ ↦ True) (by intro ⟨ x,hx ⟩; simp at hx)
+
+theorem SetTheory.Set.empty_function_unique {X: Set} (f g: Function (∅:Set) X) : f = g := by sorry
+
+/-- Definition 3.3.10 (Composition) -/
+noncomputable abbrev Function.comp {X Y Z: Set} (g: Function Y Z) (f: Function X Y)  : Function X Z :=
+  Function.mk_fn (fun x ↦ g (f x))
+
+-- `∘` is already taken in Mathlib for the composition of Mathlib functions, so we use `○` here instead to avoid ambiguity.
+infix:90 "○" => Function.comp
+
+theorem Function.comp_eval {X Y Z: Set} (g: Function Y Z) (f: Function X Y) (x: X) : (g ○ f) x = g (f x) := Function.eval_of _ _
+
+/-- Compatibility with Mathlib's composition operation -/
+theorem Function.comp_eq_comp {X Y Z: Set} (g: Function Y Z) (f: Function X Y) : (g ○ f).to_fn = g.to_fn ∘ f.to_fn := by sorry
+
+/-- Example 3.3.11 -/
+abbrev SetTheory.Set.f_3_3_11 : Function nat nat := Function.mk_fn (fun x ↦ (2*x:ℕ))
+
+abbrev SetTheory.Set.g_3_3_11 : Function nat nat := Function.mk_fn (fun x ↦ (x+3:ℕ))
+
+theorem SetTheory.Set.g_circ_f_3_3_11: g_3_3_11 ○ f_3_3_11 = Function.mk_fn (fun x ↦ ((2*(x:ℕ)+3:ℕ):nat)) := by
+  rw [Function.eq_iff]
+  intro x
+  rw [Function.comp_eval, Function.eval_of, Function.eval_of, Function.eval_of]
+  simp
+
+theorem SetTheory.Set.f_circ_g_3_3_11: f_3_3_11 ○ g_3_3_11 = Function.mk_fn (fun x ↦ ((2*(x:ℕ)+6:ℕ):nat)) := by
+  rw [Function.eq_iff]
+  intro x
+  rw [Function.comp_eval, Function.eval_of, Function.eval_of, Function.eval_of]
+  simp; ring
+
+/-- Lemma 3.3.12 (Composition is associative) -/
+theorem SetTheory.Set.comp_assoc {W X Y Z: Set} (h: Function Y Z) (g: Function X Y) (f: Function W X) : h ○ (g ○ f) = (h ○ g) ○ f := by
+  rw [Function.eq_iff]
+  intro x
+  simp_rw [Function.comp_eval]
+
+abbrev Function.one_to_one {X Y: Set} (f: Function X Y) : Prop := ∀ x x': X, x ≠ x' → f x ≠ f x'
+
+theorem Function.one_to_one_iff {X Y: Set} (f: Function X Y) : f.one_to_one ↔ ∀ x x': X, f x = f x' → x = x' := by
+  apply forall_congr'; intro x
+  apply forall_congr'; intro x'
+  tauto
+
+/-- Compatibility with Mathlib's Function.Injective-/
+theorem Function.one_to_one_iff' {X Y: Set} (f: Function X Y) : f.one_to_one ↔ Function.Injective f.to_fn := by sorry
+
+/-- Example 3.3.15.  One half of the example requires the integers, and so is expressed using Mathlib functions instead of Chapter 3 functions. -/
+theorem SetTheory.Set.f_3_3_15_one_to_one : (Function.mk_fn (fun (n:nat) ↦ ((n^2:ℕ):nat))).one_to_one := by sorry
+
+example : ¬ Function.Injective (fun (n:ℤ) ↦ n^2) := by sorry
+
+example : Function.Injective (fun (n:ℕ) ↦ n^2) := by sorry
+
+/-- Remark 3.3.16 -/
+theorem SetTheory.Set.two_to_one {X Y: Set} {f: Function X Y} (h: ¬ f.one_to_one) : ∃ x x': X, x ≠ x' ∧ f x = f x' := by sorry
+
+/-- Definition 3.3.17 (Onto functions) -/
+abbrev Function.onto {X Y: Set} (f: Function X Y) : Prop := ∀ y: Y, ∃ x: X, f x = y
+
+/-- Compatibility with Mathlib's Function.Surjective-/
+theorem Function.onto_iff {X Y: Set} (f: Function X Y) : f.onto ↔ Function.Surjective f.to_fn := by sorry
+
+/-- Example 3.3.18 (using Mathlib) -/
+example : ¬ Function.Surjective (fun (n:ℤ) ↦ n^2) := by sorry
+
+abbrev A_3_3_18 := { m:ℤ // ∃ n:ℤ, m = n^2 }
+
+example : Function.Surjective (fun (n:ℤ) ↦ ⟨ n^2, by use n ⟩ : ℤ → A_3_3_18) := by sorry
+
+/-- Definition 3.3.20 (Bijective functions) -/
+abbrev Function.bijective {X Y: Set} (f: Function X Y) : Prop := f.one_to_one ∧ f.onto
+
+/-- Compatibility with Mathlib's Function.Bijective-/
+theorem Function.bijective_iff {X Y: Set} (f: Function X Y) : f.bijective ↔ Function.Bijective f.to_fn := by sorry
+
+/-- Example 3.3.21 (using Mathlib) -/
+abbrev f_3_3_21 : Fin 3 → ({3,4}:_root_.Set ℕ) := fun x ↦ match x with
+| 0 => ⟨ 3, by norm_num ⟩
+| 1 => ⟨ 3, by norm_num ⟩
+| 2 => ⟨ 4, by norm_num ⟩
+
+example : ¬ Function.Injective f_3_3_21 := by sorry
+example : ¬ Function.Bijective f_3_3_21 := by sorry
+
+abbrev g_3_3_21 : Fin 2 → ({2,3,4}:_root_.Set ℕ) := fun x ↦ match x with
+| 0 => ⟨ 2, by norm_num ⟩
+| 1 => ⟨ 3, by norm_num ⟩
+
+example : ¬ Function.Surjective g_3_3_21 := by sorry
+example : ¬ Function.Bijective g_3_3_21 := by sorry
+
+abbrev h_3_3_21 : Fin 3 → ({3,4,5}:_root_.Set ℕ) := fun x ↦ match x with
+| 0 => ⟨ 3, by norm_num ⟩
+| 1 => ⟨ 4, by norm_num ⟩
+| 2 => ⟨ 5, by norm_num ⟩
+
+example : Function.Bijective h_3_3_21 := by sorry
+
+/-- Example 3.3.22 is formulated using Mathlib rather than the set theory framework here to avoid some tedious technical issues (cf. Exercise 3.3.2) -/
+example : Function.Bijective (fun n ↦ ⟨ n+1, by omega⟩ : ℕ → { n:ℕ // n ≠ 0 }) := by sorry
+
+example : ¬ Function.Bijective (fun n ↦ n+1) := by sorry
+
+/-- Remark 3.3.24 -/
+theorem Function.bijective_incorrect_def : ∃ X Y: Set, ∃ f: Function X Y, (∀ x: X, ∃! y: Y, y = f x) ∧ ¬ f.bijective := by sorry
+
+/-- We cannot use the notation `f⁻¹` for the inverse because in Mathlib's `Inv` class, the inverse of `f` must be exactly of the same type of `f`, and `Function Y X` is a different type from `Function X Y`.-/
+abbrev Function.inverse {X Y: Set} (f: Function X Y) (h: f.bijective) : Function Y X := Function.mk (fun y x ↦ f x = y) (by
+  intro y
+  apply existsUnique_of_exists_of_unique
+  . obtain ⟨ x, hx ⟩ := h.2 y
+    use x
+  intro x x' hx hx'
+  simp at hx hx'
+  rw [←hx'] at hx
+  apply f.one_to_one_iff.mp h.1 _ _
+  simp [hx]
+  )
+
+theorem Function.inverse_eval {X Y: Set} {f: Function X Y} (h: f.bijective) (y: Y) (x: X) : x = (f.inverse h) y ↔ f x = y := Function.eval _ _ _
+
+/-- Compatibility with Mathlib's notion of inverse -/
+theorem Function.inverse_eq {X Y: Set} [Nonempty X] {f: Function X Y} (h: f.bijective) : (f.inverse h).to_fn = Function.invFun f.to_fn := by sorry
+
+/-- Exercise 3.3.1 -/
+theorem Function.refl {X Y:Set} (f: Function X Y) : f = f := by sorry
+
+theorem Function.symm {X Y:Set} (f g: Function X Y) : f = g ↔ g = f := by sorry
+
+theorem Function.trans {X Y:Set} {f g h: Function X Y} (hfg: f = g) (hgh: g = h) : f = h := by sorry
+
+theorem Function.comp_congr {X Y Z:Set} {f f': Function X Y} (hff': f = f') {g g': Function Y Z} (hgg': g = g') : g ○ f = g' ○ f' := by sorry
+
+/-- Exercise 3.3.2 -/
+theorem Function.comp_of_inj {X Y Z:Set} {f: Function X Y} {g : Function Y Z} (hf: f.one_to_one) (hg: g.one_to_one) : (g ○ f).one_to_one := by sorry
+
+theorem Function.comp_of_surj {X Y Z:Set} {f: Function X Y} {g : Function Y Z} (hf: f.onto) (hg: g.onto) : (g ○ f).onto := by sorry
+
+/-- Exercise 3.3.3 - fill in the sorrys in the statements in  a reasonable fashion. -/
+example (X: Set) : (SetTheory.Set.f_3_3_9 X).one_to_one ↔ sorry := by sorry
+
+example (X: Set) : (SetTheory.Set.f_3_3_9 X).onto ↔ sorry := by sorry
+
+example (X: Set) : (SetTheory.Set.f_3_3_9 X).bijective ↔ sorry := by sorry
+
+/-- Exercise 3.3.4.  State and prove theorems or counterexamples in the case that `hg` or `hf` is omitted as a hypothesis. -/
+theorem Function.comp_cancel_left {X Y Z:Set} {f f': Function X Y} {g : Function Y Z} (heq : g ○ f = g ○ f') (hg: g.one_to_one) : f = f' := by sorry
+
+theorem Function.comp_cancel_right {X Y Z:Set} {f: Function X Y} {g g': Function Y Z} (heq : g ○ f = g' ○ f) (hf: g.onto) : g = g' := by sorry
+
+/-- Exercise 3.3.5.  State or prove theorems or counterexamples in the case that `f` is replaced with `g` or vice versa in the conclusion.-/
+theorem Function.comp_injective {X Y Z:Set} {f: Function X Y} {g : Function Y Z} (hinj : (g ○ f).one_to_one) : f.one_to_one := by sorry
+
+theorem Function.comp_surjective {X Y Z:Set} {f: Function X Y} {g : Function Y Z} (hinj : (g ○ f).onto) : g.onto := by sorry
+
+/-- Exercise 3.3.6 -/
+theorem Function.inverse_comp_self {X Y: Set} {f: Function X Y} (h: f.bijective) (x: X) : (f.inverse h) (f x) = x := by sorry
+
+theorem Function.self_comp_inverse {X Y: Set} {f: Function X Y} (h: f.bijective) (y: Y) : f ((f.inverse h) y) = y := by sorry
+
+theorem Function.inverse_bijective {X Y: Set} {f: Function X Y} (h: f.bijective) : (f.inverse h).bijective := by sorry
+
+theorem Function.inverse_inverse {X Y: Set} {f: Function X Y} (h: f.bijective) : (f.inverse h).inverse (f.inverse_bijective h) = f := by sorry
+
+theorem Function.comp_bijective {X Y Z:Set} {f: Function X Y} {g : Function Y Z} (hf: f.bijective) (hg: g.bijective) : (g ○ f).bijective := by sorry
+
+/-- Exercise 3.3.7 -/
+theorem Function.inv_of_comp {X Y Z:Set} {f: Function X Y} {g : Function Y Z} (hf: f.bijective) (hg: g.bijective) : (g ○ f).inverse (Function.comp_bijective hf hg) = (f.inverse hf) ○ (g.inverse hg) := by sorry
+
+/-- Exercise 3.3.8 -/
+abbrev Function.inclusion {X Y:Set} (h: X ⊆ Y) : Function X Y := Function.mk_fn (fun x ↦ ⟨ x.val, h x.val x.property ⟩ )
+
+abbrev Function.id (X:Set) : Function X X := Function.mk_fn (fun x ↦ x)
+
+theorem Function.inclusion_id (X:Set) : Function.inclusion (SetTheory.Set.subset_self X) = Function.id X := by sorry
+
+theorem Function.inclusion_comp (X Y Z:Set) (hXY: X ⊆ Y) (hYZ: Y ⊆ Z) : Function.inclusion hYZ ○ Function.inclusion hXY = Function.inclusion (SetTheory.Set.subset_trans hXY hYZ) := by sorry
+
+theorem Function.comp_id {A B:Set} (f: Function A B) : f ○ Function.id A = f := by sorry
+
+theorem Function.id_comp {A B:Set} (f: Function A B) : Function.id B ○ f = f := by sorry
+
+theorem Function.comp_inv {A B:Set} (f: Function A B) (hf: f.bijective) : f ○ f.inverse hf = Function.id B := by sorry
+
+theorem Function.inv_comp {A B:Set} (f: Function A B) (hf: f.bijective) : f.inverse hf ○ f = Function.id A := by sorry
+
+theorem Function.glue {X Y Z:Set} (hXY: Disjoint X Y) (f: Function X Z) (g: Function Y Z) : ∃! h: Function (X ∪ Y) Z, (h ○ Function.inclusion (SetTheory.Set.subset_union_left X Y) = f) ∧ (h ○ Function.inclusion (SetTheory.Set.subset_union_right X Y) = g) := by sorry
 
 
 
