@@ -556,7 +556,7 @@ theorem SetTheory.Set.singleton_iff (A:Set) (hA: A ≠ ∅) : ¬ ∃ B, B ⊂ A 
 instance SetTheory.Set.inst_coe_set : Coe Set (_root_.Set Object) where
   coe X := { x | x ∈ X }
 
-/-- Injectivity of the coercion -/
+/-- Injectivity of the coercion.  Note however that we do NOT assert that the coercion is surjective (and indeed Russell's paradox prevents this) -/
 @[simp]
 theorem SetTheory.Set.coe_inj' (X Y:Set) : (X : _root_.Set Object) = (Y : _root_.Set Object) ↔ X = Y := by
   constructor
