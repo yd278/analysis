@@ -8,19 +8,21 @@ I have attempted to make the translation as faithful a paraphrasing as possible 
 
 Main constructions and results of this section:
 
-- A notion of function, adapted to the set theory of Section 3.1
+- A notion of function `Function X Y` between two sets `X`, `Y` in the set theory of Section 3.1
+- Various relations with the Mathlib notion of a function `X → Y` between two types `X`, `Y`.  (Note from Section 3.1 that every `Set` `X` can also be viewed as a subtype `{ x:Object // x ∈ X }` of `Object`.)
+- Basic function properties and operations, such as composition, one-to-one and onto functions, and inverses.
 
-Some of the examples in this section require constructs, such as the integers and real numbers, that have not yet been defined in this set theory framework.  In these cases, I have provided Mathlib substitute examples instead.
-
+In the rest of the book we will deprecate the Chapter 3 version of a function, and work with the Mathlib notion of a function instead.  Even within this section, we will switch to the Mathlib formalism for some of the examples involving number systems such as `ℤ` or `ℝ` that have not been implemented in the Chapter 3 framework.
 -/
 
 namespace Chapter3
 
-export SetTheory (Set Object nat nat_equiv)
+-- We will work here with the version `nat` of the natural numbers internal to the Chapter 3 set theory, though usually we will use coercions to then immediately translate to the Mathlib natural numbers `ℕ`.
+export SetTheory (Set Object nat)
 
 variable [SetTheory]
 
-/-- Definition 3.3.1. `Function X Y` is the structure of functions from `X` to `Y`. -/
+/-- Definition 3.3.1. `Function X Y` is the structure of functions from `X` to `Y`.   Analogous to the Mathlib type `X → Y`.-/
 @[ext]
 structure Function (X Y: Set) where
   P : X → Y → Prop
@@ -28,7 +30,7 @@ structure Function (X Y: Set) where
 
 #check Function.mk
 
-/-- Converting a Chapter 3 function to a Mathlib function. The Chapter 3 definition of a function was nonconstructive, so we have to use the axiom of choice here.  -/
+/-- Converting a Chapter 3 function `f: Function X Y` to a Mathlib function `f: X → Y`. The Chapter 3 definition of a function was nonconstructive, so we have to use the axiom of choice here.  -/
 noncomputable instance Function.inst_coefn (X Y: Set)  : CoeFun (Function X Y) (fun _ ↦ X → Y) where
   coe := fun f x ↦ Classical.choose (f.unique x)
 
@@ -80,9 +82,9 @@ theorem SetTheory.Set.f_3_3_2a_eval' (n: ℕ) : f_3_3_2a (n:nat) = (n+1:ℕ) := 
   symm
   simp only [f_3_3_2a_eval, nat_equiv_coe_of_coe]
 
-theorem SetTheory.Set.f_3_3_2a_eval'' : f_3_3_2a (nat_equiv 4) = nat_equiv 5 :=  f_3_3_2a_eval' 4
+theorem SetTheory.Set.f_3_3_2a_eval'' : f_3_3_2a 4 = 5 :=  f_3_3_2a_eval' 4
 
-theorem SetTheory.Set.f_3_3_2a_eval''' (n:ℕ) : f_3_3_2a (nat_equiv (2*n+3)) = nat_equiv (2*n+4) := by
+theorem SetTheory.Set.f_3_3_2a_eval''' (n:ℕ) : f_3_3_2a (2*n+3: ℕ) = (2*n+4:ℕ) := by
   convert f_3_3_2a_eval' _
 
 abbrev SetTheory.Set.P_3_3_2b : nat → nat → Prop := fun x y ↦ (y+1:ℕ) = (x:ℕ)
@@ -115,7 +117,7 @@ abbrev SetTheory.Set.f_3_3_2c : Function (nat \ {(0:Object)}: Set) nat := Functi
 
 theorem SetTheory.Set.f_3_3_2c_eval (x: (nat \ {(0:Object)}: Set)) (y: nat) : y = f_3_3_2c x ↔ ((y+1:ℕ):Object) = x := Function.eval _ _ _
 
-/-- Create a version of anon-zero `n` inside `nat \ {0}` for any natural number n. -/
+/-- Create a version of a non-zero `n` inside `nat \ {0}` for any natural number n. -/
 abbrev SetTheory.Set.coe_nonzero (n:ℕ) (h: n ≠ 0): (nat \ {(0:Object)}: Set) := ⟨ ((n:ℕ):Object), by simp [SetTheory.Object.ofnat_eq',h]; rw [←SetTheory.Object.ofnat_eq]; exact Subtype.property _ ⟩
 
 theorem SetTheory.Set.f_3_3_2c_eval' (n: ℕ) : f_3_3_2c (coe_nonzero (n+1) (by positivity)) = n := by
@@ -125,7 +127,7 @@ theorem SetTheory.Set.f_3_3_2c_eval'' : f_3_3_2c (coe_nonzero 4 (by positivity))
 
 theorem SetTheory.Set.f_3_3_2c_eval''' (n:ℕ) : f_3_3_2c (coe_nonzero (2*n+3) (by positivity)) = (2*n+2:ℕ) := by convert f_3_3_2c_eval' (2*n+2)
 
-/-- Example 3.3.3 is a little tricky to replicate with the current formalism as the real numbers have not been constructed yet.  Instead, I offer some Mathlib counterparts.  Of course, filling in these sorries will require using some Mathlib API, for instance for the nonnegative real class `NNReal`. -/
+/-- Example 3.3.3 is a little tricky to replicate with the current formalism as the real numbers have not been constructed yet.  Instead, I offer some Mathlib counterparts.  Of course, filling in these sorries will require using some Mathlib API, for instance for the nonnegative real class `NNReal`, and how this class interacts with `ℝ`. -/
 example : ¬ ∃ f: ℝ → ℝ, ∀ x y, y = f x ↔ y^2 = x := by sorry
 
 example : ¬ ∃ f: NNReal → ℝ, ∀ x y, y = f x ↔ y^2 = x := by sorry
@@ -187,7 +189,7 @@ infix:90 "○" => Function.comp
 
 theorem Function.comp_eval {X Y Z: Set} (g: Function Y Z) (f: Function X Y) (x: X) : (g ○ f) x = g (f x) := Function.eval_of _ _
 
-/-- Compatibility with Mathlib's composition operation -/
+/-- Compatibility with Mathlib's composition operation.  You may find the `ext` and `simp` tactics to be useful. -/
 theorem Function.comp_eq_comp {X Y Z: Set} (g: Function Y Z) (f: Function X Y) : (g ○ f).to_fn = g.to_fn ∘ f.to_fn := by sorry
 
 /-- Example 3.3.11 -/
@@ -220,7 +222,7 @@ theorem Function.one_to_one_iff {X Y: Set} (f: Function X Y) : f.one_to_one ↔ 
   apply forall_congr'; intro x'
   tauto
 
-/-- Compatibility with Mathlib's Function.Injective-/
+/-- Compatibility with Mathlib's `Function.Injective`.  You may wish to use the `unfold` tactic to understand Mathlib concepts such as `Function.Injective`. -/
 theorem Function.one_to_one_iff' {X Y: Set} (f: Function X Y) : f.one_to_one ↔ Function.Injective f.to_fn := by sorry
 
 /-- Example 3.3.15.  One half of the example requires the integers, and so is expressed using Mathlib functions instead of Chapter 3 functions. -/

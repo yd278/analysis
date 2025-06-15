@@ -242,13 +242,30 @@ theorem Nat.trichotomous (a b:Nat) : a < b ∨ a = b ∨ a > b := by
   have why : a++ > b := by sorry
   tauto
 
-/-- (Advanced exercise, not from textbook) Establish the decidability of this order computably (without using the classical reasoning or the axiom of choice), thus allowing one to remove the `noncomputable` tag from this and subsequent definitions and instances.  This exercise is only recommended for Lean experts. -/
-noncomputable instance Nat.decidableRel : DecidableRel (· ≤ · : Nat → Nat → Prop) := by
-  classical
-  exact Classical.decRel _
+/-- (Not from textbook) Establish the decidability of this order computably.  The portion of the proof involving decidability has been provided; the remaining sorries involve claims about the natural numbers.  One could also have established this result by the `classical` tactic followed by `exact Classical.decRel _`, but this would make this definition (as well as some instances below) noncomputable. -/
+def le_dec : (a b : Nat) → Decidable (a ≤ b)
+  | 0, b => by
+    apply isTrue
+    sorry
+  | a++, b => by
+    cases le_dec a b with
+    | isTrue h =>
+      cases decEq a b with
+      | isTrue h =>
+        apply isFalse
+        sorry
+      | isFalse h =>
+        apply isTrue
+        sorry
+    | isFalse h =>
+      apply isFalse
+      sorry
+
+instance Nat.decidableRel : DecidableRel (· ≤ · : Nat → Nat → Prop) := le_dec
+
 
 /-- (Not from textbook) Nat has the structure of a linear ordering. -/
-noncomputable instance Nat.linearOrder : LinearOrder Nat where
+instance Nat.linearOrder : LinearOrder Nat where
   le_refl := ge_refl
   le_trans a b c hab hbc := ge_trans hbc hab
   lt_iff_le_not_le := sorry
