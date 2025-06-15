@@ -58,6 +58,15 @@ theorem Int.eq (a b c d:ℕ): a —— b = c —— d ↔ a + d = c + b := by
   . exact Quotient.exact
   intro h; exact Quotient.sound h
 
+/-- Decidability of equality -/
+instance Int.decidableEq : DecidableEq Int := by
+  intro a b
+  have : ∀ (n:PreInt) (m: PreInt), Decidable (Quotient.mk PreInt.instSetoid n = Quotient.mk PreInt.instSetoid m) := by
+    intro ⟨ a,b ⟩ ⟨ c,d ⟩
+    rw [eq]
+    exact decEq _ _
+  exact Quotient.recOnSubsingleton₂ a b this
+
 /-- Definition 4.1.1 (Integers) -/
 theorem Int.eq_diff (n:Int) : ∃ a b, n = a —— b := by
   apply Quot.ind _ n; intro ⟨ a, b ⟩
@@ -265,13 +274,23 @@ theorem Int.not_gt_and_eq (a b:Int) : ¬ (a > b ∧ a = b):= by sorry
 /-- Lemma 4.1.11(f) (Order trichotomy) / Exercise 4.1.7 -/
 theorem Int.not_lt_and_eq (a b:Int) : ¬ (a < b ∧ a = b):= by sorry
 
-/-- (Advanced exercise, not from textbook) Establish the decidability of this order computably (without using the classical reasoning or the axiom of choice), thus allowing one to remove the `noncomputable` tag from this and subsequent definitions and instances.  This exercise is only recommended for Lean experts. -/
-noncomputable instance Int.decidableRel : DecidableRel (· ≤ · : Int → Int → Prop) := by
-  classical
-  exact Classical.decRel _
+/-- (Not from textbook) Establish the decidability of this order. -/
+instance Int.decidableRel : DecidableRel (· ≤ · : Int → Int → Prop) := by
+  intro n m
+  have : ∀ (n:PreInt) (m: PreInt), Decidable (Quotient.mk PreInt.instSetoid n ≤ Quotient.mk PreInt.instSetoid m) := by
+    intro ⟨ a,b ⟩ ⟨ c,d ⟩
+    change Decidable (a —— b ≤ c —— d)
+    cases (a + d).decLe (b + c) with
+      | isTrue h =>
+        apply isTrue
+        sorry
+      | isFalse h =>
+        apply isFalse
+        sorry
+  exact Quotient.recOnSubsingleton₂ n m this
 
 /-- (Not from textbook) Int has the structure of a linear ordering. -/
-noncomputable instance Int.instLinearOrder : LinearOrder Int where
+instance Int.instLinearOrder : LinearOrder Int where
   le_refl := sorry
   le_trans := sorry
   lt_iff_le_not_le := sorry

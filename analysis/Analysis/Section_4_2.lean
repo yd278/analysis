@@ -283,13 +283,33 @@ theorem Rat.add_lt_add_right {x y:Rat} (z:Rat) (hxy: x < y) : x + z < y + z := b
 /-- Proposition 4.2.9(e) (positive multiplication preserves order) / Exercise 4.2.5 -/
 theorem Rat.mul_lt_mul_right {x y z:Rat} (hxy: x < y) (hz: z.isPos) : x * z < y * z := by sorry
 
-/-- (Advanced exercise, not from textbook) Establish the decidability of this order computably (without using the classical reasoning or the axiom of choice), thus allowing one to remove the `noncomputable` tag from this and subsequent definitions and instances.  This exercise is only recommended for Lean experts. -/
-noncomputable instance Rat.decidableRel : DecidableRel (· ≤ · : Rat → Rat → Prop) := by
-  classical
-  exact Classical.decRel _
+/-- (Not from textbook) Establish the decidability of this order. -/
+instance Rat.decidableRel : DecidableRel (· ≤ · : Rat → Rat → Prop) := by
+  intro n m
+  have : ∀ (n:PreRat) (m: PreRat), Decidable (Quotient.mk PreRat.instSetoid n ≤ Quotient.mk PreRat.instSetoid m) := by
+    intro ⟨ a,b,hb ⟩ ⟨ c,d,hd ⟩
+    -- at this point, the goal is morally `Decidable(a//b ≤ c//d)`, but there are technical issues due to the junk value of formal divisionwhen the denominator vanishes.  It may be more convenient to avoid formal division and work directly with `Quotient.mk`.
+    cases (0:ℤ).decLe (b*d) with
+      | isTrue hbd =>
+        cases (a * d).decLe (b * c) with
+          | isTrue h =>
+            apply isTrue
+            sorry
+          | isFalse h =>
+            apply isFalse
+            sorry
+      | isFalse hbd =>
+        cases (b * c).decLe (a * d) with
+          | isTrue h =>
+            apply isTrue
+            sorry
+          | isFalse h =>
+            apply isFalse
+            sorry
+  exact Quotient.recOnSubsingleton₂ n m this
 
 /-- (Not from textbook) Rat has the structure of a linear ordering. -/
-noncomputable instance Rat.instLinearOrder : LinearOrder Rat where
+instance Rat.instLinearOrder : LinearOrder Rat where
   le_refl := sorry
   le_trans := sorry
   lt_iff_le_not_le := sorry
