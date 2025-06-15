@@ -25,7 +25,7 @@ In order to align the formalization with Mathlib conventions, a small number of 
 - Chapter 3: Set theory
   - Section 3.1: Fundamentals ([Verso page](https://teorth.github.io/analysis/sec31/)) ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Section_3_1.html)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Section_3_1.lean))
   - _Section 3.2: Russell's paradox (possible future expansion)_
-  - _Section 3.3: Functions (planned)_
+  - Section 3.3: Functions ([Verso page](https://teorth.github.io/analysis/sec33/)) ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Section_3_3.html)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Section_3_3.lean))
   - _Section 3.4: Images and inverse images (planned)_
   - _Section 3.5: Cartesian products (planned)_
   - _Section 3.6: Cardinality of sets (planned)_
