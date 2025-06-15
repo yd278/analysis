@@ -34,23 +34,26 @@ namespace Chapter3
 
 /-- Some of the axioms of Zermelo-Frankel theory with atoms  -/
 class SetTheory where
-  Set : Type
-  Object : Type
-  set_to_object : Set ↪ Object
-  mem : Object → Set → Prop
-  emptyset: Set
-  emptyset_mem x : ¬ mem x emptyset
-  extensionality X Y : (∀ x, mem x X ↔ mem x Y) → X = Y
-  singleton : Object → Set
-  singleton_axiom x y : mem x (singleton y) ↔ x = y
-  union_pair : Set → Set → Set
-  union_pair_axiom X Y x : mem x (union_pair X Y) ↔ (mem x X ∨ mem x Y)
-  specify A (P: Subtype (fun x ↦ mem x A) → Prop) : Set
-  specification_axiom A (P: Subtype (fun x ↦ mem x A) → Prop) : (∀ x, mem x (specify A P) → mem x A) ∧ ∀ x, mem x.val (specify A P) ↔ P x
-  replace A (P: Subtype (fun x ↦ mem x A) → Object → Prop) (hP: ∀ x y y', P x y ∧ P x y' → y = y') : Set
-  replacement_axiom A (P: Subtype (fun x ↦ mem x A) → Object → Prop) (hP: ∀ x y y', P x y ∧ P x y' → y = y') : ∀ y, mem y (replace A P hP) ↔ ∃ x, P x y
-  nat : Set
-  nat_equiv : ℕ ≃ Subtype (fun x ↦ mem x nat)
+  Set : Type -- Axiom 3.1
+  Object : Type -- Axiom 3.1
+  set_to_object : Set ↪ Object -- Axiom 3.1
+  mem : Object → Set → Prop -- Axiom 3.1
+  extensionality X Y : (∀ x, mem x X ↔ mem x Y) → X = Y -- Axiom 3.2
+  emptyset: Set -- Axiom 3.3
+  emptyset_mem x : ¬ mem x emptyset -- Axiom 3.3
+  singleton : Object → Set -- Axiom 3.4
+  singleton_axiom x y : mem x (singleton y) ↔ x = y -- Axiom 3.4
+  union_pair : Set → Set → Set -- Axiom 3.5
+  union_pair_axiom X Y x : mem x (union_pair X Y) ↔ (mem x X ∨ mem x Y) -- Axiom 3.5
+  specify A (P: Subtype (mem . A) → Prop) : Set -- Axiom 3.6
+  specification_axiom A (P: Subtype (mem . A) → Prop) : (∀ x, mem x (specify A P) → mem x A) ∧ ∀ x, mem x.val (specify A P) ↔ P x -- Axiom 3.6
+  replace A (P: Subtype (mem . A) → Object → Prop) (hP: ∀ x y y', P x y ∧ P x y' → y = y') : Set -- Axiom 3.7
+  replacement_axiom A (P: Subtype (mem . A) → Object → Prop) (hP: ∀ x y y', P x y ∧ P x y' → y = y') : ∀ y, mem y (replace A P hP) ↔ ∃ x, P x y -- Axiom 3.7
+  nat : Set -- Axiom 3.8
+  nat_equiv : ℕ ≃ Subtype (mem . nat) -- Axiom 3.8
+  pow : Set → Set → Set -- Axiom 3.11
+  function_to_object (X: Set) (Y: Set) : (Subtype (mem . X) → Subtype (mem . Y)) ↪ Object -- Axiom 3.11
+  power_set_axiom (X: Set) (Y: Set) (F:Object) : mem F (pow X Y) ↔ ∃ f: Subtype (mem . X) → Subtype (mem . Y), function_to_object X Y f = F -- Axiom 3.11
 
 export SetTheory (Set Object)
 
