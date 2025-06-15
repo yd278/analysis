@@ -254,7 +254,7 @@ theorem Int.neg_gt_neg {a b:Int} (h: a > b) : -a < -b := by sorry
 theorem Int.gt_trans {a b c:Int} (hab: a > b) (hbc: b > c) : a > c := by sorry
 
 /-- Lemma 4.1.11(f) (Order trichotomy) / Exercise 4.1.7 -/
-theorem Int.trichotomous' (a b c:Int) : a > b ∨ a < b ∨ a = b := by sorry
+theorem Int.trichotomous' (a b:Int) : a > b ∨ a < b ∨ a = b := by sorry
 
 /-- Lemma 4.1.11(f) (Order trichotomy) / Exercise 4.1.7 -/
 theorem Int.not_gt_and_lt (a b:Int) : ¬ (a > b ∧ a < b):= by sorry
