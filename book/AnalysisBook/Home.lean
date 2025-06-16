@@ -22,6 +22,7 @@ Currently formalized sections:
 - [Section 2.3: Multiplication](./sec23/)
 - [Chapter 2 epilogue: Isomorphism with the Mathlib natural numbers](./sec2e)
 - [Section 3.1: Set theory fundamentals](./sec31/)
+- [Section 3.2: Russel's paradox](./sec32/)
 - [Section 3.3: Functions](./sec33/)
 - [Section 4.1: The integers](./sec41/)
 - [Section 4.2: The rationals](./sec42/)
