@@ -117,6 +117,11 @@ lemma SetTheory.Set.nonempty_def {X:Set} (h: X ≠ ∅) : ∃ x, x ∈ X := by
   replace claim := ext claim
   contradiction
 
+theorem SetTheory.Set.nonempty_of_inhabited {X:Set} {x:Object} (h:x ∈ X) : X ≠ ∅ := by
+  contrapose! h
+  rw [eq_empty_iff_forall_notMem] at h
+  exact h x
+
 instance SetTheory.Set.instSingleton : Singleton Object Set where
   singleton := SetTheory.singleton
 
