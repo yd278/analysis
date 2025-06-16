@@ -51,6 +51,7 @@ class SetTheory where
   replacement_axiom A (P: Subtype (mem . A) → Object → Prop) (hP: ∀ x y y', P x y ∧ P x y' → y = y') : ∀ y, mem y (replace A P hP) ↔ ∃ x, P x y -- Axiom 3.7
   nat : Set -- Axiom 3.8
   nat_equiv : ℕ ≃ Subtype (mem . nat) -- Axiom 3.8
+  regularity_axiom A (hA : ∃ x, mem x A) : ∃ x, mem x A ∧ ∀ S, x = set_to_object S → ¬ ∃ y, mem y A ∧ mem y S -- Axiom 3.9
   pow : Set → Set → Set -- Axiom 3.11
   function_to_object (X: Set) (Y: Set) : (Subtype (mem . X) → Subtype (mem . Y)) ↪ Object -- Axiom 3.11
   power_set_axiom (X: Set) (Y: Set) (F:Object) : mem F (pow X Y) ↔ ∃ f: Subtype (mem . X) → Subtype (mem . Y), function_to_object X Y f = F -- Axiom 3.11
@@ -99,12 +100,12 @@ instance SetTheory.Set.instEmpty : EmptyCollection Set where
 @[simp]
 theorem SetTheory.Set.not_mem_empty : ∀ x, x ∉ (∅:Set) := SetTheory.emptyset_mem
 
-/-- Empty set is unique -/
-theorem SetTheory.Set.eq_empty_iff_forall_notMem {X:Set} : X = ∅ ↔ (∀ x, ¬ x ∈ X) := by
+/-- Empty set has no elements -/
+theorem SetTheory.Set.eq_empty_iff_forall_notMem {X:Set} : X = ∅ ↔ (∀ x, x ∉ X) := by
   sorry
 
 /-- Empty set is unique -/
-theorem SetTheory.Set.empty_unique : ∃! (X:Set), ∀ x, ¬ x ∈ X := by
+theorem SetTheory.Set.empty_unique : ∃! (X:Set), ∀ x, x ∉ X := by
   sorry
 
 /-- Lemma 3.1.5 (Single choice) -/
