@@ -29,6 +29,7 @@ def sections := #[
   (`Analysis.Section_2_2, "Addition"),
   (`Analysis.Section_2_3, "Multiplication"),
   (`Analysis.Section_3_1, "Fundamentals"),
+  (`Analysis.Section_3_2, "Russell's paradox"),
   (`Analysis.Section_3_3, "Functions"),
   (`Analysis.Section_3_4, "Images and inverse images"),
   (`Analysis.Section_4_1, "The integers"),

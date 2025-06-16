@@ -9,6 +9,11 @@ In this section we set up a version of Zermelo-Frankel set theory (with atoms) t
 I have attempted to make the translation as faithful a paraphrasing as possible of the original text.   When there is a choice between a more idiomatic Lean solution and a more faithful translation, I have generally chosen the latter.  In particular, there will be places where the Lean code could be "golfed" to be more elegant and idiomatic, but I have consciously avoided doing so.
 
 This section is mostly optional, though it does make explicit the axiom of foundation which is used in a minor role in an exercise in Section 3.5.
+
+Main constructions and results of this section:
+
+- Russell's paradox (ruling out the axiom of universal specification)
+- The axiom of regularity (foundation) - an axiom designed to avoid Russell's paradox
 --/
 
 namespace Chapter3
