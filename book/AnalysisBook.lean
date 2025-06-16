@@ -70,7 +70,7 @@ def demoSite : Site := site AnalysisBook.Home /
   "sec65" Book.Analysis.Section_6_5
   "sec66" Book.Analysis.Section_6_6
   "sec6e" Book.Analysis.Section_6_epilogue
-  "sec71" Book.Analysis.Section_7_1
+--  "sec71" Book.Analysis.Section_7_1
 
 def baseUrl := "https://teorth.github.io/analysis/docs/"
 
