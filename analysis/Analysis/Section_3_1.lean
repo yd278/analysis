@@ -54,6 +54,8 @@ class SetTheory where
   pow : Set → Set → Set -- Axiom 3.11
   function_to_object (X: Set) (Y: Set) : (Subtype (mem . X) → Subtype (mem . Y)) ↪ Object -- Axiom 3.11
   power_set_axiom (X: Set) (Y: Set) (F:Object) : mem F (pow X Y) ↔ ∃ f: Subtype (mem . X) → Subtype (mem . Y), function_to_object X Y f = F -- Axiom 3.11
+  union : Set → Set -- Axiom 3.12
+  union_axiom A x : mem x (union A) ↔ ∃ S, mem x S ∧ mem (set_to_object S) A -- Axiom 3.12
 
 export SetTheory (Set Object)
 
@@ -127,6 +129,7 @@ instance SetTheory.Set.instUnion : Union Set where
   union := SetTheory.union_pair
 
 /-- Axiom 3.4 (Pairwise union)-/
+@[simp]
 theorem SetTheory.Set.mem_union (x:Object) (X Y:Set) : x ∈ (X ∪ Y) ↔ (x ∈ X ∨ x ∈ Y) := SetTheory.union_pair_axiom X Y x
 
 instance SetTheory.Set.instInsert : Insert Object Set where
