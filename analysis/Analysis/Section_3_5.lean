@@ -100,6 +100,80 @@ theorem SetTheory.Set.curry_uncurry {X Y Z:Set} (f: X → Y → Z) : curry (uncu
 
 theorem SetTheory.Set.uncurry_curry {X Y Z:Set} (f: X ×ˢ Y → Z) : uncurry (curry f) = f := by sorry
 
+abbrev SetTheory.Set.prod_commutator (X Y:Set) : X ×ˢ Y ≃ Y ×ˢ X where
+  toFun := sorry
+  invFun := sorry
+  left_inv := sorry
+  right_inv := sorry
+
+abbrev SetTheory.Set.prod_associator (X Y Z:Set) : (X ×ˢ Y) ×ˢ Z ≃ X ×ˢ (Y ×ˢ Z) where
+  toFun := sorry
+  invFun := sorry
+  left_inv := sorry
+  right_inv := sorry
+
+/-- Connections with the Mathlib set product -/
+abbrev SetTheory.Set.prod_equiv_prod (X Y:Set) : ((X ×ˢ Y):_root_.Set Object) ≃ (X:_root_.Set Object) ×ˢ (Y:_root_.Set Object) where
+  toFun := sorry
+  invFun := sorry
+  left_inv := sorry
+  right_inv := sorry
+
+
+/-- Definition 3.5.7 -/
+abbrev SetTheory.Set.tuple {I:Set} {X: I → Set} (a: ∀ i, X i) : Object := object_of ((fun i ↦ ⟨ a i, by rw [mem_iUnion]; use i; exact (a i).property ⟩):I → iUnion I X)
+
+/-- Definition 3.5.7 -/
+abbrev SetTheory.Set.iProd {I: Set} (X: I → Set) : Set := ((iUnion I X)^I).specify (fun t ↦ ∃ a : ∀ i, X i, t = tuple a)
+
+/-- Definition 3.5.7 -/
+theorem SetTheory.Set.mem_iProd {I: Set} {X: I → Set} (t:Object) : t ∈ iProd X ↔ ∃ a: ∀ i, X i, t = tuple a := by
+  simp only [iProd, specification_axiom'']
+  constructor
+  . intro ⟨ ht, a, h ⟩
+    use a
+  intro ⟨ a, ha ⟩
+  have h : t ∈ (I.iUnion X)^I := by
+    rw [power_set_axiom, ha]
+    use fun i ↦ ⟨ a i, by rw [mem_iUnion]; use i; exact (a i).property ⟩
+  use h, a
+
+@[simp]
+theorem SetTheory.Set.tuple_inj {I:Set} {X: I → Set} (a b: ∀ i, X i) : tuple a = tuple b ↔ a = b := by sorry
+
+/-- Example 3.5.11 -/
+abbrev SetTheory.Set.singleton_iProd_equiv (i:Object) (X:Set) : iProd (fun _:({i}:Set) ↦ X) ≃ X where
+  toFun := sorry
+  invFun := sorry
+  left_inv := sorry
+  right_inv := sorry
+
+/-- Example 3.5.11 -/
+abbrev SetTheory.Set.empty_iProd_equiv (X: (∅:Set) → Set) : iProd X ≃ Fin 1 where
+  toFun := sorry
+  invFun := sorry
+  left_inv := sorry
+  right_inv := sorry
+
+/-- Example 3.5.11 -/
+abbrev SetTheory.Set.iProd_of_const_equiv (I:Set) (X: Set) : iProd (fun i:I ↦ X) ≃ (I → X) where
+  toFun := sorry
+  invFun := sorry
+  left_inv := sorry
+  right_inv := sorry
+
+abbrev SetTheory.Set.iProd_equiv_prod (X: ({0,1}:Set) → Set) : iProd X ≃ (X ⟨ 0, by simp ⟩) ×ˢ (X ⟨ 1, by simp ⟩) where
+  toFun := sorry
+  invFun := sorry
+  left_inv := sorry
+  right_inv := sorry
+
+/-- Example 3.5.9 -/
+abbrev SetTheory.Set.iProd_equiv_prod_triple (X: ({0,1,2}:Set) → Set) : iProd X ≃ (X ⟨ 0, by simp ⟩) ×ˢ (X ⟨ 1, by simp ⟩) ×ˢ (X ⟨ 2, by simp ⟩) where
+  toFun := sorry
+  invFun := sorry
+  left_inv := sorry
+  right_inv := sorry
 
 
 end Chapter3
