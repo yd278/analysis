@@ -104,7 +104,7 @@ More resource suggestions welcome!
 
 ### Building the project
 
-To build this project after [installing Lean](https://www.lean-lang.org/lean-get-started) and cloning this repository, follow these steps:
+To build this project after [installing Lean](https://lean-lang.org/documentation/setup/) and cloning this repository, follow these steps:
 
 ```
 % cd analysis/
@@ -115,7 +115,7 @@ To build this project after [installing Lean](https://www.lean-lang.org/lean-get
 
 ### Building the project's web page
 
-To build the project's web page after [installing Lean](https://www.lean-lang.org/lean-get-started) and cloning this repository, follow these steps:
+To build the project's web page after [installing Lean](https://lean-lang.org/documentation/setup/) and cloning this repository, follow these steps:
 
 ```
 % cd analysis/
