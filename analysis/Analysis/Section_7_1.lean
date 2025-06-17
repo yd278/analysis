@@ -249,7 +249,8 @@ theorem finite_series_of_finite_series {XX YY:Type*} (X: Finset XX) (Y: Finset Y
         intro ⟨ y, hy ⟩
         use ⟨ (x₀, y), by simp [hy] ⟩
       convert map_finite_series _ hπ with z
-      obtain ⟨ ⟨ x, y ⟩, hz ⟩ := z
+      obtain ⟨ xy , hz ⟩ := z
+      obtain ⟨x, y⟩ := xy
       simp at hz ⊢; tauto
     _ = _ := by
       convert (finite_series_of_disjoint_union _ _).symm
