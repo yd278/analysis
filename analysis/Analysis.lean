@@ -7,6 +7,7 @@ import Analysis.Section_3_2
 import Analysis.Section_3_3
 import Analysis.Section_3_4
 import Analysis.Section_3_5
+import Analysis.Section_3_6
 import Analysis.Section_4_1
 import Analysis.Section_4_2
 import Analysis.Section_4_3
