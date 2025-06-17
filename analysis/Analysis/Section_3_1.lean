@@ -19,6 +19,7 @@ Main constructions and results of this section:
 - The replacement `A.replace hP` of a set `A` via a predicate
 `P: A.toSubtype → Object → Prop` obeying a uniqueness condition `∀ x y y', P x y ∧ P x y' → y = y'`, and the axiom of replacement.
 - A bijective correspondence between the Mathlib natural numbers `ℕ` and a set `Chapter3.Nat : Chapter3.Set` (the axiom of infinity).
+- Axioms of regularity, power set, and union (used in later sections of this chapter, but not required here)
 - Connections with Mathlib's notion of a set
 
 The other axioms of Zermelo-Frankel set theory are discussed in later sections.
