@@ -1,7 +1,9 @@
 import Lake
 open Lake DSL
 
-require verso from git "https://github.com/pimotte/verso.git"@"analysis"
+require verso from git "https://github.com/leanprover/verso.git"@"main"
+require subverso from git
+  "https://github.com/leanprover/subverso.git" @ "c0fc43dce384e563afdef19288daa35befaf4f86"
 
 package "analysis-book" where
   version := v!"0.1.0"
@@ -50,7 +52,7 @@ def sections := #[
   (`Analysis.Section_6_5, "Some standard limits"),
   (`Analysis.Section_6_6, "Subsequences"),
   (`Analysis.Section_6_epilogue, "Connections with Mathlib limits"),
- (`Analysis.Section_7_1, "Finite series")
+  (`Analysis.Section_7_1, "Finite series")
 ]
 
 /--
