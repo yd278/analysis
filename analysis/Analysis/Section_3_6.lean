@@ -10,6 +10,10 @@ I have attempted to make the translation as faithful a paraphrasing as possible 
 Main constructions and results of this section:
 
 - Cardinality of a set
+- Finite and infinite sets
+- Connections with Mathlib equivalents
+
+After this section, these notions will be deprecated in favor of their Mathlib equivalents.
 
 -/
 
