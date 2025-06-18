@@ -287,8 +287,7 @@ theorem finite_series_of_finite_series {XX YY:Type*} (X: Finset XX) (Y: Finset Y
       congr 1
       rw [finite_series_of_fintype, finite_series_of_fintype f]
       set π : Finset.product {x₀} Y → Y :=
-        fun z ↦ ⟨ z.val.2, by obtain ⟨ z, hz ⟩ := z; simp at hz ⊢;
-        obtain ⟨ a, ⟨ ha, rfl ⟩ ⟩ := hz; simp [ha] ⟩
+        fun z ↦ ⟨ z.val.2, by obtain ⟨ z, hz ⟩ := z; simp at hz ⊢; obtain ⟨ a, ⟨ ha, rfl ⟩ ⟩ := hz; simp [ha] ⟩
       have hπ : Function.Bijective π := by
         constructor
         . intro ⟨ ⟨ x, y ⟩, hz ⟩ ⟨ ⟨ x', y' ⟩, hz' ⟩ hzz'
