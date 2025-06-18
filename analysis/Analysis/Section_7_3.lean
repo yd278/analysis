@@ -197,6 +197,7 @@ theorem Series.converges_qseries (q : ℝ) (hq : q > 0) : (mk' (m := 1) fun n �
 
 /-- Remark 7.3.8 -/
 theorem Series.zeta_eq {q:ℝ} (hq: q > 1) : (mk' (m := 1) fun n ↦ 1 / (n:ℝ) ^ q : Series).sum = riemannZeta q := by
+  -- `riemannZeta` is defined over the complex numbers, so some preliminary work is needed to specialize to the reals.
   set L := ∑' n:ℕ, 1 / (n+1:ℝ)^q
   have hL : L = riemannZeta q := by
     rw [zeta_eq_tsum_one_div_nat_add_one_cpow (by norm_cast)]
@@ -208,9 +209,9 @@ theorem Series.zeta_eq {q:ℝ} (hq: q > 1) : (mk' (m := 1) fun n ↦ 1 / (n:ℝ)
   apply sum_of_converges
   have : Summable (fun (n : ℕ)↦ 1 / (n+1:ℝ) ^ q) := by
     convert (Real.summable_one_div_nat_add_rpow 1 q).mpr hq using 4 with n
-    rw [abs_of_nonneg (show (n+1:ℝ) ≥ 0 by positivity)]
+    rw [abs_of_nonneg (by positivity)]
   have tail (a: ℤ → ℝ) (L:ℝ) : Filter.Tendsto a Filter.atTop (nhds L) ↔ Filter.Tendsto (fun n:ℕ ↦ a n) Filter.atTop (nhds L) := by
-    convert Filter.tendsto_map'_iff (f:=a) (g:= fun n:ℕ ↦ (n:ℤ) )
+    convert Filter.tendsto_map'_iff (g:= fun n:ℕ ↦ (n:ℤ) )
     simp
   unfold convergesTo
   rw [tail _ L]
@@ -225,10 +226,8 @@ theorem Series.zeta_eq {q:ℝ} (hq: q > 1) : (mk' (m := 1) fun n ↦ 1 / (n:ℝ)
     simp [e]
     constructor
     . intro ⟨ h1, h2 ⟩
-      use (x-1).toNat
-      omega
-    intro ⟨ a, han, hax ⟩
-    omega
+      use (x-1).toNat; omega
+    intro ⟨ a, han, hax ⟩; omega
   simp [e]
 
 /-- Exercise 7.3.3 -/
