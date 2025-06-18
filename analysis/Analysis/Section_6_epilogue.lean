@@ -64,9 +64,33 @@ theorem Chapter6.Sequence.tendsto_iff_Tendsto (a: ℕ → ℝ) (L:ℝ) :
   simp [hpos, ←Real.dist_eq]
   exact le_of_lt hN
 
+theorem Chapter6.Sequence.tendsto_iff_Tendsto' (a: Sequence) (L:ℝ) : a.tendsTo L ↔ Filter.Tendsto a.seq Filter.atTop (nhds L) := by
+  rw [Metric.tendsto_atTop, tendsTo_iff]
+  constructor
+  . intro h ε hε
+    specialize h (ε/2) (half_pos hε)
+    obtain ⟨ N, hN ⟩ := h
+    use N
+    intro n hn
+    specialize hN n hn
+    rw [Real.dist_eq]
+    linarith
+  intro h ε hε
+  specialize h ε hε
+  obtain ⟨ N, hN ⟩ := h
+  use N
+  intro n hn
+  rw [ge_iff_le] at hn
+  specialize hN n hn
+  simp [←Real.dist_eq]
+  exact le_of_lt hN
+
 theorem Chapter6.Sequence.converges_iff_Tendsto (a: ℕ → ℝ) :
     (a:Sequence).convergent ↔ ∃ L, Filter.Tendsto a Filter.atTop (nhds L) := by
   simp_rw [←tendsto_iff_Tendsto]
+
+theorem Chapter6.Sequence.converges_iff_Tendsto' (a: Sequence) : a.convergent ↔ ∃ L, Filter.Tendsto a.seq Filter.atTop (nhds L) := by
+  simp_rw [←tendsto_iff_Tendsto']
 
 /-- A technicality: `CauSeq.IsComplete ℝ` was established for `_root_.abs` but not for `norm`. -/
 instance inst_real_complete : CauSeq.IsComplete ℝ norm := by
@@ -166,4 +190,3 @@ theorem Chapter6.Sequence.liminf_eq (a:ℕ → ℝ) :
     (a:Sequence).liminf = Filter.liminf (fun n ↦ (a n:EReal)) Filter.atTop := by
   simp_rw [Filter.liminf_eq, Filter.eventually_atTop]
   sorry
-
