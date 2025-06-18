@@ -49,6 +49,14 @@ theorem Series.eval_mk' {m:ℤ} (a : { n // n ≥ m } → ℝ) {n : ℤ} (h:n �
 /-- Definition 7.2.2 (Convergence of series) -/
 abbrev Series.partial (s : Series) (N:ℤ) : ℝ := ∑ n ∈ Finset.Icc s.m N, s.seq n
 
+theorem Series.partial_succ (s : Series) {N:ℤ} (h: N ≥ s.m-1) : s.partial (N+1) = s.partial N + s.seq (N+1) := by
+  unfold Series.partial
+  rw [add_comm (s.partial N) _]
+  have : N+1 ∉ Finset.Icc s.m N := by simp
+  convert Finset.sum_insert this
+  refine (Finset.insert_Icc_right_eq_Icc_add_one ?_).symm
+  linarith
+
 abbrev Series.convergesTo (s : Series) (L:ℝ) : Prop := Filter.Tendsto (s.partial) Filter.atTop (nhds L)
 
 abbrev Series.converges (s : Series) : Prop := ∃ L, s.convergesTo L
@@ -125,15 +133,9 @@ theorem Series.converges_of_alternating {m:ℤ} {a: { n // n ≥ m} → ℝ} (ha
   set b := mk' fun n ↦ (-1) ^ (n:ℤ) * a n
   set S := b.partial
   have claim0 {N:ℤ} (hN: N ≥ m) : S (N+1) = S N + (-1)^(N+1) * a ⟨ N+1, by linarith ⟩ := by
-    unfold S Series.partial
-    rw [add_comm (S N) _]
-    have : N+1 ∉ Finset.Icc b.m N := by simp
-    convert Finset.sum_insert this
-    . refine (Finset.insert_Icc_right_eq_Icc_add_one ?_).symm
-      simp [b, mk']
-      linarith
-    have : m ≤ N+1 := by linarith
-    simp [b, this]
+    have h1 : N+1 ≥ m := by linarith
+    convert b.partial_succ ?_
+    simp [b, h1]; linarith
   have claim1 {N:ℤ} (hN: N ≥ m) : S (N+2) = S N + (-1)^(N+1) * (a ⟨ N+1, by linarith ⟩ - a ⟨ N+2, by linarith ⟩) := calc
       S (N+2) = S N + (-1)^(N+1) * a ⟨ N+1, by linarith ⟩ + (-1)^(N+2) * a ⟨ N+2, by linarith ⟩ := by
         have hN2 : N+2 = N+1+1 := by abel

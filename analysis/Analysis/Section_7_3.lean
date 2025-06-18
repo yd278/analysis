@@ -69,7 +69,68 @@ theorem Series.cauchy_criterion {s:Series} (hm: s.m = 1) (hs:s.nonneg) (hmono: �
   set S := s.partial
   set T := t.partial
   have Lemma_7_3_6 (K:ℕ) : S (2^(K+1) - 1) ≤ T K ∧ T K ≤ 2 * S (2^K) := by
-    sorry -- TODO
+    induction' K with K hK
+    . simp [S,T,Series.partial, hm, htm, t]
+      linarith [hs 1]
+    obtain ⟨ hK1, hK2 ⟩ := hK
+    have claim1 : T (K + 1) = T K + 2^(K+1) * s.seq (2^(K+1)) := by
+      convert t.partial_succ ?_
+      linarith
+    have claim2a : S (2^(K+1)) ≥ S (2^K) + 2^K * s.seq (2^(K+1)) := calc
+      _ = S (2^K) + ∑ n ∈ Finset.Ioc (2^K) (2^(K+1)), s.seq n := by
+        have : Disjoint (Finset.Icc s.m (2^K)) (Finset.Ioc (2^K) (2^(K+1))) := by
+          rw [Finset.disjoint_iff_ne]
+          intro x hx y hy
+          simp at hx hy
+          linarith
+        convert Finset.sum_union this
+        ext x; simp
+        constructor
+        . intro ⟨h1, h2⟩
+          simp [h1, h2, le_or_lt]
+        intro h
+        rcases h with ⟨ h1, h2 ⟩ | ⟨ h1, h2 ⟩
+        . simp [h1,pow_succ']; linarith
+        simp [h2, hm]
+        have : 1 ≤ 2^K := Nat.one_le_two_pow
+        linarith
+      _ ≥ S (2^K) + ∑ n ∈ Finset.Ioc ((2:ℤ)^K) (2^(K+1)), s.seq (2^(K+1)) := by
+        gcongr with n hn
+        sorry
+      _ = _ := by
+        simp [pow_succ']; left
+        ring_nf
+        norm_cast
+    have claim2 : 2 * S (2^(K+1)) ≥ 2 * S (2^K) + 2^(K+1) * s.seq (2^(K+1)) := by nth_rewrite 2 [pow_succ']; linarith
+    have claim3 : S (2^(K+1+1) - 1) ≤ S (2^(K+1)-1) + 2^(K+1) * s.seq (2^(K+1)) := calc
+      _ = S (2^(K+1)-1) + ∑ n ∈ Finset.Icc (2^(K+1)) (2^(K+1+1)-1), s.seq n := by
+        have : Disjoint (Finset.Icc s.m (2^(K+1)-1)) (Finset.Icc (2^(K+1)) (2^(K+1+1)-1)) := by
+          rw [Finset.disjoint_iff_ne]
+          intro x hx y hy
+          simp at hx hy
+          linarith
+        convert Finset.sum_union this
+        ext x; simp
+        constructor
+        . intro ⟨h1, h2⟩
+          simp [h1, h2]
+          omega
+        intro h
+        rcases h with ⟨ h1, h2 ⟩ | ⟨ h1, h2 ⟩
+        . simp [h1, pow_succ' _ (K+1)]
+          linarith
+        simp [h2, hm]
+        have : 1 ≤ 2^(K+1) := Nat.one_le_two_pow
+        linarith
+      _ ≤ S (2^(K+1)-1) + ∑ n ∈ Finset.Icc ((2:ℤ)^(K+1)) (2^(K+1+1)-1), s.seq (2^(K+1)) := by
+        gcongr with n hn
+        sorry
+      _ = _ := by
+        simp [pow_succ']; left
+        ring_nf
+        norm_cast
+    simp
+    constructor <;> linarith
   constructor
   . intro h
     obtain ⟨ M, hM ⟩ := h
