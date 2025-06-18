@@ -64,6 +64,14 @@ theorem Series.cauchy_criterion {s:Series} (hm: s.m = 1) (hs:s.nonneg) (hmono: �
     by_cases h: n ≥ 0
     all_goals simp [t,h]
     exact hs _
+  have hmono' : ∀ n ≥ 1, ∀ m ≥ n, s.seq m ≤ s.seq n := by
+    intro n hn m hm
+    obtain ⟨ k, rfl ⟩ := Int.le.dest hm
+    clear hm
+    induction' k with k hk
+    . simp
+    convert (hmono (n+k) (by linarith)).trans hk using 2
+    simp; abel
   have htm : t.m = 0 := by simp [t]
   rw [converges_of_nonneg_iff hs, converges_of_nonneg_iff ht]
   set S := s.partial
@@ -72,6 +80,8 @@ theorem Series.cauchy_criterion {s:Series} (hm: s.m = 1) (hs:s.nonneg) (hmono: �
     induction' K with K hK
     . simp [S,T,Series.partial, hm, htm, t]
       linarith [hs 1]
+    have h2K : 1 ≤ 2^K := Nat.one_le_two_pow
+    have h2K' : 1 ≤ 2^(K+1) := Nat.one_le_two_pow
     obtain ⟨ hK1, hK2 ⟩ := hK
     have claim1 : T (K + 1) = T K + 2^(K+1) * s.seq (2^(K+1)) := by
       convert t.partial_succ ?_
@@ -81,8 +91,7 @@ theorem Series.cauchy_criterion {s:Series} (hm: s.m = 1) (hs:s.nonneg) (hmono: �
         have : Disjoint (Finset.Icc s.m (2^K)) (Finset.Ioc (2^K) (2^(K+1))) := by
           rw [Finset.disjoint_iff_ne]
           intro x hx y hy
-          simp at hx hy
-          linarith
+          simp at hx hy; linarith
         convert Finset.sum_union this
         ext x; simp
         constructor
@@ -91,12 +100,11 @@ theorem Series.cauchy_criterion {s:Series} (hm: s.m = 1) (hs:s.nonneg) (hmono: �
         intro h
         rcases h with ⟨ h1, h2 ⟩ | ⟨ h1, h2 ⟩
         . simp [h1,pow_succ']; linarith
-        simp [h2, hm]
-        have : 1 ≤ 2^K := Nat.one_le_two_pow
-        linarith
+        simp [h2, hm]; linarith
       _ ≥ S (2^K) + ∑ n ∈ Finset.Ioc ((2:ℤ)^K) (2^(K+1)), s.seq (2^(K+1)) := by
         gcongr with n hn
-        sorry
+        simp at hn
+        exact hmono' _ (by linarith) _ hn.2
       _ = _ := by
         simp [pow_succ']; left
         ring_nf
@@ -107,24 +115,20 @@ theorem Series.cauchy_criterion {s:Series} (hm: s.m = 1) (hs:s.nonneg) (hmono: �
         have : Disjoint (Finset.Icc s.m (2^(K+1)-1)) (Finset.Icc (2^(K+1)) (2^(K+1+1)-1)) := by
           rw [Finset.disjoint_iff_ne]
           intro x hx y hy
-          simp at hx hy
-          linarith
+          simp at hx hy; linarith
         convert Finset.sum_union this
         ext x; simp
         constructor
         . intro ⟨h1, h2⟩
-          simp [h1, h2]
-          omega
+          simp [h1, h2]; omega
         intro h
         rcases h with ⟨ h1, h2 ⟩ | ⟨ h1, h2 ⟩
-        . simp [h1, pow_succ' _ (K+1)]
-          linarith
-        simp [h2, hm]
-        have : 1 ≤ 2^(K+1) := Nat.one_le_two_pow
-        linarith
+        . simp [h1, pow_succ' _ (K+1)]; linarith
+        simp [h2, hm]; linarith
       _ ≤ S (2^(K+1)-1) + ∑ n ∈ Finset.Icc ((2:ℤ)^(K+1)) (2^(K+1+1)-1), s.seq (2^(K+1)) := by
         gcongr with n hn
-        sorry
+        simp at hn
+        exact hmono' _ (by linarith) _ hn.1
       _ = _ := by
         simp [pow_succ']; left
         ring_nf
