@@ -47,11 +47,13 @@ theorem Series.converges_of_le {s t : Series} (hm : s.m = t.m) (hcomp : ∀ n �
 theorem Series.diverges_of_ge {s t : Series} (hm : s.m = t.m) (hcomp : ∀ n ≥ s.m, |s.seq n| ≤ t.seq n) (hdiv: ¬ s.absConverges) : t.diverges := by sorry
 
 /-- Lemma 7.3.3 (Geometric series) / Exercise 7.3.2 -/
-theorem Series.converges_geom (x : ℝ) (hx : |x| < 1) : (fun n ↦ x ^ n : Series).convergesTo (1 / (1 - x)) := by sorry
+theorem Series.converges_geom {x : ℝ} (hx : |x| < 1) : (fun n ↦ x ^ n : Series).convergesTo (1 / (1 - x)) := by sorry
 
-theorem Series.absConverges_geom (x : ℝ) (hx : |x| < 1) : (fun n ↦ x ^ n : Series).absConverges := by sorry
+theorem Series.absConverges_geom {x : ℝ} (hx : |x| < 1) : (fun n ↦ x ^ n : Series).absConverges := by sorry
 
-theorem Series.diverges_geom (x : ℝ) (hx : |x| ≥ 1) : (fun n ↦ x ^ n : Series).diverges := by sorry
+theorem Series.diverges_geom {x : ℝ} (hx : |x| ≥ 1) : (fun n ↦ x ^ n : Series).diverges := by sorry
+
+theorem Series.converges_geom_iff (x : ℝ) : (fun n ↦ x ^ n : Series).converges ↔ |x| < 1 := by sorry
 
 /-- Proposition 7.3.4 (Cauchy criterion) -/
 theorem Series.cauchy_criterion {s:Series} (hm: s.m = 1) (hs:s.nonneg) (hmono: ∀ n ≥ 1, s.seq (n+1) ≤ s.seq n) : s.converges ↔ (fun k ↦ 2^k * s.seq (2^k): Series).converges := by
@@ -104,13 +106,26 @@ theorem Series.cauchy_criterion {s:Series} (hm: s.m = 1) (hs:s.nonneg) (hmono: �
     _ ≤ M := hM K
 
 /-- Corollary 7.3.7 -/
-theorem Series.converges_qseries (q : ℝ) (hq : q > 1) : (fun n:ℕ ↦ 1 / (n:ℝ) ^ q : Series).converges := by
+theorem Series.converges_qseries (q : ℝ) (hq : q > 0) : (mk' (m := 1) fun n ↦ 1 / (n:ℝ) ^ q : Series).converges ↔ (q>1) := by
   -- This proof is written to follow the structure of the original text.
-  sorry -- TODO
-
-theorem Series.diverges_qseries (q : ℝ) (hpos: q > 0) (hq : q ≤ 1) : (fun n:ℕ ↦ 1 / (n:ℝ) ^ q : Series).diverges := by
-  -- This proof is written to follow the structure of the original text.
-  sorry -- TODO
+  set s := (mk' (m := 1) fun n ↦ 1 / (n:ℝ) ^ q : Series)
+  have hs : s.nonneg := by intro n; simp [s]; by_cases h : 1 ≤ n <;> simp [h]; positivity
+  have hmono : ∀ n ≥ 1, s.seq (n+1) ≤ s.seq n := by
+    intro n hn
+    have hn1 : n ≥ 0 := by positivity
+    have hn3 : n.toNat > 0 := by omega
+    simp [s, hn, hn1]
+    apply inv_anti₀ (by positivity)
+    exact Real.rpow_le_rpow (by positivity) (by simp) (by positivity)
+  rw [cauchy_criterion (by simp [s]) hs hmono]
+  have (n:ℕ) : 2^n * s.seq (2^n) = (2^(1-q))^n := by
+    have : 1 ≤ (2:ℤ)^n := by norm_cast; exact Nat.one_le_two_pow
+    simp [s, this]
+    rw [←Real.rpow_neg (by positivity), mul_comm, ←Real.rpow_add_one (by positivity), Real.rpow_pow_comm (by norm_num)]
+    congr 1; abel
+  simp [this, converges_geom_iff]
+  rw [abs_of_nonneg (by positivity), Real.rpow_lt_one_iff_of_pos (by positivity)]
+  simp
 
 /-- Exercise 7.3.3 -/
 theorem Series.nonneg_sum_zero {a:ℕ → ℝ} (ha: (a:Series).nonneg) (hconv: (a:Series).converges) : (a:Series).sum = 0 ↔ ∀ n, a n = 0 := by sorry
