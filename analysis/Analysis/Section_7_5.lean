@@ -212,15 +212,19 @@ theorem Series.ratio_ineq {c:ℤ → ℝ} (m:ℤ) (hpos: ∀ n ≥ m, c n > 0) :
 
 /-- Corollary 7.5.3 (Ratio test)-/
 theorem Series.ratio_test_pos {s : Series} (hnon: ∀ n ≥ s.m, s.seq n ≠ 0)
-  (h : Filter.limsup (fun n ↦ |s.seq n+1| / |s.seq n|) Filter.atTop < 1) : s.absConverges := by
-    -- This proof is written to follow the structure of the original text.
-    sorry
+  (h : Filter.limsup (fun n ↦ ((|s.seq (n+1)| / |s.seq n|:ℝ):EReal)) Filter.atTop < 1) : s.absConverges := by
+    apply Series.root_test_pos (lt_of_le_of_lt _ h)
+    convert (ratio_ineq s.m _).2.2
+    convert hnon using 1 with n
+    simp
 
 /-- Corollary 7.5.3 (Ratio test)-/
 theorem Series.ratio_test_neg {s : Series} (hnon: ∀ n ≥ s.m, s.seq n ≠ 0)
-  (h : Filter.liminf (fun n ↦ |s.seq n+1| / |s.seq n|) Filter.atTop > 1) : s.diverges := by
-    -- This proof is written to follow the structure of the original text.
-    sorry
+  (h : Filter.liminf (fun n ↦ ((|s.seq (n+1)| / |s.seq n|:ℝ):EReal)) Filter.atTop > 1) : s.diverges := by
+    apply Series.root_test_neg (lt_of_lt_of_le h _)
+    convert (ratio_ineq s.m _).1.trans (ratio_ineq s.m _).2.1 with n
+    . rfl
+    all_goals convert hnon using 1 with n; simp
 
 /-- Corollary 7.5.3 (Ratio test) / Exercise 7.5.3 -/
 theorem Series.ratio_test_inconclusive: ∃ s:Series, (∀ n ≥ s.m, s.seq n ≠ 0) ∧
