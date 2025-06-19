@@ -1,6 +1,7 @@
 import Mathlib.Tactic
 import Mathlib.Algebra.Field.Power
 import Mathlib.NumberTheory.LSeries.RiemannZeta
+import Mathlib.NumberTheory.LSeries.HurwitzZetaValues
 import Analysis.Section_6_1
 import Analysis.Section_6_epilogue
 import Analysis.Section_7_2
@@ -229,6 +230,12 @@ theorem Series.zeta_eq {q:ℝ} (hq: q > 1) : (mk' (m := 1) fun n ↦ 1 / (n:ℝ)
       use (x-1).toNat; omega
     intro ⟨ a, han, hax ⟩; omega
   simp [e]
+
+theorem Series.Basel_problem :  (mk' (m := 1) fun n ↦ 1 / (n:ℝ) ^ 2 : Series).sum = Real.pi ^ 2 / 6 := by
+  have := zeta_eq (show 2 > 1 by norm_num)
+  simp [Complex.ofReal_ofNat, riemannZeta_two] at this
+  simpa [←Complex.ofReal_inj]
+
 
 /-- Exercise 7.3.3 -/
 theorem Series.nonneg_sum_zero {a:ℕ → ℝ} (ha: (a:Series).nonneg) (hconv: (a:Series).converges) : (a:Series).sum = 0 ↔ ∀ n, a n = 0 := by sorry
