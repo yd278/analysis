@@ -28,3 +28,4 @@ import Analysis.Section_7_1
 import Analysis.Section_7_2
 import Analysis.Section_7_3
 import Analysis.Section_7_4
+import Analysis.Section_7_5

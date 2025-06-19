@@ -47,3 +47,4 @@ Currently formalized sections:
 - [Section 7.2: Infinite series](./sec72/)
 - [Section 7.3: Sums of non-negative numbers](./sec73/)
 - [Section 7.4: Rearrangement of series](./sec74/)
+- [Section 7.5: The root and ratio tests](./sec75/)
