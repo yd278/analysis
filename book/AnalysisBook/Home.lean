@@ -50,3 +50,4 @@ Currently formalized sections:
 - [Section 7.5: The root and ratio tests](./sec75/)
 - [Section 9.1: Subsets of the real line](./sec91/)
 - [Section 9.2: The algebra of real-valued functions](./sec92/)
+- [Section 9.3: Limiting values of functions](./sec93/)
