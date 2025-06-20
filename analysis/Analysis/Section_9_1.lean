@@ -69,7 +69,7 @@ example : ¬ AdherentPt 2 (Set.Ioo 0 1) := by sorry
 /-- Definition 9.1.10 (Closure).  Here we identify this definition with the Mathilb version. -/
 theorem closure_def (X:Set ℝ) : closure X = { x | AdherentPt x X } := by
   ext x
-  simp [Real.mem_closure_iff, AdherentPt, Real.adherent]
+  simp [Real.mem_closure_iff, AdherentPt, Real.adherent']
   constructor
   . intro h ε hε
     obtain ⟨ y, hy, hxy ⟩ := h ε hε
