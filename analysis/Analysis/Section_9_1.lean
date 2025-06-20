@@ -46,21 +46,21 @@ example {a b: EReal} (h: a ≥ b) : Set.Ioo a b = ∅ := by
 example {a b: EReal} (h: a = b) : Set.Icc a a = {a} := by
   sorry
 
-/-- Definition 9.1.5 -/
-abbrev Real.adherent (ε:ℝ) (x:ℝ) (X: Set ℝ) := ∃ y ∈ X, |x - y| ≤ ε
+/-- Definition 9.1.5.  Note that a slightly different `Real.adherent` was defined in Chapter 6.4 -/
+abbrev Real.adherent' (ε:ℝ) (x:ℝ) (X: Set ℝ) := ∃ y ∈ X, |x - y| ≤ ε
 
 /-- Example 9.1.7 -/
-example : (0.5:ℝ).adherent 1.1 (Set.Ioo 0 1) := by sorry
+example : (0.5:ℝ).adherent' 1.1 (Set.Ioo 0 1) := by sorry
 
-example : ¬ (0.1:ℝ).adherent 1.1 (Set.Ioo 0 1) := by sorry
+example : ¬ (0.1:ℝ).adherent' 1.1 (Set.Ioo 0 1) := by sorry
 
-example : (0.5:ℝ).adherent 1.1 {1,2,3} := by sorry
+example : (0.5:ℝ).adherent' 1.1 {1,2,3} := by sorry
 
 
 namespace Chapter9
 
 /-- Definition 9.1.ℝ-/
-abbrev AdherentPt (x:ℝ) (X:Set ℝ) := ∀ ε > (0:ℝ), ε.adherent x X
+abbrev AdherentPt (x:ℝ) (X:Set ℝ) := ∀ ε > (0:ℝ), ε.adherent' x X
 
 example : AdherentPt 1 (Set.Ioo 0 1) := by sorry
 
