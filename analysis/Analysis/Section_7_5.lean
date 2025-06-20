@@ -12,6 +12,8 @@ Main constructions and results of this section:
 
 - The root and ratio tests
 
+A point that is only implicitly stated in the text is that for the root and ratio tests, the lim inf and lim sup should be interpreted within the extended reals.  The Lean formalizations below make this point more explicit.
+
 -/
 
 namespace Chapter7
