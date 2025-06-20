@@ -3,7 +3,7 @@ open Lake DSL
 
 require verso from git "https://github.com/leanprover/verso.git"@"main"
 require subverso from git
-  "https://github.com/leanprover/subverso.git" @ "c0fc43dce384e563afdef19288daa35befaf4f86"
+  "https://github.com/leanprover/subverso.git" @ "79c973b07e2f43c4ac1cec720bbe20b4fbfbd0e9"
 
 package "analysis-book" where
   version := v!"0.1.0"
