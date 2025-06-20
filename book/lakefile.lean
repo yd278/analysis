@@ -56,7 +56,8 @@ def sections := #[
   (`Analysis.Section_7_2, "Infinite series"),
   (`Analysis.Section_7_3, "Sums of non-negative numbers"),
   (`Analysis.Section_7_4, "Rearrangement of series"),
-  (`Analysis.Section_7_5, "The root and ratio tests")
+  (`Analysis.Section_7_5, "The root and ratio tests"),
+  (`Analysis.Section_9_1, "Subsets of the real line"),
 ]
 
 /--
