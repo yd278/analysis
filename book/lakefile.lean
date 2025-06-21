@@ -62,6 +62,7 @@ def sections := #[
   (`Analysis.Section_9_3, "Limiting values of functions"),
   (`Analysis.Section_9_4, "Continuous functions"),
   (`Analysis.Section_9_5, "Limits from the left and right"),
+  (`Analysis.Section_9_6, "The maximum principle"),
 ]
 
 /--
