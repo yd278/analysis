@@ -13,7 +13,7 @@ the Lean code could be "golfed" to be more elegant and idiomatic, but I have con
 doing so.
 
 Main constructions and results of this section:
--
+- Left and right limits
 -/
 
 namespace Chapter9
