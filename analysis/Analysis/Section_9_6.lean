@@ -51,7 +51,29 @@ example : ¬ BddOn (fun x:ℝ ↦ 1/x) (Set.Ioo 0 1) := by sorry
 theorem BddOn.of_continuous_on_compact {a b:ℝ} (h:a < b) (f:ℝ → ℝ) (hf: ContinuousOn f (Set.Icc a b) ) :
   BddOn f (Set.Icc a b) := by
   -- This proof is written to follow the structure of the original text.
-  sorry -- TODO
+  by_contra! hunbound
+  simp [BddOn] at hunbound
+  set x := fun (n:ℕ) ↦ (hunbound n).choose
+  have hx (n:ℕ) : a ≤ x n ∧ x n ≤ b ∧ n < |f (x n)| := (hunbound n).choose_spec
+  set X := Set.Icc a b
+  have hXclosed : IsClosed X := Icc_closed (by linarith)
+  have hXbounded : Bornology.IsBounded X := Icc_bounded _ _
+  have haX (n:ℕ): x n ∈ X := by simp [X]; exact ⟨ (hx n).1, (hx n).2.1 ⟩
+  obtain ⟨ n, hn, ⟨ L, hLX, hconv ⟩ ⟩ := ((Heine_Borel X).mp ⟨ hXclosed, hXbounded ⟩) x haX
+  have why (j:ℕ) : n j ≥ j := by sorry
+  replace hf := ContinuousOn.continuousWithinAt hf hLX
+  rw [ContinuousWithinAt.iff] at hf
+  replace hf := Convergesto.comp (AdherentPt.of_mem hLX) hf (fun j ↦ haX (n j)) hconv
+  replace hf := Metric.isBounded_range_of_tendsto _ hf
+  rw [isBounded_def] at hf
+  obtain ⟨ M, hpos, hM ⟩ := hf
+  obtain ⟨ j, hj ⟩ := exists_nat_gt M
+  replace hx := (hx (n j)).2.2
+  replace hM : f (x (n j)) ∈ Set.Icc (-M) M := by
+    apply hM; simp
+  simp [←abs_le] at hM
+  have : n j ≥ (j:ℝ) := by simp [why j]
+  linarith
 
 /-- Definition 7.6.5 -/
 abbrev HasMaxAt (f:ℝ → ℝ) (X:Set ℝ) (x₀:ℝ) : Prop :=
