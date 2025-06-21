@@ -175,9 +175,14 @@ theorem closure_of_Q :
     sorry
 
 /-- Lemma 9.1.14 / Exercise 9.1.5 -/
-theorem limit_of_AdherentPt (X: Set ℝ) {x:ℝ} :
+theorem limit_of_AdherentPt (X: Set ℝ) (x:ℝ) :
   AdherentPt x X ↔ ∃ a : ℕ → ℝ, (∀ n, a n ∈ X) ∧ Filter.Tendsto a Filter.atTop (nhds x) := by
     sorry
+
+theorem AdherentPt.of_mem {X: Set ℝ} {x: ℝ} (h: x ∈ X) : AdherentPt x X := by
+  rw [limit_of_AdherentPt]
+  use fun _ ↦ x
+  simp [h]
 
 /-- Definition 9.1.15.  Here we use the Mathlib definition. -/
 theorem isClosed_def (X:Set ℝ): IsClosed X ↔ closure X = X :=

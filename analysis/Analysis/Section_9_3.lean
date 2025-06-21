@@ -13,7 +13,9 @@ doing so.
 
 Main constructions and results of this section:
 
--
+- Limits of continuous functions
+- Connection with Mathilb's filter convergence concepts
+- Limit laws for functions
 
 Technical point: in the text, the functions `f` studied are defined only on subsets `X` of `ℝ`, and left undefined elsewhere.  However, in Lean, this then creates some fiddly conversions when trying to restrict `f` to various subsets of `X` (which, technically, are not precisely subsets of `ℝ`, though they can be coerced to such).  To avoid this issue we will deviate from the text by having our functions defined on all of `ℝ` (with the understanding that they are assigned "junk" values outside of the domain `X` of interest).
 -/
@@ -105,7 +107,7 @@ theorem Convergesto.comp {E:Set ℝ} {f: ℝ → ℝ} {L:ℝ} {x₀:ℝ} (h: Adh
 theorem Convergesto.uniq {E:Set ℝ} {f: ℝ → ℝ} {L L':ℝ} {x₀:ℝ} (h: AdherentPt x₀ E)
   (hf: Convergesto E f L x₀) (hf': Convergesto E f L' x₀) : L = L' := by
   -- This proof is written to follow the structure of the original text.
-  let ⟨ a, ha, hconv ⟩ := (limit_of_AdherentPt _).mp h
+  let ⟨ a, ha, hconv ⟩ := (limit_of_AdherentPt _ _).mp h
   have hL := hf.comp h ha hconv
   have hL' := hf'.comp h ha hconv
   exact tendsto_nhds_unique  hL hL'
