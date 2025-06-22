@@ -55,3 +55,4 @@ Currently formalized sections:
 - [Section 9.5: Left and right limits](./sec95/)
 - [Section 9.6: The maximum principle](./sec96/)
 - [Section 9.7: The intermediate value theorem](./sec97/)
+- [Appendix A.1: Mathematical statements](./secA1/)
