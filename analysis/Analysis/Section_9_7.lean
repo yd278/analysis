@@ -24,21 +24,21 @@ theorem intermediate_value {a b:ℝ} (hab: a < b) {f:ℝ → ℝ} (hf: Continuou
   -- This proof is written to follow the structure of the original text.
   rcases hy with hy_left | hy_right
   . by_cases hya : y = f a
-    . use a; simp [hya, hab]
+    . use a; simp [hya, le_of_lt hab]
     by_cases hyb : y = f b
-    . use b; simp [hyb, hab]
+    . use b; simp [hyb, le_of_lt hab]
     simp at hy_left
     replace hya : f a < y := by contrapose! hya; linarith
     replace hyb : y < f b := by contrapose! hyb; linarith
     set E := {x | x ∈ Set.Icc a b ∧ f x < y}
     have hE : E ⊆ Set.Icc a b := by
-      rintro x ⟨hx₁, hx₂⟩; exact ⟨x, hx₁⟩
+      rintro x ⟨hx₁, hx₂⟩; exact hx₁
     have hE_bdd : BddAbove E := BddAbove.mono hE bddAbove_Icc
     have hE_nonempty : E.Nonempty := by
-      use a; split; simp [hya, hab]
+      use a; simp [E, hya, le_of_lt hab]
     set c := sSup E
     have hc : c ∈ Set.Icc a b := by
-      simp at hc
+      simp
       constructor
       . sorry -- TODO
       sorry -- TODO

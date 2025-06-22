@@ -357,7 +357,7 @@ theorem Sequence.sup_not_strict_mono : ∃ (a b:ℕ → ℝ), (∀ n, a n < b n)
 
 /- Exercise 6.4.7 -/
 
-theorem Sequence.tendsTo_real_iff :
+def Sequence.tendsTo_real_iff :
   Decidable (∀ (a:Sequence) (x:ℝ), a.tendsTo x ↔ a.abs.tendsTo x) := by
   -- The first line of this proof should be `apply isTrue` or `apply isFalse`.
   sorry
