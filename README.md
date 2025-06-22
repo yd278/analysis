@@ -73,7 +73,7 @@ In order to align the formalization with Mathlib conventions, a small number of 
 - _Chapter 11: The Riemann integral (planned)_
 - Appendix A: The basics of mathematical logic
   - A.1: Mathematical statements ([Verso page](https://teorth.github.io/analysis/secA1/)) ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Appendix_A_1.html)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Appendix_A_1.lean))
-  - _A.2: Implication (planned)_
+  - A.2: Implication ([Verso page](https://teorth.github.io/analysis/secA2/)) ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Appendix_A_2.html)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Appendix_A_2.lean))
   - _A.3: The structure of proofs (planned)_
   - _A.4: Variables and quantifiers (planned)_
   - _A.5: Nested quantifiers (planned)_

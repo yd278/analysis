@@ -36,3 +36,5 @@ import Analysis.Section_9_4
 import Analysis.Section_9_5
 import Analysis.Section_9_6
 import Analysis.Section_9_7
+import Analysis.Appendix_A_1
+import Analysis.Appendix_A_2

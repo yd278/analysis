@@ -65,6 +65,7 @@ def sections := #[
   (`Analysis.Section_9_6, "The maximum principle"),
   (`Analysis.Section_9_7, "The intermediate value theorem"),
   (`Analysis.Appendix_A_1, "Mathematical statements"),
+  (`Analysis.Appendix_A_2, "Implication"),
 ]
 
 /--
