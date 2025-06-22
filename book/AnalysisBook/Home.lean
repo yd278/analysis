@@ -58,3 +58,5 @@ Currently formalized sections:
 - [Appendix A.1: Mathematical statements](./secA1/)
 - [Appendix A.2: Implications](./secA2/)
 - [Appendix A.3: The structure of proofs](./secA3/)
+- [Appendix A.4: Variables and quantifiers](./secA4/)
+- [Appendix A.5: Nested quantifiers](./secA5/)

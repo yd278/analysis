@@ -66,7 +66,9 @@ def sections := #[
   (`Analysis.Section_9_7, "The intermediate value theorem"),
   (`Analysis.Appendix_A_1, "Mathematical statements"),
   (`Analysis.Appendix_A_2, "Implication"),
-  (`Analysis.Appendix_A_3, "The structure of proofs")
+  (`Analysis.Appendix_A_3, "The structure of proofs"),
+  (`Analysis.Appendix_A_4, "Variables and quantifiers"),
+  (`Analysis.Appendix_A_5, "Nested quantifiers")
 ]
 
 /--
