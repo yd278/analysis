@@ -153,17 +153,15 @@ def MonotoneOn.exist_inverse_without_strictmono {a b:ℝ} (h: a < b) (f: ℝ →
   sorry
 
 
-/-- Exercise 9.8.4: state and prove an analogue of `MonotoneOne.exist_inverse` for `Antitone` functions. -/
-theorem AntitoneOn.exist_inverse {a b:ℝ} (h: a < b) (f: ℝ → ℝ) (hcont: ContinuousOn f (Set.Icc a b)) (hmono: StrictAntiOn f (Set.Icc a b)) :
-  sorry := by
-  sorry
+/- Exercise 9.8.4: state and prove an analogue of `MonotoneOne.exist_inverse` for `Antitone` functions. -/
+-- theorem AntitoneOn.exist_inverse {a b:ℝ} (h: a < b) (f: ℝ → ℝ) (hcont: ContinuousOn f (Set.Icc a b)) (hmono: StrictAntiOn f (Set.Icc a b)) : sorry := by sorry
 
 /-- An equivalence between the natural numbers and the rationals. -/
 noncomputable abbrev q_9_8_5 : ℕ ≃ ℚ := nonempty_equiv_of_countable.some
 
 noncomputable abbrev g_9_8_5 : ℚ → ℝ := fun q ↦ (2:ℝ)^(-q_9_8_5.symm q:ℤ)
 
-noncomputable abbrev f_9_8_5 : ℝ → ℝ := fun x ↦ ∑' r ∈ {r // r < x}, g_9_8_5 r
+noncomputable abbrev f_9_8_5 : ℝ → ℝ := fun x ↦ ∑' r : {r:ℚ // (r:ℝ) < x}, g_9_8_5 r
 
 /-- Exercise 9.8.5(a) -/
 example : StrictMonoOn f_9_8_5 Set.univ := by
