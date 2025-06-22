@@ -14,6 +14,8 @@ Main constructions and results of this section:
 - Review of Mathlib monotonicity concepts
 -/
 
+namespace Chapter9
+
 /-- Definition 9.8.1 -/
 theorem MonotoneOn.iff {X: Set ℝ} (f: ℝ → ℝ) : MonotoneOn f X  ↔ ∀ x ∈ X, ∀ y ∈ X, y > x → f y ≥ f x := by
   constructor
@@ -174,3 +176,5 @@ example (r:ℚ) : ¬ ContinuousAt f_9_8_5 r := by
 /-- Exercise 9.8.5(c) -/
 example {x:ℝ} (hx: ¬ ∃ r:ℚ, x = r) : ContinuousAt f_9_8_5 x := by
   sorry
+
+end Chapter9
