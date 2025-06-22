@@ -68,7 +68,9 @@ def sections := #[
   (`Analysis.Appendix_A_2, "Implication"),
   (`Analysis.Appendix_A_3, "The structure of proofs"),
   (`Analysis.Appendix_A_4, "Variables and quantifiers"),
-  (`Analysis.Appendix_A_5, "Nested quantifiers")
+  (`Analysis.Appendix_A_5, "Nested quantifiers"),
+  (`Analysis.Appendix_A_6, "Some examples of proofs and quantifiers"),
+  (`Analysis.Appendix_A_7, "Equality")
 ]
 
 /--

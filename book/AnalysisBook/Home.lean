@@ -60,3 +60,5 @@ Currently formalized sections:
 - [Appendix A.3: The structure of proofs](./secA3/)
 - [Appendix A.4: Variables and quantifiers](./secA4/)
 - [Appendix A.5: Nested quantifiers](./secA5/)
+- [Appendix A.6: Some examples of proofs and quantifiers](./secA6/)
+- [Appendix A.7: Equality](./secA7/)
