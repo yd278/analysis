@@ -71,7 +71,14 @@ In order to align the formalization with Mathlib conventions, a small number of 
   - _Section 9.10: Limits at infinity (planned)_
 - _Chapter 10: Differentiation of functions (planned)_
 - _Chapter 11: The Riemann integral (planned)_
-- _Appendix A: The basics of mathematical logic (possible future expansion)_
+- Appendix A: The basics of mathematical logic
+  - A.1: Mathematical statements ([Verso page](https://teorth.github.io/analysis/secA1/)) ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Appendix_A_1.html)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Appendix_A_1.lean))
+  - A.2: Implication ([Verso page](https://teorth.github.io/analysis/secA2/)) ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Appendix_A_2.html)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Appendix_A_2.lean))
+  - A.3: The structure of proofs ([Verso page](https://teorth.github.io/analysis/secA3/)) ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Appendix_A_3.html)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Appendix_A_3.lean))
+  - _A.4: Variables and quantifiers (planned)_
+  - _A.5: Nested quantifiers (planned)_
+  - _A.6: Some examples of proofs and quantifiers (planned)_
+  - _A.7: Equality (planned)_
 - _Appendix B: The decimal system (possible future expansion)_
 
 ## Other resources
