@@ -66,7 +66,7 @@ theorem Sequence.convergent_of_subseq_of_bounded {a:ℕ→ ℝ} (ha: (a:Sequence
 
 def Sequence.exist_subseq_of_subseq :
   Decidable (∃ a b : ℕ → ℝ, a ≠ b ∧ Sequence.subseq a b ∧ Sequence.subseq b a) := by
-    -- The first line of this proof should be `apply isTrue` or `apply isFalse`.
+    -- The first line of this construction should be `apply isTrue` or `apply isFalse`.
     sorry
 
 /--

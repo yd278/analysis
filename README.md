@@ -65,7 +65,7 @@ In order to align the formalization with Mathlib conventions, a small number of 
   - Section 9.4: Continuous functions ([Verso page](https://teorth.github.io/analysis/sec94/)) ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Section_9_4.html)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Section_9_4.lean))
   - Section 9.5: Left and right limits ([Verso page](https://teorth.github.io/analysis/sec95/)) ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Section_9_5.html)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Section_9_5.lean))
   - Section 9.6: The maximum principle ([Verso page](https://teorth.github.io/analysis/sec96/)) ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Section_9_6.html)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Section_9_6.lean))
-  - _Section 9.7: The intermediate value theorem (planned)_
+  - Section 9.7: The intermediate value theorem ([Verso page](https://teorth.github.io/analysis/sec97/)) ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Section_9_7.html)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Section_9_7.lean))
   - _Section 9.8: Monotonic functions (planned)_
   - _Section 9.9: Uniform continuity (planned)_
   - _Section 9.10: Limits at infinity (planned)_

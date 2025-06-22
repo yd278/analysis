@@ -34,19 +34,88 @@ theorem intermediate_value {a b:ℝ} (hab: a < b) {f:ℝ → ℝ} (hf: Continuou
     have hE : E ⊆ Set.Icc a b := by
       rintro x ⟨hx₁, hx₂⟩; exact hx₁
     have hE_bdd : BddAbove E := BddAbove.mono hE bddAbove_Icc
+    have hEa : a ∈ E := by
+      simp [E, hya, le_of_lt hab]
     have hE_nonempty : E.Nonempty := by
-      use a; simp [E, hya, le_of_lt hab]
+      use a
     set c := sSup E
     have hc : c ∈ Set.Icc a b := by
       simp
       constructor
-      . sorry -- TODO
-      sorry -- TODO
+      . exact ConditionallyCompleteLattice.le_csSup _ _ hE_bdd hEa
+      convert csSup_le_csSup bddAbove_Icc hE_nonempty hE
+      exact (csSup_Icc (le_of_lt hab)).symm
     use c, hc
     have hfc_upper : f c ≤ y := by
-      sorry -- TODO
+      have hxe (n:ℕ) : ∃ x ∈ E, c - 1/(n+1:ℝ) < x := by
+        have : 1/(n+1:ℝ) > 0 := by positivity
+        replace : c - 1/(n+1:ℝ) < sSup E := by linarith
+        exact exists_lt_of_lt_csSup hE_nonempty this
+      set x := fun n ↦ (hxe n).choose
+      have hx1 (n:ℕ) : x n ∈ E := (hxe n).choose_spec.1
+      have hx2 (n:ℕ) : c - 1/(n+1:ℝ) < x n := (hxe n).choose_spec.2
+      have : Filter.Tendsto x Filter.atTop (nhds c) := by
+        apply Filter.Tendsto.squeeze (g := fun j ↦ c - 1/(j+1:ℝ)) (h := fun j ↦ c) (f := x)
+        . convert Filter.Tendsto.const_sub c (c:=0) _
+          . simp
+          exact tendsto_one_div_add_atTop_nhds_zero_nat
+        . exact tendsto_const_nhds
+        . exact fun n ↦ le_of_lt (hx2 n)
+        exact fun n ↦ ConditionallyCompleteLattice.le_csSup _ _ hE_bdd (hx1 n)
+      replace := Filter.Tendsto.comp_of_continuous hc (hf.continuousWithinAt hc) (fun n ↦ hE (hx1 n)) this
+      have hfxny (n:ℕ) : f (x n) ≤ y := by
+        specialize hx1 n
+        simp [E] at hx1
+        exact le_of_lt hx1.2
+      exact le_of_tendsto' this hfxny
+    have hne : c ≠ b := by
+      contrapose! hfc_upper
+      rwa [hfc_upper]
+    replace hne : c < b := by contrapose! hne; simp at hc; linarith
     have hfc_lower : y ≤ f c := by
-      sorry -- TODO
+      have : ∃ N:ℕ, ∀ n ≥ N, (c+1/(n+1:ℝ)) < b := by
+        obtain ⟨ N, hN ⟩ := exists_nat_gt (1/(b-c))
+        use N
+        intro n hn
+        have hpos : 0 < b-c := by linarith
+        have : 1/(n+1:ℝ) < b-c := by
+          rw [one_div_lt (by positivity) (by positivity)]
+          apply hN.trans; norm_cast; linarith
+        linarith
+      obtain ⟨ N, hN ⟩ := this
+      have hmem : ∀ n ≥ N, (c + 1/(n+1:ℝ)) ∈ Set.Icc a b := by
+        intro n hn
+        simp only [Set.mem_Icc, le_of_lt (hN n hn), and_true]
+        have : 1/(n+1:ℝ) > 0 := by positivity
+        replace : c + 1/(n+1:ℝ) > c := by linarith
+        simp at hc
+        linarith
+      have : ∀ n ≥ N, c + 1/(n+1:ℝ) ∉ E := by
+        intro n _
+        have : 1/(n+1:ℝ) > 0 := by positivity
+        replace : c + 1/(n+1:ℝ) > c := by linarith
+        exact notMem_of_csSup_lt this hE_bdd
+      replace : ∀ n ≥ N, f (c + 1/(n+1:ℝ)) ≥ y := by
+        intro n hn
+        specialize this n hn
+        contrapose! this
+        simp only [Set.mem_Icc, Set.mem_setOf_eq, E, this, le_of_lt (hN n hn), and_true]
+        have := hmem n hn
+        simp only [Set.mem_Icc] at this
+        tauto
+      have hconv : Filter.Tendsto (fun n:ℕ ↦ c + 1/(n+1:ℝ)) Filter.atTop (nhds c) := by
+        convert Filter.Tendsto.const_add c (c:=0) _
+        . simp
+        exact tendsto_one_div_add_atTop_nhds_zero_nat
+      replace hf := (hf.continuousWithinAt hc).tendsto
+      rw [nhdsWithin.eq_1] at hf
+      have hconv' : Filter.Tendsto (fun n:ℕ ↦ c + 1/(n+1:ℝ)) Filter.atTop (Filter.principal (Set.Icc a b)) := by
+        simp only [Filter.tendsto_principal, Filter.eventually_atTop]
+        use N
+      replace hconv' := Filter.tendsto_inf.mpr ⟨ hconv, hconv' ⟩
+      apply ge_of_tendsto (Filter.Tendsto.comp hf hconv') _
+      simp only [Function.comp_apply, Filter.eventually_atTop]
+      use N
     linarith
   sorry
 

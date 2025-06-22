@@ -54,3 +54,4 @@ Currently formalized sections:
 - [Section 9.4: Continuous functions](./sec94/)
 - [Section 9.5: Left and right limits](./sec95/)
 - [Section 9.6: The maximum principle](./sec96/)
+- [Section 9.7: The intermediate value theorem](./sec97/)
