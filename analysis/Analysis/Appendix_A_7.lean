@@ -46,6 +46,16 @@ example {X Y:Type} (f:X → Y) (x y:X) (h: x = y) : f x = f y := by
 
 #check congrArg
 
+def equality_as_equiv_relation (X:Type) : Setoid X := {
+  r a b := a = b
+  iseqv := {
+    refl := Eq.refl
+    symm := Eq.symm
+    trans := Eq.trans
+  }
+}
+
+
 open Real in
 /-- Example A.7.1 -/
 example {x y:ℝ} (h:x = y) : 2*x = 2*y ∧ sin x = sin y ∧ ∀ z, x + z = y + z := by
