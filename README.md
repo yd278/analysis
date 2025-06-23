@@ -67,7 +67,7 @@ In order to align the formalization with Mathlib conventions, a small number of 
   - Section 9.6: The maximum principle ([Verso page](https://teorth.github.io/analysis/sec96/)) ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Section_9_6.html)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Section_9_6.lean))
   - Section 9.7: The intermediate value theorem ([Verso page](https://teorth.github.io/analysis/sec97/)) ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Section_9_7.html)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Section_9_7.lean))
   - Section 9.8: Monotonic functions ([Verso page](https://teorth.github.io/analysis/sec98/)) ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Section_9_8.html)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Section_9_8.lean))
-  - _Section 9.9: Uniform continuity (planned)_
+  - Section 9.9: Uniform continuity ([Verso page](https://teorth.github.io/analysis/sec99/)) ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Section_9_9.html)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Section_9_9.lean))
   - _Section 9.10: Limits at infinity (planned)_
 - _Chapter 10: Differentiation of functions (planned)_
 - _Chapter 11: The Riemann integral (planned)_
