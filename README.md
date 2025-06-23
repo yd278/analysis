@@ -68,8 +68,13 @@ In order to align the formalization with Mathlib conventions, a small number of 
   - Section 9.7: The intermediate value theorem ([Verso page](https://teorth.github.io/analysis/sec97/)) ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Section_9_7.html)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Section_9_7.lean))
   - Section 9.8: Monotonic functions ([Verso page](https://teorth.github.io/analysis/sec98/)) ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Section_9_8.html)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Section_9_8.lean))
   - Section 9.9: Uniform continuity ([Verso page](https://teorth.github.io/analysis/sec99/)) ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Section_9_9.html)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Section_9_9.lean))
-  - _Section 9.10: Limits at infinity (planned)_
-- _Chapter 10: Differentiation of functions (planned)_
+  - Section 9.10: Limits at infinity ([Verso page](https://teorth.github.io/analysis/sec910/)) ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Section_9_10.html)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Section_9_10.lean))
+- Chapter 10: Differentiation of functions 
+  - _Section 10.1: Basic definitions (planned)_
+  - _Section 10.2: Local maxima, local minima, and derivatives (planned)_
+  - _Section 10.3: Monotone functions and derivatives (planned)_
+  - _Section 10.4: Inverse functions and derivatives (planned)_
+  - _Section 10.5: L'Hôpital's rule (planned)_
 - _Chapter 11: The Riemann integral (planned)_
 - Appendix A: The basics of mathematical logic
   - A.1: Mathematical statements ([Verso page](https://teorth.github.io/analysis/secA1/)) ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Appendix_A_1.html)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Appendix_A_1.lean))
