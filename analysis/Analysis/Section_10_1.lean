@@ -38,7 +38,9 @@ theorem derivative_unique {X: Set ℝ} {x₀ : ℝ}
   (hx₀: ClusterPt x₀ (Filter.principal (X \ {x₀}))) {f: ℝ → ℝ} {L L':ℝ}
   (hL: HasDerivWithinAt f L X x₀) (hL': HasDerivWithinAt f L' X x₀) :
   L = L' := by
-    sorry -- TODO
+    rw [_root_.HasDerivWithinAt.iff] at hL hL'
+    rw [ClusterPt.eq_1] at hx₀
+    apply tendsto_nhds_unique hL hL'
 
 #check DifferentiableWithinAt.hasDerivWithinAt
 
