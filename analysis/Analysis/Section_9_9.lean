@@ -13,7 +13,9 @@ the Lean code could be "golfed" to be more elegant and idiomatic, but I have con
 doing so.
 
 Main constructions and results of this section:
--
+- API for Mathlib's `UniformContinousOn`
+- Continuous functions on compact intervls are uniformly continuous
+
 -/
 
 open Chapter6
