@@ -157,7 +157,7 @@ example : 3 = 4 —— 1 := by
   rw [Int.ofNat_eq, Int.eq]
 
 /-- (Not from textbook) 0 is the only natural whose cast is 0 -/
-lemma Int.eq_0_of_cast_eq_0 (n : ℕ) : (n : Int) = 0 ↔ n = 0 := by sorry
+lemma Int.cast_eq_0_iff_eq_0 (n : ℕ) : (n : Int) = 0 ↔ n = 0 := by sorry
 
 /-- Definition 4.1.4 (Negation of integers) / Exercise 4.1.2 -/
 instance Int.instNeg : Neg Int where
@@ -325,7 +325,7 @@ theorem Int.neg_one_mul (a:Int) : -1 * a = -a := by sorry
 /-- Exercise 4.1.8 -/
 theorem Int.no_induction : ∃ P: Int → Prop, P 0 ∧ ∀ n, P n → P (n+1) ∧ ¬ ∀ n, P n := by sorry
 
-/-- A positive number squared is posivtive. This is a special case of 4.1.9 that's useful for proving the general case. --/
+/-- A nonnegative number squared is nonnegative. This is a special case of 4.1.9 that's useful for proving the general case. --/
 lemma Int.sq_nonneg_of_pos (n:Int) (h: 0 ≤ n) : 0 ≤ n*n := by sorry
 
 /-- Exercise 4.1.9 -/
