@@ -12,6 +12,8 @@ doing so.
 
 Main constructions and results of this section:
 - API for Mathlib's `HasDerivWithinAt`, `derivWithin`, and `DifferentiableWithinAt`.
+- Sum rule, product rule, and chain rule
+- Newton approximation
 
 Note that the Mathlib conventions differ slightly from that in the text, in that differentiability is defined even at points that are not limit points of the domain; derivatives in such cases may not be unique, but `derivWithin` still selects one such derivative in such cases (or `0`, if no derivative exists).
 
