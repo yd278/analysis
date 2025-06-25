@@ -62,6 +62,7 @@ Currently formalized sections:
 - [Section 10.2: Local extrema and derivatives](./sec102/)
 - [Section 10.3: Monotone functions and derivatives](./sec103/)
 - [Section 10.4: The inverse function theorem](./sec104/)
+- [Section 10.5: L'Hôpital's rule](./sec105/)
 - [Appendix A.1: Mathematical statements](./secA1/)
 - [Appendix A.2: Implications](./secA2/)
 - [Appendix A.3: The structure of proofs](./secA3/)
