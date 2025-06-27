@@ -73,6 +73,7 @@ def sections := #[
   (`Analysis.Section_10_3, "Monotone functions and derivatives"),
   (`Analysis.Section_10_4, "The inverse function theorem"),
   (`Analysis.Section_10_5, "L'Hôpital's rule"),
+  (`Analysis.Section_11_1, "Partitions"),
   (`Analysis.Appendix_A_1, "Mathematical statements"),
   (`Analysis.Appendix_A_2, "Implication"),
   (`Analysis.Appendix_A_3, "The structure of proofs"),
