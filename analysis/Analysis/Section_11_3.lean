@@ -119,6 +119,58 @@ theorem integ_on_subsingleton {f:ℝ → ℝ} {I: BoundedInterval} (hI: |I|ₗ =
   . simp [PiecewiseConstantOn.integ_const' hconst, hI]
   exact PiecewiseConstantOn.of_const hconst
 
+/-- Definition 11.3.9 (Riemann sums).  The restriction to positive length J is not needed thanks to various junk value conventions. -/
+noncomputable abbrev upper_riemann_sum (f:ℝ → ℝ) {I: BoundedInterval} (P: Partition I) : ℝ :=
+  ∑ J ∈ P.intervals, (sSup (f '' (J:Set ℝ))) * |J|ₗ
+
+noncomputable abbrev lower_riemann_sum (f:ℝ → ℝ) {I: BoundedInterval} (P: Partition I) : ℝ :=
+  ∑ J ∈ P.intervals, (sInf (f '' (J:Set ℝ))) * |J|ₗ
+
+/-- Lemma 11.3.11 / Exercise 11.3.4 -/
+theorem upper_riemann_sum_le {f g: ℝ → ℝ} {I:BoundedInterval} (P: Partition I)
+  (hf: BddOn f I) (hgf: MajorizesOn g f I) (hg: PiecewiseConstantOn g I) :
+  upper_riemann_sum f P ≤ integ g I := by
+   sorry
+
+theorem lower_riemann_sum_ge {f h: ℝ → ℝ} {I:BoundedInterval} (P: Partition I)
+  (hf: BddOn f I) (hfh: MinorizesOn h f I) (hg: PiecewiseConstantOn h I) :
+  integ h I ≤ lower_riemann_sum f P := by
+   sorry
+
+/-- Proposition 11.3.12 / Exercise 11.3.5 -/
+theorem upper_integ_eq_inf_upper_sum {f:ℝ → ℝ} {I:BoundedInterval} (hf: BddOn f I) :
+  upper_integral f I = sInf (Set.range (fun P : Partition I ↦ upper_riemann_sum f P)) := by
+  sorry
+
+theorem lower_integ_eq_sup_lower_sum {f:ℝ → ℝ} {I:BoundedInterval} (hf: BddOn f I) :
+  lower_integral f I = sSup (Set.range (fun P : Partition I ↦ lower_riemann_sum f P)) := by
+  sorry
+
+/-- Exercise 11.3.1 -/
+theorem MajorizesOn.trans {f g h: ℝ → ℝ} {I: BoundedInterval}
+  (hfg: MajorizesOn f g I) (hgh: MajorizesOn g h I) : MajorizesOn f h I := by
+  sorry
+
+/-- Exercise 11.3.1 -/
+theorem MajorizesOn.anti_symm {f g: ℝ → ℝ} {I: BoundedInterval}:
+  ∀ x ∈ (I:Set ℝ), f x = g x ↔ MajorizesOn f g I ∧ MajorizesOn g f I := by
+  sorry
+
+/-- Exercise 11.3.2 -/
+def MajorizesOn.of_add : Decidable ( ∀ (f g h:ℝ → ℝ) (I:BoundedInterval) (hfg: MajorizesOn f g I),
+ MajorizesOn (f+h) (g+h) I) := by
+  -- the first line of this construction should be either `apply isTrue` or `apply isFalse`.
+  sorry
+
+def MajorizesOn.of_mul : Decidable ( ∀ (f g h:ℝ → ℝ) (I:BoundedInterval) (hfg: MajorizesOn f g I),
+ MajorizesOn (f*h) (g*h) I) := by
+  -- the first line of this construction should be either `apply isTrue` or `apply isFalse`.
+  sorry
+
+def MajorizesOn.of_smul : Decidable ( ∀ (f g:ℝ → ℝ) (c:ℝ) (I:BoundedInterval) (hfg: MajorizesOn f g I),
+ MajorizesOn (c • f) (c • g) I) := by
+  -- the first line of this construction should be either `apply isTrue` or `apply isFalse`.
+  sorry
 
 
 end Chapter11
