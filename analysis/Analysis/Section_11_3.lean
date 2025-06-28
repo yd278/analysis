@@ -112,9 +112,13 @@ theorem integ_of_piecewise_const {f:ℝ → ℝ} {I: BoundedInterval} (hf: Piece
 /-- Remark 11.3.8 -/
 theorem integ_on_subsingleton {f:ℝ → ℝ} {I: BoundedInterval} (hI: |I|ₗ = 0) :
   integrable f I ∧ integ f I = 0 := by
+  have hI' := hI
+  rw [←length_of_subsingleton] at hI'
+  have hconst : ConstantOn f I := ConstantOn.of_subsingleton
   convert integ_of_piecewise_const _
-  . sorry -- TODO
-  sorry -- TODO
+  . simp [PiecewiseConstantOn.integ_const' hconst, hI]
+  exact PiecewiseConstantOn.of_const hconst
+
 
 
 end Chapter11
