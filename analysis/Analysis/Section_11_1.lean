@@ -11,7 +11,8 @@ doing so.
 
 Main constructions and results of this section:
 
--
+- Bounded intervals and partitions
+- Length of an interval; the lengths of a partition sum to the length of the interval
 
 -/
 
@@ -42,20 +43,16 @@ noncomputable instance BoundedInterval.decidableEq : DecidableEq BoundedInterval
   exact instDecidableEqOfLawfulBEq
 
 @[simp]
-theorem BoundedInterval.mem_Ioo (a b x:ℝ) : x ∈ (Ioo a b : Set ℝ) ↔ a < x ∧ x < b := by
-  rfl
+theorem BoundedInterval.set_Ioo (a b:ℝ) : (Ioo a b : Set ℝ) = Set.Ioo a b := by rfl
 
 @[simp]
-theorem BoundedInterval.mem_Icc (a b x:ℝ) : x ∈ (Icc a b : Set ℝ) ↔ a ≤ x ∧ x ≤ b := by
-  rfl
+theorem BoundedInterval.set_Icc (a b:ℝ) : (Icc a b : Set ℝ) = Set.Icc a b := by rfl
 
 @[simp]
-theorem BoundedInterval.mem_Ioc (a b x:ℝ) : x ∈ (Ioc a b : Set ℝ) ↔ a < x ∧ x ≤ b := by
-  rfl
+theorem BoundedInterval.set_Ioc (a b:ℝ) : (Ioc a b : Set ℝ) = Set.Ioc a b := by rfl
 
 @[simp]
-theorem BoundedInterval.mem_Ico (a b x:ℝ) : x ∈ (Ico a b : Set ℝ) ↔ a ≤ x ∧ x < b := by
-  rfl
+theorem BoundedInterval.set_Ico (a b:ℝ) : (Ico a b : Set ℝ) = Set.Ico a b := by rfl
 
 -- Definition 11.1.1
 #check Set.ordConnected_def
@@ -70,6 +67,9 @@ example : ¬ (Set.Icc 1 2 ∪ Set.Icc 3 4 : Set ℝ).OrdConnected := by sorry
 example : (∅:Set ℝ).OrdConnected := by sorry
 
 example (x:ℝ) : ({x}: Set ℝ).OrdConnected := by sorry
+
+
+
 
 /-- Lemma 11.1.4 / Exercise 11.1.1 -/
 theorem BoundedInterval.ordConnected_iff (X:Set ℝ) : Bornology.IsBounded X ∧ X.OrdConnected ↔ ∃ I: BoundedInterval, X = I := by
@@ -156,16 +156,232 @@ theorem BoundedInterval.length_of_empty {I: BoundedInterval} (hI: (I:Set ℝ) = 
 theorem BoundedInterval.length_of_subsingleton {I: BoundedInterval} : Subsingleton (I:Set ℝ) ↔ |I|ₗ = 0 := by
   sorry
 
+
+abbrev BoundedInterval.joins (K I J: BoundedInterval) : Prop := (I:Set ℝ) ∩ (J:Set ℝ) = ∅
+  ∧ (K:Set ℝ) = (I:Set ℝ) ∪ (J:Set ℝ) ∧ |K|ₗ = |I|ₗ + |J|ₗ
+
+theorem BoundedInterval.join_Icc_Ioc {a b c:ℝ} (hab: a ≤ b) (hbc: b ≤ c) : (Icc a c).joins (Icc a b) (Ioc b c) := by
+  refine ⟨ ?_, ?_, ?_ ⟩
+  . rw [Set.eq_empty_iff_forall_notMem]; intro x
+    simp; intro h1 h2 h3; linarith
+  . ext x; simp
+    constructor
+    . rintro ⟨ h1, h2 ⟩; simp [h1, h2]; exact le_or_lt x b
+    intro h
+    rcases h with h1 | h2
+    . exact ⟨ h1.1, by linarith ⟩
+    exact ⟨ by linarith, h2.2 ⟩
+  simp [length, BoundedInterval.a, BoundedInterval.b,
+        show a ≤ b by linarith, show b ≤ c by linarith, show a ≤ c by linarith]
+
+theorem BoundedInterval.join_Icc_Ioo {a b c:ℝ} (hab: a ≤ b) (hbc: b < c) : (Ico a c).joins (Icc a b) (Ioo b c) := by
+  refine ⟨ ?_, ?_, ?_ ⟩
+  . rw [Set.eq_empty_iff_forall_notMem]; intro x
+    simp; intro h1 h2 h3; linarith
+  . ext x; simp
+    constructor
+    . rintro ⟨ h1, h2 ⟩; simp [h1, h2]; exact le_or_lt x b
+    intro h
+    rcases h with h1 | h2
+    . exact ⟨ h1.1, by linarith ⟩
+    exact ⟨ by linarith, h2.2 ⟩
+  simp [length, BoundedInterval.a, BoundedInterval.b,
+        show a ≤ b by linarith, show b ≤ c by linarith, show a ≤ c by linarith]
+
+theorem BoundedInterval.join_Ioc_Ioc {a b c:ℝ} (hab: a ≤ b) (hbc: b ≤ c) : (Ioc a c).joins (Ioc a b) (Ioc b c) := by
+  refine ⟨ ?_, ?_, ?_ ⟩
+  . rw [Set.eq_empty_iff_forall_notMem]; intro x
+    simp; intro h1 h2 h3; linarith
+  . ext x
+    simp
+    constructor
+    . rintro ⟨ h1, h2 ⟩; simp [h1, h2]; exact le_or_lt x b
+    intro h
+    rcases h with h1 | h2
+    . exact ⟨ h1.1, by linarith ⟩
+    exact ⟨ by linarith, h2.2 ⟩
+  simp [length, BoundedInterval.a, BoundedInterval.b,
+        show a ≤ b by linarith, show b ≤ c by linarith, show a ≤ c by linarith]
+
+theorem BoundedInterval.join_Ioc_Ioo {a b c:ℝ} (hab: a ≤ b) (hbc: b < c) : (Ioo a c).joins (Ioc a b) (Ioo b c) := by
+  refine ⟨ ?_, ?_, ?_ ⟩
+  . rw [Set.eq_empty_iff_forall_notMem]; intro x
+    simp; intro h1 h2 h3; linarith
+  . ext x
+    simp
+    constructor
+    . rintro ⟨ h1, h2 ⟩; simp [h1, h2]; exact le_or_lt x b
+    intro h
+    rcases h with h1 | h2
+    . exact ⟨ h1.1, by linarith ⟩
+    exact ⟨ by linarith, h2.2 ⟩
+  simp [length, BoundedInterval.a, BoundedInterval.b,
+        show a ≤ b by linarith, show b ≤ c by linarith, show a ≤ c by linarith]
+
+theorem BoundedInterval.join_Ico_Icc {a b c:ℝ} (hab: a ≤ b) (hbc: b ≤ c) : (Icc a c).joins (Ico a b) (Icc b c) := by
+  refine ⟨ ?_, ?_, ?_ ⟩
+  . rw [Set.eq_empty_iff_forall_notMem]; intro x
+    simp; intro h1 h2 h3; linarith
+  . ext x
+    simp
+    constructor
+    . rintro ⟨ h1, h2 ⟩; simp [h1, h2]; exact lt_or_le x b
+    intro h
+    rcases h with h1 | h2
+    . exact ⟨ h1.1, by linarith ⟩
+    exact ⟨ by linarith, h2.2 ⟩
+  simp [length, BoundedInterval.a, BoundedInterval.b,
+        show a ≤ b by linarith, show b ≤ c by linarith, show a ≤ c by linarith]
+
+theorem BoundedInterval.join_Ico_Ico {a b c:ℝ} (hab: a ≤ b) (hbc: b ≤ c) : (Ico a c).joins (Ico a b) (Ico b c) := by
+  refine ⟨ ?_, ?_, ?_ ⟩
+  . rw [Set.eq_empty_iff_forall_notMem]; intro x
+    simp; intro h1 h2 h3; linarith
+  . ext x
+    simp
+    constructor
+    . rintro ⟨ h1, h2 ⟩; simp [h1, h2]; exact lt_or_le x b
+    intro h
+    rcases h with h1 | h2
+    . exact ⟨ h1.1, by linarith ⟩
+    exact ⟨ by linarith, h2.2 ⟩
+  simp [length, BoundedInterval.a, BoundedInterval.b,
+        show a ≤ b by linarith, show b ≤ c by linarith, show a ≤ c by linarith]
+
+theorem BoundedInterval.join_Ioo_Icc {a b c:ℝ} (hab: a < b) (hbc: b ≤ c) : (Ioc a c).joins (Ioo a b) (Icc b c) := by
+  refine ⟨ ?_, ?_, ?_ ⟩
+  . rw [Set.eq_empty_iff_forall_notMem]; intro x
+    simp; intro h1 h2 h3; linarith
+  . ext x
+    simp
+    constructor
+    . rintro ⟨ h1, h2 ⟩; simp [h1, h2]; exact lt_or_le x b
+    intro h
+    rcases h with h1 | h2
+    . exact ⟨ h1.1, by linarith ⟩
+    exact ⟨ by linarith, h2.2 ⟩
+  simp [length, BoundedInterval.a, BoundedInterval.b,
+        show a ≤ b by linarith, show b ≤ c by linarith, show a ≤ c by linarith]
+
+theorem BoundedInterval.join_Ioo_Ico {a b c:ℝ} (hab: a < b) (hbc: b ≤ c) : (Ioo a c).joins (Ioo a b) (Ico b c) := by
+  refine ⟨ ?_, ?_, ?_ ⟩
+  . rw [Set.eq_empty_iff_forall_notMem]; intro x
+    simp; intro h1 h2 h3; linarith
+  . ext x
+    simp
+    constructor
+    . rintro ⟨ h1, h2 ⟩; simp [h1, h2]; exact lt_or_le x b
+    intro h
+    rcases h with h1 | h2
+    . exact ⟨ h1.1, by linarith ⟩
+    exact ⟨ by linarith, h2.2 ⟩
+  simp [length, BoundedInterval.a, BoundedInterval.b,
+        show a ≤ b by linarith, show b ≤ c by linarith, show a ≤ c by linarith]
+
+
 @[ext]
 structure Partition (I: BoundedInterval) where
   intervals : Finset BoundedInterval
   exists_unique (x:ℝ) (hx : x ∈ I) : ∃! J, J ∈ intervals ∧ x ∈ J
   contains (J : BoundedInterval) (hJ : J ∈ intervals) : J ⊆ I
 
+#check Partition.mk
+
+instance Partition.instMembership (I: BoundedInterval) : Membership BoundedInterval (Partition I) where
+  mem P J := J ∈ P.intervals
+
+instance Partition.instBot (I: BoundedInterval) : Bot (Partition I) where
+  bot := {
+    intervals := {I}
+    exists_unique x hx := by
+      apply ExistsUnique.intro I
+      . simp [hx]
+      simp
+    contains J hJ := by
+      simp at hJ
+      rw [hJ, subset_iff]
+    }
+
+@[simp]
+theorem Partition.intervals_of_bot (I:BoundedInterval) : (⊥:Partition I).intervals = {I} := by
+  rfl
+
+noncomputable abbrev Partition.join {I J K:BoundedInterval} (P: Partition I) (Q: Partition J) (h: K.joins I J) : Partition K
+:=
+{
+  intervals := P.intervals ∪ Q.intervals
+  exists_unique x hx := by
+    simp [mem_iff, h.2] at hx
+    rcases hx with hx | hx
+    . obtain ⟨ L, hLP, hxL ⟩ := (P.exists_unique x hx).exists
+      apply ExistsUnique.intro L (by aesop)
+      rintro K ⟨ hK, hxK⟩
+      simp at hK
+      rcases hK with hKP | hKQ
+      . exact (P.exists_unique x hx).unique ⟨ hKP, hxK ⟩ ⟨ hLP, hxL ⟩
+      replace hxK := (BoundedInterval.subset_iff _ _).mp (Q.contains K hKQ) hxK
+      have := h.1
+      apply_fun (fun A ↦ x ∈ A) at this
+      simp [hx, hxK] at this
+    obtain ⟨ L, hLQ, hxL ⟩ := (Q.exists_unique x hx).exists
+    apply ExistsUnique.intro L (by aesop)
+    rintro K ⟨ hK, hxK⟩
+    simp at hK
+    rcases hK with hKP | hKQ
+    . replace hxK := (BoundedInterval.subset_iff _ _).mp (P.contains K hKP) hxK
+      have := h.1
+      apply_fun (fun A ↦ x ∈ A) at this
+      simp [hx, hxK] at this
+    exact (Q.exists_unique x hx).unique ⟨ hKQ, hxK ⟩ ⟨ hLQ, hxL ⟩
+  contains L hL := by
+    simp at hL
+    rcases hL with hLP | hLQ
+    . apply (P.contains L hLP).trans
+      simp [h, subset_iff]
+    apply (Q.contains L hLQ).trans
+    simp [h, subset_iff]
+}
+
+@[simp]
+theorem Partition.intervals_of_join {I J K:BoundedInterval} {h:K.joins I J} (P: Partition I) (Q: Partition J) : (P.join Q h).intervals = P.intervals ∪ Q.intervals := by
+  simp [Partition.join, dif_pos h]
+
+noncomputable abbrev Partition.add_empty {I:BoundedInterval} (P: Partition I) : Partition I := {
+  intervals := P.intervals ∪ {∅}
+  exists_unique x hx := by
+    obtain ⟨ J, hJP, hxJ ⟩ := (P.exists_unique x hx).exists
+    apply ExistsUnique.intro J (by aesop)
+    rintro K ⟨ hK, hxK ⟩
+    simp at hK
+    rcases hK with hK | rfl
+    . exact (P.exists_unique x hx).unique ⟨ hK, hxK ⟩ ⟨ hJP, hxJ ⟩
+    simp [mem_iff] at hxK
+  contains L hL := by
+    simp at hL
+    rcases hL with hL | rfl
+    . exact P.contains L hL
+    simp [subset_iff]
+}
+
+@[simp]
+theorem Partition.intervals_of_add_empty (I: BoundedInterval) (P: Partition I) : (P.add_empty).intervals = P.intervals ∪ {∅} := by
+  simp [Partition.add_empty, Finset.union_empty]
+
 example : ∃ P:Partition (Icc 1 8),
   P.intervals = {Icc 1 1, Ioo 1 3, Ico 3 5,
                  Icc 5 5, Ioc 5 8, ∅} := by
-  sorry
+  set P1 : Partition (Icc 1 1) := ⊥
+  set P2 : Partition (Ico 1 3) := P1.join (⊥:Partition (Ioo 1 3))
+                                  (BoundedInterval.join_Icc_Ioo (by norm_num) (by norm_num) )
+  set P3 : Partition (Ico 1 5) := P2.join (⊥:Partition (Ico 3 5))
+                                  (BoundedInterval.join_Ico_Ico (by norm_num) (by norm_num) )
+  set P4 : Partition (Icc 1 5) := P3.join (⊥:Partition (Icc 5 5))
+                                  (BoundedInterval.join_Ico_Icc (by norm_num) (by norm_num) )
+  set P5 : Partition (Icc 1 8) := P4.join (⊥:Partition (Ioc 5 8))
+                                  (BoundedInterval.join_Icc_Ioc (by norm_num) (by norm_num) )
+  use P5.add_empty
+  simp [P5, P4, P3, P2, P1]
+  aesop
 
 example : ∃ P:Partition (Icc 1 8),
   P.intervals = {Icc 1 1, Ioo 1 3, Ico 3 5,
@@ -188,7 +404,7 @@ example : ¬ ∃ P:Partition (Ioo 1 5),
 /-- Exercise 11.1.3.  The exercise only claims c ≤ b, but the stronger claim c < b is true and useful. -/
 theorem Partition.exist_right {I: BoundedInterval} (hI: I.a < I.b) (hI': I.b ∉ I)
   {P: Partition I}
-  : ∃ c ∈ Set.Ico I.a I.b, Ioo c I.b ∈ P.intervals ∨ Ico c I.b ∈ P.intervals := by
+  : ∃ c ∈ Set.Ico I.a I.b, Ioo c I.b ∈ P ∨ Ico c I.b ∈ P := by
   sorry
 
 /-- Theorem 11.1.13 (Length is finitely additive).
@@ -208,30 +424,28 @@ theorem Partition.sum_of_length  (I: BoundedInterval) (P: Partition I) :
   -- the proof in the book treats the n=1 case separately, but this is unnecessary
   intro I P hcard
   by_cases h : Subsingleton (I:Set ℝ)
-  . have (J: BoundedInterval) (hJ: J ∈ P.intervals) : Subsingleton (J:Set ℝ) := by
+  . have (J: BoundedInterval) (hJ: J ∈ P) : Subsingleton (J:Set ℝ) := by
       sorry
     simp_rw [length_of_subsingleton] at h this
     simp only [h]
     apply Finset.sum_eq_zero this
   simp only [length_of_subsingleton, length, sup_eq_right, tsub_le_iff_right, zero_add, not_le] at h
-  have : ∃ K : BoundedInterval, K ∈ P.intervals ∧
-         ∃ IK : BoundedInterval, |I|ₗ = |K|ₗ + |IK|ₗ ∧ (IK:Set ℝ) = (I:Set ℝ) \ (K:Set ℝ) := by
-    clear hn
+  have : ∃ K L : BoundedInterval, K ∈ P ∧ I.joins L K := by
     by_cases hI' : I.b ∈ I
     . obtain ⟨ K, hK, hbK ⟩ := (P.exists_unique I.b hI').exists
       have hKI : K ⊆ I := P.contains K hK
-      use K, hK
       by_cases hsub : Subsingleton (K:Set ℝ)
-      . simp only [length_of_subsingleton.mp hsub, zero_add]
-        simp only [mem_iff] at hbK
-        simp only [Set.subsingleton_coe] at hsub
+      . simp_all [mem_iff, Set.subsingleton_coe]
         replace hbK := Set.Subsingleton.eq_singleton_of_mem hsub hbK
+        have : K = Icc (I.b) (I.b) := by
+          sorry
+        subst this
         cases I with
         | Ioo a b => simp only [mem_iff, Set.mem_Ioo, lt_self_iff_false, and_false] at hI'
-        | Icc a b => use Ico a b
-                     simp only [length, hbK, Set.Icc_diff_right, and_self]
-        | Ioc a b => use Ioo a b
-                     simp only [length, hbK, Set.Ioc_diff_right, and_self]
+        | Icc a b => use (Icc b b), hK, Ico a b
+                     exact join_Ico_Icc (le_of_lt h) (le_refl _)
+        | Ioc a b => use (Icc b b), hK, Ioo a b
+                     exact join_Ioo_Icc h (le_refl _)
         | Ico a b => simp only [mem_iff, Set.mem_Ico, lt_self_iff_false, and_false] at hI'
       simp only [length_of_subsingleton, sup_eq_right, tsub_le_iff_right, zero_add, not_le] at hsub
       have hKI' := (K.Ioo_subset.trans hKI).trans I.subset_Icc
@@ -257,53 +471,29 @@ theorem Partition.sum_of_length  (I: BoundedInterval) (P: Partition I) :
           simp only [mem_iff, subset_iff, BoundedInterval.a, BoundedInterval.b, Set.mem_Icc, Set.mem_Ioo] at *
           linarith
         | Icc c b' =>
-          use Ico a c
-          simp only [length, mem_iff, subset_iff, BoundedInterval.a, BoundedInterval.b, Set.mem_Icc, le_refl, and_true] at *
-          simp only [sub_nonneg, hI', sup_of_le_left, hKb, hbK, hKA, sub_add_sub_cancel, true_and]
-          ext x; simp only [Set.mem_Ico, Set.mem_diff, Set.mem_Icc, not_and, not_le]
-          constructor
-          . rintro ⟨ h1, h2 ⟩
-            simp only [h1, true_and, isEmpty_Prop, not_le, h2, IsEmpty.forall_iff, and_true]; linarith
-          rintro ⟨ ⟨ h1, h2 ⟩, h3 ⟩
-          simp only [h1, true_and]; contrapose! h3; simp only [h3, h2, and_self]
+          use Icc c b', Ico a c, hK
+          simp [BoundedInterval.b] at hKb; subst hKb
+          exact join_Ico_Icc hKA (by linarith)
         | Ioc c b' =>
-          use Icc a c
-          simp only [mem_iff, subset_iff, BoundedInterval.a, BoundedInterval.b, Set.mem_Icc, Set.mem_Ioc, le_refl, and_true] at *
-          simp only [length, BoundedInterval.b, BoundedInterval.a, sub_nonneg, hI', sup_of_le_left,
-            hKb, show c ≤ b by linarith, hKA, sub_add_sub_cancel, true_and]
-          ext x; simp only [Set.mem_Icc, Set.mem_diff, Set.mem_Ioc, not_and, not_le]
-          constructor
-          . rintro ⟨ h1, h2 ⟩
-            simp only [h1, true_and, isEmpty_Prop, not_lt, h2, IsEmpty.forall_iff, and_true]; linarith
-          rintro ⟨ ⟨ h1, h2 ⟩, h3 ⟩
-          simp only [h1, true_and]; contrapose! h3; simp only [h3, h2, and_self]
+          use Ioc c b', Icc a c, hK
+          simp [BoundedInterval.b] at hKb; subst hKb
+          exact join_Icc_Ioc hKA (by linarith)
         | Ico c b' => simp only [BoundedInterval.a, BoundedInterval.b, mem_iff, Set.mem_Icc,
           le_refl, and_true, Set.mem_Ico, subset_iff] at *; linarith
       | Ioc a b =>
         cases K with
         | Ioo c b' => simp_all [mem_iff, subset_iff]
         | Icc c b' =>
-          use Ioo a c
-          simp only [length, BoundedInterval.a, BoundedInterval.b] at *
-          simp only [sub_nonneg, le_of_lt h, sup_of_le_left, hKb, show c ≤ b by linarith, hKA,
-            sub_add_sub_cancel, true_and]
-          ext x; simp only [Set.mem_Ioo, Set.mem_diff, Set.mem_Ioc, Set.mem_Icc, not_and, not_le]
-          constructor
-          . rintro ⟨ h1, h2 ⟩
-            simp only [h1, true_and, isEmpty_Prop, not_le, h2, IsEmpty.forall_iff, and_true]; linarith
-          rintro ⟨ ⟨ h1, h2 ⟩, h3 ⟩
-          simp only [h1, true_and]; contrapose! h3; simp only [h3, h2, and_self]
+          use Icc c b', Ioo a c, hK
+          simp [BoundedInterval.b] at hKb; subst hKb
+          simp [subset_iff] at hKI
+          have : c ∈ Set.Icc c b' := by simp; linarith
+          replace this := hKI this; simp at this
+          exact join_Ioo_Icc (by linarith) (by linarith)
         | Ioc c b' =>
-          use Ioc a c
-          simp only [length, BoundedInterval.a, BoundedInterval.b] at *
-          simp only [sub_nonneg, le_of_lt h, sup_of_le_left, hKb, (show b - c ≥ 0 by linarith), hKA,
-            sub_add_sub_cancel, true_and]
-          ext x; simp only [Set.mem_Ioc, Set.mem_diff, not_and, not_le]
-          constructor
-          . rintro ⟨ h1, h2 ⟩
-            simp only [h1, true_and, isEmpty_Prop, not_lt, h2, IsEmpty.forall_iff, and_true]; linarith
-          rintro ⟨ ⟨ h1, h2 ⟩, h3 ⟩
-          simp only [h1, true_and]; contrapose! h3; simp only [h3, h2, and_self]
+          use Ioc c b', Ioc a c, hK
+          simp [BoundedInterval.b] at hKb; subst hKb
+          exact join_Ioc_Ioc hKA (by linarith)
         | Ico c b' =>
           simp only [mem_iff, subset_iff, BoundedInterval.a, BoundedInterval.b, Set.mem_Ioc, Set.mem_Ico] at *; linarith
       | Ico a b => simp only [mem_iff, Set.mem_Ico, lt_self_iff_false, and_false] at hI'
@@ -311,82 +501,44 @@ theorem Partition.sum_of_length  (I: BoundedInterval) (P: Partition I) :
     cases I with
     | Ioo a b =>
       rcases hK with hK | hK
-      . simp only [mem_iff, subset_iff, BoundedInterval.a, BoundedInterval.b]
+      . simp_all [mem_iff, subset_iff, BoundedInterval.a, BoundedInterval.b]
         use Ioo c b, hK, Ioc a c
-        simp_all [length, BoundedInterval.a, BoundedInterval.b, le_of_lt h, le_of_lt hc.2]
-        ext x; simp only [Set.mem_Ioc, Set.mem_diff, Set.mem_Ioo, not_and, not_lt]
-        constructor
-        . rintro ⟨ h1, h2 ⟩
-          simp only [h1, true_and, isEmpty_Prop, not_lt, h2, IsEmpty.forall_iff, and_true]; linarith
-        rintro ⟨ ⟨ h1, h2 ⟩, h3 ⟩
-        simp only [h1, true_and]; contrapose! h3; simp only [h3, h2, and_self]
-      simp_all only [BoundedInterval.a, BoundedInterval.b, mem_iff, Set.mem_Ioo, lt_self_iff_false,
-        and_false, not_false_eq_true, Set.mem_Ico]
+        exact join_Ioc_Ioo (hc.1) (hc.2)
+      simp_all [mem_iff, subset_iff, BoundedInterval.a, BoundedInterval.b]
       use Ico c b, hK, Ioo a c
-      simp only [length, BoundedInterval.b, BoundedInterval.a, sub_nonneg, le_of_lt h,
-        sup_of_le_left, le_of_lt hc.2, hc.1, sub_add_sub_cancel, true_and]
-      ext x; simp only [Set.mem_Ioo, Set.mem_diff, Set.mem_Ico, not_and, not_lt]
-      constructor
-      . rintro ⟨ h1, h2 ⟩
-        simp only [h1, true_and, isEmpty_Prop, not_le, h2, IsEmpty.forall_iff, and_true]; linarith
-      rintro ⟨ ⟨ h1, h2 ⟩, h3 ⟩
-      simp [h1]; contrapose! h3; simp [h2, h3]
+      replace hK := P.contains _ hK
+      simp [subset_iff] at hK
+      have : c ∈ Set.Ico c b := by simp; linarith
+      replace this := hK this; simp at this
+      exact join_Ioo_Ico (by linarith) (by linarith)
     | Icc a b => simp [mem_iff, subset_iff, BoundedInterval.a, BoundedInterval.b] at hI' h; linarith
     | Ioc a b => simp [mem_iff, subset_iff, BoundedInterval.a, BoundedInterval.b] at hI' h; linarith
     | Ico a b =>
       rcases hK with hK | hK
       . simp_all [mem_iff, subset_iff, BoundedInterval.a, BoundedInterval.b]
         use Ioo c b, hK, Icc a c
-        simp only [length, BoundedInterval.b, BoundedInterval.a, sub_nonneg, le_of_lt h,
-          sup_of_le_left, (show b - c ≥ 0 by linarith), hc.1, sub_add_sub_cancel, true_and]
-        ext x; simp only [Set.mem_Icc, Set.mem_diff, Set.mem_Ico, Set.mem_Ioo, not_and, not_lt]
-        constructor
-        . rintro ⟨ h1, h2 ⟩
-          simp only [h1, true_and, isEmpty_Prop, not_lt, h2, IsEmpty.forall_iff, and_true]; linarith
-        rintro ⟨ ⟨ h1, h2 ⟩, h3 ⟩
-        simp only [h1, true_and]; contrapose! h3; simp only [h3, h2, and_self]
+        exact join_Icc_Ioo (hc.1) (hc.2)
       simp_all [mem_iff, subset_iff, BoundedInterval.a, BoundedInterval.b]
       use Ico c b, hK, Ico a c
-      simp only [length, BoundedInterval.b, BoundedInterval.a, sub_nonneg, le_of_lt h,
-        sup_of_le_left, (show b - c ≥ 0 by linarith), hc.1, sub_add_sub_cancel, true_and]
-      ext x; simp only [Set.mem_Icc, Set.mem_diff, Set.mem_Ico, Set.mem_Ioo, not_and, not_lt]
-      constructor
-      . rintro ⟨ h1, h2 ⟩
-        simp only [h1, true_and, isEmpty_Prop, not_lt, h2, IsEmpty.forall_iff, and_true]
-        refine ⟨ by linarith, ?_ ⟩
-        intro h3; linarith
-      rintro ⟨ ⟨ h1, h2 ⟩, h3 ⟩
-      simp only [h1, true_and]; contrapose! h3; simp only [h3, h2, and_self]
-  obtain ⟨ K, hK, IK, hlen, hdiff ⟩ := this
-  have : ∃ P' : Partition IK, P'.intervals = P.intervals.erase K := by
+      exact join_Ico_Ico (by linarith) (by linarith)
+  obtain ⟨ K, L, hK, ⟨ h1, h2, h3 ⟩ ⟩ := this
+  have : ∃ P' : Partition L, P'.intervals = P.intervals.erase K := by
     sorry
   obtain ⟨ P', hP' ⟩ := this
-  rw [hlen, ←Finset.add_sum_erase _ _ hK, ←hP']
+  rw [h3, ←Finset.add_sum_erase _ _ hK, ←hP', add_comm]
   congr
   apply hn _ _ _
   simp only [hP', Finset.card_erase_of_mem hK, hcard, add_tsub_cancel_right]
 
 /-- Definition 11.1.14 (Finer and coarser partitions) -/
 instance Partition.instLE (I: BoundedInterval) : LE (Partition I) where
-  le P P' := ∀ J ∈ P'.intervals, ∃ K ∈ P.intervals, J ⊆ K
+  le P P' := ∀ J ∈ P'.intervals, ∃ K ∈ P, J ⊆ K
 
 instance Partition.instPreOrder (I: BoundedInterval) : Preorder (Partition I) where
   le_refl P := by
     sorry
   le_trans P P' P'' hP hP' := by
     sorry
-
-instance Partition.instBot (I: BoundedInterval) : Bot (Partition I) where
-  bot := {
-    intervals := {I}
-    exists_unique x hx := by
-      apply ExistsUnique.intro I
-      . simp [hx]
-      simp
-    contains J hJ := by
-      simp at hJ
-      rw [hJ, subset_iff]
-    }
 
 instance Partition.instOrderBot (I: BoundedInterval) : OrderBot (Partition I) where
   bot_le := by
