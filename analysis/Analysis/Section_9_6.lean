@@ -38,6 +38,9 @@ theorem BddOn.iff' (f:ℝ → ℝ) (X:Set ℝ) :
   BddOn f X ↔ Bornology.IsBounded (f '' X) := by
   sorry
 
+theorem BddOn.of_bounded {f :ℝ → ℝ} {X: Set ℝ} {M:ℝ} (h: ∀ x ∈ X, |f x| ≤ M) :
+  BddOn f X := by use M
+
 example : Continuous (fun x:ℝ ↦ x) := by sorry
 
 example : ¬ BddOn (fun x:ℝ ↦ x) Set.univ  := by sorry
