@@ -11,7 +11,8 @@ Lean code could be "golfed" to be more elegant and idiomatic, but I have conscio
 doing so.
 
 Main constructions and results of this section:
-
+- Piecewise constant functions
+- The piecewise constant integral
 
 -/
 
@@ -209,7 +210,7 @@ theorem PiecewiseConstantOn.integ_mono {f g: ℝ → ℝ} {I: BoundedInterval} (
 
 /-- Theorem 11.2.16 (f) (Laws of integration) / Exercise 11.2.4 -/
 theorem PiecewiseConstantOn.integ_const (c: ℝ) (I: BoundedInterval) :
-  PiecewiseConstantOn.integ (fun _ ↦ c) I ≤ c * |I|ₗ := by
+  PiecewiseConstantOn.integ (fun _ ↦ c) I = c * |I|ₗ := by
   sorry
 
 open Classical in
