@@ -29,11 +29,14 @@ noncomputable abbrev upper_integral (f:ℝ → ℝ) (I: BoundedInterval) : ℝ :
 noncomputable abbrev lower_integral (f:ℝ → ℝ) (I: BoundedInterval) : ℝ :=
   sSup ((fun g ↦ PiecewiseConstantOn.integ g I) '' {g | MinorizesOn g f I ∧ PiecewiseConstantOn g I})
 
-/-- Lemma 11.3.3 -/
+/-- Lemma 11.3.3, augmented with some additional useful facts -/
 lemma integral_bounds {f:ℝ → ℝ} {I: BoundedInterval} {M:ℝ} (h: ∀ x ∈ (I:Set ℝ), |f x| ≤ M) :
   -M * |I|ₗ ≤ lower_integral f I ∧
   lower_integral f I ≤ upper_integral f I ∧
-  upper_integral f I ≤ M * |I|ₗ := by
+  upper_integral f I ≤ M * |I|ₗ ∧
+  (∀ g, MajorizesOn g f I ∧ PiecewiseConstantOn g I → upper_integral f I ≤ PiecewiseConstantOn.integ g I) ∧
+  ∀ h, MinorizesOn h f I ∧ PiecewiseConstantOn h I → PiecewiseConstantOn.integ h I ≤ lower_integral f I
+  := by
   -- This proof is modified slightly from the original text.
   set A := ((fun g ↦ PiecewiseConstantOn.integ g I) '' {g | MajorizesOn g f I ∧ PiecewiseConstantOn g I})
   set B := ((fun g ↦ PiecewiseConstantOn.integ g I) '' {g | MinorizesOn g f I ∧ PiecewiseConstantOn g I})
@@ -74,7 +77,7 @@ lemma integral_bounds {f:ℝ → ℝ} {I: BoundedInterval} {M:ℝ} (h: ∀ x ∈
     rw [bddAbove_def]
     use M * |I|ₗ
     intro b hb; exact h3 h1 hb
-  refine ⟨ ?_, ?_, ?_ ⟩
+  refine ⟨ ?_, ?_, ?_, ?_, ?_ ⟩
   . apply ConditionallyCompleteLattice.le_csSup _ _ hB h2
   . apply ConditionallyCompleteLattice.csSup_le _ _ (Set.nonempty_of_mem h2) _
     rw [mem_upperBounds]
@@ -83,7 +86,15 @@ lemma integral_bounds {f:ℝ → ℝ} {I: BoundedInterval} {M:ℝ} (h: ∀ x ∈
     rw [mem_lowerBounds]
     intro a ha
     exact h3 ha hb
-  apply ConditionallyCompleteLattice.csInf_le _ _ hA h1
+  . apply ConditionallyCompleteLattice.csInf_le _ _ hA h1
+  . intro g hg
+    apply ConditionallyCompleteLattice.csInf_le _ _ hA _
+    simp [A]
+    use g
+  intro h hh
+  apply ConditionallyCompleteLattice.le_csSup _ _ hB _
+  simp [B]
+  use h
 
 /-- Definition 11.3.4 (Riemann integral)
 As we permit junk values, the simplest definition for the Riemann integral is the upper integral.-/
