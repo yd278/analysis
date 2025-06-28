@@ -408,7 +408,8 @@ theorem Partition.exist_right {I: BoundedInterval} (hI: I.a < I.b) (hI': I.b ∉
   sorry
 
 /-- Theorem 11.1.13 (Length is finitely additive).
-Due to the excessive case analysis, `simp only` is used in place of `simp` to speed up elaboration. -/
+Due to the excessive case analysis, `simp only` is used in place of `simp` in some places
+to speed up elaboration. -/
 theorem Partition.sum_of_length  (I: BoundedInterval) (P: Partition I) :
   ∑ J ∈ P.intervals, |J|ₗ = |I|ₗ := by
   -- This proof is written to follow the structure of the original text.
