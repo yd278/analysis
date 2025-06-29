@@ -25,6 +25,8 @@ abbrev MajorizesOn (g f:ℝ → ℝ) (I: BoundedInterval) : Prop := ∀ x ∈ (I
 
 abbrev MinorizesOn (g f:ℝ → ℝ) (I: BoundedInterval) : Prop := ∀ x ∈ (I:Set ℝ), g x ≤ f x
 
+theorem MinorizesOn.iff (g f:ℝ → ℝ) (I: BoundedInterval) : MinorizesOn g f I ↔ MajorizesOn f g I := by rfl
+
 /-- Definition 11.3.2 (Uppper and lower Riemann integrals )-/
 noncomputable abbrev upper_integral (f:ℝ → ℝ) (I: BoundedInterval) : ℝ :=
   sInf ((fun g ↦ PiecewiseConstantOn.integ g I) '' {g | MajorizesOn g f I ∧ PiecewiseConstantOn g I})
