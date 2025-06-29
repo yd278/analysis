@@ -214,7 +214,7 @@ theorem integ_of_mul_nonneg {I: BoundedInterval} {f g:ℝ → ℝ} (hf: Integrab
         exact PiecewiseConstantOn.max hg'const hzero
       intro x hx
       simp
-    obtain ⟨ g', hg'min, hg'const, hg'int, hg_nonneg ⟩ := this
+    obtain ⟨ g', hg'min, hg'const, hg'int, hg'_nonneg ⟩ := this
     have : ∃ f'', MajorizesOn f'' f I ∧ PiecewiseConstantOn f'' I ∧ PiecewiseConstantOn.integ f'' I < integ f I + ε ∧ MinorizesOn f'' (fun _ ↦ M₁) I := by
       obtain ⟨ f'', hf''maj, hf''const, hf''int ⟩ := lt_of_gt_upper_integral hf.1 (show upper_integral f I < integ f I + ε  by linarith)
       use min f'' (fun _ ↦ M₁)
@@ -247,7 +247,27 @@ theorem integ_of_mul_nonneg {I: BoundedInterval} {f g:ℝ → ℝ} (hf: Integrab
       intro x hx
       simp
     obtain ⟨ g'', hg''maj, hg''const, hg''int, hg''nonneg ⟩ := this
-    
+    have hf'g'_const := PiecewiseConstantOn.mul hf'const hg'const
+    have hf'g'_maj : MinorizesOn (f' * g') (f * g) I := by
+      intro x hx
+      specialize hf'min x hx
+      specialize hg'min x hx
+      specialize hf'_nonneg x hx
+      specialize hg'_nonneg x hx
+      simp at hf'_nonneg hg'_nonneg ⊢
+      exact mul_le_mul hf'min hg'min (by positivity) (by linarith)
+    have hf''g''_const := PiecewiseConstantOn.mul hf''const hg''const
+    have hf''g''_maj : MajorizesOn (f'' * g'') (f * g) I := by
+      intro x hx
+      specialize hf''maj x hx
+      specialize hg''maj x hx
+      specialize hf''nonneg x hx
+      specialize hg_nonneg x hx
+      specialize hf_nonneg x hx
+      simp at hf''nonneg hf_nonneg hg_nonneg ⊢
+      exact mul_le_mul hf''maj hg''maj (by positivity) (by linarith)
+
+
 
 
 
