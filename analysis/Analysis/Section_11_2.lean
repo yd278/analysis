@@ -55,6 +55,10 @@ theorem ConstantOn.eq {f: ℝ → ℝ} {X: Set ℝ} (h: ConstantOn f X) {x:ℝ} 
 theorem ConstantOn.of_const {f:ℝ → ℝ} {X: Set ℝ} {c:ℝ} (h: ∀ x ∈ X, f x = c) :
   ConstantOn f X := by use c; rintro ⟨ x, hx ⟩; simp [h x hx]
 
+theorem ConstantOn.of_const' (c:ℝ) (X:Set ℝ): ConstantOn (fun _ ↦ c) X := by
+  apply ConstantOn.of_const (c := c)
+  simp
+
 theorem ConstantOn.const_eq {f:ℝ → ℝ} {X: Set ℝ} (hX: X.Nonempty) {c:ℝ} (h: ∀ x ∈ X, f x = c) :
   constant_value_on f X = c := by
     rw [←eq (of_const h) hX.some_mem, h _ hX.some_mem]

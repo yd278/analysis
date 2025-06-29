@@ -25,9 +25,15 @@ theorem integ_of_add {I: BoundedInterval} {f g:ℝ → ℝ} (hf: IntegrableOn f 
   sorry
 
 /-- Theorem 11.4.1(b) / Exercise 11.4.1 -/
-theorem integ_of_smul {I: BoundedInterval} {c:ℝ} {f:ℝ → ℝ} (hf: IntegrableOn f I) :
+theorem integ_of_smul {I: BoundedInterval} (c:ℝ) {f:ℝ → ℝ} (hf: IntegrableOn f I) :
   IntegrableOn (c • f) I ∧ integ (c • f) I = c * integ f I := by
   sorry
+
+theorem integ_of_neg {I: BoundedInterval} {f:ℝ → ℝ} (hf: IntegrableOn f I) :
+  IntegrableOn (-f) I ∧ integ (-f) I = -integ f I := by
+  have := integ_of_smul (-1) hf
+  simp at this
+  exact this
 
 /-- Theorem 11.4.1(c) / Exercise 11.4.1 -/
 theorem integ_of_sub {I: BoundedInterval} {f g:ℝ → ℝ} (hf: IntegrableOn f I) (hg: IntegrableOn g I) :
@@ -47,12 +53,12 @@ theorem integ_mono {I: BoundedInterval} {f g:ℝ → ℝ} (hf: IntegrableOn f I)
 
 /-- Theorem 11.4.1(f) / Exercise 11.4.1 -/
 theorem integ_of_const (c:ℝ) (I: BoundedInterval) :
-  integ (fun _ ↦ c) I = c * |I|ₗ := by
+  IntegrableOn (fun _ ↦ c) I ∧ integ (fun _ ↦ c) I = c * |I|ₗ := by
   sorry
 
 /-- Theorem 11.4.1(f) / Exercise 11.4.1 -/
 theorem integ_of_const' {I: BoundedInterval} {f:ℝ → ℝ} (hf: ConstantOn f I) :
-  integ f I = (constant_value_on f I) * |I|ₗ := by
+  IntegrableOn f I ∧ integ f I = (constant_value_on f I) * |I|ₗ := by
   sorry
 
 
@@ -76,7 +82,7 @@ theorem integ_of_join {I J K: BoundedInterval} (hIJK: K.joins I J)
   IntegrableOn f I ∧ IntegrableOn f J ∧ integ f K = integ f I + integ f J := by
   sorry
 
-/-- THeorem 11.4.3 (Max and min preserve integrability)-/
+/-- Theorem 11.4.3 (Max and min preserve integrability)-/
 theorem integ_of_max {I: BoundedInterval} {f g:ℝ → ℝ} (hf: IntegrableOn f I) (hg: IntegrableOn g I) :
   IntegrableOn (max f g) I  := by
   -- This proof is written to follow the structure of the original text.
@@ -140,5 +146,120 @@ theorem integ_of_max {I: BoundedInterval} {f g:ℝ → ℝ} (hf: IntegrableOn f 
     linarith
   linarith
 
+theorem integ_of_min {I: BoundedInterval} {f g:ℝ → ℝ} (hf: IntegrableOn f I) (hg: IntegrableOn g I) :
+  IntegrableOn (min f g) I  := by
+  sorry
+
+/-- Corollary 11.4.4 -/
+theorem integ_of_abs {I: BoundedInterval} {f:ℝ → ℝ} (hf: IntegrableOn f I) :
+  IntegrableOn (abs f) I := by
+  have f_plus := integ_of_max hf (integ_of_const 0 I).1
+  have f_minus := integ_of_min hf (integ_of_const 0 I).1
+  convert (integ_of_sub f_plus f_minus).1 using 1
+  ext x
+  rcases le_or_gt (f x) 0 with h | h
+  . simp [h]
+  simp [le_of_lt h]
+
+/-- Theorem 11.4.5 (Products preserve Riemann integrability).
+It is convenient to first establish the non-negative case.-/
+theorem integ_of_mul_nonneg {I: BoundedInterval} {f g:ℝ → ℝ} (hf: IntegrableOn f I) (hg: IntegrableOn g I)
+  (hf_nonneg: MajorizesOn f 0 I) (hg_nonneg: MajorizesOn g 0 I) :
+  IntegrableOn (f * g) I := by
+  -- This proof is written to follow the structure of the original text.
+  unfold IntegrableOn at hf hg
+  obtain ⟨ M₁, hM₁ ⟩ := hf.1
+  obtain ⟨ M₂, hM₂ ⟩ := hg.1
+  have hmul_bound : BddOn (f * g) I := by
+    use M₁ * M₂
+    intro x hx
+    specialize hM₁ x hx
+    specialize hM₂ x hx
+    simp [abs_mul]
+    have : 0 ≤ M₁ := by apply (abs_nonneg _).trans hM₁
+    exact mul_le_mul  hM₁ hM₂ (by positivity) (by positivity)
+  have lower_le_upper : 0 ≤ upper_integral (f * g) I - lower_integral (f * g) I := by
+    linarith [lower_integral_le_upper hmul_bound]
+  have (ε:ℝ) (hε: 0 < ε) : upper_integral (f * g) I - lower_integral (f * g) I ≤ (2*M₁+2*M₂)*ε := by
+    have : ∃ f', MinorizesOn f' f I ∧ PiecewiseConstantOn f' I ∧ integ f I - ε < PiecewiseConstantOn.integ f' I ∧ MajorizesOn f' 0 I := by
+      obtain ⟨ f', hf'min, hf'const, hf'int ⟩ := gt_of_lt_lower_integral hf.1 (show integ f I - ε < lower_integral f I by linarith)
+      use max f' 0
+      have hzero := PiecewiseConstantOn.of_const (ConstantOn.of_const' 0 I)
+      refine ⟨ ?_, ?_, ?_, ?_ ⟩
+      . intro x hx
+        specialize hf_nonneg x hx
+        specialize hf'min x hx
+        simp
+        exact ⟨hf'min, hf_nonneg⟩
+      . exact PiecewiseConstantOn.max hf'const hzero
+      . apply lt_of_lt_of_le hf'int (PiecewiseConstantOn.integ_mono _ hf'const _)
+        . intro x hx; simp
+        exact PiecewiseConstantOn.max hf'const hzero
+      intro x hx
+      simp
+    obtain ⟨ f', hf'min, hf'const, hf'int, hf'_nonneg ⟩ := this
+    have : ∃ g', MinorizesOn g' g I ∧ PiecewiseConstantOn g' I ∧ integ g I - ε < PiecewiseConstantOn.integ g' I ∧ MajorizesOn g' 0 I := by
+      obtain ⟨ g', hg'min, hg'const, hg'int ⟩ := gt_of_lt_lower_integral hg.1 (show integ g I - ε < lower_integral g I by linarith)
+      use max g' 0
+      have hzero := PiecewiseConstantOn.of_const (ConstantOn.of_const' 0 I)
+      refine ⟨ ?_, ?_, ?_, ?_ ⟩
+      . intro x hx
+        specialize hg_nonneg x hx
+        specialize hg'min x hx
+        simp
+        exact ⟨hg'min, hg_nonneg⟩
+      . exact PiecewiseConstantOn.max hg'const hzero
+      . apply lt_of_lt_of_le hg'int (PiecewiseConstantOn.integ_mono _ hg'const _)
+        . intro x hx; simp
+        exact PiecewiseConstantOn.max hg'const hzero
+      intro x hx
+      simp
+    obtain ⟨ g', hg'min, hg'const, hg'int, hg_nonneg ⟩ := this
+    have : ∃ f'', MajorizesOn f'' f I ∧ PiecewiseConstantOn f'' I ∧ PiecewiseConstantOn.integ f'' I < integ f I + ε ∧ MinorizesOn f'' (fun _ ↦ M₁) I := by
+      obtain ⟨ f'', hf''maj, hf''const, hf''int ⟩ := lt_of_gt_upper_integral hf.1 (show upper_integral f I < integ f I + ε  by linarith)
+      use min f'' (fun _ ↦ M₁)
+      have hM₁_piece := PiecewiseConstantOn.of_const (ConstantOn.of_const' M₁ I)
+      refine ⟨ ?_, ?_, ?_, ?_ ⟩
+      . intro x hx
+        specialize hM₁ x hx; rw [abs_le'] at hM₁
+        specialize hf''maj x hx
+        simp [hf''maj, hM₁.1]
+      . exact PiecewiseConstantOn.min hf''const hM₁_piece
+      . apply lt_of_le_of_lt (PiecewiseConstantOn.integ_mono _ _ hf''const) hf''int
+        . intro x hx; simp [hf''maj, hM₁_piece]
+        exact PiecewiseConstantOn.min hf''const hM₁_piece
+      intro x hx
+      simp
+    obtain ⟨ f'', hf''maj, hf''const, hf''int, hf''nonneg ⟩ := this
+    have : ∃ g'', MajorizesOn g'' g I ∧ PiecewiseConstantOn g'' I ∧ PiecewiseConstantOn.integ g'' I < integ g I + ε ∧ MinorizesOn g'' (fun _ ↦ M₂) I := by
+      obtain ⟨ g'', hg''maj, hg''const, hg''int ⟩ := lt_of_gt_upper_integral hg.1 (show upper_integral g I < integ g I + ε  by linarith)
+      use min g'' (fun _ ↦ M₂)
+      have hM₂_piece := PiecewiseConstantOn.of_const (ConstantOn.of_const' M₂ I)
+      refine ⟨ ?_, ?_, ?_, ?_ ⟩
+      . intro x hx
+        specialize hM₂ x hx; rw [abs_le'] at hM₂
+        specialize hg''maj x hx
+        simp [hg''maj, hM₂.1]
+      . exact PiecewiseConstantOn.min hg''const hM₂_piece
+      . apply lt_of_le_of_lt (PiecewiseConstantOn.integ_mono _ _ hg''const) hg''int
+        . intro x hx; simp [hg''maj, hM₂_piece]
+        exact PiecewiseConstantOn.min hg''const hM₂_piece
+      intro x hx
+      simp
+    obtain ⟨ g'', hg''maj, hg''const, hg''int, hg''nonneg ⟩ := this
+    
+
+
+
+
+
+    sorry
+
+  sorry
+
+theorem integ_of_mul {I: BoundedInterval} {f g:ℝ → ℝ} (hf: IntegrableOn f I) (hg: IntegrableOn g I) :
+  IntegrableOn (f * g) I := by
+  -- This proof is written to follow the structure of the original text.
+  sorry
 
 end Chapter11
