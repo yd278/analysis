@@ -146,6 +146,7 @@ theorem integ_of_max {I: BoundedInterval} {f g:ℝ → ℝ} (hf: IntegrableOn f 
     linarith
   linarith
 
+/-- Theorem 11.4.5 / Exercise 11.4.3.  The objective here is to create a shorter proof than the one above.-/
 theorem integ_of_min {I: BoundedInterval} {f g:ℝ → ℝ} (hf: IntegrableOn f I) (hg: IntegrableOn g I) :
   IntegrableOn (min f g) I  := by
   sorry
@@ -336,5 +337,20 @@ theorem integ_of_mul {I: BoundedInterval} {f g:ℝ → ℝ} (hf: IntegrableOn f 
   IntegrableOn (f * g) I := by
   -- This proof is written to follow the structure of the original text.
   sorry
+
+open BoundedInterval
+
+/-- Exercise 11.4.2 -/
+theorem integ_split {I: BoundedInterval} {f: ℝ → ℝ} (hf: IntegrableOn f I) (P: Partition I) :
+  integ f I = ∑ J ∈ P.intervals, integ f J := by
+    sorry
+
+/-- Exercise 11.5.2 - MOVE THIS TO SECTION 11.5 -/
+theorem integ_zero {a b:ℝ} (hab: a ≤ b) (f: ℝ → ℝ) (hf: ContinuousOn f (Icc a b))
+  (hnonneg: MajorizesOn f (fun _ ↦ 0) (Icc a b)) (hinteg : integ f (Icc a b) = 0) :
+  ∀ x ∈ Icc a b, f x = 0 := by
+    sorry
+
+
 
 end Chapter11
