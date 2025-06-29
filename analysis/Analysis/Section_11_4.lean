@@ -169,7 +169,9 @@ theorem integ_of_mul_nonneg {I: BoundedInterval} {f g:ℝ → ℝ} (hf: Integrab
   -- This proof is written to follow the structure of the original text.
   by_cases hI : (I:Set ℝ).Nonempty
   swap
-  . sorry
+  . apply (integ_on_subsingleton _).1
+    rw [←BoundedInterval.length_of_subsingleton]
+    aesop
   unfold IntegrableOn at hf hg
   obtain ⟨ M₁, hM₁ ⟩ := hf.1
   obtain ⟨ M₂, hM₂ ⟩ := hg.1
@@ -188,7 +190,7 @@ theorem integ_of_mul_nonneg {I: BoundedInterval} {f g:ℝ → ℝ} (hf: Integrab
     exact mul_le_mul  hM₁ hM₂ (by positivity) (by positivity)
   have lower_le_upper : 0 ≤ upper_integral (f * g) I - lower_integral (f * g) I := by
     linarith [lower_integral_le_upper hmul_bound]
-  have (ε:ℝ) (hε: 0 < ε) : upper_integral (f * g) I - lower_integral (f * g) I ≤ (2*M₁+2*M₂)*ε := by
+  have (ε:ℝ) (hε: 0 < ε) : upper_integral (f * g) I - lower_integral (f * g) I ≤ 2*(M₁+M₂)*ε := by
     have : ∃ f', MinorizesOn f' f I ∧ PiecewiseConstantOn f' I ∧ integ f I - ε < PiecewiseConstantOn.integ f' I ∧ MajorizesOn f' 0 I := by
       obtain ⟨ f', hf'min, hf'const, hf'int ⟩ := gt_of_lt_lower_integral hf.1 (show integ f I - ε < lower_integral f I by linarith)
       use max f' 0
@@ -312,7 +314,23 @@ theorem integ_of_mul_nonneg {I: BoundedInterval} {f g:ℝ → ℝ} (hf: Integrab
         . linarith
         linarith
       _ = _ := by ring
-  sorry
+  refine ⟨ hmul_bound, ?_ ⟩
+  rw [le_iff_lt_or_eq] at lower_le_upper
+  rcases lower_le_upper with h | h
+  . by_cases hMM : M₁ + M₂ > 0
+    swap
+    . have hpos : M₁ + M₂ = 0 := by linarith
+      specialize this 1 (by norm_num)
+      simp [hpos] at this
+      linarith
+    set ε := (upper_integral (f*g) I - lower_integral (f*g) I)/(4*(M₁+M₂))
+    specialize this ε (by positivity)
+    simp only [ε] at this
+    replace : upper_integral (f * g) I - lower_integral (f * g) I ≤ (upper_integral (f * g) I - lower_integral (f * g) I)/2 := by
+      convert this using 1
+      field_simp; ring
+    linarith
+  linarith
 
 theorem integ_of_mul {I: BoundedInterval} {f g:ℝ → ℝ} (hf: IntegrableOn f I) (hg: IntegrableOn g I) :
   IntegrableOn (f * g) I := by
