@@ -259,7 +259,7 @@ theorem PiecewiseConstantOn.integ_smul {f: ℝ → ℝ} {I: BoundedInterval} (c:
   sorry
 
 /-- Theorem 11.2.16 (c) (Laws of integration) / Exercise 11.2.4 -/
-theorem PiecewiseConstantOn.integ_sub {f g: ℝ → ℝ} {I: BoundedInterval} (c:ℝ)
+theorem PiecewiseConstantOn.integ_sub {f g: ℝ → ℝ} {I: BoundedInterval}
   (hf: PiecewiseConstantOn f I) (hg: PiecewiseConstantOn g I) :
   PiecewiseConstantOn.integ (f - g) I = PiecewiseConstantOn.integ f I - PiecewiseConstantOn.integ g I
    := by

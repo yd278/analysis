@@ -167,16 +167,24 @@ theorem integ_of_mul_nonneg {I: BoundedInterval} {f g:ℝ → ℝ} (hf: Integrab
   (hf_nonneg: MajorizesOn f 0 I) (hg_nonneg: MajorizesOn g 0 I) :
   IntegrableOn (f * g) I := by
   -- This proof is written to follow the structure of the original text.
+  by_cases hI : (I:Set ℝ).Nonempty
+  swap
+  . sorry
   unfold IntegrableOn at hf hg
   obtain ⟨ M₁, hM₁ ⟩ := hf.1
   obtain ⟨ M₂, hM₂ ⟩ := hg.1
+  have hM₁pos : 0 ≤ M₁ := by
+    specialize hM₁ hI.some hI.some_mem
+    apply (abs_nonneg _).trans hM₁
+  have hM₂pos : 0 ≤ M₂ := by
+    specialize hM₂ hI.some hI.some_mem
+    apply (abs_nonneg _).trans hM₂
   have hmul_bound : BddOn (f * g) I := by
     use M₁ * M₂
     intro x hx
     specialize hM₁ x hx
     specialize hM₂ x hx
     simp [abs_mul]
-    have : 0 ≤ M₁ := by apply (abs_nonneg _).trans hM₁
     exact mul_le_mul  hM₁ hM₂ (by positivity) (by positivity)
   have lower_le_upper : 0 ≤ upper_integral (f * g) I - lower_integral (f * g) I := by
     linarith [lower_integral_le_upper hmul_bound]
@@ -230,7 +238,7 @@ theorem integ_of_mul_nonneg {I: BoundedInterval} {f g:ℝ → ℝ} (hf: Integrab
         exact PiecewiseConstantOn.min hf''const hM₁_piece
       intro x hx
       simp
-    obtain ⟨ f'', hf''maj, hf''const, hf''int, hf''nonneg ⟩ := this
+    obtain ⟨ f'', hf''maj, hf''const, hf''int, hf''bound ⟩ := this
     have : ∃ g'', MajorizesOn g'' g I ∧ PiecewiseConstantOn g'' I ∧ PiecewiseConstantOn.integ g'' I < integ g I + ε ∧ MinorizesOn g'' (fun _ ↦ M₂) I := by
       obtain ⟨ g'', hg''maj, hg''const, hg''int ⟩ := lt_of_gt_upper_integral hg.1 (show upper_integral g I < integ g I + ε  by linarith)
       use min g'' (fun _ ↦ M₂)
@@ -246,7 +254,7 @@ theorem integ_of_mul_nonneg {I: BoundedInterval} {f g:ℝ → ℝ} (hf: Integrab
         exact PiecewiseConstantOn.min hg''const hM₂_piece
       intro x hx
       simp
-    obtain ⟨ g'', hg''maj, hg''const, hg''int, hg''nonneg ⟩ := this
+    obtain ⟨ g'', hg''maj, hg''const, hg''int, hg''bound ⟩ := this
     have hf'g'_const := PiecewiseConstantOn.mul hf'const hg'const
     have hf'g'_maj : MinorizesOn (f' * g') (f * g) I := by
       intro x hx
@@ -261,20 +269,49 @@ theorem integ_of_mul_nonneg {I: BoundedInterval} {f g:ℝ → ℝ} (hf: Integrab
       intro x hx
       specialize hf''maj x hx
       specialize hg''maj x hx
-      specialize hf''nonneg x hx
+      specialize hf''bound x hx
       specialize hg_nonneg x hx
       specialize hf_nonneg x hx
-      simp at hf''nonneg hf_nonneg hg_nonneg ⊢
+      simp at hf''bound hf_nonneg hg_nonneg ⊢
       exact mul_le_mul hf''maj hg''maj (by positivity) (by linarith)
-
-
-
-
-
-
-
-    sorry
-
+    have hupper_le := upper_integral_le_integ hmul_bound hf''g''_maj hf''g''_const
+    have hlower_ge := integ_le_lower_integral hmul_bound hf'g'_maj hf'g'_const
+    have hh_const := PiecewiseConstantOn.sub hf''g''_const hf'g'_const
+    have hh_integ := PiecewiseConstantOn.integ_sub hf''g''_const hf'g'_const
+    have hhmin : MinorizesOn (f'' * g'' - f' * g') (M₁ • (g''-g') + M₂ • (f''-f')) I := by
+      intro x hx
+      simp only [Pi.sub_apply, Pi.mul_apply, Pi.add_apply, Pi.smul_apply, smul_eq_mul]
+      calc
+        _ = (f'' x) * (g'' x - g' x) + (g' x) * (f'' x - f' x) := by ring
+        _ ≤ _ := by
+          specialize hg'min x hx
+          specialize hg''maj x hx
+          specialize hf''bound x hx
+          specialize hf'min x hx
+          specialize hf''maj x hx
+          specialize hg''bound x hx
+          gcongr
+          . linarith
+          . linarith
+          simp at hg''bound; linarith
+    have hg''g'_const := PiecewiseConstantOn.sub hg''const hg'const
+    have hg''g'_integ := PiecewiseConstantOn.integ_sub hg''const hg'const
+    have hM₁g''g'_const := PiecewiseConstantOn.smul M₁ hg''g'_const
+    have hM₁g''g_integ := PiecewiseConstantOn.integ_smul M₁ hg''g'_const
+    have hf''f'_const := PiecewiseConstantOn.sub hf''const hf'const
+    have hf''f_integ := PiecewiseConstantOn.integ_sub hf''const hf'const
+    have hM₂f''f'_const := PiecewiseConstantOn.smul M₂ hf''f'_const
+    have hM₂f''f_integ := PiecewiseConstantOn.integ_smul M₂ hf''f'_const
+    have hsum_const := PiecewiseConstantOn.add hM₁g''g'_const hM₂f''f'_const
+    have hsum_integ := PiecewiseConstantOn.integ_add hM₁g''g'_const hM₂f''f'_const
+    have hsum_bound := PiecewiseConstantOn.integ_mono hhmin hh_const hsum_const
+    calc
+      _ ≤ M₁ * PiecewiseConstantOn.integ (g'' - g') I + M₂ * PiecewiseConstantOn.integ (f'' - f') I := by linarith
+      _ ≤ M₁ * (2*ε) + M₂ * (2*ε) := by
+        gcongr
+        . linarith
+        linarith
+      _ = _ := by ring
   sorry
 
 theorem integ_of_mul {I: BoundedInterval} {f g:ℝ → ℝ} (hf: IntegrableOn f I) (hg: IntegrableOn g I) :
