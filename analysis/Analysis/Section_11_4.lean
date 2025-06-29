@@ -336,19 +336,36 @@ theorem integ_of_mul_nonneg {I: BoundedInterval} {f g:ℝ → ℝ} (hf: Integrab
 theorem integ_of_mul {I: BoundedInterval} {f g:ℝ → ℝ} (hf: IntegrableOn f I) (hg: IntegrableOn g I) :
   IntegrableOn (f * g) I := by
   -- This proof is written to follow the structure of the original text.
-  sorry
+  set fplus := max f (fun _ ↦ 0)
+  set fminus := -min f (fun _ ↦ 0)
+  set gplus := max g (fun _ ↦ 0)
+  set gminus := -min g (fun _ ↦ 0)
+  have hfplus_integ : IntegrableOn fplus I := integ_of_max hf (integ_of_const 0 I).1
+  have hfminus_integ : IntegrableOn fminus I := (integ_of_neg (integ_of_min hf (integ_of_const 0 I).1)).1
+  have hgplus_integ : IntegrableOn gplus I := integ_of_max hg (integ_of_const 0 I).1
+  have hgminus_integ : IntegrableOn gminus I := (integ_of_neg (integ_of_min hg (integ_of_const 0 I).1)).1
+  have hfplus_nonneg : MajorizesOn fplus 0 I := by intro x hx; simp [fplus]
+  have hfminus_nonneg : MajorizesOn fminus 0 I := by intro x hx; simp [fminus]
+  have hgplus_nonneg : MajorizesOn gplus 0 I := by intro x hx; simp [gplus]
+  have hgminus_nonneg : MajorizesOn gminus 0 I := by intro x hx; simp [gminus]
+  have hfplusgplus := integ_of_mul_nonneg hfplus_integ hgplus_integ hfplus_nonneg hgplus_nonneg
+  have hfplusgminus := integ_of_mul_nonneg hfplus_integ hgminus_integ hfplus_nonneg hgminus_nonneg
+  have hfminusgplus := integ_of_mul_nonneg hfminus_integ hgplus_integ hfminus_nonneg hgplus_nonneg
+  have hfminusgminus := integ_of_mul_nonneg hfminus_integ hgminus_integ hfminus_nonneg hgminus_nonneg
+  have hf : f = fplus - fminus := by ext x; simp [fplus, fminus]
+  have hg : g = gplus - gminus := by ext x; simp [gplus, gminus]
+  rw [hf, hg]
+  ring_nf
+  apply (integ_of_add _ hfminusgminus).1
+  apply (integ_of_add hfplusgplus _).1
+  apply (integ_of_sub _ hfminusgplus).1
+  exact (integ_of_neg hfplusgminus).1
 
 open BoundedInterval
 
 /-- Exercise 11.4.2 -/
 theorem integ_split {I: BoundedInterval} {f: ℝ → ℝ} (hf: IntegrableOn f I) (P: Partition I) :
   integ f I = ∑ J ∈ P.intervals, integ f J := by
-    sorry
-
-/-- Exercise 11.5.2 - MOVE THIS TO SECTION 11.5 -/
-theorem integ_zero {a b:ℝ} (hab: a ≤ b) (f: ℝ → ℝ) (hf: ContinuousOn f (Icc a b))
-  (hnonneg: MajorizesOn f (fun _ ↦ 0) (Icc a b)) (hinteg : integ f (Icc a b) = 0) :
-  ∀ x ∈ Icc a b, f x = 0 := by
     sorry
 
 
