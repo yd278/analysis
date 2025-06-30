@@ -103,7 +103,7 @@ theorem SetTheory.Set.specify_exists (h: axiom_of_universal_specification) (A:Se
 
 /--
   Exercise 3.2.1. The spirit of the exercise is to establish these results without using either
-  Russell's paradox, or the specify operation.
+  Russell's paradox, or the replace operation.
 -/
 theorem SetTheory.Set.replace_exists (h: axiom_of_universal_specification) (A:Set)
   (P: A → Object → Prop) (hP: ∀ x y y', P x y ∧ P x y' → y = y') :
