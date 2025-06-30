@@ -185,8 +185,16 @@ theorem lower_riemann_sum_ge {f h: ℝ → ℝ} {I:BoundedInterval} (P: Partitio
    sorry
 
 /-- Proposition 11.3.12 / Exercise 11.3.5 -/
+theorem upper_integ_le_upper_sum {f:ℝ → ℝ} {I:BoundedInterval} (hf: BddOn f I)
+  (P: Partition I): upper_integral f I ≤ upper_riemann_sum f P := by
+  sorry
+
 theorem upper_integ_eq_inf_upper_sum {f:ℝ → ℝ} {I:BoundedInterval} (hf: BddOn f I) :
   upper_integral f I = sInf (Set.range (fun P : Partition I ↦ upper_riemann_sum f P)) := by
+  sorry
+
+theorem lower_integ_ge_lower_sum {f:ℝ → ℝ} {I:BoundedInterval} (hf: BddOn f I)
+  (P: Partition I): lower_riemann_sum f P ≤ lower_integral f I := by
   sorry
 
 theorem lower_integ_eq_sup_lower_sum {f:ℝ → ℝ} {I:BoundedInterval} (hf: BddOn f I) :

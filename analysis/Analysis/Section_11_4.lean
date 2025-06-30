@@ -82,6 +82,17 @@ theorem integ_of_join {I J K: BoundedInterval} (hIJK: K.joins I J)
   IntegrableOn f I ∧ IntegrableOn f J ∧ integ f K = integ f I + integ f J := by
   sorry
 
+/-- A handy little lemma for "epsilon of room" type arguments -/
+lemma nonneg_of_le_const_mul_eps {x C:ℝ} (h: ∀ ε>0, x ≤ C * ε) : x ≤ 0 := by
+  by_cases hC: C > 0
+  . by_contra!
+    specialize h (x/(2*C)) ( by positivity)
+    convert_to x ≤ x/2 at h
+    . field_simp; ring
+    linarith
+  specialize h 1 (by norm_num)
+  simp at h hC; linarith
+
 /-- Theorem 11.4.3 (Max and min preserve integrability)-/
 theorem integ_of_max {I: BoundedInterval} {f g:ℝ → ℝ} (hf: IntegrableOn f I) (hg: IntegrableOn g I) :
   IntegrableOn (max f g) I  := by
@@ -138,12 +149,7 @@ theorem integ_of_max {I: BoundedInterval} {f g:ℝ → ℝ} (hf: IntegrableOn f 
     replace this := integ_mono hf''g''_integ.1 hf'g'h_integ.1 this
     linarith
   refine ⟨ hmax_bound, ?_ ⟩
-  rw [le_iff_lt_or_eq] at lower_le_upper
-  rcases lower_le_upper with h | h
-  . set ε := (upper_integral (max f g) I - lower_integral (max f g) I)/5
-    specialize this ε (by positivity)
-    simp [ε] at this
-    linarith
+  replace := nonneg_of_le_const_mul_eps this
   linarith
 
 /-- Theorem 11.4.5 / Exercise 11.4.3.  The objective here is to create a shorter proof than the one above.-/
@@ -316,21 +322,7 @@ theorem integ_of_mul_nonneg {I: BoundedInterval} {f g:ℝ → ℝ} (hf: Integrab
         linarith
       _ = _ := by ring
   refine ⟨ hmul_bound, ?_ ⟩
-  rw [le_iff_lt_or_eq] at lower_le_upper
-  rcases lower_le_upper with h | h
-  . by_cases hMM : M₁ + M₂ > 0
-    swap
-    . have hpos : M₁ + M₂ = 0 := by linarith
-      specialize this 1 (by norm_num)
-      simp [hpos] at this
-      linarith
-    set ε := (upper_integral (f*g) I - lower_integral (f*g) I)/(4*(M₁+M₂))
-    specialize this ε (by positivity)
-    simp only [ε] at this
-    replace : upper_integral (f * g) I - lower_integral (f * g) I ≤ (upper_integral (f * g) I - lower_integral (f * g) I)/2 := by
-      convert this using 1
-      field_simp; ring
-    linarith
+  replace := nonneg_of_le_const_mul_eps this
   linarith
 
 theorem integ_of_mul {I: BoundedInterval} {f g:ℝ → ℝ} (hf: IntegrableOn f I) (hg: IntegrableOn g I) :
