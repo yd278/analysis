@@ -51,18 +51,11 @@ abbrev Chapter2.Nat.map_add : ∀ (n m : Nat), (n + m).toNat = n.toNat + m.toNat
   induction' n with n hn
   · rw [show zero = 0 from rfl]
     rw [zero_add, _root_.Nat.zero_add]
-  rw [succ_add, succ_toNat, succ_toNat, hn]
-  ring
+  sorry
 
 abbrev Chapter2.Nat.map_mul : ∀ (n m : Nat), (n * m).toNat = n.toNat * m.toNat := by
   intro n m
-  induction' n with n hn
-  · rw [show zero = 0 from rfl]
-    rw [zero_mul, _root_.Nat.zero_mul]
-  rw [succ_mul]
-  have := map_add (n*m) m
-  rw [this, hn]
-  ring
+  sorry
 
 abbrev Chapter2.Nat.map_le_map_iff : ∀ {n m : Nat}, n.toNat ≤ m.toNat ↔ n ≤ m := by
   intro n m
