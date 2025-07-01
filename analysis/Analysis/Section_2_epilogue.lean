@@ -46,19 +46,21 @@ abbrev Chapter2.Nat.equivNat : Chapter2.Nat ≃ ℕ where
     simp [←succ_eq_add_one]
     exact hn
 
+abbrev Chapter2.Nat.map_add : ∀ (x y : Nat), (x + y).toNat = x.toNat + y.toNat := by
+  intro n m
+  induction' n with n hn
+  · rw [show zero = 0 from rfl]
+    rw [zero_add, _root_.Nat.zero_add]
+  sorry
+
+abbrev Chapter2.Nat.map_mul : ∀ (x y : Nat), (x * y).toNat = x.toNat * y.toNat := by
+  intro n m
+  sorry
+
 abbrev Chapter2.Nat.equivNat_ordered_ring : Chapter2.Nat ≃+*o ℕ where
   toEquiv := equivNat
-  map_add' := by
-    intro n m
-    simp [equivNat]
-    induction' n with n hn
-    · rw [show zero = 0 from rfl]
-      rw [zero_add, _root_.Nat.zero_add]
-    sorry
-  map_mul' := by
-    intro n m
-    simp [equivNat]
-    sorry
+  map_add' := map_add
+  map_mul' := map_mul
   map_le_map_iff' := by sorry
 
 lemma Chapter2.Nat.pow_eq_pow (n m : Chapter2.Nat) :
