@@ -51,6 +51,9 @@ abbrev Chapter2.Nat.equivNat_ordered_ring : Chapter2.Nat ≃+*o ℕ where
   map_add' := by
     intro n m
     simp [equivNat]
+    induction' n with n hn
+    · rw [show zero = 0 from rfl]
+      rw [zero_add, _root_.Nat.zero_add]
     sorry
   map_mul' := by
     intro n m
