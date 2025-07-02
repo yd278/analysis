@@ -74,7 +74,7 @@ lemma Chapter2.Nat.pow_eq_pow (n m : Chapter2.Nat) :
 
 /-- The Peano axioms for an abstract type `Nat` -/
 @[ext]
-class PeanoAxioms where
+structure PeanoAxioms where
   Nat : Type
   zero : Nat -- Axiom 2.1
   succ : Nat → Nat -- Axiom 2.2
