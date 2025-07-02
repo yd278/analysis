@@ -303,5 +303,5 @@ theorem Series.absConverges_of_subseries {a:ℕ → ℝ} (ha: (a:Series).absConv
     and expressing `a n` as the difference of `a n + |a n|` and `|a n|`. -/
 theorem Series.absConverges_of_permute' {a:ℕ → ℝ} (ha : (a:Series).absConverges)
   {f: ℕ → ℕ} (hf: Function.Bijective f) :
-    (fun n ↦ a (f n):Series).absConverges  ∧ (a:Series).sum = (fun n ↦ a (f n) : Series).sum :=
+    (fun n ↦ a (f n):Series).absConverges  ∧ (a:Series).sum = (fun n ↦ a (f n) : Series).sum := by sorry
 end Chapter7
