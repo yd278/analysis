@@ -114,8 +114,8 @@ Intended as a demonstration of `isSteady_of_coe`
 -/
 example : (1:ℚ).steady (ThreesFun:Sequence) := by
   rw [Rat.isSteady_of_coe]
-  intro n m
   unfold ThreesFun Rat.close
+  intro n m
   simp
 
 /--
