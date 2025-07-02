@@ -81,7 +81,7 @@ In order to align the formalization with Mathlib conventions, a small number of 
   - Section 11.3: Upper and lower Riemann integrals ([Verso page](https://teorth.github.io/analysis/sec113/)) ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Section_11_3.html)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Section_11_3.lean))
   - Section 11.4: Basic properties of the Riemann integral ([Verso page](https://teorth.github.io/analysis/sec114/)) ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Section_11_4.html)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Section_11_4.lean))
   - Section 11.5: Riemann integrability of continuous functions ([Verso page](https://teorth.github.io/analysis/sec115/)) ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Section_11_5.html)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Section_11_5.lean))
-  - _Section 11.6: Riemann integrability of monotone functions (planned)_
+  - Section 11.6: Riemann integrability of monotone functions ([Verso page](https://teorth.github.io/analysis/sec116/)) ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Section_11_6.html)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Section_11_6.lean))
   - _Section 11.7: A non-Riemann integrable function (planned)_
   - _Section 11.8: The Riemann-Stieltjes integral (planned)_
   - _Section 11.9: The two fundamental theorems of calculus (planned)_
