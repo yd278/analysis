@@ -155,6 +155,10 @@ noncomputable abbrev Equiv.mk' (P Q : PeanoAxioms) : Equiv P Q := by sorry
 /-- There is only one equivalence between any two structures obeying the Peano axioms. -/
 theorem Equiv.uniq {P Q : PeanoAxioms} (equiv1 equiv2 : PeanoAxioms.Equiv P Q) :
     equiv1 = equiv2 := by
+  obtain ⟨equiv1, equiv_zero1, equiv_succ1⟩ := equiv1
+  obtain ⟨equiv2, equiv_zero2, equiv_succ2⟩ := equiv2
+  congr
+  ext n
   sorry
 
 /-- A sample result: recursion is well-defined on any structure obeying the Peano axioms-/
