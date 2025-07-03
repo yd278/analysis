@@ -106,23 +106,21 @@ lemma Rat.isSteady_of_coe (ε : ℚ) (a:ℕ → ℚ) :
   lift m to ℕ using hm
   simp [h n m]
 
-def ThreesFun := (fun _:ℕ ↦ (3:ℚ))
-
 /--
 Not in textbook: the sequence 2, 2 ... in 1-steady
 Intended as a demonstration of `isSteady_of_coe`
 -/
-example : (1:ℚ).steady (ThreesFun:Sequence) := by
-  rw [Rat.isSteady_of_coe]
-  unfold ThreesFun Rat.close
+example : (1:ℚ).steady ((fun _:ℕ ↦ (3:ℚ)):Sequence) := by
+  rw [Rat.isSteady_of_coe 1 (fun _:ℕ ↦ (3:ℚ))]
+  unfold Rat.close
   intro n m
   simp
 
 /--
 Compare: if you need to work with `Rat.steady` on the coercion directly, there will be side conditions `hn : n ≥ 0` and `hm : m ≥ 0` that you will need to deal with.
 -/
-example : (1:ℚ).steady (ThreesFun:Sequence) := by
-  unfold ThreesFun Rat.steady Rat.close
+example : (1:ℚ).steady ( (fun _:ℕ ↦ (3:ℚ)):Sequence) := by
+  unfold Rat.steady Rat.close
   intro n hn m hm
   dsimp at * -- Not strictly necessary, but cleans up the proof state so you can see what's going on
   simp [hn, hm]
