@@ -107,7 +107,7 @@ lemma Rat.isSteady_of_coe (ε : ℚ) (a:ℕ → ℚ) :
   simp [h n m]
 
 /--
-Not in textbook: the sequence 2, 2 ... in 1-steady
+Not in textbook: the sequence 2, 2 ... is 1-steady
 Intended as a demonstration of `isSteady_of_coe`
 -/
 example : (1:ℚ).steady ((fun _:ℕ ↦ (3:ℚ)):Sequence) := by
