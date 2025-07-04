@@ -99,6 +99,10 @@ theorem Real.upperBound_discrete_unique {E: Set Real} {n:ℕ} {m m':ℤ}
 theorem Real.LIM_of_Cauchy {q:ℕ → ℚ} (hq: ∀ M, ∀ n ≥ M, ∀ n' ≥ M, |q n - q n'| ≤ 1 / (M+1)) :
     (q:Sequence).isCauchy ∧ ∀ M, |q M - LIM q| ≤ 1 / (M+1) := by sorry
 
+/--
+The sequence m₁, m₂ … is well-defined
+This proof uses a different indexing convention than the text
+-/
 lemma Real.LUB_claim1 (n : ℕ) {E: Set Real} (hE: Set.Nonempty E) (hbound: BddAbove E)
 :  ∃! m:ℤ,
       (((m:ℚ) / (n+1):ℚ):Real) ∈ upperBounds E
