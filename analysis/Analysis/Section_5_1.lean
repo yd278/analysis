@@ -108,7 +108,7 @@ namespace Chapter5
 5.1.3 - definition of ε-steadiness for a sequence starting at 0
 -/
 lemma Rat.isSteady_of_coe (ε : ℚ) (a:ℕ → ℚ) :
-    ε.steady (a:Sequence) ↔ ∀ n m : ℕ, ε.close (a n) (a m) := by
+    ε.steady a ↔ ∀ n m : ℕ, ε.close (a n) (a m) := by
   constructor
   · intro h n m
     specialize h n (by simp) m (by simp)
