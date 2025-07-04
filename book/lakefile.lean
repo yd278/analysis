@@ -79,6 +79,7 @@ def sections := #[
   (`Analysis.Section_11_4, "Basic properties of the Riemann integral"),
   (`Analysis.Section_11_5, "Riemann integrability of continuous functions"),
   (`Analysis.Section_11_6, "Riemann integrability of monotone functions"),
+  (`Analysis.Section_11_7, "A non-Riemann integrable function"),
   (`Analysis.Appendix_A_1, "Mathematical statements"),
   (`Analysis.Appendix_A_2, "Implication"),
   (`Analysis.Appendix_A_3, "The structure of proofs"),
