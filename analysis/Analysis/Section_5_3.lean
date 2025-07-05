@@ -377,7 +377,7 @@ theorem Real.bounded_away_zero_of_nonzero {x:Real} (hx: x ≠ 0) :
   have how : ∀ j ≥ N, |b j| ≥ ε/2 := by sorry
   set a : ℕ → ℚ := fun n ↦ if n < n₀ then (ε/2) else b n
   have not_hard : Sequence.equiv a b := by sorry
-  have ha :(a:Sequence).isCauchy := (Sequence.equiv_of_cauchy not_hard).mpr hb
+  have ha :(a:Sequence).isCauchy := (Sequence.cauchy_of_equiv not_hard).mpr hb
   refine ⟨ a, ha, ?_, ?_ ⟩
   . rw [bounded_away_zero_def]
     use ε/2, half_pos hε
