@@ -53,6 +53,7 @@ instance CauchySequence.instCoeFun : CoeFun CauchySequence (fun _ ↦ ℕ → �
 theorem CauchySequence.coe_to_sequence (a: CauchySequence) :
     ((a:ℕ → ℚ):Sequence) = a.toSequence := by
   apply Sequence.ext
+  simp only [Sequence.n0_coe]
   . rw [a.zero]
   ext n
   by_cases h:n ≥ 0
