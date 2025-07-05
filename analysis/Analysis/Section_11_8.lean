@@ -192,7 +192,7 @@ noncomputable abbrev α_length (α: ℝ → ℝ) (I: BoundedInterval) : ℝ := m
 
 notation3:max α"["I"]ₗ" => α_length α I
 
-theorem α_length_of_empty {α: ℝ → ℝ} {I: BoundedInterval} (hI: (I:Set ℝ) = ∅) : α[I]ₗ = 0 :=
+theorem α_length_of_empty (α: ℝ → ℝ) {I: BoundedInterval} (hI: (I:Set ℝ) = ∅) : α[I]ₗ = 0 :=
   match I with
   | Icc a b => by
       simp [Set.Icc_eq_empty_iff] at hI ⊢
@@ -209,15 +209,248 @@ theorem α_length_of_empty {α: ℝ → ℝ} {I: BoundedInterval} (hI: (I:Set �
       simp [Set.Ioo_eq_empty_iff] at hI ⊢
       intros; linarith
 
+@[simp]
+theorem α_length_of_pt {α: ℝ → ℝ} (a:ℝ) : α[Icc a a]ₗ = jump α a := by
+  simp [α_length, jump]
+
+theorem α_length_of_cts {α:ℝ → ℝ} {I: BoundedInterval} {a b: ℝ}
+  (haa: a < I.a) (hab: I.a < I.b) (hbb: I.b < b)
+  (hI : I ⊆ Ioo a b) (hα: ContinuousOn α (Ioo a b)) :
+  α[I]ₗ = α I.b - α I.a := by
+  have ha_left : left_lim α I.a = α I.a := by
+    apply left_lim_of_continuous _ (ContinuousOn.continuousWithinAt hα _)
+    . refine ⟨ I.a - a, by linarith, ?_ ⟩
+      intro x; simp; intro h1 h2
+      exact ⟨ h1, by linarith ⟩
+    simp [haa]; linarith
+  have ha_right : right_lim α I.a = α I.a := by
+    apply right_lim_of_continuous _ (ContinuousOn.continuousWithinAt hα _)
+    . refine ⟨ b - I.a, by linarith, ?_ ⟩
+      intro x; simp; intro h1 h2
+      exact ⟨ by linarith, h2 ⟩
+    simp [haa]; linarith
+  have hb_left : left_lim α I.b = α I.b := by
+    apply left_lim_of_continuous _ (ContinuousOn.continuousWithinAt hα _)
+    . refine ⟨ I.b - a, by linarith, ?_ ⟩
+      intro x; simp; intro h1 h2
+      exact ⟨ h1, by linarith ⟩
+    simp [hbb]; linarith
+  have hb_right : right_lim α I.b = α I.b := by
+    apply right_lim_of_continuous _ (ContinuousOn.continuousWithinAt hα _)
+    . refine ⟨ b - I.b, by linarith, ?_ ⟩
+      intro x; simp; intro h1 h2
+      exact ⟨ by linarith, h2 ⟩
+    simp [hbb]; linarith
+  cases I with
+  | Icc a' b' =>
+    simp [α_length, hb_right, ha_left, le_of_lt hab]
+  | Ico a' b' =>
+    simp [α_length, hb_left, ha_left, le_of_lt hab]
+  | Ioc a' b' =>
+    simp [α_length, hb_right, ha_right, le_of_lt hab]
+  | Ioo a' b' =>
+    simp [α_length, hb_left, ha_right, hab]
+
+/-- Example 11.8.2-/
+example : (fun x ↦ x^2)[Icc 2 3]ₗ = 5 := by
+  sorry
+
+example : (fun x ↦ x^2)[Icc 2 2]ₗ = 0 := by
+  sorry
+
+example : (fun x ↦ x^2)[Ioo 2 2]ₗ = 0 := by
+  sorry
+
+/-- Example 11.8.3-/
+@[simp]
+theorem α_len_of_id (I: BoundedInterval) : (fun x ↦ x)[I]ₗ = |I|ₗ := by
+  sorry
+
+/-- An improved version of BoundedInterval.joins that also controls α-length. -/
+abbrev BoundedInterval.joins' (K I J: BoundedInterval) : Prop :=
+  K.joins I J ∧ ∀ α:ℝ → ℝ, α[K]ₗ = α[I]ₗ + α[J]ₗ
+
+theorem BoundedInterval.join_Icc_Ioc' {a b c:ℝ} (hab: a ≤ b) (hbc: b ≤ c) : (Icc a c).joins' (Icc a b) (Ioc b c) := by
+  refine ⟨ join_Icc_Ioc hab hbc, ?_ ⟩
+  simp [α_length, BoundedInterval.a, BoundedInterval.b,
+        show a ≤ b by linarith, show b ≤ c by linarith, show a ≤ c by linarith]
+
+theorem BoundedInterval.join_Icc_Ioo' {a b c:ℝ} (hab: a ≤ b) (hbc: b < c) : (Ico a c).joins' (Icc a b) (Ioo b c) := by
+  refine ⟨ join_Icc_Ioo hab hbc, ?_ ⟩
+  simp [α_length, BoundedInterval.a, BoundedInterval.b,
+        show a ≤ b by linarith, show b < c by linarith, show a ≤ c by linarith]
+
+theorem BoundedInterval.join_Ioc_Ioc' {a b c:ℝ} (hab: a ≤ b) (hbc: b ≤ c) : (Ioc a c).joins' (Ioc a b) (Ioc b c) := by
+  refine ⟨ join_Ioc_Ioc hab hbc, ?_ ⟩
+  simp [α_length, BoundedInterval.a, BoundedInterval.b,
+        show a ≤ b by linarith, show b ≤ c by linarith, show a ≤ c by linarith]
+
+theorem BoundedInterval.join_Ioc_Ioo' {a b c:ℝ} (hab: a ≤ b) (hbc: b < c) : (Ioo a c).joins' (Ioc a b) (Ioo b c) := by
+  refine ⟨ join_Ioc_Ioo hab hbc, ?_ ⟩
+  simp [α_length, BoundedInterval.a, BoundedInterval.b,
+        show a ≤ b by linarith, show b < c by linarith, show a < c by linarith]
+
+theorem BoundedInterval.join_Ico_Icc' {a b c:ℝ} (hab: a ≤ b) (hbc: b ≤ c) : (Icc a c).joins' (Ico a b) (Icc b c) := by
+  refine ⟨ join_Ico_Icc hab hbc, ?_ ⟩
+  simp [α_length, BoundedInterval.a, BoundedInterval.b,
+        show a ≤ b by linarith, show b ≤ c by linarith, show a ≤ c by linarith]
+
+theorem BoundedInterval.join_Ico_Ico' {a b c:ℝ} (hab: a ≤ b) (hbc: b ≤ c) : (Ico a c).joins' (Ico a b) (Ico b c) := by
+  refine ⟨ join_Ico_Ico hab hbc, ?_ ⟩
+  simp [α_length, BoundedInterval.a, BoundedInterval.b,
+        show a ≤ b by linarith, show b ≤ c by linarith, show a ≤ c by linarith]
+
+theorem BoundedInterval.join_Ioo_Icc' {a b c:ℝ} (hab: a < b) (hbc: b ≤ c) : (Ioc a c).joins' (Ioo a b) (Icc b c) := by
+  refine ⟨ join_Ioo_Icc hab hbc, ?_ ⟩
+  simp [α_length, BoundedInterval.a, BoundedInterval.b,
+        show a < b by linarith, show b ≤ c by linarith, show a ≤ c by linarith]
+
+theorem BoundedInterval.join_Ioo_Ico' {a b c:ℝ} (hab: a < b) (hbc: b ≤ c) : (Ioo a c).joins' (Ioo a b) (Ico b c) := by
+  refine ⟨ join_Ioo_Ico hab hbc, ?_ ⟩
+  simp [α_length, BoundedInterval.a, BoundedInterval.b,
+        show a < b by linarith, show b ≤ c by linarith, show a < c by linarith]
+
+/-- Theorem 11.8.4 / Exercise 11.8.1 -/
+theorem Partition.sum_of_α_length  {I: BoundedInterval} (P: Partition I) (α: ℝ → ℝ) :
+  ∑ J ∈ P.intervals, α[J]ₗ = α[I]ₗ := by
+  sorry
+
+/-- Definition 11.8.5 (Piecewise constant RS integral)-/
+noncomputable abbrev PiecewiseConstantWith.RS_integ (f:ℝ → ℝ) {I: BoundedInterval} (P: Partition I) (α: ℝ → ℝ)   :
+  ℝ := ∑ J ∈ P.intervals, constant_value_on f (J:Set ℝ) * α[J]ₗ
+
+/-- Example 11.8.6 -/
+noncomputable abbrev f_11_8_6 (x:ℝ) : ℝ := if x < 2 then 4 else 2
+
+noncomputable abbrev P_11_8_6 : Partition (Icc 1 3) :=
+  (⊥: Partition (Ico 1 2)).join (⊥ : Partition (Icc 2 3))
+  (join_Ico_Icc (by norm_num) (by norm_num) )
+
+theorem f_11_8_6_RS_integ : PiecewiseConstantWith.RS_integ f_11_8_6 P_11_8_6 (fun x ↦ x) = 22 := by
+  sorry
+
+/-- Example 11.8.7 -/
+theorem PiecewiseConstantWith.RS_integ_eq_integ {f:ℝ → ℝ} {I: BoundedInterval} (P: Partition I) :RS_integ f P (fun x ↦ x) = integ f P := by
+  sorry
+
+/-- Analogue of Proposition 11.2.13 -/
+theorem PiecewiseConstantWith.RSinteg_eq {f:ℝ → ℝ} {I: BoundedInterval} {P P': Partition I}
+  (hP: PiecewiseConstantWith f P) (hP': PiecewiseConstantWith f P') (α:ℝ → ℝ): RS_integ f P α = RS_integ f P' α := by
+  sorry
+
+open Classical in
+noncomputable abbrev PiecewiseConstantOn.RS_integ (f:ℝ → ℝ) (I: BoundedInterval) (α:ℝ → ℝ):
+  ℝ := if h: PiecewiseConstantOn f I then PiecewiseConstantWith.RS_integ f h.choose α else 0
+
+/-- α-length non-negative when α monotone -/
+
+theorem α_length_nonneg_of_monotone {α:ℝ → ℝ} {I: BoundedInterval} (hα: MonotoneOn α I) :
+  0 ≤ α[I]ₗ := by
+  sorry
 
 
 
+/-- Analogue of Theorem 11.2.16 (a) (Laws of integration) / Exercise 11.8.3 -/
+theorem PiecewiseConstantOn.RS_integ_add {f g: ℝ → ℝ} {I: BoundedInterval}
+  (hf: PiecewiseConstantOn f I) (hg: PiecewiseConstantOn g I) (α:ℝ → ℝ):
+  PiecewiseConstantOn.RS_integ (f + g) I α = PiecewiseConstantOn.RS_integ f I α + PiecewiseConstantOn.RS_integ g I α := by
+  sorry
 
+/-- Analogue of Theorem 11.2.16 (b) (Laws of integration) / Exercise 11.8.3 -/
+theorem PiecewiseConstantOn.RS_integ_smul {f: ℝ → ℝ} {I: BoundedInterval} (c:ℝ)
+  (hf: PiecewiseConstantOn f I) (α:ℝ → ℝ) :
+  PiecewiseConstantOn.RS_integ (c • f) I α = c * PiecewiseConstantOn.RS_integ f I α
+   := by
+  sorry
 
+/-- Theorem 11.8.8 (c) (Laws of RS integration) / Exercise 11.8.8 -/
+theorem PiecewiseConstantOn.RS_integ_sub {f g: ℝ → ℝ} {I: BoundedInterval} (α : ℝ → ℝ)
+  (hf: PiecewiseConstantOn f I) (hg: PiecewiseConstantOn g I) :
+  PiecewiseConstantOn.RS_integ (f - g) I α = PiecewiseConstantOn.RS_integ f I α - PiecewiseConstantOn.RS_integ g I α := by
+  sorry
 
+/-- Theorem 11.8.8 (d) (Laws of RS integration) / Exercise 11.8.8 -/
+theorem PiecewiseConstantOn.RS_integ_of_nonneg {f: ℝ → ℝ} {I: BoundedInterval} (α : ℝ → ℝ)
+  (h: ∀ x ∈ I, 0 ≤ f x) (hf: PiecewiseConstantOn f I) (hα : ∀ J ∈ (hf.choose : Partition I).intervals, 0 ≤ α[J]ₗ) :
+  0 ≤ PiecewiseConstantOn.RS_integ f I α := by
+  sorry
 
+/-- Theorem 11.8.8 (e) (Laws of RS integration) / Exercise 11.8.8 -/
+theorem PiecewiseConstantOn.RS_integ_mono {f g: ℝ → ℝ} {I: BoundedInterval} (α : ℝ → ℝ)
+  (h: ∀ x ∈ I, f x ≤ g x) (hf: PiecewiseConstantOn f I) (hg: PiecewiseConstantOn g I)
+  (hα : ∀ J ∈ (hf.choose : Partition I).intervals, 0 ≤ α[J]ₗ) :
+  PiecewiseConstantOn.RS_integ f I α ≤ PiecewiseConstantOn.RS_integ g I α := by
+  sorry
 
+/-- Theorem 11.8.8 (f) (Laws of RS integration) / Exercise 11.8.8 -/
+theorem PiecewiseConstantOn.RS_integ_const (c: ℝ) (I: BoundedInterval) (α : ℝ → ℝ) :
+  PiecewiseConstantOn.RS_integ (fun _ ↦ c) I α = c * α[I]ₗ := by
+  sorry
 
+/-- Theorem 11.8.8 (f) (Laws of RS integration) / Exercise 11.8.8 -/
+theorem PiecewiseConstantOn.RS_integ_const' {f:ℝ → ℝ} {I: BoundedInterval} (α : ℝ → ℝ)
+  (h: ConstantOn f I) :
+  PiecewiseConstantOn.RS_integ f I α = (constant_value_on f I) * α[I]ₗ := by
+  sorry
 
+open Classical in
+/-- Theorem 11.8.8 (g) (Laws of RS integration) / Exercise 11.8.8 -/
+theorem PiecewiseConstantOn.RS_of_extend {I J: BoundedInterval} (hIJ: I ⊆ J)
+  {f: ℝ → ℝ} (h: PiecewiseConstantOn f I) (α : ℝ → ℝ) :
+  PiecewiseConstantOn (fun x ↦ if x ∈ I then f x else 0) J := by
+  sorry
+
+open Classical in
+/-- Theorem 11.8.8 (g) (Laws of RS integration) / Exercise 11.8.8 -/
+theorem PiecewiseConstantOn.RS_integ_of_extend {I J: BoundedInterval} (hIJ: I ⊆ J)
+  {f: ℝ → ℝ} (h: PiecewiseConstantOn f I) (α : ℝ → ℝ) :
+  PiecewiseConstantOn.RS_integ (fun x ↦ if x ∈ I then f x else 0) J α = PiecewiseConstantOn.RS_integ f I α := by
+  sorry
+
+/-- Theorem 11.8.8 (h) (Laws of RS integration) / Exercise 11.8.8 -/
+theorem PiecewiseConstantOn.RS_integ_of_join {I J K: BoundedInterval} (hIJK: K.joins' I J)
+  {f: ℝ → ℝ} (h: PiecewiseConstantOn f K) (α : ℝ → ℝ) :
+  PiecewiseConstantOn.RS_integ f K α = PiecewiseConstantOn.RS_integ f I α + PiecewiseConstantOn.RS_integ f J α := by
+  sorry
+
+/-- Analogue of Definition 11.3.2 (Uppper and lower Riemann integrals )-/
+noncomputable abbrev upper_RS_integral (f:ℝ → ℝ) (I: BoundedInterval) (α: ℝ → ℝ): ℝ :=
+  sInf ((fun g ↦ PiecewiseConstantOn.RS_integ g I α) '' {g | MajorizesOn g f I ∧ PiecewiseConstantOn g I})
+
+noncomputable abbrev lower_RS_integral (f:ℝ → ℝ) (I: BoundedInterval) (α: ℝ → ℝ): ℝ :=
+  sSup ((fun g ↦ PiecewiseConstantOn.RS_integ g I α) '' {g | MinorizesOn g f I ∧ PiecewiseConstantOn g I})
+
+/-- Analogue of Definition 11.3.4 -/
+noncomputable abbrev RS_integ (f:ℝ → ℝ) (I: BoundedInterval) (α:ℝ → ℝ) : ℝ :=
+upper_RS_integral f I α
+
+noncomputable abbrev RS_IntegrableOn (f:ℝ → ℝ) (I: BoundedInterval) (α: ℝ → ℝ) : Prop :=
+  BddOn f I ∧ lower_RS_integral f I α = upper_RS_integral f I α
+
+theorem upper_RS_integral_eq_upper_integral (f:ℝ → ℝ) (I: BoundedInterval) :
+  upper_RS_integral f I (fun x ↦ x) = upper_integral f I := by
+  sorry
+
+theorem lower_RS_integral_eq_lower_integral (f:ℝ → ℝ) (I: BoundedInterval) :
+  lower_RS_integral f I (fun x ↦ x) = lower_integral f I := by
+  sorry
+
+theorem RS_integ_eq_integ (f:ℝ → ℝ) (I: BoundedInterval) :
+  RS_integ f I (fun x ↦ x) = integ f I := by
+  sorry
+
+theorem RS_IntegrableOn_iff_IntegrableOn (f:ℝ → ℝ) (I: BoundedInterval) :
+  RS_IntegrableOn f I (fun x ↦ x) ↔ IntegrableOn f I := by
+  sorry
+
+/-- Exercise 11.8.4 -/
+theorem RS_integ_of_uniform_cts {I: BoundedInterval} {f:ℝ → ℝ} (hf: UniformContinuousOn f I)
+ (α:ℝ → ℝ) :
+  RS_IntegrableOn f I α := by
+  sorry
+
+/-- Exercise 11.8.5 -/
+theorem RS_integ_with_sign (f:ℝ → ℝ) (hf: ContinuousOn f (Set.Icc (-1) 1)) : RS_IntegrableOn f (Icc (-1) 1) Real.sign ∧ RS_integ f (Icc (-1) 1) (fun x ↦ -Real.sign x) = 2 * f 0 := by
+  sorry
 
 end Chapter11
