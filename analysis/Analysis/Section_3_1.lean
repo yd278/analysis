@@ -290,7 +290,8 @@ theorem SetTheory.Set.triple_eq (a b c:Object) : {a,b,c} = ({a}:Set) ∪ {b,c} :
 
 /-- Example 3.1.10 -/
 theorem SetTheory.Set.pair_union_pair (a b c:Object) :
-    ({a,b}:Set) ∪ {b,c} = {a,b,c} := sorry
+    ({a,b}:Set) ∪ {b,c} = {a,b,c} := by
+  sorry
 
 /-- Definition 3.1.14.   -/
 instance SetTheory.Set.instSubset : HasSubset Set where
@@ -450,11 +451,13 @@ theorem SetTheory.Set.inter_assoc (A B C:Set) : (A ∩ B) ∩ C = A ∩ (B ∩ C
 
 /-- Proposition 3.1.27(f) -/
 theorem  SetTheory.Set.inter_union_distrib_left (A B C:Set) :
-    A ∩ (B ∪ C) = (A ∩ B) ∪ (A ∩ C) := sorry
+    A ∩ (B ∪ C) = (A ∩ B) ∪ (A ∩ C) := by
+  sorry
 
 /-- Proposition 3.1.27(f) -/
 theorem  SetTheory.Set.union_inter_distrib_left (A B C:Set) :
-    A ∪ (B ∩ C) = (A ∪ B) ∩ (A ∪ C) := sorry
+    A ∪ (B ∩ C) = (A ∪ B) ∩ (A ∪ C) := by
+  sorry
 
 /-- Proposition 3.1.27(f) -/
 theorem SetTheory.Set.union_compl {A X:Set} (hAX: A ⊆ X) : A ∪ (X \ A) = X := by sorry
