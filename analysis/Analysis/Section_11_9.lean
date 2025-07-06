@@ -19,7 +19,7 @@ namespace Chapter11
 open Chapter9 BoundedInterval
 
 /-- Theorem 11.9.1 (First Fundamental Theorem of Calculus)-/
-theorem cts_of_integ {a b:ℝ} (hab: a < b) {f:ℝ → ℝ} (hf: IntegrableOn f (Icc a b)) :
+theorem cts_of_integ {a b:ℝ} {f:ℝ → ℝ} (hf: IntegrableOn f (Icc a b)) :
   ContinuousOn (fun x => integ f (Icc a x)) (Set.Icc a b) := by
   -- This proof is written to follow the structure of the original text.
   set F : ℝ → ℝ := fun x => integ f (Icc a x)
@@ -52,7 +52,16 @@ theorem cts_of_integ {a b:ℝ} (hab: a < b) {f:ℝ → ℝ} (hf: IntegrableOn f 
     . simp [h]
     . simp [abs_of_pos (show 0 < x-y by linarith), abs_sub_comm, this h hy hx]
   replace : UniformContinuousOn F (Set.Icc a b) := by
-    sorry
+    simp [Metric.uniformContinuousOn_iff, Real.dist_eq, -Set.mem_Icc]
+    intro ε hε
+    use (ε/(max M 1)), (by positivity)
+    intro x hx y hy hxy
+    calc
+      _ = |F y - F x| := by rw [abs_sub_comm]
+      _ ≤ M * |x-y| := this hx hy
+      _ ≤ (max M 1) * |x-y| := by gcongr; exact le_max_left _ _
+      _ < (max M 1) * (ε / (max M 1)) := by gcongr
+      _ = _ := by field_simp
   exact ContinuousOn.ofUniformContinuousOn F this
 
 theorem deriv_of_integ {a b:ℝ} (hab: a < b) {f:ℝ → ℝ} (hf: IntegrableOn f (Icc a b))
