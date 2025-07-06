@@ -364,16 +364,35 @@ theorem SetTheory.Set.subset_antisymm (A B:Set) (hAB:A ⊆ B) (hBA:B ⊆ A) : A 
 theorem SetTheory.Set.ssubset_trans (A B C:Set) (hAB:A ⊂ B) (hBC:B ⊂ C) : A ⊂ C := by
   sorry
 
+
 /--
-  This defines the subtype `A.toSubtype` for any `A:Set`.  To produce an element `x'` of this
-  subtype, use `⟨ x, hx ⟩`, where `x:Object` and `hx:x ∈ A`.  The object `x` associated to a
-  subtype element `x'` is recovered as `x.val`, and the property `hx` that `x` belongs to `A` is
-  recovered as `x.property`
+  This defines the subtype `A.toSubtype` for any `A:Set`.
+  Note that `A.toSubtype` gives you a type, similar to how `Object` or `Set` are types.
+  A value `x'` of type `A.toSubtype` combines some `x: Object` with a proof that `hx: x ∈ A`.
+
+  To produce an element `x'` of this subtype, use `⟨ x, hx ⟩`, where `x: Object` and `hx: x ∈ A`.
+  The object `x` associated to a subtype element `x'` is recovered as `x'.val`, and
+  the property `hx` that `x` belongs to `A` is recovered as `x'.property`.
 -/
 abbrev SetTheory.Set.toSubtype (A:Set) := Subtype (fun x ↦ x ∈ A)
 
+example (A: Set) (x: Object) (hx: x ∈ A) : A.toSubtype := ⟨x, hx⟩
+example (A: Set) (x': A.toSubtype) : Object := x'.val
+example (A: Set) (x': A.toSubtype) : x'.val ∈ A := x'.property
+
+-- In practice, a subtype lets us carry an object with a membership proof as a single value.
+-- Compare these two proofs. They are equivalent, but the latter packs `x` and `hx` into `x'`.
+example (A B: Set) (x: Object) (hx: x ∈ A) : x ∈ A ∪ B := by simp; left; exact hx
+example (A B: Set) (x': A.toSubtype) : x'.val ∈ A ∪ B := by simp; left; exact x'.property
+
 instance : CoeSort (Set) (Type) where
   coe A := A.toSubtype
+
+-- Now instead of writing `x': A.toSubtype`, we can just write `x': A`.
+-- Compare these three proofs. They are equivalent, but the last one reads most concisely.
+example (A B: Set) (x: Object) (hx: x ∈ A) : x ∈ A ∪ B := by simp; left; exact hx
+example (A B: Set) (x': A.toSubtype) : x'.val ∈ A ∪ B := by simp; left; exact x'.property
+example (A B: Set) (x': A) : x'.val ∈ A ∪ B := by simp; left; exact x'.property
 
 /--
   Elements of a set (implicitly coerced to a subtype) are also elements of the set
@@ -385,7 +404,6 @@ lemma SetTheory.Set.subtype_coe (A:Set) (x:A) : x.val = x := rfl
 
 lemma SetTheory.Set.coe_inj (A:Set) (x y:A) : x.val = y.val ↔ x = y := Subtype.coe_inj
 
-
 /--
   If one has a proof `hx` of `x ∈ A`, then `A.subtype_mk hx` will then make the element of `A`
   (viewed as a subtype) corresponding to `x`.
@@ -393,7 +411,6 @@ lemma SetTheory.Set.coe_inj (A:Set) (x y:A) : x.val = y.val ↔ x = y := Subtype
 def SetTheory.Set.subtype_mk (A:Set) {x:Object} (hx:x ∈ A) : A := ⟨ x, hx ⟩
 
 lemma SetTheory.Set.subtype_mk_coe {A:Set} {x:Object} (hx:x ∈ A) : A.subtype_mk hx = x := by rfl
-
 
 
 abbrev SetTheory.Set.specify (A:Set) (P: A → Prop) : Set := SetTheory.specify A P
