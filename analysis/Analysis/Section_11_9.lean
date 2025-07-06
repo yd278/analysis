@@ -1,5 +1,7 @@
 import Mathlib.Tactic
 import Mathlib.Topology.Instances.Irrational
+import Analysis.Section_9_4
+import Analysis.Section_10_1
 import Analysis.Section_11_8
 
 /-!
@@ -67,6 +69,36 @@ theorem cts_of_integ {a b:ℝ} {f:ℝ → ℝ} (hf: IntegrableOn f (Icc a b)) :
 theorem deriv_of_integ {a b:ℝ} (hab: a < b) {f:ℝ → ℝ} (hf: IntegrableOn f (Icc a b))
   {x₀:ℝ} (hx₀ : x₀ ∈ Set.Icc a b) (hcts: ContinuousWithinAt f (Icc a b) x₀) :
   HasDerivWithinAt (fun x => integ f (Icc a x)) (f x₀) (Set.Icc a b) x₀ := by
+  -- This proof is written to follow the structure of the original text.
+  rw [HasDerivWithinAt.iff_approx_linear]
+  intro ε hε
+  simp [(ContinuousWithinAt.tfae _ f hx₀).out 0 2] at hcts
+  specialize hcts ε hε
+  obtain ⟨ δ, hδ, hconv ⟩ := hcts
+  use δ, hδ
+  intro y hy hyδ
+  rcases lt_trichotomy x₀ y with hx₀y | hx₀y | hx₀y
+  . have := (integ_of_join (join_Icc_Ioc hy.1 hy.2) hf).1
+    replace := (integ_of_join (join_Icc_Ioc hx₀.1 (le_of_lt hx₀y)) this).2
+    simp [this.2, abs_le', abs_of_pos (show 0 < y - x₀ by linarith)]
+    have h1 := integ_mono (g := fun _ ↦ f x₀ + ε) this.1 (integ_of_const _ _).1 ?_
+    have h2 := integ_mono (f := fun _ ↦ f x₀ - ε) (integ_of_const _ _).1 this.1 ?_
+    simp [integ_of_const, le_of_lt hx₀y, BoundedInterval.a, BoundedInterval.b] at h1 h2
+    constructor
+    . convert h1 using 1; ring
+    . simp [←sub_nonneg] at h2 ⊢
+      convert h2 using 1; ring
+    . intro z hz
+      simp at hz hy hx₀
+      simp_rw [abs_lt] at hyδ hconv
+      specialize hconv z (by linarith) (by linarith) ⟨ by linarith, by linarith ⟩
+      simp; linarith
+    intro z hz
+    simp at hz hy hx₀
+    simp_rw [abs_lt] at hyδ hconv
+    specialize hconv z (by linarith) (by linarith) ⟨ by linarith, by linarith ⟩
+    simp; linarith
+  . simp [hx₀y]
   sorry
 
 
