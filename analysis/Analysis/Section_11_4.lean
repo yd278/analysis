@@ -78,7 +78,7 @@ theorem integ_of_extend {I J: BoundedInterval} (hIJ: I ⊆ J)
 
 /-- Theorem 11.4.1 (h) (Laws of integration) / Exercise 11.4.1 -/
 theorem integ_of_join {I J K: BoundedInterval} (hIJK: K.joins I J)
-  {f: ℝ → ℝ} (h: PiecewiseConstantOn f K) :
+  {f: ℝ → ℝ} (h: IntegrableOn f K) :
   IntegrableOn f I ∧ IntegrableOn f J ∧ integ f K = integ f I + integ f J := by
   sorry
 

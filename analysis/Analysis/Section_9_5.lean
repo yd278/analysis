@@ -30,7 +30,7 @@ open Classical in
 noncomputable abbrev left_limit (X: Set ℝ) (f: ℝ → ℝ) (x₀:ℝ) : ℝ := if h: left_limit_exists X f x₀ then h.choose else 0
 
 theorem right_limit.eq {X: Set ℝ} {f: ℝ → ℝ} {x₀:ℝ} {L:ℝ} (had: AdherentPt x₀ (X ∩ Set.Ioi x₀))
-  (h: Filter.Tendsto f ((nhds x₀) ⊓ Filter.principal (X ∩ Set.Ioi x₀)) (nhds L)) : right_limit X f x₀ = L := by
+  (h: Filter.Tendsto f ((nhds x₀) ⊓ Filter.principal (X ∩ Set.Ioi x₀)) (nhds L)) : right_limit_exists X f x₀ ∧ right_limit X f x₀ = L := by
   have h' : right_limit_exists X f x₀ := by use L
   simp [right_limit, h']
   have hne : (nhds x₀ ⊓ Filter.principal (X ∩ Set.Ioi x₀)).NeBot := by
@@ -38,7 +38,7 @@ theorem right_limit.eq {X: Set ℝ} {f: ℝ → ℝ} {x₀:ℝ} {L:ℝ} (had: Ad
   exact tendsto_nhds_unique h'.choose_spec h
 
 theorem left_limit.eq {X: Set ℝ} {f: ℝ → ℝ} {x₀:ℝ} {L:ℝ} (had: AdherentPt x₀ (X ∩ Set.Iio x₀)) (h: Filter.Tendsto f ((nhds x₀) ⊓ Filter.principal (X ∩ Set.Iio x₀))
-  (nhds L)) : left_limit X f x₀ = L := by
+  (nhds L)) : left_limit_exists X f x₀ ∧ left_limit X f x₀ = L := by
   have h' : left_limit_exists X f x₀ := by use L
   simp [left_limit, h']
   have hne : (nhds x₀ ⊓ Filter.principal (X ∩ Set.Iio x₀)).NeBot := by
@@ -58,33 +58,32 @@ example : right_limit Set.univ Real.sign 0 = 1 := by sorry
 
 example : left_limit Set.univ Real.sign 0 = -1 := by sorry
 
-theorem right_limit.conv {X: Set ℝ} {f: ℝ → ℝ} {x₀:ℝ} {L:ℝ} (had: AdherentPt x₀ (X ∩ Set.Ioi x₀))
+theorem right_limit.conv {X: Set ℝ} {f: ℝ → ℝ} {x₀:ℝ} (had: AdherentPt x₀ (X ∩ Set.Ioi x₀))
   (h: right_limit_exists X f x₀)
   (a:ℕ → ℝ) (ha: ∀ n, a n ∈ X ∩ Set.Ioi x₀)
   (hconv: Filter.Tendsto a Filter.atTop (nhds x₀)) :
   Filter.Tendsto (fun n ↦ f (a n)) Filter.atTop (nhds (right_limit X f x₀)) := by
   obtain ⟨ L, hL ⟩ := h
   apply Convergesto.comp had _ ha hconv
-  rwa [Convergesto.iff, right_limit.eq had hL]
+  rwa [Convergesto.iff, (right_limit.eq had hL).2]
 
-theorem left_limit.conv {X: Set ℝ} {f: ℝ → ℝ} {x₀:ℝ} {L:ℝ} (had: AdherentPt x₀ (X ∩ Set.Iio x₀))
+theorem left_limit.conv {X: Set ℝ} {f: ℝ → ℝ} {x₀:ℝ} (had: AdherentPt x₀ (X ∩ Set.Iio x₀))
   (h: left_limit_exists X f x₀)
   (a:ℕ → ℝ) (ha: ∀ n, a n ∈ X ∩ Set.Iio x₀)
   (hconv: Filter.Tendsto a Filter.atTop (nhds x₀)) :
   Filter.Tendsto (fun n ↦ f (a n)) Filter.atTop (nhds (left_limit X f x₀)) := by
   obtain ⟨ L, hL ⟩ := h
   apply Convergesto.comp had _ ha hconv
-  rwa [Convergesto.iff, left_limit.eq had hL]
+  rwa [Convergesto.iff, (left_limit.eq had hL).2]
 
 /-- Proposition 9.5.3 -/
 theorem ContinuousAt.iff_eq_left_right_limit {X: Set ℝ} {f: ℝ → ℝ} {x₀:ℝ} (h: x₀ ∈ X)
   (had_left: AdherentPt x₀ (X ∩ Set.Iio x₀)) (had_right: AdherentPt x₀ (X ∩ Set.Ioi x₀)) :
-  ContinuousWithinAt f X x₀ ↔ right_limit_exists X f x₀ ∧ left_limit_exists X f x₀ ∧
-  right_limit X f x₀ = f x₀ ∧ left_limit X f x₀ = f x₀ := by
+  ContinuousWithinAt f X x₀ ↔ (right_limit_exists X f x₀ ∧ right_limit X f x₀ = f x₀) ∧ (left_limit_exists X f x₀ ∧ left_limit X f x₀ = f x₀) := by
   -- This proof is written to follow the structure of the original text.
   constructor
   . sorry
-  rintro ⟨ hre, hle, hright, lheft ⟩
+  rintro ⟨ ⟨ hre, hright⟩, ⟨ hle, lheft ⟩ ⟩
   set L := f x₀
   have := (ContinuousWithinAt.tfae X f h).out 0 2
   rw [this]

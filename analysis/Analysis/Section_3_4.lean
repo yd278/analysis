@@ -13,7 +13,7 @@ doing so.
 Main constructions and results of this section:
 
 - Images and inverse images of (Mathlib) functions, within the framework of Section 3.1 set
-  theory. (The Section 3.2 functions are now deprecated and will not be used further.)
+  theory. (The Section 3.3 functions are now deprecated and will not be used further.)
 - Connection with Mathlib's image `f '' S` and preimage `f ⁻¹' S` notions.
 -/
 

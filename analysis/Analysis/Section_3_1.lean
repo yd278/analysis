@@ -60,12 +60,17 @@ Some technical notes:
 -/
 
 
+
 namespace Chapter3
+
+/- The ability to work in multiple universe is not relevant immediately, but
+becomes relevant when constructing models of set theory in the Chapter 3 epilogue. -/
+universe u v
 
 /-- The axioms of Zermelo-Frankel theory with atoms  -/
 class SetTheory where
-  Set : Type -- Axiom 3.1
-  Object : Type -- Axiom 3.1
+  Set : Type u -- Axiom 3.1
+  Object : Type v -- Axiom 3.1
   set_to_object : Set ↪ Object -- Axiom 3.1
   mem : Object → Set → Prop -- Axiom 3.1
   extensionality X Y : (∀ x, mem x X ↔ mem x Y) → X = Y -- Axiom 3.2
