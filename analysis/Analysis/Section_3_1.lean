@@ -110,9 +110,15 @@ variable [SetTheory]
 instance objects_mem_sets : Membership Object Set where
   mem X x := SetTheory.mem x X
 
+-- Now we can use the `∈` notation between our `Object` and `Set`.
+example (X: Set) (x: Object) : Prop := x ∈ X
+
 /-- Axiom 3.1 (Sets are objects)-/
 instance sets_are_objects : Coe Set Object where
   coe X := SetTheory.set_to_object X
+
+-- Now we can treat a `Set` as an `Object` when needed.
+example (X Y: Set) : Prop := (X: Object) ∈ Y
 
 /-- Axiom 3.1 (Sets are objects)-/
 theorem SetTheory.Set.coe_eq {X Y:Set} (h: (X: Object) = (Y: Object)) : X = Y :=
@@ -136,6 +142,9 @@ theorem SetTheory.Set.ext_iff (X Y: Set) : X = Y ↔ ∀ x, x ∈ X ↔ x ∈ Y 
 
 instance SetTheory.Set.instEmpty : EmptyCollection Set where
   emptyCollection := SetTheory.emptyset
+
+-- Now we can use the `∅` notation to refer to `SetTheory.emptyset`.
+example : ∅ = SetTheory.emptyset := by rfl
 
 /--
   Axiom 3.3 (empty set).
@@ -170,6 +179,9 @@ theorem SetTheory.Set.nonempty_of_inhabited {X:Set} {x:Object} (h:x ∈ X) : X �
 instance SetTheory.Set.instSingleton : Singleton Object Set where
   singleton := SetTheory.singleton
 
+-- Now we can use the `{x}` notation for a single element `Set`.
+example (x: Object) : Set := {x}
+
 /--
   Axiom 3.3(a) (singleton).
   Note: in some applications one may have to explicitly cast {a} to Set due to Mathlib's
@@ -182,6 +194,9 @@ theorem SetTheory.Set.mem_singleton (x a:Object) : x ∈ ({a}:Set) ↔ x = a := 
 
 instance SetTheory.Set.instUnion : Union Set where
   union := SetTheory.union_pair
+
+-- Now we can use the `X ∪ Y` notation for a union of two `Set`s.
+example (X Y: Set) : Set := X ∪ Y
 
 /-- Axiom 3.4 (Pairwise union)-/
 @[simp]
@@ -300,12 +315,18 @@ theorem SetTheory.Set.pair_union_pair (a b c:Object) :
 instance SetTheory.Set.instSubset : HasSubset Set where
   Subset X Y := ∀ x, x ∈ X → x ∈ Y
 
+-- Now we can use `⊆` for a subset relationship between two `Set`s.
+example (X Y: Set) : Prop := X ⊆ Y
+
 /--
   Definition 3.1.14.
   Note that the strict subset operation in Mathlib is denoted `⊂` rather than `⊊`.
 -/
 instance SetTheory.Set.instSSubset : HasSSubset Set where
   SSubset X Y := X ⊆ Y ∧ X ≠ Y
+
+-- Now we can use `⊂` for a strict subset relationship between two `Set`s.
+example (X Y: Set) : Prop := X ⊂ Y
 
 /-- Definition 3.1.14. -/
 theorem SetTheory.Set.subset_def (X Y:Set) : X ⊆ Y ↔ ∀ x, x ∈ X → x ∈ Y := by rfl
