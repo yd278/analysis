@@ -1,7 +1,9 @@
 import Mathlib.Tactic
 import Mathlib.Topology.Instances.Irrational
 import Analysis.Section_9_4
+import Analysis.Section_9_8
 import Analysis.Section_10_1
+import Analysis.Section_11_6
 import Analysis.Section_11_8
 
 /-!
@@ -100,6 +102,105 @@ theorem deriv_of_integ {a b:ℝ} (hab: a < b) {f:ℝ → ℝ} (hf: IntegrableOn 
     simp; linarith
   . simp [hx₀y]
   sorry
+
+/-- Example 11.9.2 -/
+theorem IntegrableOn.of_f_9_8_5 : IntegrableOn f_9_8_5 (Icc 0 1) := by
+  apply integ_of_monotone
+  apply StrictMonoOn.monotoneOn
+  exact StrictMonoOn.mono StrictMonoOn.of_f_9_8_5 (by simp)
+
+noncomputable abbrev F_11_9_2 := fun x ↦ integ f_9_8_5 (Icc 0 x)
+
+theorem ContinuousOn.of_F_11_9_2 : ContinuousOn F_11_9_2 (Set.Icc 0 1) := by
+  apply cts_of_integ
+  exact IntegrableOn.of_f_9_8_5
+
+theorem DifferentiableOn.of_F_11_9_2 {x:ℝ} (hx: ¬ ∃ r:ℚ, x = r) (hx': x ∈ Set.Icc 0 1) :
+  DifferentiableWithinAt ℝ F_11_9_2 (Set.Icc 0 1) x := by
+  have := deriv_of_integ (show 0 < 1 by norm_num) IntegrableOn.of_f_9_8_5 hx'
+     (ContinuousAt.continuousWithinAt (ContinuousAt.of_f_9_8_5 hx))
+  rw [hasDerivWithinAt_iff_hasFDerivWithinAt] at this
+  use (ContinuousLinearMap.smulRight (1:ℝ →L[ℝ] ℝ) (f_9_8_5 x))
+
+/-- Definition 11.9.3.  We drop the requirement that x be a limit point as this makes
+    the Lean arguments slightly cleaner -/
+abbrev AntiderivOn (F f: ℝ → ℝ) (I: BoundedInterval) :=
+  DifferentiableOn ℝ F I ∧ ∀ x ∈ I, HasDerivWithinAt F (f x) I x
+
+/-- Theorem 11.9.4 (Second Fundamental Theorem of Calculus) -/
+theorem integ_eq_antederiv_sub {a b:ℝ} (h:a ≤ b) {f F: ℝ → ℝ}
+  (hf: IntegrableOn f (Icc a b)) (hF: AntiderivOn F f (Icc a b)) :
+  integ f (Icc a b) = F b - F a := by
+
+  -- This proof is written to follow the structure of the original text.
+  rcases lt_or_eq_of_le h with h | h
+  . have hF_cts : ContinuousOn F (Set.Icc a b) := by
+      intro x hx
+      apply ContinuousWithinAt.of_differentiableWithinAt
+      exact hF.1 x hx
+    -- for technical reasons we need to extend F by constant outside of Icc a b
+    let F' : ℝ → ℝ := fun x ↦
+      if x ∈ Set.Icc a b then F x else
+        if x < a then F a else F b
+
+    have hF'_cts : ContinuousOn F' (Ioo (a-1) (b+1)) := by
+      sorry
+
+    have hupper (P: Partition (Icc a b)) : upper_riemann_sum f P ≥ F b - F a := by
+      have := Partition.sum_of_α_length P F'
+      calc
+        _ ≥ ∑ J ∈ P.intervals, F'[J]ₗ := by
+          apply Finset.sum_le_sum
+          intro J hJ
+          by_cases hJ_empty : (J:Set ℝ) = ∅
+          . simp [α_length_of_empty _ hJ_empty, length_of_empty hJ_empty]
+          rcases le_or_gt J.b J.a with hJab | hJab
+          . push_neg at hJ_empty
+            obtain ⟨ x, hx ⟩ := hJ_empty
+            cases J with
+            | Ioo a' b' => simp at hx; linarith
+            | Ioc a' b' => simp at hx; linarith
+            | Ico a' b' => simp at hx; linarith
+            | Icc a' b' =>
+              simp at hx
+              have : a' = b' := by linarith
+              simp [this]
+              have hnhds: (Ioo (a-1) (b+1):Set ℝ) ∈ nhds b' := by
+                replace hJ := P.contains _ hJ
+                simp [subset_iff] at hJ
+                rw [Set.Icc_subset_Icc_iff (by linarith)] at hJ
+                apply Ioo_mem_nhds <;> linarith
+              rw [α_length_of_pt, jump_of_continuous hnhds (hF'_cts _ (mem_of_mem_nhds hnhds))]
+          sorry
+        _ = F'[Icc a b]ₗ := Partition.sum_of_α_length P F'
+        _ = F' b - F' a := by
+          apply α_length_of_cts (by linarith) _ (by linarith) _ hF'_cts
+          simp [h]
+          intro x hx; simp [mem_iff] at hx ⊢; exact ⟨ by linarith, by linarith ⟩
+        _ = _ := by
+          simp [F', le_of_lt h]
+    have hlower (P: Partition (Icc a b)) : lower_riemann_sum f P ≤ F b - F a := by
+      sorry
+    replace hupper : upper_integral f (Icc a b) ≥ F b - F a := by
+      rw [upper_integ_eq_inf_upper_sum hf.1]
+      apply le_csInf
+      . simp [Set.range_nonempty]
+      simp
+      intro P; specialize hupper P; linarith
+    replace hlower : lower_integral f (Icc a b) ≤ F b - F a := by
+      rw [lower_integ_eq_sup_lower_sum hf.1]
+      apply csSup_le
+      . simp [Set.range_nonempty]
+      simp
+      intro P; specialize hlower P; linarith
+    replace hf := hf.2
+    linarith
+  simp [h]
+  apply (integ_on_subsingleton _).2
+  simp [length]
+
+
+
 
 
 end Chapter11
