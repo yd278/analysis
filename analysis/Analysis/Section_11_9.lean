@@ -1,10 +1,13 @@
 import Mathlib.Tactic
-import Mathlib.Topology.Instances.Irrational
+import Mathlib.Topology.ContinuousOn
+import Analysis.Section_7_3
 import Analysis.Section_9_4
 import Analysis.Section_9_8
 import Analysis.Section_10_1
+import Analysis.Section_10_2
 import Analysis.Section_11_6
 import Analysis.Section_11_8
+
 
 /-!
 # Analysis I, Section 11.9
@@ -20,7 +23,7 @@ Main constructions and results of this section:
 -/
 
 namespace Chapter11
-open Chapter9 BoundedInterval
+open Chapter9 Chapter10 BoundedInterval
 
 /-- Theorem 11.9.1 (First Fundamental Theorem of Calculus)-/
 theorem cts_of_integ {a b:ℝ} {f:ℝ → ℝ} (hf: IntegrableOn f (Icc a b)) :
@@ -122,13 +125,16 @@ theorem DifferentiableOn.of_F_11_9_2 {x:ℝ} (hx: ¬ ∃ r:ℚ, x = r) (hx': x �
   rw [hasDerivWithinAt_iff_hasFDerivWithinAt] at this
   use (ContinuousLinearMap.smulRight (1:ℝ →L[ℝ] ℝ) (f_9_8_5 x))
 
+/-- Exercise 11.9.1 -/
+theorem DifferentiableOn.of_F_11_9_2' {q:ℚ} (hq: (q:ℝ) ∈ Set.Icc 0 1) : ¬ DifferentiableWithinAt ℝ F_11_9_2 (Set.Icc 0 1) q := by sorry
+
 /-- Definition 11.9.3.  We drop the requirement that x be a limit point as this makes
     the Lean arguments slightly cleaner -/
 abbrev AntiderivOn (F f: ℝ → ℝ) (I: BoundedInterval) :=
   DifferentiableOn ℝ F I ∧ ∀ x ∈ I, HasDerivWithinAt F (f x) I x
 
 /-- Theorem 11.9.4 (Second Fundamental Theorem of Calculus) -/
-theorem integ_eq_antederiv_sub {a b:ℝ} (h:a ≤ b) {f F: ℝ → ℝ}
+theorem integ_eq_antideriv_sub {a b:ℝ} (h:a ≤ b) {f F: ℝ → ℝ}
   (hf: IntegrableOn f (Icc a b)) (hF: AntiderivOn F f (Icc a b)) :
   integ f (Icc a b) = F b - F a := by
 
@@ -139,12 +145,17 @@ theorem integ_eq_antederiv_sub {a b:ℝ} (h:a ≤ b) {f F: ℝ → ℝ}
       apply ContinuousWithinAt.of_differentiableWithinAt
       exact hF.1 x hx
     -- for technical reasons we need to extend F by constant outside of Icc a b
-    let F' : ℝ → ℝ := fun x ↦
-      if x ∈ Set.Icc a b then F x else
-        if x < a then F a else F b
+    let F' : ℝ → ℝ := fun x ↦ F (max (min x b) a)
+
+    have hFF' {x:ℝ} (hx: x ∈ Set.Icc a b) : F' x = F x := by
+      simp at hx
+      simp [F', hx.2, hx.1]
 
     have hF'_cts : ContinuousOn F' (Ioo (a-1) (b+1)) := by
-      sorry
+      apply Continuous.continuousOn
+      convert ContinuousOn.comp_continuous hF_cts (f := fun x ↦ max (min x b) a) ?_ ?_ using 1
+      . continuity
+      intro x; simp [le_of_lt h]
 
     have hupper (P: Partition (Icc a b)) : upper_riemann_sum f P ≥ F b - F a := by
       have := Partition.sum_of_α_length P F'
@@ -158,27 +169,91 @@ theorem integ_eq_antederiv_sub {a b:ℝ} (h:a ≤ b) {f F: ℝ → ℝ}
           . push_neg at hJ_empty
             obtain ⟨ x, hx ⟩ := hJ_empty
             cases J with
-            | Ioo a' b' => simp at hx; linarith
-            | Ioc a' b' => simp at hx; linarith
-            | Ico a' b' => simp at hx; linarith
-            | Icc a' b' =>
+            | Ioo c d => simp at hx; linarith
+            | Ioc c d => simp at hx; linarith
+            | Ico c d => simp at hx; linarith
+            | Icc c d =>
               simp at hx
-              have : a' = b' := by linarith
+              have : c = d := by linarith
               simp [this]
-              have hnhds: (Ioo (a-1) (b+1):Set ℝ) ∈ nhds b' := by
+              have hnhds: (Ioo (a-1) (b+1):Set ℝ) ∈ nhds d := by
                 replace hJ := P.contains _ hJ
                 simp [subset_iff] at hJ
                 rw [Set.Icc_subset_Icc_iff (by linarith)] at hJ
                 apply Ioo_mem_nhds <;> linarith
               rw [α_length_of_pt, jump_of_continuous hnhds (hF'_cts _ (mem_of_mem_nhds hnhds))]
-          sorry
+          set c := J.a
+          set d := J.b
+          replace hJ := P.contains _ hJ
+          have hJ' : Icc a b ⊆ Ioo (a-1/2) (b+1/2) := by
+            apply Set.Icc_subset_Ioo <;> linarith
+          replace hJ' := ((Ioo_subset J).trans hJ).trans hJ'
+          simp [subset_iff] at hJ'
+          rw [Set.Ioo_subset_Ioo_iff hJab] at hJ'
+          have hJ'' : Icc a b ⊆ Ioo (a-1) (b+1) := by
+            apply Set.Icc_subset_Ioo <;> linarith
+          replace hJ'' := hJ.trans hJ''
+          rw [α_length_of_cts (by linarith) hJab (by linarith) hJ'' hF'_cts]
+          have := HasDerivWithinAt.mean_value hJab (ContinuousOn.mono hF'_cts ?_) ?_
+          . obtain ⟨ e, he, hmean ⟩ := this
+            have : HasDerivWithinAt F' (f e) (Set.Ioo c d) e := by
+              replace hJ := (Ioo_subset J).trans hJ
+              simp [subset_iff] at hJ
+              apply HasDerivWithinAt.congr (f := F)
+              . exact HasDerivWithinAt.mono (hF.2 e (hJ he)) hJ
+              . intro x hx
+                exact hFF' (hJ hx)
+              exact hFF' (hJ he)
+            replace := derivative_unique ?_ this hmean
+            . calc
+                _ = F' d - F' c := rfl
+                _ = (d - c) * f e := by
+                  rw [this]
+                  have : d-c > 0 := by linarith
+                  field_simp
+                _ = f e * |J|ₗ := by
+                  simp [mul_comm, length]
+                  left; rw [max_eq_left (by linarith)]
+                _ ≤ _ := by
+                  gcongr
+                  apply le_csSup
+                  . rw [bddAbove_def]
+                    obtain ⟨ M, hM ⟩ := hf.1
+                    use M
+                    simp only [abs_le', and_imp, Set.mem_image, forall_exists_index,
+                      forall_apply_eq_imp_iff₂, F'] at hM ⊢
+                    intro x hx
+                    rw [subset_iff] at hJ
+                    specialize hM x (hJ hx)
+                    tauto
+                  simp; use e; simp
+                  exact ((subset_iff _ _).mp (Ioo_subset J)) he
+            rw [←mem_closure_iff_clusterPt]
+            apply closure_mono (s := Set.Ioo e d)
+            . intro x hx; simp at he hx ⊢
+              exact ⟨ ⟨ by linarith, by linarith ⟩, by linarith ⟩
+            simp at he
+            rw [closure_Ioo (by linarith)]
+            simp; linarith
+          . simp; rw [Set.Icc_subset_Ioo_iff (le_of_lt hJab)]
+            exact ⟨ by linarith, by linarith ⟩
+          apply DifferentiableOn.congr (f := F)
+          . apply DifferentiableOn.mono hF.1
+            replace hJ := (Ioo_subset J).trans hJ
+            simpa [subset_iff] using hJ
+          intro x hx
+          have : x ∈ Set.Icc a b := by
+            replace hJ := (Ioo_subset J).trans hJ _ hx
+            simpa using hJ
+          simp only [ite_eq_left_iff, F']
+          tauto
         _ = F'[Icc a b]ₗ := Partition.sum_of_α_length P F'
         _ = F' b - F' a := by
           apply α_length_of_cts (by linarith) _ (by linarith) _ hF'_cts
           simp [h]
           intro x hx; simp [mem_iff] at hx ⊢; exact ⟨ by linarith, by linarith ⟩
         _ = _ := by
-          simp [F', le_of_lt h]
+          congr 1 <;> apply hFF' <;> simp [le_of_lt h]
     have hlower (P: Partition (Icc a b)) : lower_riemann_sum f P ≤ F b - F a := by
       sorry
     replace hupper : upper_integral f (Icc a b) ≥ F b - F a := by
@@ -199,10 +274,33 @@ theorem integ_eq_antederiv_sub {a b:ℝ} (h:a ≤ b) {f F: ℝ → ℝ}
   apply (integ_on_subsingleton _).2
   simp [length]
 
+open Real
 
+noncomputable abbrev F_11_9 : ℝ → ℝ := fun x ↦ if x = 0 then 0 else x^2 * sin (1 / x^3)
 
+example : Differentiable ℝ F_11_9 := by sorry
 
+example : ¬ BddOn (deriv F_11_9) (Set.Icc (-1) 1) := by sorry
+
+example : AntiderivOn F_11_9 (deriv F_11_9) (Icc (-1) 1) := by sorry
+
+/-- Lemma 11.9.5 / Exercise 11.9.2 -/
+theorem antideriv_eq_antideriv_add_const {I:BoundedInterval} {f F G : ℝ → ℝ}
+  (hfF: AntiderivOn F f I) (hfG: AntiderivOn G f I) :
+   ∃ C, ∀ x ∈ (I:Set ℝ), F x = G x + C := by
+    sorry
+
+/-- Exercise 11.9.3 -/
+example {a b x₀:ℝ} (hab: a < b) (hx₀: x₀ ∈ Icc a b) {f: ℝ → ℝ} (hf: MonotoneOn f (Icc a b)) :
+  DifferentiableWithinAt ℝ (fun x => integ f (Icc a x)) (Icc a b) x₀ ↔
+  ContinuousWithinAt f (Icc a b) x₀ := by
+  sorry
 
 end Chapter11
 
--- note to self: remember to move Exercise 11.6.5 to Exercise 11.9.5
+/-- Exercise 11.6.5, moved to Section 11.9 -/
+theorem Chapter7.Series.converges_qseries' (p:ℝ) : (mk' (m := 1) fun n ↦ 1 / (n:ℝ) ^ p : Series).converges ↔ (p>1) := by
+  sorry
+
+theorem Chapter7.Series.converges_qseries'' (p:ℝ) : (mk' (m := 1) fun n ↦ 1 / (n:ℝ) ^ p : Series).absConverges ↔ (p>1) := by
+  sorry
