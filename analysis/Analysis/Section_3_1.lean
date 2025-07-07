@@ -634,11 +634,23 @@ theorem SetTheory.Set.ofNat_inj (n m:ℕ) :
     (ofNat(n) : Nat) = (ofNat(m) : Nat) ↔ ofNat(n) = ofNat(m) := by
       convert nat_equiv_inj _ _
 
+example : (5:Nat) ≠ (3:Nat) := by
+  simp
+
 @[simp]
 theorem SetTheory.Set.ofNat_inj' (n m:ℕ) :
     (ofNat(n) : Object) = (ofNat(m) : Object) ↔ ofNat(n) = ofNat(m) := by
       simp only [←Object.ofnat_eq, Object.ofnat_eq', Set.coe_inj, Set.nat_equiv_inj]
       rfl
+
+example : (5:Object) ≠ (3:Object) := by
+  simp
+
+@[simp]
+lemma SetTheory.Set.nat_coe_eq_iff {m n : ℕ} : (m:Object) = ofNat(n) ↔ m = n := by exact ofNat_inj' m n
+
+example (n: ℕ) : (n: Object) = 2 ↔ n = 2 := by
+  simp
 
 @[simp]
 theorem SetTheory.Object.natCast_inj (n m:ℕ) :
@@ -653,11 +665,6 @@ lemma SetTheory.Set.nat_equiv_coe_of_coe (n:ℕ) : ((n:Nat):ℕ) = n :=
 lemma SetTheory.Set.nat_equiv_coe_of_coe' (n:Nat) : ((n:ℕ):Nat) = n :=
   Equiv.symm_apply_apply nat_equiv.symm n
 
-example : (5:Nat) ≠ (3:Nat) := by
-  simp
-
-example : (5:Object) ≠ (3:Object) := by
-  simp
 
 /-- Example 3.1.16 (simplified).  -/
 example : ({3, 5}:Set) ⊆ {1, 3, 5} := by
