@@ -214,7 +214,7 @@ theorem α_length_of_pt {α: ℝ → ℝ} (a:ℝ) : α[Icc a a]ₗ = jump α a :
   simp [α_length, jump]
 
 theorem α_length_of_cts {α:ℝ → ℝ} {I: BoundedInterval} {a b: ℝ}
-  (haa: a < I.a) (hab: I.a < I.b) (hbb: I.b < b)
+  (haa: a < I.a) (hab: I.a ≤ I.b) (hbb: I.b < b)
   (hI : I ⊆ Ioo a b) (hα: ContinuousOn α (Ioo a b)) :
   α[I]ₗ = α I.b - α I.a := by
   have ha_left : left_lim α I.a = α I.a := by
@@ -243,13 +243,15 @@ theorem α_length_of_cts {α:ℝ → ℝ} {I: BoundedInterval} {a b: ℝ}
     simp [hbb]; linarith
   cases I with
   | Icc a' b' =>
-    simp [α_length, hb_right, ha_left, le_of_lt hab]
+    simp [α_length, hb_right, ha_left, hab]
   | Ico a' b' =>
-    simp [α_length, hb_left, ha_left, le_of_lt hab]
+    simp [α_length, hb_left, ha_left, hab]
   | Ioc a' b' =>
-    simp [α_length, hb_right, ha_right, le_of_lt hab]
+    simp [α_length, hb_right, ha_right, hab]
   | Ioo a' b' =>
-    simp [α_length, hb_left, ha_right, hab]
+    simp [α_length, hb_left, ha_right]
+    intro h; replace h : a' = b' := by linarith
+    simp [h]
 
 /-- Example 11.8.2-/
 example : (fun x ↦ x^2)[Icc 2 3]ₗ = 5 := by
@@ -334,7 +336,7 @@ theorem PiecewiseConstantWith.RS_integ_eq_integ {f:ℝ → ℝ} {I: BoundedInter
   sorry
 
 /-- Analogue of Proposition 11.2.13 -/
-theorem PiecewiseConstantWith.RSinteg_eq {f:ℝ → ℝ} {I: BoundedInterval} {P P': Partition I}
+theorem PiecewiseConstantWith.RS_integ_eq {f:ℝ → ℝ} {I: BoundedInterval} {P P': Partition I}
   (hP: PiecewiseConstantWith f P) (hP': PiecewiseConstantWith f P') (α:ℝ → ℝ): RS_integ f P α = RS_integ f P' α := by
   sorry
 
@@ -342,13 +344,16 @@ open Classical in
 noncomputable abbrev PiecewiseConstantOn.RS_integ (f:ℝ → ℝ) (I: BoundedInterval) (α:ℝ → ℝ):
   ℝ := if h: PiecewiseConstantOn f I then PiecewiseConstantWith.RS_integ f h.choose α else 0
 
-/-- α-length non-negative when α monotone -/
+theorem PiecewiseConstantOn.RS_integ_def {f:ℝ → ℝ} {I: BoundedInterval} {P: Partition I}
+  (h: PiecewiseConstantWith f P) (α:ℝ → ℝ) : PiecewiseConstantOn.RS_integ f I α = PiecewiseConstantWith.RS_integ f P α := by
+  have h' : PiecewiseConstantOn f I := by use P
+  simp [PiecewiseConstantOn.RS_integ, h']
+  exact PiecewiseConstantWith.RS_integ_eq h'.choose_spec h α
 
+/-- α-length non-negative when α monotone -/
 theorem α_length_nonneg_of_monotone {α:ℝ → ℝ}  (hα: Monotone α) (I: BoundedInterval):
   0 ≤ α[I]ₗ := by
   sorry
-
-
 
 /-- Analogue of Theorem 11.2.16 (a) (Laws of integration) / Exercise 11.8.3 -/
 theorem PiecewiseConstantOn.RS_integ_add {f g: ℝ → ℝ} {I: BoundedInterval}
@@ -453,6 +458,12 @@ theorem RS_integ_of_uniform_cts {I: BoundedInterval} {f:ℝ → ℝ} (hf: Unifor
 
 /-- Exercise 11.8.5 -/
 theorem RS_integ_with_sign (f:ℝ → ℝ) (hf: ContinuousOn f (Set.Icc (-1) 1)) : RS_IntegrableOn f (Icc (-1) 1) Real.sign ∧ RS_integ f (Icc (-1) 1) (fun x ↦ -Real.sign x) = 2 * f 0 := by
+  sorry
+
+/-- Analogue of Lemma 11.3.7 -/
+theorem RS_integ_of_piecewise_const {f:ℝ → ℝ} {I: BoundedInterval} (hf: PiecewiseConstantOn f I)
+  {α: ℝ → ℝ} (hα: Monotone α):
+  RS_IntegrableOn f I α ∧ RS_integ f I α = PiecewiseConstantOn.RS_integ f I α := by
   sorry
 
 end Chapter11
