@@ -309,7 +309,10 @@ theorem SetTheory.Set.triple_eq (a b c:Object) : {a,b,c} = ({a}:Set) ∪ {b,c} :
 /-- Example 3.1.10 -/
 theorem SetTheory.Set.pair_union_pair (a b c:Object) :
     ({a,b}:Set) ∪ {b,c} = {a,b,c} := by
-  sorry
+  apply ext
+  intro x
+  simp only [mem_union, mem_pair, mem_triple]
+  tauto
 
 /-- Definition 3.1.14.   -/
 instance SetTheory.Set.instSubset : HasSubset Set where
@@ -668,36 +671,63 @@ lemma SetTheory.Set.nat_equiv_coe_of_coe' (n:Nat) : ((n:ℕ):Nat) = n :=
 
 /-- Example 3.1.16 (simplified).  -/
 example : ({3, 5}:Set) ⊆ {1, 3, 5} := by
-  sorry
+  rw [SetTheory.Set.subset_def]
+  simp only [SetTheory.Set.mem_pair, SetTheory.Set.mem_triple]
+  intro x hx
+  tauto
 
 /-- Example 3.1.17 (simplified). -/
-example : ({3, 5}:Set).specify (fun x ↦ x.val ≠ 3)
- = {(5:Object)} := by
-  sorry
+example : ({3, 5}:Set).specify (fun x ↦ x.val ≠ 3) = ({5}:Set) := by
+  apply SetTheory.Set.ext
+  intro x
+  simp only [SetTheory.Set.mem_singleton, SetTheory.Set.specification_axiom'']
+  constructor
+  · rintro ⟨h1, h2⟩
+    simp only [SetTheory.Set.mem_pair] at h1
+    tauto
+  rintro ⟨rfl⟩
+  norm_num
 
 /-- Example 3.1.24 -/
 
-example : ({1, 2, 4}:Set) ∩ {2,3,4} = {2, 4} := by sorry
+example : ({1, 2, 4}:Set) ∩ {2,3,4} = {2, 4} := by
+  apply SetTheory.Set.ext
+  -- Instead of unfolding repetitive branches by hand like earlier,
+  -- you can use the `aesop` tactic which does this automatically.
+  aesop
 
 /-- Example 3.1.24 -/
 
-example : ({1, 2}:Set) ∩ {3,4} = ∅ := by sorry
+example : ({1, 2}:Set) ∩ {3,4} = ∅ := by
+  rw [SetTheory.Set.eq_empty_iff_forall_notMem]
+  aesop
 
-example : ¬ Disjoint  ({1, 2, 3}:Set)  {2,3,4} := by sorry
+example : ¬ Disjoint ({1, 2, 3}:Set) {2,3,4} := by
+  rw [disjoint_iff]
+  intro h
+  change {1, 2, 3} ∩ {2, 3, 4} = ∅ at h
+  rw [SetTheory.Set.eq_empty_iff_forall_notMem] at h
+  aesop
 
 example : Disjoint (∅:Set) ∅ := by sorry
 
 /-- Definition 3.1.26 example -/
 
-example : ({1, 2, 3, 4}:Set) \ {2,4,6} = {1, 3} := by sorry
+example : ({1, 2, 3, 4}:Set) \ {2,4,6} = {1, 3} := by
+  apply SetTheory.Set.ext
+  simp only [SetTheory.Set.mem_sdiff, SetTheory.Set.instInsert]
+  aesop
 
 /-- Example 3.1.30 -/
 
-example : ({3,5,9}:Set).replace (P := fun x y ↦ ∃ (n:ℕ), x.val = n ∧ y = (n+1:ℕ)) (by sorry) = {4,6,10} := by sorry
+example : ({3,5,9}:Set).replace (P := fun x y ↦ ∃ (n:ℕ), x.val = n ∧ y = (n+1:ℕ)) (by aesop) = {4,6,10} := by sorry
 
 /-- Example 3.1.31 -/
 
-example : ({3,5,9}:Set).replace (P := fun x y ↦ y=1) (by sorry) = {1} := by sorry
+example : ({3,5,9}:Set).replace (P := fun _ y ↦ y=1) (by aesop) = {1} := by
+  apply SetTheory.Set.ext
+  simp only [SetTheory.Set.replacement_axiom]
+  aesop
 
 /-- Exercise 3.1.5.  One can use the `tfae_have` and `tfae_finish` tactics here. -/
 theorem SetTheory.Set.subset_tfae (A B:Set) : [A ⊆ B, A ∪ B = B, A ∩ B = A].TFAE := by sorry
