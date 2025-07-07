@@ -1,4 +1,6 @@
 import Mathlib.Tactic
+import Analysis.Section_9_6
+import Analysis.Section_10_3
 import Analysis.Section_11_9
 
 
@@ -18,7 +20,7 @@ Main constructions and results of this section:
 
 namespace Chapter11
 
-open BoundedInterval
+open BoundedInterval Chapter9 Chapter10
 
 /-- Proposition 11.10.1 (Integration by parts formula) / Exercise 11.10.1 -/
 theorem integ_of_mul_deriv {a b:ℝ} (hab: a ≤ b) {F G: ℝ → ℝ}
@@ -30,33 +32,33 @@ theorem integ_of_mul_deriv {a b:ℝ} (hab: a ≤ b) {F G: ℝ → ℝ}
     sorry
 
 /-- Theorem 11.10.2.  Need to add continuity of α due to our conventions on α-length -/
-theorem RS_integ_eq_integ_of_mul_deriv
-  {a b:ℝ} {α f:ℝ → ℝ} (hα: Monotone α)
+theorem PiecewiseConstantOn.RS_integ_eq_integ_of_mul_deriv
+  {a b:ℝ} {α f:ℝ → ℝ}
   (hα_diff: DifferentiableOn ℝ α (Icc a b)) (hαcont: Continuous α)
   (hα': IntegrableOn (derivWithin α (Icc a b)) (Icc a b))
   (hf: PiecewiseConstantOn f (Icc a b)) :
   IntegrableOn (f * derivWithin α (Icc a b)) (Icc a b) ∧
-  integ (f * derivWithin α (Icc a b)) (Icc a b) = RS_integ f (Icc a b) α := by
+  Chapter11.integ (f * derivWithin α (Icc a b)) (Icc a b) = RS_integ f (Icc a b) α := by
   -- This proof is adapted from the structure of the original text.
+  set α' := derivWithin α (Icc a b)
   have hf_integ: IntegrableOn f (Icc a b) :=
     (integ_of_piecewise_const hf).1
-  have hfα'_integ: IntegrableOn (f * derivWithin α (Icc a b)) (Icc a b) :=
+  have hfα'_integ: IntegrableOn (f * α') (Icc a b) :=
     integ_of_mul hf_integ hα'
   refine ⟨ hfα'_integ, ?_ ⟩
-  rw [(RS_integ_of_piecewise_const hf hα).2]
   obtain ⟨ P, hP ⟩ := hf
   rw [PiecewiseConstantOn.RS_integ_def hP α, integ_split hfα'_integ P]
   unfold PiecewiseConstantWith.RS_integ
   apply Finset.sum_congr rfl
   intro J hJ
   calc
-    _ = integ ((constant_value_on f (J:Set ℝ)) • derivWithin α (Icc a b)) J := by
-      apply integ_congr
+    _ = Chapter11.integ ((constant_value_on f (J:Set ℝ)) • α') J := by
+      apply Chapter11.integ_congr
       intro x hx
       simp only [Pi.mul_apply, Pi.smul_apply, smul_eq_mul]; congr
       apply ConstantOn.eq _ hx
       exact hP J hJ
-    _ = constant_value_on f (J:Set ℝ) * integ (derivWithin α (Icc a b)) J := by
+    _ = constant_value_on f (J:Set ℝ) * Chapter11.integ α' J := by
       convert (integ_of_smul _ _).2
       apply integ_mono' (P.contains _ hJ) hα'
     _ = _ := by
@@ -80,13 +82,69 @@ theorem RS_integ_eq_integ_of_mul_deriv
           simp [closure_Ioo (show J.a ≠ J.b by linarith)] at this
           simp [subset_iff, this]
         calc
-          _ = integ (derivWithin α (Icc a b)) (Icc J.a J.b) :=
+          _ = Chapter11.integ α' (Icc J.a J.b) :=
             integ_eq (subset_Icc J) rfl rfl (integ_mono' this hα')
           _ = _ := by
             convert integ_eq_antideriv_sub (le_of_lt hJab) (integ_mono' this hα') _
             apply AntiderivOn.mono (I := Icc a b) ⟨ hα_diff, _ ⟩ this
             intro x hx
             exact DifferentiableWithinAt.hasDerivWithinAt (hα_diff x hx)
+
+/-- Corollary 11.10.3 -/
+theorem RS_integ_eq_integ_of_mul_deriv
+  {a b:ℝ} (hab: a < b) {α f:ℝ → ℝ} (hα: Monotone α)
+  (hα_diff: DifferentiableOn ℝ α (Icc a b)) (hαcont: Continuous α)
+  (hα': IntegrableOn (derivWithin α (Icc a b)) (Icc a b))
+  (hf: RS_IntegrableOn f (Icc a b) α) :
+  IntegrableOn (f * derivWithin α (Icc a b)) (Icc a b) ∧
+  integ (f * derivWithin α (Icc a b)) (Icc a b) = RS_integ f (Icc a b) α := by
+  set α' := derivWithin α (Icc a b)
+  have hfα'_bound: BddOn (f * α') (Icc a b) := by
+    obtain ⟨ M, hM ⟩ := hf.1
+    obtain ⟨ N, hN ⟩ := hα'.1
+    use M * N
+    intro x hx; specialize hM x hx; specialize hN x hx
+    simp [abs_mul]
+    gcongr
+    exact (abs_nonneg _).trans hM
+  have hα'_nonneg : MajorizesOn α' 0 (Icc a b) := by
+    intro x hx
+    convert ge_iff_le.mp (derivative_of_monotone _ _ hα (hα_diff x hx))
+    rw [←mem_closure_iff_clusterPt]
+    simp at hx
+    rcases le_iff_lt_or_eq.mp hx.1 with h | h
+    . apply (closure_mono (s := Set.Ico a x)) _
+      . simp [closure_Ico (show a ≠ x by linarith), hx.1]
+      intro y hy; simp at hy ⊢
+      simp [hy]; exact ⟨ by linarith, by linarith ⟩
+    apply (closure_mono (s := Set.Ioc x b)) _
+    . simp [closure_Ioc (show x ≠ b by linarith), hx.2]
+    intro y hy; simp at hy ⊢
+    simp [hy]; exact ⟨ by linarith, by linarith ⟩
+  have h0 := hf.2
+  have h1 : RS_integ f (Icc a b) α ≤ lower_integral (f * α') (Icc a b) := by
+    apply le_of_forall_sub_le
+    intro ε hε
+    obtain ⟨ h, hhminor, hhconst, hh ⟩ := gt_of_lt_lower_RS_integral hf.1 hα (show RS_integ f (Icc a b) α - ε < lower_RS_integral f (Icc a b) α by linarith)
+    have := PiecewiseConstantOn.RS_integ_eq_integ_of_mul_deriv hα_diff hαcont hα' hhconst
+    rw [←this.2] at hh
+    replace : lower_integral (h * α') (Icc a b) = integ (h * α') (Icc a b) := this.1.2
+    have why : lower_integral (h * α') (Icc a b) ≤ lower_integral (f * α') (Icc a b) := by
+      sorry
+    linarith
+  have h2 : upper_integral (f * α') (Icc a b) ≤ RS_integ f (Icc a b) α := by
+    apply le_of_forall_pos_le_add
+    intro ε hε
+    obtain ⟨ h, hhmajor, hhconst, hh ⟩ := lt_of_gt_upper_RS_integral hf.1 hα (show upper_RS_integral f (Icc a b) α + ε > RS_integ f (Icc a b) α by linarith)
+    have := PiecewiseConstantOn.RS_integ_eq_integ_of_mul_deriv hα_diff hαcont hα' hhconst
+    rw [←this.2] at hh
+    have why : upper_integral (f * α') (Icc a b) ≤ upper_integral (h * α') (Icc a b) := by
+      sorry
+    linarith
+  have h3 : lower_integral (f * α') (Icc a b) ≤
+    upper_integral (f * α') (Icc a b) := lower_integral_le_upper hfα'_bound
+  exact ⟨ ⟨ hfα'_bound, by linarith ⟩, by linarith ⟩
+
 
 
 

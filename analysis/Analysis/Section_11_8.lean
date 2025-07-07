@@ -427,6 +427,64 @@ noncomputable abbrev upper_RS_integral (f:ℝ → ℝ) (I: BoundedInterval) (α:
 noncomputable abbrev lower_RS_integral (f:ℝ → ℝ) (I: BoundedInterval) (α: ℝ → ℝ): ℝ :=
   sSup ((fun g ↦ PiecewiseConstantOn.RS_integ g I α) '' {g | MinorizesOn g f I ∧ PiecewiseConstantOn g I})
 
+lemma RS_integral_bound_upper_of_bounded {f:ℝ → ℝ} {M:ℝ} {I: BoundedInterval}
+  (h: ∀ x ∈ (I:Set ℝ), |f x| ≤ M) {α:ℝ → ℝ} (hα:Monotone α)
+  : M * α[I]ₗ ∈ (fun g ↦ PiecewiseConstantOn.RS_integ g I α) '' {g | MajorizesOn g f I ∧ PiecewiseConstantOn g I} := by
+  simp
+  refine ⟨ fun _ ↦ M , ⟨ ⟨ ?_, ?_, ⟩, ?_ ⟩ ⟩
+  . intro x hx
+    specialize h x hx
+    simp [abs_le'] at h
+    simp [h.1]
+  . apply PiecewiseConstantOn.of_const (ConstantOn.of_const (c := M) _)
+    simp
+  exact PiecewiseConstantOn.RS_integ_const M I hα
+
+lemma RS_integral_bound_lower_of_bounded {f:ℝ → ℝ} {M:ℝ} {I: BoundedInterval} (h: ∀ x ∈ (I:Set ℝ), |f x| ≤ M) {α:ℝ → ℝ} (hα:Monotone α)
+  : -M * α[I]ₗ ∈ (fun g ↦ PiecewiseConstantOn.RS_integ g I α) '' {g | MinorizesOn g f I ∧ PiecewiseConstantOn g I} := by
+  simp
+  refine ⟨ fun _ ↦ -M , ⟨ ⟨ ?_, ?_, ⟩, ?_ ⟩ ⟩
+  . intro x hx
+    specialize h x hx
+    simp [abs_le'] at h
+    simp; linarith
+  . apply PiecewiseConstantOn.of_const (ConstantOn.of_const (c := -M) _)
+    simp
+  convert PiecewiseConstantOn.RS_integ_const (-M) I hα using 1
+  simp
+
+lemma RS_integral_bound_upper_nonempty {f:ℝ → ℝ} {I: BoundedInterval} (h: BddOn f I)
+  {α:ℝ → ℝ} (hα: Monotone α) :
+  ((fun g ↦ PiecewiseConstantOn.RS_integ g I α) '' {g | MajorizesOn g f I ∧ PiecewiseConstantOn g I}).Nonempty := by
+  obtain ⟨ M, h ⟩ := h
+  apply Set.nonempty_of_mem
+  exact RS_integral_bound_upper_of_bounded h hα
+
+lemma RS_integral_bound_lower_nonempty {f:ℝ → ℝ} {I: BoundedInterval} (h: BddOn f I)
+  {α:ℝ → ℝ} (hα: Monotone α) :
+  ((fun g ↦ PiecewiseConstantOn.RS_integ g I α) '' {g | MinorizesOn g f I ∧ PiecewiseConstantOn g I}).Nonempty := by
+  obtain ⟨ M, h ⟩ := h
+  apply Set.nonempty_of_mem
+  exact RS_integral_bound_lower_of_bounded h hα
+
+lemma lt_of_gt_upper_RS_integral {f:ℝ → ℝ} {I: BoundedInterval} (hf: BddOn f I)
+  {α: ℝ → ℝ} (hα: Monotone α) {X:ℝ} (hX: upper_RS_integral f I α < X ) :
+  ∃ g, MajorizesOn g f I ∧ PiecewiseConstantOn g I ∧ PiecewiseConstantOn.RS_integ g I α < X := by
+  obtain ⟨ Y, hY, hYX ⟩ := exists_lt_of_csInf_lt (RS_integral_bound_upper_nonempty hf hα) hX
+  simp at hY
+  obtain ⟨ g, ⟨ hmaj, hgp ⟩, hgi ⟩ := hY
+  refine ⟨ g, hmaj, hgp, ?_ ⟩
+  rwa [hgi]
+
+lemma gt_of_lt_lower_RS_integral {f:ℝ → ℝ} {I: BoundedInterval} (hf: BddOn f I)
+  {α:ℝ → ℝ} (hα: Monotone α) {X:ℝ} (hX: X < lower_RS_integral f I α) :
+  ∃ h, MinorizesOn h f I ∧ PiecewiseConstantOn h I ∧ X < PiecewiseConstantOn.RS_integ h I α := by
+  obtain ⟨ Y, hY, hYX ⟩ := exists_lt_of_lt_csSup (RS_integral_bound_lower_nonempty hf hα) hX
+  simp at hY
+  obtain ⟨ h, ⟨ hmin, hhp ⟩, hhi ⟩ := hY
+  refine ⟨ h, hmin, hhp, ?_ ⟩
+  rwa [hhi]
+
 /-- Analogue of Definition 11.3.4 -/
 noncomputable abbrev RS_integ (f:ℝ → ℝ) (I: BoundedInterval) (α:ℝ → ℝ) : ℝ :=
 upper_RS_integral f I α
@@ -434,6 +492,7 @@ upper_RS_integral f I α
 noncomputable abbrev RS_IntegrableOn (f:ℝ → ℝ) (I: BoundedInterval) (α: ℝ → ℝ) : Prop :=
   BddOn f I ∧ lower_RS_integral f I α = upper_RS_integral f I α
 
+/-- Analogue of various components of Lemma 11.3.3 -/
 theorem upper_RS_integral_eq_upper_integral (f:ℝ → ℝ) (I: BoundedInterval) :
   upper_RS_integral f I (fun x ↦ x) = upper_integral f I := by
   sorry
