@@ -98,6 +98,7 @@ theorem RS_integ_eq_integ_of_mul_deriv
   (hf: RS_IntegrableOn f (Icc a b) α) :
   IntegrableOn (f * derivWithin α (Icc a b)) (Icc a b) ∧
   integ (f * derivWithin α (Icc a b)) (Icc a b) = RS_integ f (Icc a b) α := by
+  -- This proof is adapted from the structure of the original text.
   set α' := derivWithin α (Icc a b)
   have hfα'_bound: BddOn (f * α') (Icc a b) := by
     obtain ⟨ M, hM ⟩ := hf.1
@@ -145,7 +146,61 @@ theorem RS_integ_eq_integ_of_mul_deriv
     upper_integral (f * α') (Icc a b) := lower_integral_le_upper hfα'_bound
   exact ⟨ ⟨ hfα'_bound, by linarith ⟩, by linarith ⟩
 
-
+/-- Lemma 11.10.5 / Exercise 11.10.2-/
+theorem PiecewiseConstantOn.RS_integ_of_comp {a b:ℝ} (hab: a < b) {φ f:ℝ → ℝ}
+  (hφ_cont: Continuous φ) (hφ_mono: Monotone φ) (hf: PiecewiseConstantOn f (Icc (φ a) (φ b))) :
+  PiecewiseConstantOn (f ∘ φ) (Icc a b) ∧ RS_integ (f ∘ φ) (Icc a b) φ =
+    integ f (Icc (φ a) (φ b)) := by
+  -- This proof is adapted from the structure of the original text.
+  obtain ⟨ P', hf ⟩ := hf
+  set P := P'.remove_empty
+  replace hf : PiecewiseConstantWith f P := by
+    intro J hJ
+    simp [P, Partition.remove_empty, Partition.instMembership] at hJ
+    exact hf J hJ.1
+  rw [PiecewiseConstantOn.integ_def hf]
+  unfold PiecewiseConstantWith.integ
+  set φ_inv : P.intervals → Set ℝ := fun J ↦ { x:ℝ | x ∈ Set.Icc a b ∧ φ x ∈ (J:Set ℝ) }
+  have hφ_inv_bounded (J: P.intervals) : Bornology.IsBounded (φ_inv J) := by
+    apply Bornology.IsBounded.subset (Icc_bounded a b)
+    intro x; aesop
+  have hφ_inv_connected (J: P.intervals) : (φ_inv J).OrdConnected := by sorry
+  set φ_inv' : P.intervals → BoundedInterval := fun J ↦ ((BoundedInterval.ordConnected_iff _).mp ⟨ hφ_inv_bounded J, hφ_inv_connected J ⟩).choose
+  have hφ_inv' (J:P.intervals) : φ_inv J = φ_inv' J :=
+    ((BoundedInterval.ordConnected_iff _).mp ⟨ hφ_inv_bounded J, hφ_inv_connected J ⟩).choose_spec
+  have hφ_inv_nonempty (J:P.intervals) : (φ_inv J).Nonempty := by sorry
+  have hφ_inv_const {J:P.intervals} : ConstantOn (f ∘ φ) (φ_inv' J) ∧ constant_value_on (f ∘ φ) (φ_inv' J) = constant_value_on f J := by
+    sorry
+  set Q : Partition (Icc a b) := {
+    intervals := Finset.image φ_inv' Finset.univ
+    exists_unique x := by sorry
+    contains K hK := by sorry
+  }
+  have hfφ_piecewise : PiecewiseConstantWith (f ∘ φ) Q := by
+    sorry
+  have hfφ_piecewise' : PiecewiseConstantOn (f ∘ φ) (Icc a b) := ⟨ Q, hfφ_piecewise ⟩
+  refine ⟨ hfφ_piecewise' , ?_ ⟩
+  rw [PiecewiseConstantOn.RS_integ_def hfφ_piecewise _]
+  unfold PiecewiseConstantWith.RS_integ
+  rw [Finset.sum_image _, ←Finset.sum_coe_sort (s := P.intervals)]
+  . apply Finset.sum_congr rfl
+    intro J _
+    congr 1
+    . exact hφ_inv_const.2
+    sorry
+  intro J _ K _ hJK
+  set x := (hφ_inv_nonempty J).some
+  have h1 : x ∈ φ_inv J := (hφ_inv_nonempty J).some_mem
+  have h2 : x ∈ φ_inv K := by rwa [hφ_inv' J, hJK, ←hφ_inv' K] at h1
+  simp [φ_inv] at h1 h2
+  have h3 : φ x ∈ Icc (φ a) (φ b) := by
+    have := P.contains J.val J.property
+    simp only [subset_iff, mem_iff] at this ⊢
+    exact this h1.2
+  ext
+  apply (P.exists_unique _ h3).unique _ _
+  . simp [J.property, mem_iff, h1]
+  simp [K.property, mem_iff, h2]
 
 
 end Chapter11

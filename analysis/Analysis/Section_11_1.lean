@@ -388,6 +388,21 @@ noncomputable abbrev Partition.add_empty {I:BoundedInterval} (P: Partition I) : 
     simp [subset_iff]
 }
 
+open Classical in
+noncomputable abbrev Partition.remove_empty {I:BoundedInterval} (P: Partition I) : Partition I := {
+  intervals := P.intervals.filter (fun J ↦ (J:Set ℝ).Nonempty)
+  exists_unique x hx := by
+    obtain ⟨ J, hJP, hxJ ⟩ := (P.exists_unique x hx).exists
+    apply ExistsUnique.intro J (by
+      simp [hxJ, hJP]; simp [mem_iff] at hxJ; exact Set.nonempty_of_mem hxJ )
+    rintro K ⟨ hK, hxK ⟩
+    simp at hK
+    exact (P.exists_unique x hx).unique ⟨ hK.1, hxK ⟩ ⟨ hJP, hxJ ⟩
+  contains L hL := by
+    simp at hL
+    exact P.contains L hL.1
+}
+
 @[simp]
 theorem Partition.intervals_of_add_empty (I: BoundedInterval) (P: Partition I) : (P.add_empty).intervals = P.intervals ∪ {∅} := by
   simp [Partition.add_empty, Finset.union_empty]
