@@ -202,5 +202,67 @@ theorem PiecewiseConstantOn.RS_integ_of_comp {a b:ℝ} (hab: a < b) {φ f:ℝ �
   . simp [J.property, mem_iff, h1]
   simp [K.property, mem_iff, h2]
 
+/-- Proposition 11.10.6 (Change of variables formula II)-/
+theorem RS_integ_of_comp {a b:ℝ} (hab: a < b) {φ f: ℝ → ℝ}
+  (hφ_cont: Continuous φ) (hφ_mono: Monotone φ) (hf: IntegrableOn f (Icc (φ a) (φ b))) :
+  RS_IntegrableOn (f ∘ φ) (Icc a b) φ ∧
+  RS_integ (f ∘ φ) (Icc a b) φ = integ f (Icc (φ a) (φ b)) := by
+  -- This proof is adapted from the structure of the original text.
+  have hf_bdd := hf.1
+  have hfφ_bdd : BddOn (f ∘ φ) (Icc a b) := by
+    sorry
+  have heq : lower_integral f (Icc (φ a) (φ b)) = upper_integral f (Icc (φ a) (φ b)) := hf.2
+  have hupper : upper_RS_integral (f ∘ φ) (Icc a b) φ ≤ upper_integral f (Icc (φ a) (φ b)) := by
+    apply le_of_forall_pos_le_add
+    intro ε hε
+    obtain ⟨ f_up, hf_upmajor, hf_upconst, hf_up ⟩ := lt_of_gt_upper_integral hf.1 (show upper_integral f (Icc (φ a) (φ b)) + ε > integ f (Icc (φ a) (φ b)) by linarith)
+    have hpc := PiecewiseConstantOn.RS_integ_of_comp hab hφ_cont hφ_mono hf_upconst
+    rw [←hpc.2] at hf_up
+    have : MajorizesOn (f_up ∘ φ) (f ∘ φ) (Icc a b) := by
+      intro x hx
+      simp at hx ⊢
+      apply hf_upmajor
+      simp
+      exact ⟨ hφ_mono hx.1, hφ_mono hx.2 ⟩
+    replace := upper_RS_integral_le_integ hfφ_bdd this hpc.1 hφ_mono
+    linarith
+  have hlower : lower_integral f (Icc (φ a) (φ b)) ≤ lower_RS_integral (f ∘ φ) (Icc a b) φ := by
+    apply le_of_forall_sub_le
+    intro ε hε
+    obtain ⟨ f_low, hf_lowminor, hf_lowconst, hf_low ⟩ := gt_of_lt_lower_integral hf.1 (show lower_integral f (Icc (φ a) (φ b)) - ε < lower_integral f (Icc (φ a) (φ b)) by linarith)
+    have hpc := PiecewiseConstantOn.RS_integ_of_comp hab hφ_cont hφ_mono hf_lowconst
+    rw [←hpc.2] at hf_low
+    have : MinorizesOn (f_low ∘ φ) (f ∘ φ) (Icc a b) := by
+      intro x hx
+      simp at hx ⊢
+      apply hf_lowminor
+      simp
+      exact ⟨ hφ_mono hx.1, hφ_mono hx.2 ⟩
+    replace := integ_le_lower_RS_integral hfφ_bdd this hpc.1 hφ_mono
+    linarith
+  have hle : lower_RS_integral (f ∘ φ) (Icc a b) φ ≤ upper_RS_integral (f ∘ φ) (Icc a b) φ :=
+    lower_RS_integral_le_upper hfφ_bdd hφ_mono
+  refine ⟨ ⟨ hfφ_bdd, by linarith ⟩, by linarith ⟩
+
+/-- Proposition 11.10.7 (Change of variables formula III)-/
+theorem integ_of_comp {a b:ℝ} (hab: a < b) {φ f: ℝ → ℝ}
+  (hφ_diff: DifferentiableOn ℝ φ (Icc a b))
+  (hφ_cont: Continuous φ) (hφ_mono: Monotone φ)
+  (hφ': IntegrableOn (derivWithin φ (Icc a b)) (Icc a b))
+  (hf: IntegrableOn f (Icc (φ a) (φ b))) :
+  IntegrableOn (f ∘ φ * derivWithin φ (Icc a b)) (Icc a b) ∧
+  integ (f ∘ φ * derivWithin φ (Icc a b)) (Icc a b) =
+    integ f (Icc (φ a) (φ b)) := by
+ have h1 := RS_integ_of_comp hab hφ_cont hφ_mono hf
+ have h2 := RS_integ_eq_integ_of_mul_deriv hab hφ_mono hφ_diff hφ_cont hφ' h1.1
+ refine ⟨ h2.1, by aesop ⟩
+
+/-- Exercise 11.10.3-/
+example {a b:ℝ} (hab: a < b) {f: ℝ → ℝ} (hf: IntegrableOn f (Icc a b)) :
+  IntegrableOn (fun x ↦ f (-x)) (Icc (-b) (-a)) ∧
+  integ (fun x ↦ f (-x)) (Icc (-b) (-a)) = -integ f (Icc a b) := by
+  sorry
+
+/- Exercise 11.10.4: state and prove a version of `integ_of_comp` in which `φ` is `Antitone` rather than `Monotone`. -/
 
 end Chapter11

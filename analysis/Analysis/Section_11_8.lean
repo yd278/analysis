@@ -467,6 +467,70 @@ lemma RS_integral_bound_lower_nonempty {f:ℝ → ℝ} {I: BoundedInterval} (h: 
   apply Set.nonempty_of_mem
   exact RS_integral_bound_lower_of_bounded h hα
 
+lemma RS_integral_bound_lower_le_upper {f:ℝ → ℝ} {I: BoundedInterval} {a b:ℝ}
+  {α:ℝ → ℝ} (hα: Monotone α)
+  (ha: a ∈ (fun g ↦ PiecewiseConstantOn.RS_integ g I α) '' {g | MajorizesOn g f I ∧ PiecewiseConstantOn g I})
+  (hb: b ∈ (fun g ↦ PiecewiseConstantOn.RS_integ g I α) '' {g | MinorizesOn g f I ∧ PiecewiseConstantOn g I})
+  : b ≤ a:= by
+    obtain ⟨ g, ⟨ ⟨ hmaj, hgp⟩, hgi ⟩ ⟩ := ha
+    obtain ⟨ h, ⟨ ⟨ hmin, hhp⟩, hhi ⟩ ⟩ := hb
+    rw [←hgi, ←hhi]
+    apply PiecewiseConstantOn.RS_integ_mono hα _ hhp hgp
+    intro x hx
+    have := hmaj x hx
+    apply (ge_iff_le.mp (hmin x hx)).trans (hmaj x hx)
+
+lemma RS_integral_bound_below {f:ℝ → ℝ} {I: BoundedInterval} (h: BddOn f I)
+  {α:ℝ → ℝ} (hα: Monotone α) :
+  BddBelow ((fun g ↦ PiecewiseConstantOn.RS_integ g I α) '' {g | MajorizesOn g f I ∧ PiecewiseConstantOn g I}) := by
+    rw [bddBelow_def]
+    use (RS_integral_bound_lower_nonempty h hα).some
+    intro a ha; exact RS_integral_bound_lower_le_upper hα ha (RS_integral_bound_lower_nonempty h hα).some_mem
+
+lemma RS_integral_bound_above {f:ℝ → ℝ} {I: BoundedInterval} (h: BddOn f I)
+  {α:ℝ → ℝ} (hα: Monotone α):
+  BddAbove ((fun g ↦ PiecewiseConstantOn.RS_integ g I α) '' {g | MinorizesOn g f I ∧ PiecewiseConstantOn g I}) := by
+    rw [bddAbove_def]
+    use (RS_integral_bound_upper_nonempty h hα).some
+    intro b hb; exact RS_integral_bound_lower_le_upper hα (RS_integral_bound_upper_nonempty h hα).some_mem hb
+
+lemma le_lower_RS_integral {f:ℝ → ℝ} {I: BoundedInterval} {M:ℝ} (h: ∀ x ∈ (I:Set ℝ), |f x| ≤ M)
+  {α:ℝ → ℝ} (hα: Monotone α) :
+  -M * α[I]ₗ ≤ lower_RS_integral f I α := by
+  exact ConditionallyCompleteLattice.le_csSup _ _
+    (RS_integral_bound_above (BddOn.of_bounded h) hα) (RS_integral_bound_lower_of_bounded h hα)
+
+lemma lower_RS_integral_le_upper {f:ℝ → ℝ} {I: BoundedInterval} (h: BddOn f I)
+  {α:ℝ → ℝ} (hα: Monotone α) :
+  lower_RS_integral f I α ≤ upper_RS_integral f I α := by
+  apply ConditionallyCompleteLattice.csSup_le _ _ (RS_integral_bound_lower_nonempty h hα) _
+  rw [mem_upperBounds]
+  intro b hb
+  apply ConditionallyCompleteLattice.le_csInf _ _ (RS_integral_bound_upper_nonempty h hα) _
+  rw [mem_lowerBounds]
+  intro a ha
+  exact RS_integral_bound_lower_le_upper hα ha hb
+
+lemma RS_upper_integral_le {f:ℝ → ℝ} {I: BoundedInterval} {M:ℝ} (h: ∀ x ∈ (I:Set ℝ), |f x| ≤ M)
+  {α:ℝ → ℝ} (hα: Monotone α) :
+  upper_RS_integral f I α ≤ M * α[I]ₗ := by
+  exact ConditionallyCompleteLattice.csInf_le _ _
+    (RS_integral_bound_below (BddOn.of_bounded h) hα) (RS_integral_bound_upper_of_bounded h hα)
+
+lemma upper_RS_integral_le_integ {f g:ℝ → ℝ} {I: BoundedInterval} (hf: BddOn f I)
+  (hfg: MajorizesOn g f I) (hg: PiecewiseConstantOn g I)
+  {α:ℝ → ℝ} (hα: Monotone α) :
+  upper_RS_integral f I α ≤ PiecewiseConstantOn.RS_integ g I α := by
+  apply ConditionallyCompleteLattice.csInf_le _ _ (RS_integral_bound_below hf hα) _
+  use g; simp [hg]; exact hfg
+
+lemma integ_le_lower_RS_integral {f h:ℝ → ℝ} {I: BoundedInterval} (hf: BddOn f I)
+  (hfh: MinorizesOn h f I) (hg: PiecewiseConstantOn h I)
+  {α:ℝ → ℝ} (hα: Monotone α) :
+  PiecewiseConstantOn.RS_integ h I α ≤ lower_RS_integral f I α := by
+  apply ConditionallyCompleteLattice.le_csSup _ _ (RS_integral_bound_above hf hα) _
+  use h; simp [hg]; exact hfh
+
 lemma lt_of_gt_upper_RS_integral {f:ℝ → ℝ} {I: BoundedInterval} (hf: BddOn f I)
   {α: ℝ → ℝ} (hα: Monotone α) {X:ℝ} (hX: upper_RS_integral f I α < X ) :
   ∃ g, MajorizesOn g f I ∧ PiecewiseConstantOn g I ∧ PiecewiseConstantOn.RS_integ g I α < X := by

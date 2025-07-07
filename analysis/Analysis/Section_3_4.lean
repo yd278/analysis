@@ -209,7 +209,7 @@ theorem SetTheory.Set.preimage_eq_image_of_inv {X Y V:Set} (f:X → Y) (f_inv: Y
 -- theorem SetTheory.Set.preimage_of_image {X Y:Set} (f:X → Y) (U: Set) : sorry := by sorry
 
 /--
-  Exercise 3.4.3.  Also state and prove an assertion regarding whether `⊆` can be improved to `=`.
+  Exercise 3.4.3.
 -/
 theorem SetTheory.Set.image_of_inter {X Y:Set} (f:X → Y) (A B: Set) :
     image f (A ∩ B) ⊆ (image f A) ∩ (image f B) := by sorry
@@ -219,6 +219,14 @@ theorem SetTheory.Set.image_of_diff {X Y:Set} (f:X → Y) (A B: Set) :
 
 theorem SetTheory.Set.image_of_union {X Y:Set} (f:X → Y) (A B: Set) :
     image f (A ∪ B) = (image f A) ∪ (image f B) := by sorry
+
+def SetTheory.Set.image_of_inter' : Decidable (∀ X Y:Set, ∀ f:X → Y, ∀ A B: Set, image f (A ∩ B) = (image f A) ∩ (image f B)) := by
+  -- the first line of this construction should be either `apply isTrue` or `apply isFalse`
+  sorry
+
+def SetTheory.Set.image_of_diff' : Decidable (∀ X Y:Set, ∀ f:X → Y, ∀ A B: Set, image f (A \ B) = (image f A) \ (image f B)) := by
+  -- the first line of this construction should be either `apply isTrue` or `apply isFalse`
+  sorry
 
 /-- Exercise 3.4.4 -/
 theorem SetTheory.Set.preimage_of_inter {X Y:Set} (f:X → Y) (A B: Set) :

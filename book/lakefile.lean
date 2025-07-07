@@ -83,6 +83,7 @@ def sections := #[
   (`Analysis.Section_11_7, "A non-Riemann integrable function"),
   (`Analysis.Section_11_8, "The Riemann-Stieltjes integral"),
   (`Analysis.Section_11_9, "The two fundamental theorems of calculus"),
+  (`Analysis.Section_11_10, "Consequences of the fundamental theorem of calculus"),
   (`Analysis.Appendix_A_1, "Mathematical statements"),
   (`Analysis.Appendix_A_2, "Implication"),
   (`Analysis.Appendix_A_3, "The structure of proofs"),
