@@ -46,6 +46,7 @@ def sections := #[
   (`Analysis.Section_5_3, "The construction of the real numbers"),
   (`Analysis.Section_5_4, "Ordering the reals"),
   (`Analysis.Section_5_5, "The least upper bound property"),
+  (`Analysis.Section_5_6, "Real exponentiation, part I"),
   (`Analysis.Section_5_epilogue, "Equivalence of reals"),
   (`Analysis.Section_6_1, "Convergence and limit laws"),
   (`Analysis.Section_6_2, "The extended real number system"),
