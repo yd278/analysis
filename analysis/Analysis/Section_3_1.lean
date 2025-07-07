@@ -146,6 +146,9 @@ instance SetTheory.Set.instEmpty : EmptyCollection Set where
 -- Now we can use the `∅` notation to refer to `SetTheory.emptyset`.
 example : ∅ = SetTheory.emptyset := by rfl
 
+-- Make everything we define in `SetTheory.Set.*` accessible directly.
+open SetTheory.Set
+
 /--
   Axiom 3.3 (empty set).
   Note: in some applications one may have to explicitly cast ∅ to Set due to
@@ -671,19 +674,19 @@ lemma SetTheory.Set.nat_equiv_coe_of_coe' (n:Nat) : ((n:ℕ):Nat) = n :=
 
 /-- Example 3.1.16 (simplified).  -/
 example : ({3, 5}:Set) ⊆ {1, 3, 5} := by
-  rw [SetTheory.Set.subset_def]
-  simp only [SetTheory.Set.mem_pair, SetTheory.Set.mem_triple]
+  simp only [subset_def, mem_pair, mem_triple]
   intro x hx
   tauto
 
+
 /-- Example 3.1.17 (simplified). -/
 example : ({3, 5}:Set).specify (fun x ↦ x.val ≠ 3) = ({5}:Set) := by
-  apply SetTheory.Set.ext
+  apply ext
   intro x
-  simp only [SetTheory.Set.mem_singleton, SetTheory.Set.specification_axiom'']
+  simp only [mem_singleton, specification_axiom'']
   constructor
   · rintro ⟨h1, h2⟩
-    simp only [SetTheory.Set.mem_pair] at h1
+    simp only [mem_pair] at h1
     tauto
   rintro ⟨rfl⟩
   norm_num
@@ -691,7 +694,7 @@ example : ({3, 5}:Set).specify (fun x ↦ x.val ≠ 3) = ({5}:Set) := by
 /-- Example 3.1.24 -/
 
 example : ({1, 2, 4}:Set) ∩ {2,3,4} = {2, 4} := by
-  apply SetTheory.Set.ext
+  apply ext
   -- Instead of unfolding repetitive branches by hand like earlier,
   -- you can use the `aesop` tactic which does this automatically.
   aesop
@@ -699,14 +702,14 @@ example : ({1, 2, 4}:Set) ∩ {2,3,4} = {2, 4} := by
 /-- Example 3.1.24 -/
 
 example : ({1, 2}:Set) ∩ {3,4} = ∅ := by
-  rw [SetTheory.Set.eq_empty_iff_forall_notMem]
+  rw [eq_empty_iff_forall_notMem]
   aesop
 
 example : ¬ Disjoint ({1, 2, 3}:Set) {2,3,4} := by
   rw [disjoint_iff]
   intro h
   change {1, 2, 3} ∩ {2, 3, 4} = ∅ at h
-  rw [SetTheory.Set.eq_empty_iff_forall_notMem] at h
+  rw [eq_empty_iff_forall_notMem] at h
   aesop
 
 example : Disjoint (∅:Set) ∅ := by sorry
@@ -714,8 +717,8 @@ example : Disjoint (∅:Set) ∅ := by sorry
 /-- Definition 3.1.26 example -/
 
 example : ({1, 2, 3, 4}:Set) \ {2,4,6} = {1, 3} := by
-  apply SetTheory.Set.ext
-  simp only [SetTheory.Set.mem_sdiff, SetTheory.Set.instInsert]
+  apply ext
+  simp only [mem_sdiff, instInsert]
   aesop
 
 /-- Example 3.1.30 -/
@@ -725,8 +728,8 @@ example : ({3,5,9}:Set).replace (P := fun x y ↦ ∃ (n:ℕ), x.val = n ∧ y =
 /-- Example 3.1.31 -/
 
 example : ({3,5,9}:Set).replace (P := fun _ y ↦ y=1) (by aesop) = {1} := by
-  apply SetTheory.Set.ext
-  simp only [SetTheory.Set.replacement_axiom]
+  apply ext
+  simp only [replacement_axiom]
   aesop
 
 /-- Exercise 3.1.5.  One can use the `tfae_have` and `tfae_finish` tactics here. -/
