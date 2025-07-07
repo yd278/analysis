@@ -449,7 +449,7 @@ theorem SetTheory.Set.specify_congr {A A':Set} (hAA':A = A') {P: A → Prop} {P'
 instance SetTheory.Set.instIntersection : Inter Set where
   inter X Y := X.specify (fun x ↦ x.val ∈ Y)
 
--- Now we can use the `X ∪ Y` notation for an intersection of two `Set`s.
+-- Now we can use the `X ∩ Y` notation for an intersection of two `Set`s.
 example (X Y: Set) : Set := X ∩ Y
 
 /-- Definition 3.1.22 (Intersections) -/
