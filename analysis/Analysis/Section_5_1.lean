@@ -226,46 +226,44 @@ theorem Sequence.ex_5_1_10_b : (0.1:ℚ).steady (sqrt_two.from 1) := by sorry
 
 theorem Sequence.ex_5_1_10_c : (0.1:ℚ).eventuallySteady sqrt_two := by sorry
 
+
 /-- Proposition 5.1.11 -/
 theorem Sequence.harmonic_steady : (mk' 1 (fun n ↦ (1:ℚ)/n)).isCauchy := by
-  -- This is proof is probably longer than it needs to be; there should be a shorter proof that
-  -- is still in the spirit of  the proof in the book.
-  rw [isCauchy_of_mk (fun n ↦ (1:ℚ)/n)]
+  rw [isCauchy_of_mk]
   intro ε hε
-  have : ∃ N:ℕ, N > 1/ε := exists_nat_gt (1 / ε)
-  obtain ⟨ N, hN ⟩ := this
+  -- We go by reverse from the book - first choose N such that N > 1/ε
+  obtain ⟨ N, hN : N > 1/ε ⟩ := exists_nat_gt (1 / ε)
   use N
-  have hN' : (N:ℤ) > 0 := by
+  have hN' : N > 0 := by
     have : (1/ε) > 0 := by positivity
-    replace hN := this.trans hN
-    simp at hN ⊢; assumption
+    have hN := this.trans hN
+    norm_cast at *
   constructor
-  . simp at hN' ⊢; linarith
+  . norm_cast
   intro j hj k hk
-  have hj' : (j:ℚ) ≥ 0 := by simp; linarith
-  have hj'' : (1:ℚ)/j ≤ (1:ℚ)/N := by
-    gcongr
-    . simp at hN' ⊢; assumption
-    . simp at hj ⊢; qify at hj; assumption
-  have hj''' : (1:ℚ)/j ≥ 0 := by positivity
-  have hj'''' : j ≥ 1 := by simp at hj'; linarith
-  have hk' : (k:ℚ) ≥ 0 := by simp; linarith
-  have hk'' : (1:ℚ)/k ≤ (1:ℚ)/N := by
-    gcongr
-    . simp at hN' ⊢; assumption
-    . simp at hk ⊢; qify at hk; assumption
-  have hk''' : (1:ℚ)/k ≥ 0 := by positivity
-  have hk'''' : k ≥ 1 := by simp at hk'; linarith
+  lift j to ℕ using (by linarith)
+  lift k to ℕ using (by linarith)
+  norm_cast at hj hk
+  simp [show j ≥ 1 by linarith, show k ≥ 1 by linarith]
+
   have hdist : Section_4_3.dist ((1:ℚ)/j) ((1:ℚ)/k) ≤ (1:ℚ)/N := by
     rw [Section_4_3.dist_eq, abs_le']
+    /-
+    We establish the following bounds:
+    - 1/j ∈ [0, 1/N]
+    - 1/k ∈ [0, 1/N]
+    These imply that the distance between 1/j and 1/k is at most 1/N - when they are as "far apart" as possible.
+    -/
+    have hj'' : 1/j ≤ (1:ℚ)/N := by gcongr
+    have hj''' : (0:ℚ) ≤ 1/j := by positivity
+    have hk'' : 1/k ≤ (1:ℚ)/N := by gcongr
+    have hk''' : (0:ℚ) ≤ 1/k := by positivity
     constructor <;> linarith
-  simp [seq, hj'''', hk'''']
   convert hdist.trans _ using 2
   . simp
   . simp
-  rw [div_le_iff₀, mul_comm, ←div_le_iff₀ hε]
+  rw [div_le_iff₀ (by positivity), mul_comm, ←div_le_iff₀ hε]
   . exact le_of_lt hN
-  simp at hN' ⊢; assumption
 
 abbrev BoundedBy {n:ℕ} (a: Fin n → ℚ) (M:ℚ) : Prop :=
   ∀ i, |a i| ≤ M
