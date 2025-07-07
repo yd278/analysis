@@ -27,7 +27,6 @@ Main constructions and results of this section:
 - The specification `A.specify P` of a set `A` and a predicate `P: A.toSubtype → Prop` to the
   subset of elements of `A` obeying `P`, and the axiom of specification.
   TODO: somehow implement set builder elaboration for this.
-
 - The replacement `A.replace hP` of a set `A` via a predicate
   `P: A.toSubtype → Object → Prop` obeying a uniqueness condition
   `∀ x y y', P x y ∧ P x y' → y = y'`, and the axiom of replacement.
@@ -54,7 +53,7 @@ Some technical notes:
 - After this chapter is concluded, the notion of a `Chapter3.SetTheory.Set` will be deprecated in
   favor of the standard Mathlib notion of a `Set` (or more precisely of the type `Set X` of a set
   in a given type `X`).  However, due to various technical incompatibilities between set theory
-  and type theory, we will not attempt to create any sort of equivalence between these two
+  and type theory, we will not attempt to create a full equivalence between these two
   notions of sets. (As such, this makes this entire chapter optional from the point of view of
   the rest of the book, though we retain it for pedagogical purposes.)
 -/

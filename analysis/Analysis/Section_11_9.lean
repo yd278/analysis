@@ -19,7 +19,7 @@ be places where the Lean code could be "golfed" to be more elegant and idiomatic
 have consciously avoided doing so.
 
 Main constructions and results of this section:
--
+- The fundamental theorems of calculus
 -/
 
 namespace Chapter11
@@ -133,6 +133,13 @@ theorem DifferentiableOn.of_F_11_9_2' {q:ℚ} (hq: (q:ℝ) ∈ Set.Icc 0 1) : ¬
 abbrev AntiderivOn (F f: ℝ → ℝ) (I: BoundedInterval) :=
   DifferentiableOn ℝ F I ∧ ∀ x ∈ I, HasDerivWithinAt F (f x) I x
 
+theorem AntiderivOn.mono {F f: ℝ → ℝ} {I J: BoundedInterval}
+  (h: AntiderivOn F f I) (hIJ: J ⊆ I) : AntiderivOn F f J := by
+  refine ⟨ DifferentiableOn.mono h.1 hIJ, ?_ ⟩
+  intro x hx
+  rw [subset_iff] at hIJ
+  exact HasDerivWithinAt.mono (h.2 x (hIJ hx)) hIJ
+
 /-- Theorem 11.9.4 (Second Fundamental Theorem of Calculus) -/
 theorem integ_eq_antideriv_sub {a b:ℝ} (h:a ≤ b) {f F: ℝ → ℝ}
   (hf: IntegrableOn f (Icc a b)) (hF: AntiderivOn F f (Icc a b)) :
@@ -193,7 +200,7 @@ theorem integ_eq_antideriv_sub {a b:ℝ} (h:a ≤ b) {f F: ℝ → ℝ}
           have hJ'' : Icc a b ⊆ Ioo (a-1) (b+1) := by
             apply Set.Icc_subset_Ioo <;> linarith
           replace hJ'' := hJ.trans hJ''
-          rw [α_length_of_cts (by linarith) hJab (by linarith) hJ'' hF'_cts]
+          rw [α_length_of_cts (by linarith) (le_of_lt hJab) (by linarith) hJ'' hF'_cts]
           have := HasDerivWithinAt.mean_value hJab (ContinuousOn.mono hF'_cts ?_) ?_
           . obtain ⟨ e, he, hmean ⟩ := this
             have : HasDerivWithinAt F' (f e) (Set.Ioo c d) e := by
@@ -250,7 +257,7 @@ theorem integ_eq_antideriv_sub {a b:ℝ} (h:a ≤ b) {f F: ℝ → ℝ}
         _ = F'[Icc a b]ₗ := Partition.sum_of_α_length P F'
         _ = F' b - F' a := by
           apply α_length_of_cts (by linarith) _ (by linarith) _ hF'_cts
-          simp [h]
+          . simp [le_of_lt h]
           intro x hx; simp [mem_iff] at hx ⊢; exact ⟨ by linarith, by linarith ⟩
         _ = _ := by
           congr 1 <;> apply hFF' <;> simp [le_of_lt h]

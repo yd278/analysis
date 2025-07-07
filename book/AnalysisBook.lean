@@ -54,6 +54,7 @@ def demoSite : Site := site AnalysisBook.Home /
   "sec33" Book.Analysis.Section_3_3
   "sec34" Book.Analysis.Section_3_4
   "sec35" Book.Analysis.Section_3_5
+  "sec3e" Book.Analysis.Section_3_epilogue
   "sec41" Book.Analysis.Section_4_1
   "sec42" Book.Analysis.Section_4_2
   "sec43" Book.Analysis.Section_4_3
@@ -98,6 +99,8 @@ def demoSite : Site := site AnalysisBook.Home /
   "sec116" Book.Analysis.Section_11_6
   "sec117" Book.Analysis.Section_11_7
   "sec118" Book.Analysis.Section_11_8
+  "sec119" Book.Analysis.Section_11_9
+  "sec1110" Book.Analysis.Section_11_10
   "appA1" Book.Analysis.Appendix_A_1
   "appA2" Book.Analysis.Appendix_A_2
   "appA3" Book.Analysis.Appendix_A_3

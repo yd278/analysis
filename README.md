@@ -86,7 +86,7 @@ In order to align the formalization with Mathlib conventions, a small number of 
   - Section 11.7: A non-Riemann integrable function ([Verso page](https://teorth.github.io/analysis/sec117/)) ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Section_11_7.html)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Section_11_7.lean))
   - Section 11.8: The Riemann-Stieltjes integral ([Verso page](https://teorth.github.io/analysis/sec118/)) ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Section_11_8.html)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Section_11_8.lean))
   - Section 11.9: The two fundamental theorems of calculus ([Verso page](https://teorth.github.io/analysis/sec119/)) ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Section_11_9.html)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Section_11_9.lean))
-  - _Section 11.10: Consequences of the fundamental theorem of calculus (planned)_
+  - Section 11.10: Consequences of the fundamental theorem of calculus ([Verso page](https://teorth.github.io/analysis/sec1110/)) ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Section_11_10.html)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Section_11_10.lean))
 - Appendix A: The basics of mathematical logic
   - A.1: Mathematical statements ([Verso page](https://teorth.github.io/analysis/appA1/)) ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Appendix_A_1.html)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Appendix_A_1.lean))
   - A.2: Implication ([Verso page](https://teorth.github.io/analysis/appA2/)) ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Appendix_A_2.html)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Appendix_A_2.lean))
@@ -104,7 +104,7 @@ In order to align the formalization with Mathlib conventions, a small number of 
 - [Web page for the book](https://terrytao.wordpress.com/books/analysis-i/)
   - [Springer edition](https://link.springer.com/book/10.1007/978-981-19-7261-4)
 - [Blog post announcing this project](https://terrytao.wordpress.com/2025/05/31/a-lean-companion-to-analysis-i/), Terence Tao, May 31 2025.
-- [Lean Zulip discussion about this project](https://leanprover.zulipchat.com/#narrow/channel/113488-general/topic/Lean.20companion.20to.20.22Analysis.20I.22.20-.20discussion/with/521458888)
+- [Lean Zulip discussion about this project](https://leanprover.zulipchat.com/#narrow/channel/514017-Analysis-I)
 - [Notes for contributors](./CONTRIBUTING.md)
 
 ## General Lean resources
