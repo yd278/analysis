@@ -449,6 +449,9 @@ theorem SetTheory.Set.specify_congr {A A':Set} (hAA':A = A') {P: A → Prop} {P'
 instance SetTheory.Set.instIntersection : Inter Set where
   inter X Y := X.specify (fun x ↦ x.val ∈ Y)
 
+-- Now we can use the `X ∪ Y` notation for an intersection of two `Set`s.
+example (X Y: Set) : Set := X ∩ Y
+
 /-- Definition 3.1.22 (Intersections) -/
 @[simp]
 theorem SetTheory.Set.mem_inter (x:Object) (X Y:Set) : x ∈ (X ∩ Y) ↔ (x ∈ X ∧ x ∈ Y) := by
@@ -462,6 +465,9 @@ theorem SetTheory.Set.mem_inter (x:Object) (X Y:Set) : x ∈ (X ∩ Y) ↔ (x �
 
 instance SetTheory.Set.instSDiff : SDiff Set where
   sdiff X Y := X.specify (fun x ↦ x.val ∉ Y)
+
+-- Now we can use the `X \ Y` notation for a difference of two `Set`s.
+example (X Y: Set) : Set := X \ Y
 
 /-- Definition 3.1.26 (Difference sets) -/
 @[simp]
@@ -539,6 +545,12 @@ instance SetTheory.Set.instOrderBot : OrderBot Set where
   bot := ∅
   bot_le := empty_subset
 
+-- Now we've defined `A ≤ B` to mean `A ⊆ B`, and set `⊥` to `∅`.
+-- This makes the `Disjoint` definition from Mathlib work with our `Set`.
+example (A B: Set) : (A ≤ B) ↔ (A ⊆ B) := by rfl
+example : ⊥ = (∅: Set) := by rfl
+example (A B: Set) : Prop := Disjoint A B
+
 /-- Definition of disjointness (using the previous instances) -/
 theorem SetTheory.Set.disjoint_iff (A B:Set) : Disjoint A B ↔ A ∩ B = ∅ := by
   convert _root_.disjoint_iff
@@ -553,6 +565,16 @@ theorem SetTheory.Set.replacement_axiom {A:Set} {P: A → Object → Prop}
 
 abbrev Nat := SetTheory.nat
 
+-- Going forward, we'll use `Nat` as a type.
+-- However, notice we've set `Nat` to `SetTheory.nat` which is a `Set` and not a type.
+-- The only reason we can write `x: Nat` is because we've previously defined a `CoeSort`
+-- coercion that lets us write `x: A` (when `A` is a `Set`) as a shortcut for `x: A.toSubtype`.
+-- This is why, whenever you see `x: Nat`, you're really looking at `x: Nat.toSubtype`.
+example (x: Nat) : Nat.toSubtype := x
+example (x: Nat) : Object := x.val
+example (x: Nat) : (x.val ∈ Nat) := x.property
+example (o: Object) (ho: o ∈ Nat) : Nat := ⟨o, ho⟩
+
 /-- Axiom 3.8 (Axiom of infinity) -/
 def SetTheory.Set.nat_equiv : ℕ ≃ Nat := SetTheory.nat_equiv
 
@@ -561,17 +583,36 @@ def SetTheory.Set.nat_equiv : ℕ ≃ Nat := SetTheory.nat_equiv
 instance SetTheory.Set.instOfNat {n:ℕ} : OfNat Nat n where
   ofNat := nat_equiv n
 
+-- Now we can define `Nat` with a natural literal.
+example : Nat := 5
+example : (5 : Nat).val ∈ Nat := (5 : Nat).property
+
 instance SetTheory.Set.instNatCast : NatCast Nat where
   natCast n := nat_equiv n
+
+-- Now we can turn `ℕ` into `Nat`.
+example (n : ℕ) : Nat := n
+example (n : ℕ) : (n : Nat).val ∈ Nat := (n : Nat).property
 
 instance SetTheory.Set.toNat : Coe Nat ℕ where
   coe n := nat_equiv.symm n
 
+-- Now we can turn `Nat` into `ℕ`.
+example (n : Nat) : ℕ := n
+
 instance SetTheory.Object.instNatCast : NatCast Object where
   natCast n := (n:Nat).val
 
+-- Now we can turn `ℕ` into an `Object`.
+example (n: ℕ) : Object := n
+example (n: ℕ) : Set := {(n: Object)}
+
 instance SetTheory.Object.instOfNat {n:ℕ} : OfNat Object n where
   ofNat := ((n:Nat):Object)
+
+-- Now we can define `Object` with a natural literal.
+example : Object := 1
+example : Set := {1, 2, 3}
 
 @[simp]
 lemma SetTheory.Object.ofnat_eq {n:ℕ} : ((n:Nat):Object) = (n:Object) := rfl
