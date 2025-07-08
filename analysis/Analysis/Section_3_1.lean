@@ -390,7 +390,7 @@ example (A: Set) (x': A.toSubtype) : x'.val ∈ A := x'.property
 example (A B: Set) (x: Object) (hx: x ∈ A) : x ∈ A ∪ B := by simp; left; exact hx
 example (A B: Set) (x': A.toSubtype) : x'.val ∈ A ∪ B := by simp; left; exact x'.property
 
-instance : CoeSort (Set.{u}) (Type v) where
+instance : CoeSort (Set) (Type v) where
   coe A := A.toSubtype
 
 -- Now instead of writing `x': A.toSubtype`, we can just write `x': A`.
