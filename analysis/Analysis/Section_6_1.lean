@@ -377,9 +377,18 @@ instance Sequence.inst_add : Add Sequence where
       simp [hn]
   }
 
-/-- Theorem 6.1.19(a) (limit laws) -/
+theorem Sequence.add_coe (a b: ℕ → ℝ) : (a:Sequence) + (b:Sequence) = (fun n ↦ a n + b n) := by
+  ext n; rfl
+  by_cases h:n ≥ 0 <;> simp [h, HAdd.hAdd, Add.add]
+
+/-- Theorem 6.1.19(a) (limit laws).  The `tendsTo` version is more usable than the `lim` version
+    in applications. -/
+theorem Sequence.tendsTo_add {a b:Sequence} {L M:ℝ} (ha: a.tendsTo L) (hb: b.tendsTo M) :
+  (a+b).tendsTo (L+M) := by
+  sorry
+
 theorem Sequence.lim_add {a b:Sequence} (ha: a.convergent) (hb: b.convergent) :
-    (a + b).convergent ∧ lim (a + b) = lim a + lim b := by
+  (a + b).convergent ∧ lim (a + b) = lim a + lim b := by
   sorry
 
 instance Sequence.inst_mul : Mul Sequence where
@@ -392,7 +401,16 @@ instance Sequence.inst_mul : Mul Sequence where
       simp [hn]
   }
 
-/-- Theorem 6.1.19(b) (limit laws) -/
+theorem Sequence.mul_coe (a b: ℕ → ℝ) : (a:Sequence) * (b:Sequence) = (fun n ↦ a n * b n) := by
+  ext n; rfl
+  by_cases h:n ≥ 0 <;> simp [h, HMul.hMul, Mul.mul]
+
+/-- Theorem 6.1.19(b) (limit laws).  The `tendsTo` version is more usable than the `lim` version
+    in applications. -/
+theorem Sequence.tendsTo_mul {a b:Sequence} {L M:ℝ} (ha: a.tendsTo L) (hb: b.tendsTo M) :
+    (a * b).tendsTo (L * M) := by
+  sorry
+
 theorem Sequence.lim_mul {a b:Sequence} (ha: a.convergent) (hb: b.convergent) :
     (a * b).convergent ∧ lim (a * b) = lim a * lim b := by
   sorry
@@ -407,7 +425,16 @@ instance Sequence.inst_smul : SMul ℝ Sequence where
       simp [a.vanish n hn]
   }
 
-/-- Theorem 6.1.19(c) (limit laws) -/
+theorem Sequence.smul_coe (c:ℝ) (a:ℕ → ℝ) : (c • (a:Sequence)) = (fun n ↦ c * a n) := by
+  ext n; rfl
+  by_cases h:n ≥ 0 <;> simp [h, HSMul.hSMul, SMul.smul]
+
+/-- Theorem 6.1.19(c) (limit laws).  The `tendsTo` version is more usable than the `lim` version
+    in applications. -/
+theorem Sequence.tendsTo_smul (c:ℝ) {a:Sequence} {L:ℝ} (ha: a.tendsTo L) :
+    (c • a).tendsTo (c * L) := by
+  sorry
+
 theorem Sequence.lim_smul (c:ℝ) {a:Sequence} (ha: a.convergent) :
     (c • a).convergent ∧ lim (c • a) = c * lim a := by
   sorry
@@ -422,7 +449,16 @@ instance Sequence.inst_sub : Sub Sequence where
       simp [hn]
   }
 
-/-- Theorem 6.1.19(d) (limit laws) -/
+theorem Sequence.sub_coe (a b: ℕ → ℝ) : (a:Sequence) - (b:Sequence) = (fun n ↦ a n - b n) := by
+  ext n; rfl
+  by_cases h:n ≥ 0 <;> simp [h, HSub.hSub, Sub.sub]
+
+/-- Theorem 6.1.19(d) (limit laws).  The `tendsTo` version is more usable than the `lim` version
+    in applications. -/
+theorem Sequence.tendsTo_sub {a b:Sequence} {L M:ℝ} (ha: a.tendsTo L) (hb: b.tendsTo M) :
+    (a - b).tendsTo (L - M) := by
+  sorry
+
 theorem Sequence.lim_sub {a b:Sequence} (ha: a.convergent) (hb: b.convergent) :
     (a - b).convergent ∧ lim (a - b) = lim a - lim b := by
   sorry
@@ -436,7 +472,17 @@ noncomputable instance Sequence.inst_inv : Inv Sequence where
       simp [a.vanish n hn]
   }
 
-/-- Theorem 6.1.19(e) (limit laws) -/
+theorem Sequence.inv_coe (a: ℕ → ℝ) : (a:Sequence)⁻¹ = (fun n ↦ (a n)⁻¹) := by
+  ext n; rfl
+  by_cases h:n ≥ 0 <;> simp [h, Inv.inv]
+  change (0:ℝ)⁻¹ = 0; simp
+
+/-- Theorem 6.1.19(e) (limit laws).  The `tendsTo` version is more usable than the `lim` version
+    in applications. -/
+theorem Sequence.tendsTo_inv {a:Sequence} {L:ℝ} (ha: a.tendsTo L) (hnon: L ≠ 0) :
+    (a⁻¹).tendsTo (L⁻¹) := by
+  sorry
+
 theorem Sequence.lim_inv {a:Sequence} (ha: a.convergent) (hnon: lim a ≠ 0) :
   (a⁻¹).convergent ∧ lim (a⁻¹) = (lim a)⁻¹ := by
   sorry
@@ -451,7 +497,16 @@ noncomputable instance Sequence.inst_div : Div Sequence where
       simp [hn]
   }
 
-/-- Theorem 6.1.19(f) (limit laws) -/
+theorem Sequence.div_coe (a b: ℕ → ℝ) : (a:Sequence) / (b:Sequence) = (fun n ↦ a n / b n) := by
+  ext n; rfl
+  by_cases h:n ≥ 0 <;> simp [h, HDiv.hDiv, Div.div]
+
+/-- Theorem 6.1.19(f) (limit laws).  The `tendsTo` version is more usable than the `lim` version
+    in applications. -/
+theorem Sequence.tendsTo_div {a b:Sequence} {L M:ℝ} (ha: a.tendsTo L) (hb: b.tendsTo M) (hnon: M ≠ 0) :
+    (a / b).tendsTo (L / M) := by
+  sorry
+
 theorem Sequence.lim_div {a b:Sequence} (ha: a.convergent) (hb: b.convergent) (hnon: lim b ≠ 0) :
   (a / b).convergent ∧ lim (a / b) = lim a / lim b := by
   sorry
@@ -466,8 +521,17 @@ instance Sequence.inst_max : Max Sequence where
       simp [hn]
   }
 
-/-- Theorem 6.1.19(g) (limit laws) -/
-theorem Sequence.lim_max {a b:Sequence} (ha: a.convergent) (hb: b.convergent) (hnon: lim b ≠ 0) :
+theorem Sequence.max_coe (a b: ℕ → ℝ) : (a:Sequence) ⊔ (b:Sequence) = (fun n ↦ max (a n) (b n)) := by
+  ext n; rfl
+  by_cases h:n ≥ 0 <;> simp [h, Max.max]
+
+/-- Theorem 6.1.19(g) (limit laws).  The `tendsTo` version is more usable than the `lim` version
+    in applications. -/
+theorem Sequence.tendsTo_max {a b:Sequence} {L M:ℝ} (ha: a.tendsTo L) (hb: b.tendsTo M) :
+    (max a b).tendsTo (max L M) := by
+  sorry
+
+theorem Sequence.lim_max {a b:Sequence} (ha: a.convergent) (hb: b.convergent) :
     (max a b).convergent ∧ lim (max a b) = max (lim a) (lim b) := by
   sorry
 
@@ -481,8 +545,16 @@ instance Sequence.inst_min : Min Sequence where
       simp [hn]
   }
 
+theorem Sequence.min_coe (a b: ℕ → ℝ) : (a:Sequence) ⊓ (b:Sequence) = (fun n ↦ min (a n) (b n)) := by
+  ext n; rfl
+  by_cases h:n ≥ 0 <;> simp [h, Min.min]
+
 /-- Theorem 6.1.19(h) (limit laws) -/
-theorem Sequence.lim_min {a b:Sequence} (ha: a.convergent) (hb: b.convergent) (hnon: lim b ≠ 0) :
+theorem Sequence.tendsTo_min {a b:Sequence} {L M:ℝ} (ha: a.tendsTo L) (hb: b.tendsTo M) :
+    (min a b).tendsTo (min L M) := by
+  sorry
+
+theorem Sequence.lim_min {a b:Sequence} (ha: a.convergent) (hb: b.convergent) :
     (min a b).convergent ∧ lim (min a b) = min (lim a) (lim b) := by
   sorry
 

@@ -103,38 +103,32 @@ lemma ratPow_lim_uniq {x α:ℝ} (hx: x > 0) {q q': ℕ → ℚ}
   . rw [←mul_one (lim ((fun n ↦ x^(q' n:ℝ)):Sequence))]
     rw [Sequence.lim_eq] at this
     convert (Sequence.lim_mul (b := (fun n ↦ x^(r n:ℝ):Sequence)) (ratPow_continuous hx hq') this.1).2
-    . ext n; rfl
-      by_cases h: n ≥ 0 <;> simp [h, HMul.hMul, Mul.mul, Sequence.inst_mul]
-      change x ^ (q n.toNat:ℝ) = (x ^ (q' n.toNat:ℝ)) * (x ^ ((r n.toNat:ℝ)))
+    . rw [Sequence.mul_coe]
+      rcongr _ n
       rw [←Real.rpow_add (by linarith)]
       simp [r]
     rw [this.2]
   intro ε hε
   have h1 := Sequence.lim_of_roots hx
-  rw [Sequence.lim_eq] at h1
-  have h2 := Sequence.lim_inv h1.1 (by rw [h1.2]; norm_num)
-  rw [h1.2, inv_one, ←Sequence.lim_eq] at h2
-  rw [←Sequence.lim_eq] at h1
+  have h2 := Sequence.tendsTo_inv h1 (by norm_num)
   obtain ⟨ K1, hK1, h3 ⟩ := h1 ε hε
   obtain ⟨ K2, hK2, h4 ⟩ := h2 ε hε
   simp [Inv.inv] at hK1 hK2
+  simp [Sequence.inv_coe] at h4
   set K := max K1 K2
   have hK_coe : K.toNat = (K:ℝ) := by norm_cast; simp [K]; omega
-  have hr := Sequence.lim_sub ⟨ α, hq ⟩ ⟨ α, hq' ⟩
-  rw [Sequence.lim_eq] at hq hq'
-  rw [←Sequence.lim_eq, hq.2, hq'.2] at hr
-  simp at hr
+  have hr := Sequence.tendsTo_sub hq hq'
+  rw [Sequence.sub_coe] at hr
   obtain ⟨ N, hN, hr ⟩ := hr (1 / (K + 1:ℝ)) (by positivity)
   refine ⟨ N, ?_, ?_ ⟩
-  . simp [HSub.hSub, Sub.sub] at hN ⊢; assumption
+  . simp at hN ⊢; assumption
   intro n hn
   simp at hn
   specialize h3 K (by simp [K, hK1])
-  specialize h4 K (by simp [K, hK1, Inv.inv, hK2])
-  unfold Inv.inv Sequence.inst_inv at h4
+  specialize h4 K (by simp [K, hK1, hK2])
   simp [hn, Real.dist_eq, abs_le', K, hK1, hK2] at h3 h4 ⊢
-  specialize hr n (by simp [HSub.hSub, Sub.sub, hn])
-  simp [Real.close, HSub.hSub, Sub.sub, hn, abs_le'] at hr
+  specialize hr n (by simp [hn])
+  simp [Real.close, hn, abs_le'] at hr
   rcases lt_trichotomy x 1 with h | h | h
   . sorry
   . simp [h]; linarith
@@ -184,25 +178,19 @@ theorem Real.ratPow_nonneg {x:ℝ} (hx: x > 0) (q:ℝ) : rpow x q ≥ 0 := by
 theorem Real.ratPow_add {x:ℝ} (hx: x > 0) (q r:ℝ) : rpow x (q+r) = rpow x q * rpow x r := by
   obtain ⟨ q', hq' ⟩ := eq_lim_of_rat q
   obtain ⟨ r', hr' ⟩ := eq_lim_of_rat r
-  rw [Sequence.lim_eq] at hq' hr'
-  have hq'r' := Sequence.lim_add hq'.1 hr'.1
-  rw [←Sequence.lim_eq, hq'.2, hr'.2] at hq'r'
-  rw [←Sequence.lim_eq] at hq' hr'
-  convert_to ((fun n ↦ (q' n + r' n:ℝ)):Sequence).tendsTo (q + r) at hq'r'
-  . ext n; rfl
-    by_cases h: n ≥ 0 <;> simp [h, HAdd.hAdd, Add.add, Sequence.inst_add]
+  have hq'r' := Sequence.tendsTo_add hq' hr'
+  rw [Sequence.add_coe] at hq'r'
   convert_to ((fun n ↦ ((q' n + r' n:ℚ):ℝ)):Sequence).tendsTo (q + r) at hq'r'
   . rcongr _ n; simp
   have h1 := ratPow_continuous hx hq'
   have h2 := ratPow_continuous hx hr'
   have h3 := ratPow_continuous hx hq'r'
   rw [rpow_eq_lim_ratPow hx hq', rpow_eq_lim_ratPow hx hr',
-      rpow_eq_lim_ratPow hx hq'r', ←(Sequence.lim_mul h1 h2).2]
-  congr
-  ext n; rfl
-  by_cases h : n ≥ 0 <;> simp [h, HMul.hMul, Mul.mul]
-  rw [Real.rpow_add (by linarith)]
-  rfl
+      rpow_eq_lim_ratPow hx hq'r', ←(Sequence.lim_mul h1 h2).2,
+      Sequence.mul_coe]
+  rcongr n
+  rw [←Real.rpow_add (by linarith)]; simp
+
 
 /-- Proposition 6.7.3(b) / Exercise 6.7.1 -/
 theorem Real.ratPow_ratPow {x:ℝ} (hx: x > 0) (q r:ℝ) : rpow (rpow x q) r = rpow x (q*r) := by
@@ -229,4 +217,3 @@ theorem Real.ratPow_mul {x y:ℝ} (hx: x > 0) (hy: y > 0) (q:ℝ) : rpow (x*y) q
   sorry
 
 end Chapter6
-
