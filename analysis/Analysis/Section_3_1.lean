@@ -817,6 +817,10 @@ theorem SetTheory.Set.singleton_iff (A:Set) (hA: A ≠ ∅) : (¬∃ B ⊂ A, B 
 instance SetTheory.Set.inst_coe_set : Coe Set (_root_.Set Object) where
   coe X := { x | x ∈ X }
 
+-- Now we can convert our `Set` into a Mathlib `_root_.Set`.
+-- Notice that Mathlib sets are parameterized by the element type, in our case `Object`.
+example (X: Set) : _root_.Set Object := X
+
 /--
   Injectivity of the coercion. Note however that we do NOT assert that the coercion is surjective
   (and indeed Russell's paradox prevents this)
