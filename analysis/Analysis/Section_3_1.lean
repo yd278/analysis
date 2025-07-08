@@ -773,7 +773,10 @@ theorem SetTheory.Set.partition_right {A B X:Set} (h_union: A ∪ B = X) (h_inte
     B = X \ A := by
   sorry
 
-/-- Exercise 3.1.10 -/
+/--
+  Exercise 3.1.10.
+  You may find `Function.onFun_apply` and the `fin_cases` tactic useful.
+-/
 theorem SetTheory.Set.pairwise_disjoint (A B:Set) :
     Pairwise (Function.onFun Disjoint ![A \ B, A ∩ B, B \ A]) := by sorry
 
@@ -783,7 +786,7 @@ theorem SetTheory.Set.union_eq_partition (A B:Set) : A ∪ B = (A \ B) ∪ (A �
 /--
   Exercise 3.1.11.
   The challenge is to prove this without using `Set.specify`, `Set.specification_axiom`,
-  or `Set.specification_axiom'`.
+  `Set.specification_axiom'`, or anything built from them (like differences and intersections).
 -/
 theorem SetTheory.Set.specification_from_replacement {A:Set} {P: A → Prop} :
     ∃ B, B ⊆ A ∧ ∀ x, x.val ∈ B ↔ P x := by sorry
@@ -816,6 +819,10 @@ theorem SetTheory.Set.singleton_iff (A:Set) (hA: A ≠ ∅) : (¬∃ B ⊂ A, B 
 
 instance SetTheory.Set.inst_coe_set : Coe Set (_root_.Set Object) where
   coe X := { x | x ∈ X }
+
+-- Now we can convert our `Set` into a Mathlib `_root_.Set`.
+-- Notice that Mathlib sets are parameterized by the element type, in our case `Object`.
+example (X: Set) : _root_.Set Object := X
 
 /--
   Injectivity of the coercion. Note however that we do NOT assert that the coercion is surjective

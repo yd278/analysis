@@ -112,7 +112,7 @@ noncomputable abbrev f_3_4_8_c : ({4,7}:Set) → ({0,1}:Set) :=
 abbrev f_3_4_8_d : ({4,7}:Set) → ({0,1}:Set) := fun x ↦ ⟨ 1, by simp ⟩
 
 theorem SetTheory.Set.example_3_4_8 (F:Object) :
-    F ∈ ({4,7}:Set) ^ ({0,1}:Set) ↔ F = object_of f_3_4_8_a
+    F ∈ ({0,1}:Set) ^ ({4,7}:Set) ↔ F = object_of f_3_4_8_a
     ∨ F = object_of f_3_4_8_b ∨ F = object_of f_3_4_8_c ∨ F = object_of f_3_4_8_d := by sorry
 
 /-- Lemma 3.4.9.  One needs to provide a suitable definition of the power set here. -/
