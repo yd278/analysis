@@ -133,25 +133,20 @@ theorem Real.LIM_eq_LIM {a b:ℕ → ℚ} (ha: (a:Sequence).IsCauchy) (hb: (b:Se
 theorem Sequence.add_cauchy {a b:ℕ → ℚ}  (ha: (a:Sequence).IsCauchy) (hb: (b:Sequence).IsCauchy) :
     (a + b:Sequence).IsCauchy := by
   -- This proof is written to follow the structure of the original text.
-  rw [isCauchy_def] at ha hb ⊢
+  rw [isCauchy_of_coe] at *
   intro ε hε
-  have : ε/2 > 0 := by exact half_pos hε
-  specialize ha (ε/2) this
-  specialize hb (ε/2) this
-  rw [Rat.eventuallySteady_def] at ha hb ⊢
-  obtain ⟨ N, hN, hha ⟩ := ha
-  obtain ⟨ M, hM, hhb ⟩ := hb
-  use max N M
-  simp at hN hM ⊢
-  simp [hN, Rat.steady_def] at hha hhb ⊢
-  intro n hnN hnM m hmN hmM
-  have hn := hN.trans hnN
-  have hm := hM.trans hmM
-  specialize hha n hnN m hmN
-  specialize hhb n hn hnM m hm hmM
-  simp [hn, hm, hnN, hnM, hmN, hmM] at hha hhb ⊢
-  convert Section_4_3.add_close hha hhb
-  ring
+  obtain ⟨ N1, ha ⟩ := ha (ε/2) (by positivity)
+  obtain ⟨ N2, hb ⟩ := hb (ε/2) (by positivity)
+  use max N1 N2
+  intro j hj k hk
+  unfold Section_4_3.dist at *
+  have h1 := ha j (by omega) k (by omega)
+  have h2 := hb j (by omega) k (by omega)
+  dsimp
+  rw [← Rat.close] at h1 h2 ⊢
+  convert Section_4_3.add_close h1 h2
+  linarith
+
 
 /--Lemma 5.3.7 (Sum of equivalent sequences is equivalent)-/
 theorem Sequence.add_equiv_left {a a':ℕ → ℚ} (b:ℕ → ℚ) (haa': Sequence.equiv a a') :
