@@ -117,17 +117,17 @@ theorem Real.eventuallySteady_mono {a: Chapter6.Sequence} {ε₁ ε₂: ℝ} (h�
 namespace Chapter6
 
 /-- Definition 6.1.3 (Cauchy sequence) -/
-abbrev Sequence.isCauchy (a:Sequence) : Prop := ∀ ε > (0:ℝ), ε.eventuallySteady a
+abbrev Sequence.IsCauchy (a:Sequence) : Prop := ∀ ε > (0:ℝ), ε.eventuallySteady a
 
 /-- Definition 6.1.3 (Cauchy sequence) -/
 lemma Sequence.isCauchy_def (a:Sequence) :
-  a.isCauchy ↔ ∀ ε > (0:ℝ), ε.eventuallySteady a := by rfl
+  a.IsCauchy ↔ ∀ ε > (0:ℝ), ε.eventuallySteady a := by rfl
 
 lemma Sequence.isCauchy_of_coe (a:ℕ → ℝ) :
-    (a:Sequence).isCauchy ↔ ∀ ε > 0, ∃ N, ∀ j ≥ N, ∀ k ≥ N, dist (a j) (a k) ≤ ε := by sorry
+    (a:Sequence).IsCauchy ↔ ∀ ε > 0, ∃ N, ∀ j ≥ N, ∀ k ≥ N, dist (a j) (a k) ≤ ε := by sorry
 
 lemma Sequence.isCauchy_of_mk {n₀:ℤ} (a: {n // n ≥ n₀} → ℝ) :
-    (mk' n₀ a).isCauchy
+    (mk' n₀ a).IsCauchy
     ↔ ∀ ε > 0, ∃ N ≥ n₀, ∀ j ≥ N, ∀ k ≥ N, dist (mk' n₀ a j) (mk' n₀ a k) ≤ ε := by sorry
 
 @[coe]
@@ -154,7 +154,7 @@ theorem Sequence.is_eventuallySteady_of_rat (ε:ℚ) (a: Chapter5.Sequence) :
     ε.eventuallySteady a ↔ (ε:ℝ).eventuallySteady (a:Sequence) := by sorry
 
 /-- Proposition 6.1.4 -/
-theorem Sequence.isCauchy_of_rat (a: Chapter5.Sequence) : a.isCauchy ↔ (a:Sequence).isCauchy := by
+theorem Sequence.isCauchy_of_rat (a: Chapter5.Sequence) : a.IsCauchy ↔ (a:Sequence).IsCauchy := by
   -- This proof is written to follow the structure of the original text.
   constructor
   swap
@@ -323,20 +323,20 @@ theorem Sequence.lim_harmonic :
       assumption
 
 /-- Proposition 6.1.12 / Exercise 6.1.5 -/
-theorem Sequence.Cauchy_of_convergent {a:Sequence} (h:a.convergent) : a.isCauchy := by
+theorem Sequence.Cauchy_of_convergent {a:Sequence} (h:a.convergent) : a.IsCauchy := by
   sorry
 
 /-- Example 6.1.13 -/
 example : ¬ (0.1:ℝ).eventuallySteady ((fun n ↦ (-1:ℝ)^n):Sequence) := by sorry
 
 /-- Example 6.1.13 -/
-example : ¬ ((fun n ↦ (-1:ℝ)^n):Sequence).isCauchy := by sorry
+example : ¬ ((fun n ↦ (-1:ℝ)^n):Sequence).IsCauchy := by sorry
 
 /-- Example 6.1.13 -/
 example : ¬ ((fun n ↦ (-1:ℝ)^n):Sequence).convergent := by sorry
 
 /-- Proposition 6.1.15 / Exercise 6.1.6 (Formal limits are genuine limits)-/
-theorem Sequence.lim_eq_LIM {a:ℕ → ℚ} (h: (a:Chapter5.Sequence).isCauchy) :
+theorem Sequence.lim_eq_LIM {a:ℕ → ℚ} (h: (a:Chapter5.Sequence).IsCauchy) :
     ((a:Chapter5.Sequence):Sequence).tendsTo (Chapter5.Real.equivR (Chapter5.LIM a)) := by sorry
 
 /-- Definition 6.1.16 -/
@@ -354,7 +354,7 @@ abbrev Sequence.isBounded (a:Sequence) : Prop := ∃ M ≥ 0, a.BoundedBy M
 lemma Sequence.isBounded_def (a:Sequence) :
   a.isBounded ↔ ∃ M ≥ 0, a.BoundedBy M := by rfl
 
-theorem Sequence.bounded_of_cauchy {a:Sequence} (h: a.isCauchy) : a.isBounded := by
+theorem Sequence.bounded_of_cauchy {a:Sequence} (h: a.IsCauchy) : a.isBounded := by
   sorry
 
 /-- Corollary 6.1.17 -/
@@ -514,8 +514,8 @@ theorem Sequence.lim_div_fail :
   sorry
 
 /-- Exercise 6.1.10 -/
-theorem Chapter5.Sequence.isCauchy_iff (a:Chapter5.Sequence) :
-    a.isCauchy ↔ ∀ ε > (0:ℝ), ∃ N ≥ a.n₀, ∀ n ≥ N, ∀ m ≥ N, |a n - a m| ≤ ε := by
+theorem Chapter5.Sequence.IsCauchy_iff (a:Chapter5.Sequence) :
+    a.IsCauchy ↔ ∀ ε > (0:ℝ), ∃ N ≥ a.n₀, ∀ n ≥ N, ∀ m ≥ N, |a n - a m| ≤ ε := by
   sorry
 
 

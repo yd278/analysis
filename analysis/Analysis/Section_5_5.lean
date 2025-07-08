@@ -94,7 +94,7 @@ theorem Real.upperBound_discrete_unique {E: Set Real} {n:ℕ} {m m':ℤ}
 
 /-- Exercise 5.5.4 -/
 theorem Real.LIM_of_Cauchy {q:ℕ → ℚ} (hq: ∀ M, ∀ n ≥ M, ∀ n' ≥ M, |q n - q n'| ≤ 1 / (M+1)) :
-    (q:Sequence).isCauchy ∧ ∀ M, |q M - LIM q| ≤ 1 / (M+1) := by sorry
+    (q:Sequence).IsCauchy ∧ ∀ M, |q M - LIM q| ≤ 1 / (M+1) := by sorry
 
 /--
 The sequence m₁, m₂ … is well-defined
@@ -192,11 +192,11 @@ theorem Real.LUB_exist {E: Set Real} (hE: Set.Nonempty E) (hbound: BddAbove E): 
   set a : ℕ → ℚ := fun n ↦ (m n:ℚ) / (n+1)
   set b : ℕ → ℚ := fun n ↦ 1 / (n+1)
   have claim1 (n: ℕ) := Real.LUB_claim1 n hE hbound
-  have hb : (b:Sequence).isCauchy := Cauchy_of_harmonic
+  have hb : (b:Sequence).IsCauchy := Cauchy_of_harmonic
   have hm1 (n:ℕ) : (a n:Real) ∈ upperBounds E := (claim1 n).exists.choose_spec.1
   have hm2 (n:ℕ) : ¬ ((a - b) n: Real) ∈ upperBounds E := (claim1 n).exists.choose_spec.2
   have claim2 (N:ℕ) := Real.LUB_claim2 E N a b (fun n ↦ rfl) (fun n ↦ hm1 n) (fun n ↦ hm2 n)
-  have claim3 : (a:Sequence).isCauchy := (LIM_of_Cauchy claim2).1
+  have claim3 : (a:Sequence).IsCauchy := (LIM_of_Cauchy claim2).1
   set S := LIM a
   have claim4 : S = LIM (a - b) := by
     have : LIM b = 0 := LIM_of_harmonic

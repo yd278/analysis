@@ -13,7 +13,7 @@ sequences, in particular using the language of filters.
 
 /-- Identification with the Cauchy sequence support in `Mathlib.Algebra.Order.CauSeq.Basic` -/
 theorem Chapter6.Sequence.Cauchy_iff_CauSeq (a: ℕ → ℝ) :
-    (a:Sequence).isCauchy ↔ IsCauSeq _root_.abs a := by
+    (a:Sequence).IsCauchy ↔ IsCauSeq _root_.abs a := by
   simp_rw [isCauchy_of_coe, Real.dist_eq, IsCauSeq]
   constructor
   . intro h ε hε
@@ -35,7 +35,7 @@ theorem Chapter6.Sequence.Cauchy_iff_CauSeq (a: ℕ → ℝ) :
 
 /-- Identification with the Cauchy sequence support in `Mathlib.Topology.UniformSpace.Cauchy` -/
 theorem Chapter6.Sequence.Cauchy_iff_CauchySeq (a: ℕ → ℝ) :
-    (a:Sequence).isCauchy ↔ CauchySeq a := by
+    (a:Sequence).IsCauchy ↔ CauchySeq a := by
   rw [Cauchy_iff_CauSeq]
   convert isCauSeq_iff_cauchySeq
 
@@ -97,7 +97,7 @@ instance inst_real_complete : CauSeq.IsComplete ℝ norm := by
   convert Real.instIsCompleteAbs
 
 /-- Identification with `CauSeq.lim` -/
-theorem Chapter6.Sequence.lim_eq_CauSeq_lim (a:ℕ → ℝ) (ha: (a:Sequence).isCauchy) :
+theorem Chapter6.Sequence.lim_eq_CauSeq_lim (a:ℕ → ℝ) (ha: (a:Sequence).IsCauchy) :
     Chapter6.lim (a:Sequence) = CauSeq.lim  ⟨ a, (Cauchy_iff_CauSeq a).mp ha⟩ := by
   have h1 := CauSeq.tendsto_limit ⟨ a, (Cauchy_iff_CauSeq a).mp ha⟩
   have h2 := lim_def ((a:Sequence).Cauchy_iff_convergent.mp ha)

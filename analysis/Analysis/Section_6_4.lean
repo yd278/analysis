@@ -294,7 +294,7 @@ theorem Sequence.finite_limsup_liminf_of_bounded {a:Sequence} (hbound: a.isBound
 
 /-- Theorem 6.4.18 (Completeness of the reals) -/
 theorem Sequence.Cauchy_iff_convergent (a:Sequence) :
-  a.isCauchy ↔ a.convergent := by
+  a.IsCauchy ↔ a.convergent := by
   -- This proof is written to follow the structure of the original text.
   refine ⟨ ?_, Cauchy_of_convergent ⟩
   intro h
