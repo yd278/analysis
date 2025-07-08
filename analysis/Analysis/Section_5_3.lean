@@ -63,7 +63,7 @@ theorem CauchySequence.coe_to_sequence (a: CauchySequence) :
   exact lt_of_not_ge h
 
 @[simp]
-theorem CauchySequence.coe_coe {a:ℕ → ℚ} (ha: (a:Sequence).isCauchy) : mk' ha = a := by rfl
+theorem CauchySequence.coe_coe {a:ℕ → ℚ} (ha: (a:Sequence).IsCauchy) : mk' ha = a := by rfl
 
 /-- Proposition 5.3.3 / Exercise 5.3.1 -/
 theorem Sequence.equiv_trans {a b c:ℕ → ℚ} (hab: Sequence.equiv a b) (hbc: Sequence.equiv b c) :
@@ -84,7 +84,7 @@ theorem CauchySequence.equiv_iff (a b: CauchySequence) : a ≈ b ↔ Sequence.eq
 theorem Sequence.isCauchy_of_const (a:ℚ) : ((fun _:ℕ ↦ a):Sequence).IsCauchy := by sorry
 
 instance CauchySequence.instZero : Zero CauchySequence where
-  zero := CauchySequence.mk' (a := fun _: ℕ ↦ 0) (Sequence.IsCauchy_of_const (0:ℚ))
+  zero := CauchySequence.mk' (a := fun _: ℕ ↦ 0) (Sequence.isCauchy_of_const (0:ℚ))
 
 abbrev Real := Quotient CauchySequence.instSetoid
 
@@ -254,7 +254,7 @@ theorem Real.mul_of_LIM {a b:ℕ → ℚ} (ha: (a:Sequence).IsCauchy) (hb: (b:Se
 
 instance Real.instRatCast : RatCast Real where
   ratCast := fun q ↦
-    Quotient.mk _ (CauchySequence.mk' (a := fun _ ↦ q) (Sequence.IsCauchy_of_const q))
+    Quotient.mk _ (CauchySequence.mk' (a := fun _ ↦ q) (Sequence.isCauchy_of_const q))
 
 theorem Real.ratCast_def (q:ℚ) : (q:Real) = LIM (fun _ ↦ q) := by
   rw [LIM_def]
