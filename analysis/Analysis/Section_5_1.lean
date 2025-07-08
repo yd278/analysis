@@ -198,17 +198,17 @@ lemma Sequence.ex_5_1_7_c : (0.1:ℚ).eventuallySteady ((fun n:ℕ ↦ (n+1:ℚ)
 lemma Sequence.ex_5_1_7_d {ε:ℚ} (hε:ε>0) :
     ε.eventuallySteady ((fun n:ℕ ↦ if n=0 then (10:ℚ) else (0:ℚ) ):Sequence) := by sorry
 
-abbrev Sequence.isCauchy (a:Sequence) : Prop := ∀ ε > (0:ℚ), ε.eventuallySteady a
+abbrev Sequence.IsCauchy (a:Sequence) : Prop := ∀ ε > (0:ℚ), ε.eventuallySteady a
 
 lemma Sequence.isCauchy_def (a:Sequence) :
-  a.isCauchy ↔ ∀ ε > (0:ℚ), ε.eventuallySteady a := by rfl
+  a.IsCauchy ↔ ∀ ε > (0:ℚ), ε.eventuallySteady a := by rfl
 
 lemma Sequence.isCauchy_of_coe (a:ℕ → ℚ) :
-    (a:Sequence).isCauchy ↔ ∀ ε > (0:ℚ), ∃ N, ∀ j ≥ N, ∀ k ≥ N,
+    (a:Sequence).IsCauchy ↔ ∀ ε > (0:ℚ), ∃ N, ∀ j ≥ N, ∀ k ≥ N,
     Section_4_3.dist (a j) (a k) ≤ ε := by sorry
 
 lemma Sequence.isCauchy_of_mk {n₀:ℤ} (a: {n // n ≥ n₀} → ℚ) :
-    (mk' n₀ a).isCauchy ↔ ∀ ε > (0:ℚ), ∃ N ≥ n₀, ∀ j ≥ N, ∀ k ≥ N,
+    (mk' n₀ a).IsCauchy ↔ ∀ ε > (0:ℚ), ∃ N ≥ n₀, ∀ j ≥ N, ∀ k ≥ N,
     Section_4_3.dist (mk' n₀ a j) (mk' n₀ a k) ≤ ε := by sorry
 
 noncomputable def Sequence.sqrt_two : Sequence :=
@@ -228,7 +228,7 @@ theorem Sequence.ex_5_1_10_c : (0.1:ℚ).eventuallySteady sqrt_two := by sorry
 
 
 /-- Proposition 5.1.11 -/
-theorem Sequence.harmonic_steady : (mk' 1 (fun n ↦ (1:ℚ)/n)).isCauchy := by
+theorem Sequence.harmonic_steady : (mk' 1 (fun n ↦ (1:ℚ)/n)).IsCauchy := by
   rw [isCauchy_of_mk]
   intro ε hε
   -- We go by reverse from the book - first choose N such that N > 1/ε
@@ -298,7 +298,7 @@ example : ¬ ((fun n:ℕ ↦ (-1)^n * (n+1:ℚ)):Sequence).isBounded := by sorry
 example : ((fun n:ℕ ↦ (-1:ℚ)^n):Sequence).isBounded := by sorry
 
 /-- Example 5.1.13 -/
-example : ¬ ((fun n:ℕ ↦ (-1:ℚ)^n):Sequence).isCauchy := by sorry
+example : ¬ ((fun n:ℕ ↦ (-1:ℚ)^n):Sequence).IsCauchy := by sorry
 
 /-- Lemma 5.1.14 -/
 lemma bounded_of_finite {n:ℕ} (a: Fin n → ℚ) : ∃ M ≥ 0,  BoundedBy a M := by
@@ -325,7 +325,7 @@ lemma bounded_of_finite {n:ℕ} (a: Fin n → ℚ) : ∃ M ≥ 0,  BoundedBy a M
   simp [hm]
 
 /-- Lemma 5.1.15 (Cauchy sequences are bounded) / Exercise 5.1.1 -/
-lemma Sequence.isBounded_of_isCauchy {a:Sequence} (h: a.isCauchy) : a.isBounded := by
+lemma Sequence.isBounded_of_isCauchy {a:Sequence} (h: a.IsCauchy) : a.isBounded := by
   sorry
 
 end Chapter5
