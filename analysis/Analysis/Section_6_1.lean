@@ -47,15 +47,20 @@ structure Sequence where
 instance Sequence.instCoeFun : CoeFun Sequence (fun _ ↦ ℤ → ℝ) where
   coe := fun a ↦ a.seq
 
-/-- Functions from ℕ to ℝ can be thought of as sequences. -/
-instance Sequence.instCoe : Coe (ℕ → ℝ) Sequence where
-  coe := fun a ↦ {
+@[coe]
+abbrev Sequence.ofNatFun (a:ℕ → ℝ) : Sequence :=
+ {
     m := 0
     seq := fun n ↦ if n ≥ 0 then a n.toNat else 0
     vanish := by
       intro n hn
       simp [hn]
-  }
+ }
+
+/-- Functions from ℕ to ℝ can be thought of as sequences. -/
+instance Sequence.instCoe : Coe (ℕ → ℝ) Sequence where
+  coe := ofNatFun
+
 
 abbrev Sequence.mk' (m:ℤ) (a: { n // n ≥ m } → ℝ) : Sequence where
   m := m
@@ -125,15 +130,19 @@ lemma Sequence.isCauchy_of_mk {n₀:ℤ} (a: {n // n ≥ n₀} → ℝ) :
     (mk' n₀ a).isCauchy
     ↔ ∀ ε > 0, ∃ N ≥ n₀, ∀ j ≥ N, ∀ k ≥ N, dist (mk' n₀ a j) (mk' n₀ a k) ≤ ε := by sorry
 
+@[coe]
+abbrev Sequence.ofChapter5Sequence (a: Chapter5.Sequence) : Sequence :=
+{
+  m := a.n₀
+  seq := fun n ↦ (a n:ℝ)
+  vanish := by
+    intro n hn
+    have := a.vanish n hn
+    simp [this]
+}
+
 instance Chapter5.Sequence.inst_coe_sequence : Coe Chapter5.Sequence Sequence  where
-  coe := fun a ↦ {
-    m := a.n₀
-    seq := fun n ↦ ((a n):ℝ)
-    vanish := by
-      intro n hn
-      have := a.vanish n hn
-      simp [this]
-  }
+  coe := Sequence.ofChapter5Sequence
 
 @[simp]
 theorem Chapter5.coe_sequence_eval (a: Chapter5.Sequence) (n:ℤ) : (a:Sequence) n = (a n:ℝ) := rfl
@@ -182,11 +191,11 @@ abbrev Real.eventually_close (ε: ℝ) (a: Chapter6.Sequence) (L:ℝ) : Prop :=
 theorem Real.eventually_close_def (ε: ℝ) (a: Chapter6.Sequence) (L:ℝ) :
   ε.eventually_close a L ↔ ∃ N, (N ≥ a.m) ∧ ε.close_seq (a.from N) L := by rfl
 
-theorem Real.close_seq_mono {a: Chapter6.Sequence} {ε₁ ε₂: ℝ} (hε: ε₁ ≤ ε₂)
+theorem Real.close_seq_mono {a: Chapter6.Sequence} {ε₁ ε₂ L: ℝ} (hε: ε₁ ≤ ε₂)
   (hclose: ε₁.close_seq a L) :
     ε₂.close_seq a L := by sorry
 
-theorem Real.eventually_close_mono {a: Chapter6.Sequence} {ε₁ ε₂: ℝ} (hε: ε₁ ≤ ε₂)
+theorem Real.eventually_close_mono {a: Chapter6.Sequence} {ε₁ ε₂ L: ℝ} (hε: ε₁ ≤ ε₂)
   (hclose: ε₁.eventually_close a L) :
     ε₂.eventually_close a L := by sorry
 

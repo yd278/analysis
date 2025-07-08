@@ -71,6 +71,7 @@ def demoSite : Site := site AnalysisBook.Home /
   "sec64" Book.Analysis.Section_6_4
   "sec65" Book.Analysis.Section_6_5
   "sec66" Book.Analysis.Section_6_6
+  "sec67" Book.Analysis.Section_6_7
   "sec6e" Book.Analysis.Section_6_epilogue
   "sec71" Book.Analysis.Section_7_1
   "sec72" Book.Analysis.Section_7_2
