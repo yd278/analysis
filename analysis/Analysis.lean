@@ -26,6 +26,7 @@ import Analysis.Section_6_3
 import Analysis.Section_6_4
 import Analysis.Section_6_5
 import Analysis.Section_6_6
+import Analysis.Section_6_7
 import Analysis.Section_6_epilogue
 import Analysis.Section_7_1
 import Analysis.Section_7_2

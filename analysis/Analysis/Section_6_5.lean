@@ -76,7 +76,8 @@ theorem Sequence.lim_of_power_decay {k:ℕ} :
     rfl
   have hlim : (lim a)^(k+1) = 0 := by
     rw [←(hpow k).2]
-    convert lim_harmonic.2 with n
+    convert lim_harmonic.2
+    ext n; rfl
     simp only [HPow.hPow, Pow.pow, a]
     by_cases h : n ≥ 0
     all_goals simp [h]
@@ -86,11 +87,11 @@ theorem Sequence.lim_of_power_decay {k:ℕ} :
   simp only [lim_eq, ha', true_and, pow_eq_zero hlim]
 
 /-- Lemma 6.5.2 / Exercise 6.5.2 -/
-theorem Sequence.lim_of_geometric {x:ℝ} (hx: |x| < 1) : lim ((fun (n:ℕ) ↦ x^n):Sequence) = 0 := by
+theorem Sequence.lim_of_geometric {x:ℝ} (hx: |x| < 1) : ((fun (n:ℕ) ↦ x^n):Sequence).tendsTo 0 := by
   sorry
 
 /-- Lemma 6.5.2 / Exercise 6.5.2 -/
-theorem Sequence.lim_of_geometric' {x:ℝ} (hx: x = 1) : lim ((fun (n:ℕ) ↦ x^n):Sequence) = 1 := by
+theorem Sequence.lim_of_geometric' {x:ℝ} (hx: x = 1) : ((fun (n:ℕ) ↦ x^n):Sequence).tendsTo 1 := by
   sorry
 
 /-- Lemma 6.5.2 / Exercise 6.5.2 -/
@@ -100,17 +101,17 @@ theorem Sequence.lim_of_geometric'' {x:ℝ} (hx: x = -1 ∨ |x| > 1) :
 
 /-- Lemma 6.5.3 / Exercise 6.5.3 -/
 theorem Sequence.lim_of_roots {x:ℝ} (hx: x > 0) :
-    lim ((fun (n:ℕ) ↦ x^(1/(n+1))):Sequence) = 1 := by
+    ((fun (n:ℕ) ↦ x^(1/(n+1:ℝ))):Sequence).tendsTo 1 := by
   sorry
 
 /-- Exercise 6.5.1 -/
 theorem Sequence.lim_of_rat_power_decay {q:ℚ} (hq: q > 0) :
-    lim ((fun (n:ℕ) ↦ 1/((n:ℝ)+1)^(q:ℝ)):Sequence) = 0 := by
+    (fun (n:ℕ) ↦ 1/((n+1:ℝ)^(q:ℝ)):Sequence).tendsTo 0 := by
   sorry
 
 /-- Exercise 6.5.1 -/
 theorem Sequence.lim_of_rat_power_growth {q:ℚ} (hq: q > 0) :
-    ((fun (n:ℕ) ↦ ((n:ℝ)+1)^(q:ℝ)):Sequence).divergent := by
+    (fun (n:ℕ) ↦ ((n+1:ℝ)^(q:ℝ)):Sequence).divergent := by
   sorry
 
 

@@ -11,9 +11,6 @@ translation, I have generally chosen the latter.  In particular, there will be p
 Lean code could be "golfed" to be more elegant and idiomatic, but I have consciously avoided
 doing so.
 
-In this section we begin to use the Mathlib API for sets; the Chapter 3 set theory is deprecated
-in favor of this API.
-
 Main constructions and results of this section:
 
 - Upper bound and least upper bound on the real line

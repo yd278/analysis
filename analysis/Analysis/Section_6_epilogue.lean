@@ -1,5 +1,5 @@
 import Mathlib.Tactic
-import Analysis.Section_6_6
+import Analysis.Section_6_7
 
 /-!
 # Analysis I, Chapter 6 epilogue
@@ -39,7 +39,7 @@ theorem Chapter6.Sequence.Cauchy_iff_CauchySeq (a: ℕ → ℝ) :
   rw [Cauchy_iff_CauSeq]
   convert isCauSeq_iff_cauchySeq
 
-/-- Identifiction with `Filter.Tendsto` -/
+/-- Identification with `Filter.Tendsto` -/
 theorem Chapter6.Sequence.tendsto_iff_Tendsto (a: ℕ → ℝ) (L:ℝ) :
     (a:Sequence).tendsTo L ↔ Filter.Tendsto a Filter.atTop (nhds L) := by
   rw [Metric.tendsto_atTop, tendsTo_iff]
@@ -189,4 +189,8 @@ theorem Chapter6.Sequence.limsup_eq (a:ℕ → ℝ) :
 theorem Chapter6.Sequence.liminf_eq (a:ℕ → ℝ) :
     (a:Sequence).liminf = Filter.liminf (fun n ↦ (a n:EReal)) Filter.atTop := by
   simp_rw [Filter.liminf_eq, Filter.eventually_atTop]
+  sorry
+
+/-- Identification of `rpow` and Mathlib exponentiation -/
+theorem Chapter6.Real.rpow_eq_rpow (x:ℝ) (α:ℝ) : rpow x α = x^α := by
   sorry
