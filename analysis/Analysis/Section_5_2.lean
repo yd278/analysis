@@ -123,7 +123,7 @@ lemma Sequence.equiv_example :
 
 /-- Exercise 5.2.1 -/
 theorem Sequence.cauchy_of_equiv {a b: ℕ → ℚ} (hab: Sequence.equiv a b) :
-    (a:Sequence).isCauchy ↔ (b:Sequence).isCauchy := by sorry
+    (a:Sequence).IsCauchy ↔ (b:Sequence).IsCauchy := by sorry
 
 /-- Exercise 5.2.2 -/
 theorem Sequence.bounded_of_close {ε:ℚ} {a b: ℕ → ℚ} (hab: ε.eventually_close a b) :
