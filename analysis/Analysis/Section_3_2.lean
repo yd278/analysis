@@ -117,8 +117,8 @@ theorem SetTheory.Set.not_mem_self (A:Set) : (A:Object) ∉ A := by sorry
 theorem SetTheory.Set.not_mem_mem (A B:Set) : (A:Object) ∉ B ∨ (B:Object) ∉ A := by sorry
 
 /-- Exercise 3.2.3 -/
-theorem SetTheory.Set.univ_imp (U: Set) (hU: ∀ x, x ∈ U) :
-    axiom_of_universal_specification := by sorry
+theorem SetTheory.Set.univ_iff : axiom_of_universal_specification ↔
+  ∃ (U:Set), ∀ x, x ∈ U := by sorry
 
 /-- Exercise 3.2.3 -/
 theorem SetTheory.Set.no_univ : ¬ ∃ (U:Set), ∀ (x:Object), x ∈ U := by sorry
