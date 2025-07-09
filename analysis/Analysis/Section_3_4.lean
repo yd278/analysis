@@ -218,10 +218,15 @@ theorem SetTheory.Set.preimage_eq_image_of_inv {X Y V:Set} (f:X → Y) (f_inv: Y
   (hf: Function.LeftInverse f_inv f ∧ Function.RightInverse f_inv f) (hV: V ⊆ Y) :
     image f_inv V = preimage f V := by sorry
 
-/- Exercise 3.4.2.  State and prove an assertion connecting `preimage (image f S)` and `S`. -/
--- theorem SetTheory.Set.preimage_of_image {X Y:Set} (f:X → Y) (S: Set) : sorry := by sorry
+/- Exercise 3.4.2.  State and prove an assertion connecting `preimage f (image f S)` and `S`. -/
+-- theorem SetTheory.Set.preimage_of_image {X Y:Set} (f:X → Y) (S: Set) (hS: S ⊆ X) : sorry := by sorry
 
-/- Exercise 3.4.2.  State and prove an assertion connecting `image (preimage f U)` and `U`. -/
+/- Exercise 3.4.2.  State and prove an assertion connecting `image f (preimage f U)` and `U`. -/
+-- Interestingly, it is not needed for U to be a subset of Y.
+-- theorem SetTheory.Set.preimage_of_image {X Y:Set} (f:X → Y) (U: Set) : sorry := by sorry
+
+/- Exercise 3.4.2.  State and prove an assertion connecting `preimage f (image f (preimage f U))` and `U`. -/
+-- Interestingly, it is not needed for U to be a subset of Y.
 -- theorem SetTheory.Set.preimage_of_image {X Y:Set} (f:X → Y) (U: Set) : sorry := by sorry
 
 /--
