@@ -270,7 +270,7 @@ theorem Real.LIM_of_nonneg {a: ℕ → ℚ} (ha: ∀ n, a n ≥ 0) (hcauchy: (a:
   have claim3 : ¬ Sequence.equiv a b := by
     contrapose! claim2
     rw [Sequence.equiv_def] at claim2
-    exact claim2 (c/2) (half_pos cpos)
+    solve_by_elim [half_pos]
   simp_rw [x, LIM_eq_LIM hcauchy hb_cauchy] at hlim
   contradiction
 

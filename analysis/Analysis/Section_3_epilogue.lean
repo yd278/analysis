@@ -41,8 +41,7 @@ lemma PSet.eq_of_ofNat_equiv_ofNat (n m : ℕ): (ofNat.{u} n).Equiv (ofNat.{u} m
   · intro heq
     rw [this m n (Nat.le_of_not_ge hmn) heq.symm]
   intro h
-  rw [@PSet.Equiv.eq (ofNat.{u} n) (ofNat m)] at h
-  rw [Set.ext_iff] at h
+  rw [@PSet.Equiv.eq (ofNat.{u} n) (ofNat m), Set.ext_iff] at h
   have : n ≤ m := by
     specialize h (ofNat m)
     simpa [mem_irrefl _, mem_ofNat_iff] using h
@@ -53,8 +52,7 @@ the natural numbers. -/
 noncomputable def ZFSet.nat_equiv : ℕ ≃ omega.{u} := Equiv.ofBijective (fun n => ⟨mk (PSet.ofNat.{u} n),mk_mem_iff.mpr (PSet.Mem.mk _ (ULift.up n))⟩) (by
   constructor
   · intro n m
-    simp only [Subtype.mk.injEq]
-    rw [eq]
+    simp only [Subtype.mk.injEq, eq]
     exact fun a => PSet.eq_of_ofNat_equiv_ofNat n m a
   · rintro ⟨x,hx⟩
     rw [← mk_out x, omega, mk_mem_iff, PSet.omega] at hx
@@ -112,8 +110,7 @@ noncomputable instance : Chapter3.SetTheory.{u + 1,u + 1} where
     use y, hy.left
     intro z hzA hzy
     have : z ∈ A ∩ y := ZFSet.mem_inter.mpr ⟨hzA,hzy⟩
-    rw [hy.right] at this
-    simp at this
+    simp [hy.right] at this
   pow X Y := ZFSet.funs Y X
   function_to_object X Y := {
     toFun f := (@ZFSet.map (fun s => if h : s ∈ X then f ⟨s,h⟩ else ∅) (Classical.allZFSetDefinable _) X)

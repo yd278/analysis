@@ -158,12 +158,9 @@ theorem close_mul_mul {ε δ x y z w:ℚ} (hε: ε ≥ 0) (hxy: ε.close x y) (h
   calc
     _ = |a * z + b * x + a * b| := by rw [this]; congr; ring
     _ ≤ |a * z + b * x| + |a * b| := abs_add _ _
-    _ ≤ |a * z| + |b * x| + |a * b| := by
-      gcongr; exact abs_add _ _
-    _ = |a| * |z| + |b| * |x| + |a| * |b| := by
-      simp_rw [abs_mul]
-    _ ≤ _ := by
-      gcongr
+    _ ≤ |a * z| + |b * x| + |a * b| := by gcongr; exact abs_add _ _
+    _ = |a| * |z| + |b| * |x| + |a| * |b| := by simp_rw [abs_mul]
+    _ ≤ _ := by gcongr
 
 /-- Definition 4.3.9 (exponentiation).  Here we use the Mathlib definition.-/
 lemma pow_zero (x:ℚ) : x^0 = 1 := rfl
