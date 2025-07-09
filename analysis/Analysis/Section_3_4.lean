@@ -27,8 +27,7 @@ variable [SetTheory]
 abbrev SetTheory.Set.image {X Y:Set} (f:X → Y) (S: Set) : Set :=
   X.replace (P := fun x y ↦ y = f x ∧ x.val ∈ S) (by
     intro x y y' ⟨ hy, hy' ⟩
-    simp at hy hy'
-    rw [hy.1, hy'.1]
+    simp_all
   )
 
 /-- Definition 3.4.1 -/
@@ -51,7 +50,6 @@ theorem SetTheory.Set.image_eq_image {X Y:Set} (f:X → Y) (S: Set):
 
 theorem SetTheory.Set.image_in_codomain {X Y:Set} (f:X → Y) (S: Set) :
     image f S ⊆ Y := by
-  rw [SetTheory.Set.subset_def]
   intro x h
   rw [mem_image] at h
   obtain ⟨ x', hx', hf ⟩ := h
@@ -89,7 +87,6 @@ theorem SetTheory.Set.preimage_eq {X Y:Set} (f:X → Y) (U: Set) :
 
 theorem SetTheory.Set.preimage_in_domain {X Y:Set} (f:X → Y) (U: Set) :
     (preimage f U) ⊆ X := by
-  rw [subset_def]
   intro x h
   rw [preimage] at h
   exact specification_axiom h
@@ -175,14 +172,11 @@ theorem SetTheory.Set.mem_iUnion {I:Set} (A: I → Set) (x:Object) :
     obtain ⟨ S, hx, hS ⟩ := h
     rw [replacement_axiom] at hS
     obtain ⟨ α, hα ⟩ := hS
-    simp at hα
-    rw [hα] at hx
-    use α
+    simp_all
+    use α.val, α.property
   intro h
   obtain ⟨ α, hx ⟩ := h
-  use A α
-  constructor
-  . exact hx
+  refine ⟨ A α, hx, ?_ ⟩
   rw [replacement_axiom]
   use α
 
