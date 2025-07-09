@@ -112,8 +112,7 @@ lemma Rat.isSteady_of_coe (ε : ℚ) (a:ℕ → ℚ) :
   constructor
   · intro h n m
     specialize h n (by simp) m (by simp)
-    dsimp at h
-    exact h
+    simp_all
   intro h n hn m hm
   lift n to ℕ using hn
   lift m to ℕ using hm
@@ -124,10 +123,7 @@ Not in textbook: the sequence 2, 2 ... is 1-steady
 Intended as a demonstration of `isSteady_of_coe`
 -/
 example : (1:ℚ).steady ((fun _:ℕ ↦ (3:ℚ)):Sequence) := by
-  rw [Rat.isSteady_of_coe]
-  unfold Rat.close
-  intro n m
-  simp
+  simp [Rat.isSteady_of_coe, Rat.close]
 
 /--
 Compare: if you need to work with `Rat.steady` on the coercion directly, there will be side conditions `hn : n ≥ 0` and `hm : m ≥ 0` that you will need to deal with.
@@ -135,8 +131,7 @@ Compare: if you need to work with `Rat.steady` on the coercion directly, there w
 example : (1:ℚ).steady ( (fun _:ℕ ↦ (3:ℚ)):Sequence) := by
   unfold Rat.steady Rat.close
   intro n hn m hm
-  simp only [Sequence.n0_coe, Sequence.eval_coe_at_int] at hn hm
-  simp [hn, hm]
+  simp_all [Sequence.n0_coe, Sequence.eval_coe_at_int]
 
 /-- Example 5.1.5 -/
 example : (1:ℚ).steady ((fun n:ℕ ↦ if Even n then (1:ℚ) else (0:ℚ)):Sequence) := by sorry
@@ -263,7 +258,7 @@ theorem Sequence.harmonic_steady : (mk' 1 (fun n ↦ (1:ℚ)/n)).IsCauchy := by
   . simp
   . simp
   rw [div_le_iff₀ (by positivity), mul_comm, ←div_le_iff₀ hε]
-  . exact le_of_lt hN
+  exact le_of_lt hN
 
 abbrev BoundedBy {n:ℕ} (a: Fin n → ℚ) (M:ℚ) : Prop :=
   ∀ i, |a i| ≤ M

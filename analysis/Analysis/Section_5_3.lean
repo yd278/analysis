@@ -105,18 +105,14 @@ theorem LIM_def {a:ℕ → ℚ} (ha: (a:Sequence).IsCauchy) :
 theorem Real.eq_lim (x:Real) : ∃ (a:ℕ → ℚ), (a:Sequence).IsCauchy ∧ x = LIM a := by
   -- I had a lot of trouble with this proof; perhaps there is a more idiomatic way to proceed
   apply Quot.ind _ x; intro a
-  set a' : ℕ → ℚ := (a:ℕ → ℚ); use a'
-  set s : Sequence := (a':Sequence)
-  have : s = a.toSequence := CauchySequence.coe_to_sequence a
-  rw [this]
+  use (a:ℕ → ℚ)
+  have : ((a:ℕ → ℚ):Sequence) = a.toSequence := CauchySequence.coe_to_sequence a
+  rw [this, LIM_def (by convert a.cauchy)]
   refine ⟨ a.cauchy, ?_ ⟩
   congr
-  convert (dif_pos a.cauchy).symm with n
-  . apply CauchySequence.ext'
-    change a.seq = s.seq
-    rw [this]
-  classical
-  exact Classical.propDecidable _
+  ext n; simp
+  change a.seq n = ((a:ℕ → ℚ):Sequence).seq n
+  rw [this]
 
 /-- Definition 5.3.1 (Real numbers) -/
 theorem Real.LIM_eq_LIM {a b:ℕ → ℚ} (ha: (a:Sequence).IsCauchy) (hb: (b:Sequence).IsCauchy) :
@@ -373,17 +369,15 @@ theorem Real.bounded_away_zero_of_nonzero {x:Real} (hx: x ≠ 0) :
   have how : ∀ j ≥ N, |b j| ≥ ε/2 := by sorry
   set a : ℕ → ℚ := fun n ↦ if n < n₀ then (ε/2) else b n
   have not_hard : Sequence.equiv a b := by sorry
-  have ha :(a:Sequence).IsCauchy := (Sequence.cauchy_of_equiv not_hard).mpr hb
+  have ha : (a:Sequence).IsCauchy := (Sequence.cauchy_of_equiv not_hard).mpr hb
   refine ⟨ a, ha, ?_, ?_ ⟩
   . rw [bounded_away_zero_def]
     use ε/2, half_pos hε
     intro n
-    by_cases hn: n < n₀
-    all_goals simp [a, hn]
-    . exact le_abs_self _
+    by_cases hn: n < n₀ <;> simp [a, hn, le_abs_self _]
     apply how
     linarith
-  rw[(LIM_eq_LIM ha hb).mpr not_hard]
+  rw [(LIM_eq_LIM ha hb).mpr not_hard]
 
 /--
   This result was not explicitly stated in the text, but is needed in the theory. It's a good
@@ -419,9 +413,7 @@ theorem Real.inv_of_bounded_away_zero_cauchy {a:ℕ → ℚ} (ha: bounded_away_z
       simp [mul_comm]
     _ ≤ |a m - a n| / c^2 := by
       rw [abs_div, abs_mul, sq]
-      gcongr
-      . exact ha m
-      exact ha n
+      gcongr <;> solve_by_elim
     _ = |a n - a m| / c^2 := by
       rw [abs_sub_comm]
     _ ≤ (c^2 * ε) / c^2 := by
@@ -468,7 +460,7 @@ theorem Real.inv_def {a:ℕ → ℚ} (h: bounded_away_zero a) (hc: (a:Sequence).
   have hx : x ≠ 0 := lim_of_bounded_away_zero h hc
   set hb := bounded_away_zero_of_nonzero hx
   simp only [instInv, ne_eq, Classical.dite_not, hx, ↓reduceDIte, Pi.inv_apply]
-  apply inv_of_equiv hb.choose_spec.2.1 hb.choose_spec.1 h hc hb.choose_spec.2.2.symm
+  exact inv_of_equiv hb.choose_spec.2.1 hb.choose_spec.1 h hc hb.choose_spec.2.2.symm
 
 @[simp]
 theorem Real.inv_zero : (0:Real)⁻¹ = 0 := by
