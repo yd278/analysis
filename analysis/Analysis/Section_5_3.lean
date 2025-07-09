@@ -81,10 +81,10 @@ instance CauchySequence.instSetoid : Setoid CauchySequence where
 theorem CauchySequence.equiv_iff (a b: CauchySequence) : a ≈ b ↔ Sequence.equiv a b := by rfl
 
 /-- Every constant sequence is Cauchy -/
-theorem Sequence.isCauchy_of_const (a:ℚ) : ((fun _:ℕ ↦ a):Sequence).IsCauchy := by sorry
+theorem Sequence.IsCauchy.const (a:ℚ) : ((fun _:ℕ ↦ a):Sequence).IsCauchy := by sorry
 
 instance CauchySequence.instZero : Zero CauchySequence where
-  zero := CauchySequence.mk' (a := fun _: ℕ ↦ 0) (Sequence.isCauchy_of_const (0:ℚ))
+  zero := CauchySequence.mk' (a := fun _: ℕ ↦ 0) (Sequence.IsCauchy.const (0:ℚ))
 
 abbrev Real := Quotient CauchySequence.instSetoid
 
@@ -126,10 +126,10 @@ theorem Real.LIM_eq_LIM {a b:ℕ → ℚ} (ha: (a:Sequence).IsCauchy) (hb: (b:Se
   rwa [dif_pos ha, dif_pos hb, CauchySequence.equiv_iff]
 
 /--Lemma 5.3.6 (Sum of Cauchy sequences is Cauchy)-/
-theorem Sequence.add_cauchy {a b:ℕ → ℚ}  (ha: (a:Sequence).IsCauchy) (hb: (b:Sequence).IsCauchy) :
+theorem Sequence.IsCauchy.add {a b:ℕ → ℚ}  (ha: (a:Sequence).IsCauchy) (hb: (b:Sequence).IsCauchy) :
     (a + b:Sequence).IsCauchy := by
   -- This proof is written to follow the structure of the original text.
-  rw [isCauchy_of_coe] at *
+  rw [coe] at *
   intro ε hε
   obtain ⟨ N1, ha ⟩ := ha (ε/2) (by positivity)
   obtain ⟨ N2, hb ⟩ := hb (ε/2) (by positivity)
@@ -182,7 +182,7 @@ noncomputable instance Real.add_inst : Add Real where
       change LIM ((a:ℕ → ℚ) + (b:ℕ → ℚ)) = LIM ((a':ℕ → ℚ) + (b':ℕ → ℚ))
       rw [LIM_eq_LIM]
       . exact Sequence.add_equiv haa' hbb'
-      all_goals apply Sequence.add_cauchy
+      all_goals apply Sequence.IsCauchy.add
       all_goals rw [CauchySequence.coe_to_sequence]
       . exact a.cauchy
       . exact b.cauchy
@@ -193,7 +193,7 @@ noncomputable instance Real.add_inst : Add Real where
 /-- Definition 5.3.4 (Addition of reals) -/
 theorem Real.add_of_LIM {a b:ℕ → ℚ} (ha: (a:Sequence).IsCauchy) (hb: (b:Sequence).IsCauchy) :
   LIM a + LIM b = LIM (a + b) := by
-  have hab := Sequence.add_cauchy ha hb
+  have hab := Sequence.IsCauchy.add ha hb
   simp_rw [LIM_def ha, LIM_def hb, LIM_def hab]
   convert Quotient.liftOn₂_mk _ _ _ _
   rw [dif_pos _]
@@ -245,7 +245,7 @@ theorem Real.mul_of_LIM {a b:ℕ → ℚ} (ha: (a:Sequence).IsCauchy) (hb: (b:Se
 
 instance Real.instRatCast : RatCast Real where
   ratCast := fun q ↦
-    Quotient.mk _ (CauchySequence.mk' (a := fun _ ↦ q) (Sequence.isCauchy_of_const q))
+    Quotient.mk _ (CauchySequence.mk' (a := fun _ ↦ q) (Sequence.IsCauchy.const q))
 
 theorem Real.ratCast_def (q:ℚ) : (q:Real) = LIM (fun _ ↦ q) := by
   rw [LIM_def]
@@ -360,10 +360,10 @@ theorem Real.bounded_away_zero_of_nonzero {x:Real} (hx: x ≠ 0) :
   -- This proof is written to follow the structure of the original text.
   obtain ⟨ b, hb, rfl ⟩ := eq_lim x
   simp only [←LIM_zero, ne_eq] at hx
-  rw [LIM_eq_LIM hb (by convert Sequence.isCauchy_of_const 0), Sequence.equiv_iff] at hx
+  rw [LIM_eq_LIM hb (by convert Sequence.IsCauchy.const 0), Sequence.equiv_iff] at hx
   simp at hx
   obtain ⟨ ε, hε, hx ⟩ := hx
-  have hb' := (Sequence.isCauchy_of_coe _).mp hb (ε/2) (half_pos hε)
+  have hb' := (Sequence.IsCauchy.coe _).mp hb (ε/2) (half_pos hε)
   obtain ⟨ N, hb' ⟩ := hb'
   obtain ⟨n₀, hn₀, hx ⟩ := hx N
   have how : ∀ j ≥ N, |b j| ≥ ε/2 := by sorry
@@ -399,7 +399,7 @@ theorem Real.inv_of_bounded_away_zero_cauchy {a:ℕ → ℚ} (ha: bounded_away_z
   have ha' (n:ℕ) : a n ≠ 0 := bounded_away_zero_nonzero ha n
   rw [bounded_away_zero_def] at ha
   obtain ⟨ c, hc, ha ⟩ := ha
-  simp_rw [Sequence.isCauchy_of_coe, Section_4_3.dist_eq] at ha_cauchy ⊢
+  simp_rw [Sequence.IsCauchy.coe, Section_4_3.dist_eq] at ha_cauchy ⊢
   intro ε hε
   specialize ha_cauchy (c^2 * ε) (by positivity)
   obtain ⟨ N, ha_cauchy ⟩ := ha_cauchy

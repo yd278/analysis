@@ -198,11 +198,11 @@ abbrev Sequence.IsCauchy (a:Sequence) : Prop := ∀ ε > (0:ℚ), ε.eventuallyS
 lemma Sequence.isCauchy_def (a:Sequence) :
   a.IsCauchy ↔ ∀ ε > (0:ℚ), ε.eventuallySteady a := by rfl
 
-lemma Sequence.isCauchy_of_coe (a:ℕ → ℚ) :
+lemma Sequence.IsCauchy.coe (a:ℕ → ℚ) :
     (a:Sequence).IsCauchy ↔ ∀ ε > (0:ℚ), ∃ N, ∀ j ≥ N, ∀ k ≥ N,
     Section_4_3.dist (a j) (a k) ≤ ε := by sorry
 
-lemma Sequence.isCauchy_of_mk {n₀:ℤ} (a: {n // n ≥ n₀} → ℚ) :
+lemma Sequence.IsCauchy.mk {n₀:ℤ} (a: {n // n ≥ n₀} → ℚ) :
     (mk' n₀ a).IsCauchy ↔ ∀ ε > (0:ℚ), ∃ N ≥ n₀, ∀ j ≥ N, ∀ k ≥ N,
     Section_4_3.dist (mk' n₀ a j) (mk' n₀ a k) ≤ ε := by sorry
 
@@ -224,7 +224,7 @@ theorem Sequence.ex_5_1_10_c : (0.1:ℚ).eventuallySteady sqrt_two := by sorry
 
 /-- Proposition 5.1.11 -/
 theorem Sequence.harmonic_steady : (mk' 1 (fun n ↦ (1:ℚ)/n)).IsCauchy := by
-  rw [isCauchy_of_mk]
+  rw [IsCauchy.mk]
   intro ε hε
   -- We go by reverse from the book - first choose N such that N > 1/ε
   obtain ⟨ N, hN : N > 1/ε ⟩ := exists_nat_gt (1 / ε)

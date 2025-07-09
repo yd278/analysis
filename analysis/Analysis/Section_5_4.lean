@@ -309,14 +309,14 @@ theorem Real.exists_rat_le_and_nat_ge {x:Real} (hx: x.isPos) :
   . refine ⟨ q, hq, ?_ ⟩
     convert LIM_mono _ hcauchy hbound
     . exact Real.ratCast_def q
-    exact Sequence.isCauchy_of_const q
+    exact Sequence.IsCauchy.const q
   obtain ⟨ N, hN  ⟩ := exists_nat_gt r
   use N
   calc
     x ≤ r := by
       rw [Real.ratCast_def r]
       convert LIM_mono hcauchy _ _
-      . exact Sequence.isCauchy_of_const r
+      . exact Sequence.IsCauchy.const r
       intro n
       specialize this n
       simp at this
