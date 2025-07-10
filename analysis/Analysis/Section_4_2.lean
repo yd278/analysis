@@ -12,10 +12,15 @@ text. When there is a choice between a more idiomatic Lean solution and a more f
 translation, I have generally chosen the latter. In particular, there will be places where the
 Lean code could be "golfed" to be more elegant and idiomatic, but I have consciously avoided
 doing so.
+-/
 
+namespace Section_4_2
+variable (a b : ℤ)
+
+/-!
 Main constructions and results of this section:
 
-- Definition of the "Section 4.2" rationals, `Section_4_2.Int`, as formal differences `a // b` of
+- Definition of the "Section 4.2" rationals, `Section_4_2.Rat`, as formal differences `a // b` of
   integers `a b:ℤ`, up to equivalence.  (This is a quotient of a scaffolding type
   `Section_4_2.PreRat`, which consists of formal differences without any equivalence imposed.)
 
@@ -24,7 +29,6 @@ Main constructions and results of this section:
 - Equivalence with the Mathlib rationals `_root_.Rat` (or `ℚ`), which we will use going forward.
 -/
 
-namespace Section_4_2
 
 structure PreRat where
   numerator : ℤ

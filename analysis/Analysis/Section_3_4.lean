@@ -14,7 +14,7 @@ namespace Chapter3
 
 export SetTheory (Set Object nat)
 
-variable [SetTheory] (X Y S : Set) (f : x → Y)
+variable [SetTheory] (X : Type) (S : _root_.Set X) (f : X → X)
 
 
 /-!

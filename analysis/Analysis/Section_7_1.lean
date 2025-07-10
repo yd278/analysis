@@ -13,7 +13,15 @@ Technical note: it is convenient in Lean to extend finite sequences (usually by 
 functions on the entire integers.
 
 Main constructions and results of this section:
+-/
 
+variable (n : ℤ) (A : Finset ℤ) (f : ℤ → ℝ)
+
+-- This makes available the convenient notation `∑ n ∈ A, f n` to denote summation of `f n` for
+-- `n` ranging over a finite set `A`.
+open BigOperators
+
+/-!
 - API for summation over finite sets (encoded using Mathlib's `Finset` type), using the
   `Finset.sum` method and the `∑ n ∈ A, f n` notation.
 - Fubini's theorem for finite series
@@ -22,10 +30,6 @@ We do not attempt to replicate the full API for `Finset.sum` here, but in subseq
 shall make liberal use of this API.
 
 -/
-
--- This makes available the convenient notation `∑ n ∈ A, f n` to denote summation of `f n` for
--- `n` ranging over a finite set `A`.
-open BigOperators
 
 -- This is a technical device to avoid Mathlib's insistence on decidable equality for finite sets.
 open Classical

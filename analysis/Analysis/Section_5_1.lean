@@ -9,7 +9,12 @@ text. When there is a choice between a more idiomatic Lean solution and a more f
 translation, I have generally chosen the latter. In particular, there will be places where the
 Lean code could be "golfed" to be more elegant and idiomatic, but I have consciously avoided
 doing so.
+-/
 
+namespace Chapter5
+variable (ε : ℚ)
+
+/-!
 Main constructions and results of this section:
 
 - Notion of a sequence of rationals
@@ -17,7 +22,6 @@ Main constructions and results of this section:
 
 -/
 
-namespace Chapter5
 
 /--
   Definition 5.1.1 (Sequence). To avoid some technicalities involving dependent types, we extend
@@ -110,7 +114,7 @@ def ThreesFun := (fun _:ℕ ↦ (3:ℚ))
 
 /--
 Not in textbook: the sequence 2, 2 ... in 1-steady
-Intended as a demonstration of `isSteady_of_coe`
+Intended as a demonstration of `Rat.isSteady_of_coe`
 -/
 example : (1:ℚ).steady (ThreesFun:Sequence) := by
   rw [Rat.isSteady_of_coe]
@@ -149,6 +153,8 @@ example : (10:ℚ).steady ((fun n:ℕ ↦ if n = 0 then (10:ℚ) else (0:ℚ)):S
 
 example (ε:ℚ) (hε:ε<10):  ¬ ε.steady ((fun n:ℕ ↦ if n = 0 then (10:ℚ) else (0:ℚ)):Sequence) := by
   sorry
+
+variable (n₁ n₀ : ℤ)
 
 /--
   a.from n₁ starts `a:Sequence` from `n₁`.  It is intended for use when `n₁ ≥ n₀`, but returns
