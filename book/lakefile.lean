@@ -62,6 +62,7 @@ def sections := #[
   (`Analysis.Section_7_4, "Rearrangement of series"),
   (`Analysis.Section_7_5, "The root and ratio tests"),
   (`Analysis.Section_8_1, "Countability"),
+  (`Analysis.Section_8_2, "Summation on infinite sets"),
   (`Analysis.Section_9_1, "Subsets of the real line"),
   (`Analysis.Section_9_2, "The algebra of real-valued functions"),
   (`Analysis.Section_9_3, "Limiting values of functions"),

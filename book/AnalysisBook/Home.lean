@@ -52,6 +52,8 @@ Currently formalized sections:
 - [Section 7.3: Sums of non-negative numbers](./sec73/)
 - [Section 7.4: Rearrangement of series](./sec74/)
 - [Section 7.5: The root and ratio tests](./sec75/)
+- [Section 8.1: Countability](./sec81/)
+- [Section 8.2: Summation on infinite sets](./sec82/)
 - [Section 9.1: Subsets of the real line](./sec91/)
 - [Section 9.2: The algebra of real-valued functions](./sec92/)
 - [Section 9.3: Limiting values of functions](./sec93/)

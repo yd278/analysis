@@ -15,7 +15,11 @@ doing so.
 
 Main constructions and results of this section:
 
--
+- Absolute convergence and summation on countably infinite or general sets
+- Connections with Mathlib's `Summable` and `tsum`
+
+Some non-trivial API is provided beyond what is given in the textbook in order connect these
+notions with existing summation notions.
 
 -/
 
@@ -256,9 +260,18 @@ theorem AbsConvergent'.of_countable {X:Type} (hX:CountablyInfinite X) {f:X → �
   rwa [AbsConvergent.iff hX f] at hf
 
 /-- Lemma 8.2.5 / Exercise 8.2.2-/
-theorem AbsConvergent'.countable_supp {X:Type} (f:X → ℝ) (hf: AbsConvergent' f) :
+theorem AbsConvergent'.countable_supp {X:Type} {f:X → ℝ} (hf: AbsConvergent' f) :
   AtMostCountable { x | f x ≠ 0 } := by
     sorry
+
+theorem AbsConvergent'.restrict {X:Type} {f:X → ℝ} (hf: AbsConvergent' f) (A: Set X) :
+  AbsConvergent' (fun x:A ↦ f x) := by
+  apply BddAbove.mono _ hf
+  intro z hz
+  simp at hz ⊢
+  obtain ⟨ A, hA ⟩ := hz
+  use Finset.map (Function.Embedding.subtype _) A
+  simp [hA]
 
 /-- A generalized sum.  Note that this will give junk values if `f` is not `AbsConvergent'`. -/
 noncomputable abbrev Sum' {X:Type} (f: X → ℝ) : ℝ := Sum (fun x : { x | f x ≠ 0 } ↦ f x)
@@ -283,26 +296,8 @@ theorem Sum'.of_countable_supp {X:Type} {f:X → ℝ} {A: Set X} (hA: CountablyI
   (hfA : ∀ x ∉ A, f x = 0) (hconv: AbsConvergent' f):
   AbsConvergent' (fun x:A ↦ f x) ∧ Sum' f = Sum (fun x:A ↦ f x) := by
   -- We can adapt the proof of `AbsConvergent'.of_countable` to establish absolute convergence on A.
-  have hconv' : AbsConvergent (fun x:A ↦ f x) := by
-    simp [bddAbove_def] at hconv
-    obtain ⟨ L, hL ⟩ := hconv
-    obtain ⟨ g, hg ⟩ := hA.symm
-    refine ⟨ g, hg, ?_ ⟩
-    unfold Series.absConverges
-    rw [Series.converges_of_nonneg_iff]
-    . use L; intro N
-      by_cases hN: N ≥ 0
-      . lift N to ℕ using hN
-        set g':= Function.Embedding.mk (Subtype.val ∘ g)
-          (Function.Injective.comp (Subtype.val_injective) hg.1)
-        convert hL (Finset.map g' (Finset.Icc 0 N))
-        simp [Series.partial]; rfl
-      convert hL ∅
-      simp
-      apply Series.partial_of_lt
-      simp; contrapose! hN; assumption
-    simp [Series.nonneg]
-    intro n; by_cases h: n ≥ 0 <;> simp [h]
+  have hconv' : AbsConvergent (fun x:A ↦ f x) :=
+    (AbsConvergent'.of_countable hA).mp (hconv.restrict A)
   rw [AbsConvergent'.of_countable hA]
   refine ⟨ hconv', ?_ ⟩
   unfold Sum'
@@ -338,7 +333,7 @@ theorem Sum'.of_countable_supp {X:Type} {f:X → ℝ} {A: Set X} (hA: CountablyI
     apply tendsto_nhds_unique  _ hsum
     have hconv'' : AbsConvergent (fun x:E ↦ f x) := by
       rw [←AbsConvergent'.of_countable]
-      . sorry
+      . exact hconv.restrict E
       apply (CountablyInfinite.equiv _).mp hE'; use ι
     replace := Sum.eq (hι.comp ha_bij) (AbsConvergent.comp (hι.comp ha_bij) hconv'')
     replace := this.comp tendsto_natCast_atTop_atTop
@@ -392,14 +387,185 @@ theorem Sum'.of_countable_supp {X:Type} {f:X → ℝ} {A: Set X} (hA: CountablyI
       simp [ι]
     _ = _ := hι.sum_comp (g := fun x ↦ f ↑x)
 
+/-- Connection with Mathlib's `Summable` property. Some version of this might be suitable
+    for Mathlib? -/
+theorem AbsConvergent'.iff_Summable {X:Type} (f:X → ℝ) : AbsConvergent' f ↔ Summable f := by
+  simp [←summable_abs_iff, AbsConvergent']
+  simp [summable_iff_vanishing_norm]
+  classical
+  constructor
+  . intro h ε hε
+    set s := Set.range fun A ↦ ∑ x ∈ A, |f x|
+    have hnon : s.Nonempty := by simp [s]; use 0, ∅; simp
+    have : (sSup s)-ε < sSup s := by linarith
+    rw [lt_csSup_iff h hnon] at this
+    simp [s] at this
+    obtain ⟨ S, hS ⟩ := this
+    use S
+    intro T hT
+    rw [abs_of_nonneg (by positivity)]
+    have : ∑ x ∈ T, |f x| + ∑ x ∈ S, |f x| ≤ sSup s := by
+      apply ConditionallyCompleteLattice.le_csSup _ _ h _
+      simp [s]
+      use T ∪ S; exact Finset.sum_union hT
+    linarith
+  . intro h
+    specialize h 1 (by norm_num)
+    obtain ⟨ S, hS ⟩ := h
+    rw [bddAbove_def]
+    use ∑ x ∈ S, |f x| + 1
+    simp; intro T
+    calc
+      _ = ∑ x ∈ (T ∩ S), |f x| + ∑ x ∈ (T \ S), |f x| :=
+        (Finset.sum_inter_add_sum_diff _ _ _).symm
+      _ ≤ _ := by
+        gcongr
+        . exact Finset.inter_subset_right
+        apply le_of_lt (lt_of_abs_lt (hS _ disjoint_sdiff_self_left))
+
+/-- Maybe suitable for porting to Mathlib?-/
+theorem Filter.Eventually.int_natCast_atTop (p: ℤ → Prop) :
+  (∀ᶠ n in Filter.atTop, p n) ↔ ∀ᶠ n:ℕ in Filter.atTop, p ↑n := by
+  constructor
+  . exact Filter.Eventually.natCast_atTop
+  simp [Filter.eventually_atTop]
+  intro N hN
+  use N; intro n hn
+  lift n to ℕ using (by apply LE.le.trans (by positivity) hn)
+  simp at hn; solve_by_elim
+
+theorem Filter.Tendsto.int_natCast_atTop {R:Type} (f: ℤ → R) (l: Filter R) :
+Filter.Tendsto f Filter.atTop l ↔ Filter.Tendsto (f ∘ Nat.cast) Filter.atTop l := by
+  simp [Filter.tendsto_iff_eventually]
+  apply forall_congr'; intro p
+  apply imp_congr_right; intro h
+  simp [←Filter.eventually_atTop]
+  convert Filter.Eventually.int_natCast_atTop _
 
 
+/-- Connection with Mathlib's `tsum` (or `Σ'`) operation -/
+theorem Sum'.eq_tsum {X:Type} (f:X → ℝ) (h: AbsConvergent' f) :
+  Sum' f = ∑' x, f x := by
+  set E := {x | f x ≠ 0}
+  rcases h.countable_supp with hE | hE
+  . simp [Sum']
+    obtain ⟨ g, hg ⟩ := hE.symm
+    have : ((f ∘ Subtype.val) ∘ g:Series).absConverges := by
+      apply AbsConvergent.comp hg
+      simp [←AbsConvergent'.of_countable hE]
+      exact h.restrict E
+    replace this := Sum.eq hg this
+    convert Series.convergesTo_uniq this _
+    replace : ∑' x, f x = ∑' n, f (g n) := calc
+      _ = ∑' x:E, f x := by
+        rw [←tsum_univ f]
+        have hcompl : E = Set.univ \ {x | f x = 0 } := by aesop
+        convert (tsum_setElem_eq_tsum_setElem_diff _ {x | f x = 0} (by aesop))
+      _ = _ := by
+        convert (Equiv.tsum_eq (Equiv.ofBijective _ hg) _).symm
+    rw [this]
+    unfold Series.convergesTo
+    rw [Filter.Tendsto.int_natCast_atTop]
+    convert (Summable.tendsto_sum_tsum_nat ?_).comp (Filter.tendsto_add_atTop_nat 1) with n
+    . ext N; simp [Series.partial, Nat.range_succ_eq_Icc_zero]
+    rw [AbsConvergent'.iff_Summable] at h
+    convert h.comp_injective (i := Subtype.val ∘ g) _
+    exact Subtype.val_injective.comp hg.1
+  rw [of_finsupp (A := E.toFinite.toFinset) (by simp [E])]
+  apply (tsum_eq_sum _).symm
+  simp [E]
 
+/-- Proposition 8.2.6 (a) (Absolutely convergent series laws) / Exercise 8.2.3 -/
+theorem Sum'.add {X:Type} {f g:X → ℝ} (hf: AbsConvergent' f) (hg: AbsConvergent' g) :
+  AbsConvergent' (f+g) ∧ Sum' (f + g) = Sum' f + Sum' g := by
+  sorry
 
+/-- Proposition 8.2.6 (b) (Absolutely convergent series laws) / Exercise 8.2.3 -/
+theorem Sum'.smul {X:Type} {f:X → ℝ} (hf: AbsConvergent' f) (c: ℝ) :
+  AbsConvergent' (c • f) ∧ Sum' (c • f) = c * Sum' f := by
+  sorry
 
+/-- This law is not explicitly stated in Proposition 8.2.6, but follows easily from parts (a) and (b).-/
+theorem Sum'.sub {X:Type} {f g:X → ℝ} (hf: AbsConvergent' f) (hg: AbsConvergent' g) :
+  AbsConvergent' (f-g) ∧ Sum' (f - g) = Sum' f - Sum' g := by
+  convert add hf (smul hg (-1)).1 using 2
+  . simp; abel
+  . congr; simp; abel
+  rw [(smul hg (-1)).2]; ring
 
+/-- Proposition 8.2.6 (c) (Absolutely convergent series laws) / Exercise 8.2.3.  The first
+    part of this proposition has been moved to `AbsConvergent'.restrict`. -/
+theorem Sum'.of_disjoint_union {X:Type} {f:X → ℝ} (hf: AbsConvergent' f) {X₁ X₂ : Set X} (hdisj: Disjoint X₁ X₂):
+  Sum' (fun x: (X₁ ∪ X₂: Set X) ↦ f x) = Sum' (fun x : X₁ ↦ f x) + Sum' (fun x : X₂ ↦ f x) := by
+  sorry
 
--- make connections with Summable and tsum
+/-- This technical claim, the analogue of `tsum_univ`, is required due to the way Mathlib handles
+    sets.-/
+theorem Sum'.of_univ {X:Type} {f:X → ℝ} (hf: AbsConvergent' f) :
+  Sum' (fun x: (Set.univ : Set X) ↦ f x) = Sum' f := by
+  sorry
+
+theorem Sum'.of_comp {X Y:Type} {f:X → ℝ} (hf: AbsConvergent' f) {φ: Y → X}
+  (hφ: Function.Bijective φ) :
+  AbsConvergent' (f ∘ φ) ∧ Sum' f = Sum' (f ∘ φ) := by
+  sorry
+
+/-- Lemma 8.2.7 / Exercise 8.2.4 -/
+theorem Series.divergent_parts_of_divergent {a: ℕ → ℝ} (ha: (a:Series).converges)
+  (ha': ¬ (a:Series).absConverges) :
+  ¬ AbsConvergent (fun n : {n | a n ≥ 0} ↦ a n) ∧ ¬ AbsConvergent (fun n : {n | a n < 0} ↦ a n)
+  := by
+  sorry
+
+/-- Theorem 8.2.8 (Riemann rearrangement theorem) / Exercise 8.2.5 -/
+theorem Series.permute_convergesTo_of_divergent {a: ℕ → ℝ} (ha: (a:Series).converges)
+  (ha': ¬ (a:Series).absConverges) (L:ℝ) :
+  ∃ f : ℕ → ℕ,  Function.Bijective f ∧ (a ∘ f:Series).convergesTo L
+  := by
+  -- This proof is written to follow the structure of the original text.
+  obtain ⟨ h1, h2 ⟩ := divergent_parts_of_divergent ha ha'
+  set A_plus := { n | a n ≥ 0 }
+  set A_minus := {n | a n < 0 }
+  have hdisj : Disjoint A_plus A_minus := by
+    rw [Set.disjoint_iff_inter_eq_empty]; ext n; simp [A_plus, A_minus]
+  have hunion : A_plus ∪ A_minus = Set.univ := by
+    ext n; simp [A_plus, A_minus]; exact le_or_lt _ _
+  have hA_plus_inf : Infinite A_plus := sorry
+  have hA_minus_inf : Infinite A_minus := sorry
+  obtain ⟨ a_plus, ha_plus_bij, ha_plus_mono ⟩ := (Nat.monotone_enum_of_infinite A_plus).exists
+  obtain ⟨ a_minus, ha_minus_bij, ha_minus_mono ⟩ := (Nat.monotone_enum_of_infinite A_minus).exists
+  let F : (n : ℕ) → ((m : ℕ) → m < n → ℕ) → ℕ :=
+    fun j n' ↦ if ∑ i:Fin j, n' i (by simp) > L then
+      Nat.min { n ∈ A_plus | ∀ i:Fin j, n ≠ n' i (by simp) }
+    else
+      Nat.min { n ∈ A_minus | ∀ i:Fin j, n ≠ n' i (by simp) }
+  let n' : ℕ → ℕ := Nat.strongRec F
+  have hn' (j:ℕ) : n' j = if ∑ i:Fin j, n' i > L then
+      Nat.min { n ∈ A_plus | ∀ i:Fin j, n ≠ n' i }
+    else
+      Nat.min { n ∈ A_minus | ∀ i:Fin j, n ≠ n' i }
+    := Nat.strongRec.eq_def _ j
+  have hn'_plus_inf (j:ℕ) : Infinite { n ∈ A_plus | ∀ i:Fin j, n ≠ n' i } := by sorry
+  have hn'_minus_inf (j:ℕ) : Infinite { n ∈ A_minus | ∀ i:Fin j, n ≠ n' i } := by sorry
+  have hn'_inj : Function.Injective n' := by sorry
+  have h_case_I : Infinite { j | ∑ i:Fin j, n' i > L } := by sorry
+  have h_case_II : Infinite { j | ∑ i:Fin j, n' i ≤ L } := by sorry
+  have hn'_surj : Function.Surjective n' := by sorry
+  have hconv : Filter.Tendsto (a ∘ n') Filter.atTop (nhds 0) := by sorry
+  have hsum : (a ∘ n':Series).convergesTo L := by sorry
+  use n'
+  refine ⟨ ⟨ hn'_inj, hn'_surj ⟩, ?_ ⟩; convert hsum
+
+/-- Exercise 8.2.6 -/
+theorem Series.permute_diverges_of_divergent {a: ℕ → ℝ} (ha: (a:Series).converges)
+  (ha': ¬ (a:Series).absConverges)  :
+  ∃ f : ℕ → ℕ,  Function.Bijective f ∧ Filter.Tendsto (fun N ↦ ((a ∘ f:Series).partial N : EReal)) Filter.atTop (nhds ⊤) := by
+  sorry
+
+theorem Series.permute_diverges_of_divergent' {a: ℕ → ℝ} (ha: (a:Series).converges)
+  (ha': ¬ (a:Series).absConverges)  :
+  ∃ f : ℕ → ℕ,  Function.Bijective f ∧ Filter.Tendsto (fun N ↦ ((a ∘ f:Series).partial N : EReal)) Filter.atTop (nhds ⊥) := by
+  sorry
 
 
 
