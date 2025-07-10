@@ -146,7 +146,6 @@ To build this project after [installing Lean](https://lean-lang.org/documentatio
 
 ```
 % cd analysis/
-% cd Analysis/
 % lake exe cache get
 % lake build
 ```
@@ -157,11 +156,9 @@ To build the project's web page after [installing Lean](https://lean-lang.org/do
 
 ```
 % cd analysis/
-% cd Analysis/
 % lake exe cache get
 % lake -R -Kenv=dev build Analysis:docs
 % lake build
-% cd ../
 % cd book/
 % lake exe analysis-book
 % cd ../
