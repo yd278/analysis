@@ -145,7 +145,8 @@ theorem close_mul_right {ε x y z:ℚ} (hε: ε ≥ 0) (hxy: ε.close x y) :
 /-- Proposition 4.3.7(h) / Exercise 4.3.2 -/
 theorem close_mul_mul {ε δ x y z w:ℚ} (hε: ε ≥ 0) (hxy: ε.close x y) (hzw: δ.close z w) :
     (ε*|z|+δ*|x|+ε*δ).close (x * z) (y * w) := by
-  -- The proof is written to follow the structure of the original text, though on formalization it was revealed that the hypothesis δ ≥ 0 was unnecessary.
+  -- The proof is written to follow the structure of the original text, though
+  -- on formalization it was revealed that the hypothesis δ ≥ 0 was unnecessary.
   set a := y-x
   have ha : y = x + a := by simp [a]
   have haε: |a| ≤ ε := by rwa [close_symm, close_iff] at hxy
@@ -157,12 +158,9 @@ theorem close_mul_mul {ε δ x y z w:ℚ} (hε: ε ≥ 0) (hxy: ε.close x y) (h
   calc
     _ = |a * z + b * x + a * b| := by rw [this]; congr; ring
     _ ≤ |a * z + b * x| + |a * b| := abs_add _ _
-    _ ≤ |a * z| + |b * x| + |a * b| := by
-      gcongr; exact abs_add _ _
-    _ = |a| * |z| + |b| * |x| + |a| * |b| := by
-      simp_rw [abs_mul]
-    _ ≤ _ := by
-      gcongr
+    _ ≤ |a * z| + |b * x| + |a * b| := by gcongr; exact abs_add _ _
+    _ = |a| * |z| + |b| * |x| + |a| * |b| := by simp_rw [abs_mul]
+    _ ≤ _ := by gcongr
 
 /-- Definition 4.3.9 (exponentiation).  Here we use the Mathlib definition.-/
 lemma pow_zero (x:ℚ) : x^0 = 1 := rfl
@@ -172,7 +170,7 @@ example : (0:ℚ)^0 = 1 := pow_zero 0
 /-- Definition 4.3.9 (exponentiation).  Here we use the Mathlib definition.-/
 lemma pow_succ (x:ℚ) (n:ℕ) : x^(n+1) = x^n * x := _root_.pow_succ x n
 
-/-- Proposition 4.3.10 (Properties of exponentiation, I) / Exercise 4.3.3 -/
+/-- Proposition 4.3.10(a) (Properties of exponentiation, I) / Exercise 4.3.3 -/
 theorem pow_add (x:ℚ) (m n:ℕ) : x^n * x^m = x^(n+m) := by sorry
 
 /-- Proposition 4.3.10(a) (Properties of exponentiation, I) / Exercise 4.3.3 -/

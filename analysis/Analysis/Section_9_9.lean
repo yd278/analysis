@@ -149,18 +149,18 @@ example : ¬ UniformContinuousOn f_9_9_11 Set.univ := by
 
 /-- Proposition 9.9.12 / Exercise 9.9.3  -/
 theorem UniformContinuousOn.ofCauchy  {X:Set ℝ} (f: ℝ → ℝ)
-  (hf: UniformContinuousOn f X) {x: ℕ → ℝ} (hx: (x:Sequence).isCauchy) (hmem : ∀ n, x n ∈ X) :
-  (f ∘ x:Sequence).isCauchy := by
+  (hf: UniformContinuousOn f X) {x: ℕ → ℝ} (hx: (x:Sequence).IsCauchy) (hmem : ∀ n, x n ∈ X) :
+  (f ∘ x:Sequence).IsCauchy := by
   sorry
 
 /-- Example 9.9.13 -/
-example : ((fun n:ℕ ↦ 1/(n+1:ℝ)):Sequence).isCauchy := by
+example : ((fun n:ℕ ↦ 1/(n+1:ℝ)):Sequence).IsCauchy := by
   sorry
 
 example (n:ℕ) : 1/(n+1:ℝ) ∈ Set.Ioo 0 2 := by
   sorry
 
-example : ¬ ((fun n:ℕ ↦ f_9_9_10 (1/(n+1:ℝ))):Sequence).isCauchy := by
+example : ¬ ((fun n:ℕ ↦ f_9_9_10 (1/(n+1:ℝ))):Sequence).IsCauchy := by
   sorry
 
 example : ¬ UniformContinuousOn f_9_9_10 (Set.Ioo 0 2) := by

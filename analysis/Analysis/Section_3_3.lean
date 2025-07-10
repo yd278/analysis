@@ -89,45 +89,45 @@ theorem Function.eval_of {X Y: Set} (f: X → Y) (x:X) : (Function.mk_fn f) x = 
   symm; rw [eval]
 
 
-/-- Example 3.3.2.   -/
-abbrev P_3_3_2a : nat → nat → Prop := fun x y ↦ (y:ℕ) = (x:ℕ)+1
+/-- Example 3.3.3.   -/
+abbrev P_3_3_3a : nat → nat → Prop := fun x y ↦ (y:ℕ) = (x:ℕ)+1
 
-theorem SetTheory.Set.P_3_3_2a_existsUnique (x: nat) : ∃! y: nat, P_3_3_2a x y := by
+theorem SetTheory.Set.P_3_3_3a_existsUnique (x: nat) : ∃! y: nat, P_3_3_3a x y := by
   apply ExistsUnique.intro ((x+1:ℕ):nat)
-  . simp [P_3_3_2a]
+  . simp [P_3_3_3a]
   intro y h
-  simp only [P_3_3_2a, Equiv.symm_apply_eq] at h
+  simp only [P_3_3_3a, Equiv.symm_apply_eq] at h
   assumption
 
-abbrev SetTheory.Set.f_3_3_2a : Function nat nat := Function.mk P_3_3_2a P_3_3_2a_existsUnique
+abbrev SetTheory.Set.f_3_3_3a : Function nat nat := Function.mk P_3_3_3a P_3_3_3a_existsUnique
 
-theorem SetTheory.Set.f_3_3_2a_eval (x y: nat) : y = f_3_3_2a x ↔ (y:ℕ) = (x+1:ℕ) :=
+theorem SetTheory.Set.f_3_3_3a_eval (x y: nat) : y = f_3_3_3a x ↔ (y:ℕ) = (x+1:ℕ) :=
   Function.eval _ _ _
 
 
-theorem SetTheory.Set.f_3_3_2a_eval' (n: ℕ) : f_3_3_2a (n:nat) = (n+1:ℕ) := by
+theorem SetTheory.Set.f_3_3_3a_eval' (n: ℕ) : f_3_3_3a (n:nat) = (n+1:ℕ) := by
   symm
-  simp only [f_3_3_2a_eval, nat_equiv_coe_of_coe]
+  simp only [f_3_3_3a_eval, nat_equiv_coe_of_coe]
 
-theorem SetTheory.Set.f_3_3_2a_eval'' : f_3_3_2a 4 = 5 :=  f_3_3_2a_eval' 4
+theorem SetTheory.Set.f_3_3_3a_eval'' : f_3_3_3a 4 = 5 :=  f_3_3_3a_eval' 4
 
-theorem SetTheory.Set.f_3_3_2a_eval''' (n:ℕ) : f_3_3_2a (2*n+3: ℕ) = (2*n+4:ℕ) := by
-  convert f_3_3_2a_eval' _
+theorem SetTheory.Set.f_3_3_3a_eval''' (n:ℕ) : f_3_3_3a (2*n+3: ℕ) = (2*n+4:ℕ) := by
+  convert f_3_3_3a_eval' _
 
-abbrev SetTheory.Set.P_3_3_2b : nat → nat → Prop := fun x y ↦ (y+1:ℕ) = (x:ℕ)
+abbrev SetTheory.Set.P_3_3_3b : nat → nat → Prop := fun x y ↦ (y+1:ℕ) = (x:ℕ)
 
-theorem SetTheory.Set.not_P_3_3_2b_existsUnique : ¬ ∀ x, ∃! y: nat, P_3_3_2b x y := by
+theorem SetTheory.Set.not_P_3_3_3b_existsUnique : ¬ ∀ x, ∃! y: nat, P_3_3_3b x y := by
   by_contra h
   replace h := ExistsUnique.exists (h (0:nat))
   obtain ⟨ n, hn ⟩ := h
   have : ((0:nat):ℕ) = 0 := by simp [OfNat.ofNat]
-  simp [P_3_3_2b, this] at hn
+  simp [P_3_3_3b, this] at hn
 
-abbrev SetTheory.Set.P_3_3_2c : (nat \ {(0:Object)}: Set) → nat → Prop :=
+abbrev SetTheory.Set.P_3_3_3c : (nat \ {(0:Object)}: Set) → nat → Prop :=
   fun x y ↦ ((y+1:ℕ):Object) = x
 
-theorem SetTheory.Set.P_3_3_2c_existsUnique (x: (nat \ {(0:Object)}: Set)) :
-    ∃! y: nat, P_3_3_2c x y := by
+theorem SetTheory.Set.P_3_3_3c_existsUnique (x: (nat \ {(0:Object)}: Set)) :
+    ∃! y: nat, P_3_3_3c x y := by
   -- Some technical unpacking here due to the subtle distinctions between the `Object` type,
   -- sets converted to subtypes of `Object`, and subsets of those sets.
   obtain ⟨ x, hx ⟩ := x
@@ -135,7 +135,7 @@ theorem SetTheory.Set.P_3_3_2c_existsUnique (x: (nat \ {(0:Object)}: Set)) :
   obtain ⟨ hx1, hx2⟩ := hx
   set n := ((⟨ x, hx1 ⟩:nat):ℕ)
   have : x = (n:nat) := by simp [n]
-  simp [P_3_3_2c, this, SetTheory.Object.ofnat_eq'] at hx2 ⊢
+  simp [P_3_3_3c, this, SetTheory.Object.ofnat_eq'] at hx2 ⊢
   replace hx2 : n = (n-1) + 1 := by omega
   apply ExistsUnique.intro ((n-1:ℕ):nat)
   . simp [←hx2]
@@ -143,11 +143,11 @@ theorem SetTheory.Set.P_3_3_2c_existsUnique (x: (nat \ {(0:Object)}: Set)) :
   set m := (y:ℕ)
   simp [←hy, m]
 
-abbrev SetTheory.Set.f_3_3_2c : Function (nat \ {(0:Object)}: Set) nat :=
-  Function.mk P_3_3_2c P_3_3_2c_existsUnique
+abbrev SetTheory.Set.f_3_3_3c : Function (nat \ {(0:Object)}: Set) nat :=
+  Function.mk P_3_3_3c P_3_3_3c_existsUnique
 
-theorem SetTheory.Set.f_3_3_2c_eval (x: (nat \ {(0:Object)}: Set)) (y: nat) :
-    y = f_3_3_2c x ↔ ((y+1:ℕ):Object) = x := Function.eval _ _ _
+theorem SetTheory.Set.f_3_3_3c_eval (x: (nat \ {(0:Object)}: Set)) (y: nat) :
+    y = f_3_3_3c x ↔ ((y+1:ℕ):Object) = x := Function.eval _ _ _
 
 /-- Create a version of a non-zero `n` inside `nat \ {0}` for any natural number n. -/
 abbrev SetTheory.Set.coe_nonzero (n:ℕ) (h: n ≠ 0): (nat \ {(0:Object)}: Set) :=
@@ -157,17 +157,17 @@ abbrev SetTheory.Set.coe_nonzero (n:ℕ) (h: n ≠ 0): (nat \ {(0:Object)}: Set)
     exact Subtype.property _
   ⟩
 
-theorem SetTheory.Set.f_3_3_2c_eval' (n: ℕ) : f_3_3_2c (coe_nonzero (n+1) (by positivity)) = n := by
-  symm; rw [f_3_3_2c_eval]; simp
+theorem SetTheory.Set.f_3_3_3c_eval' (n: ℕ) : f_3_3_3c (coe_nonzero (n+1) (by positivity)) = n := by
+  symm; rw [f_3_3_3c_eval]; simp
 
-theorem SetTheory.Set.f_3_3_2c_eval'' : f_3_3_2c (coe_nonzero 4 (by positivity)) = 3 := by
-  convert f_3_3_2c_eval' 3
+theorem SetTheory.Set.f_3_3_3c_eval'' : f_3_3_3c (coe_nonzero 4 (by positivity)) = 3 := by
+  convert f_3_3_3c_eval' 3
 
-theorem SetTheory.Set.f_3_3_2c_eval''' (n:ℕ) :
-    f_3_3_2c (coe_nonzero (2*n+3) (by positivity)) = (2*n+2:ℕ) := by convert f_3_3_2c_eval' (2*n+2)
+theorem SetTheory.Set.f_3_3_3c_eval''' (n:ℕ) :
+    f_3_3_3c (coe_nonzero (2*n+3) (by positivity)) = (2*n+2:ℕ) := by convert f_3_3_3c_eval' (2*n+2)
 
 /--
-  Example 3.3.3 is a little tricky to replicate with the current formalism as the real numbers
+  Example 3.3.4 is a little tricky to replicate with the current formalism as the real numbers
   have not been constructed yet.  Instead, I offer some Mathlib counterparts.  Of course, filling
   in these sorries will require using some Mathlib API, for instance for the nonnegative real
   class `NNReal`, and how this class interacts with `ℝ`.
@@ -179,19 +179,19 @@ example : ¬ ∃ f: NNReal → ℝ, ∀ x y, y = f x ↔ y^2 = x := by sorry
 example : ∃ f: NNReal → NNReal, ∀ x y, y = f x ↔ y^2 = x := by sorry
 
 
-/-- Example 3.3.4. The unused variable `_x` is underscored to avoid triggering a linter. -/
-abbrev SetTheory.Set.P_3_3_4 : nat → nat → Prop := fun _x y ↦ y = 7
+/-- Example 3.3.5. The unused variable `_x` is underscored to avoid triggering a linter. -/
+abbrev SetTheory.Set.P_3_3_5 : nat → nat → Prop := fun _x y ↦ y = 7
 
-theorem SetTheory.Set.P_3_3_4_existsUnique (x: nat) : ∃! y: nat, P_3_3_4 x y := by
+theorem SetTheory.Set.P_3_3_5_existsUnique (x: nat) : ∃! y: nat, P_3_3_5 x y := by
   apply ExistsUnique.intro 7
-  all_goals simp [P_3_3_4]
+  all_goals simp [P_3_3_5]
 
-abbrev SetTheory.Set.f_3_3_4 : Function nat nat := Function.mk P_3_3_4 P_3_3_4_existsUnique
+abbrev SetTheory.Set.f_3_3_5 : Function nat nat := Function.mk P_3_3_5 P_3_3_5_existsUnique
 
-theorem SetTheory.Set.f_3_3_4_eval (x: nat) : f_3_3_4 x = 7 := by
+theorem SetTheory.Set.f_3_3_5_eval (x: nat) : f_3_3_5 x = 7 := by
   symm; rw [Function.eval]
 
-/-- Definition 3.3.7 (Equality of functions) -/
+/-- Definition 3.3.8 (Equality of functions) -/
 theorem Function.eq_iff {X Y: Set} (f g: Function X Y) : f = g ↔ ∀ x: X, f x = g x := by
   constructor
   . intro h; simp [h]
@@ -204,14 +204,14 @@ theorem Function.eq_iff {X Y: Set} (f g: Function X Y) : f = g ↔ ∀ x: X, f x
   rwa [←Function.eval _ _ _, h x, Function.eval _ _ _]
 
 /--
-  Example 3.3.8 (simplified).  The second part of the example is tricky to replicate in this
+  Example 3.3.10 (simplified).  The second part of the example is tricky to replicate in this
   formalism, so a Mathlib substitute is offered instead.
 -/
-abbrev SetTheory.Set.f_3_3_8a : Function nat nat := Function.mk_fn (fun x ↦ (x^2 + 2*x + 1:ℕ))
+abbrev SetTheory.Set.f_3_3_10a : Function nat nat := Function.mk_fn (fun x ↦ (x^2 + 2*x + 1:ℕ))
 
-abbrev SetTheory.Set.f_3_3_8b : Function nat nat := Function.mk_fn (fun x ↦ ((x+1)^2:ℕ))
+abbrev SetTheory.Set.f_3_3_10b : Function nat nat := Function.mk_fn (fun x ↦ ((x+1)^2:ℕ))
 
-theorem SetTheory.Set.f_3_3_8_eq : f_3_3_8a = f_3_3_8b := by
+theorem SetTheory.Set.f_3_3_10_eq : f_3_3_10a = f_3_3_10b := by
   rw [Function.eq_iff]
   intro x
   rw [Function.eval_of, Function.eval_of]
@@ -222,13 +222,13 @@ example : (fun x:NNReal ↦ (x:ℝ)) = (fun x:NNReal ↦ |(x:ℝ)|) := by sorry
 
 example : (fun x:ℝ ↦ (x:ℝ)) ≠ (fun x:ℝ ↦ |(x:ℝ)|) := by sorry
 
-/-- Example 3.3.9 -/
-abbrev SetTheory.Set.f_3_3_9 (X:Set) : Function (∅:Set) X :=
+/-- Example 3.3.11 -/
+abbrev SetTheory.Set.f_3_3_11 (X:Set) : Function (∅:Set) X :=
   Function.mk (fun _ _ ↦ True) (by intro ⟨ x,hx ⟩; simp at hx)
 
 theorem SetTheory.Set.empty_function_unique {X: Set} (f g: Function (∅:Set) X) : f = g := by sorry
 
-/-- Definition 3.3.10 (Composition) -/
+/-- Definition 3.3.13 (Composition) -/
 noncomputable abbrev Function.comp {X Y Z: Set} (g: Function Y Z) (f: Function X Y) :
     Function X Z :=
   Function.mk_fn (fun x ↦ g (f x))
@@ -247,26 +247,26 @@ theorem Function.comp_eval {X Y Z: Set} (g: Function Y Z) (f: Function X Y) (x: 
 theorem Function.comp_eq_comp {X Y Z: Set} (g: Function Y Z) (f: Function X Y) :
     (g ○ f).to_fn = g.to_fn ∘ f.to_fn := by sorry
 
-/-- Example 3.3.11 -/
-abbrev SetTheory.Set.f_3_3_11 : Function nat nat := Function.mk_fn (fun x ↦ (2*x:ℕ))
+/-- Example 3.3.14 -/
+abbrev SetTheory.Set.f_3_3_14 : Function nat nat := Function.mk_fn (fun x ↦ (2*x:ℕ))
 
-abbrev SetTheory.Set.g_3_3_11 : Function nat nat := Function.mk_fn (fun x ↦ (x+3:ℕ))
+abbrev SetTheory.Set.g_3_3_14 : Function nat nat := Function.mk_fn (fun x ↦ (x+3:ℕ))
 
-theorem SetTheory.Set.g_circ_f_3_3_11 :
-    g_3_3_11 ○ f_3_3_11 = Function.mk_fn (fun x ↦ ((2*(x:ℕ)+3:ℕ):nat)) := by
+theorem SetTheory.Set.g_circ_f_3_3_14 :
+    g_3_3_14 ○ f_3_3_14 = Function.mk_fn (fun x ↦ ((2*(x:ℕ)+3:ℕ):nat)) := by
   rw [Function.eq_iff]
   intro x
   rw [Function.comp_eval, Function.eval_of, Function.eval_of, Function.eval_of]
   simp
 
-theorem SetTheory.Set.f_circ_g_3_3_11 :
-    f_3_3_11 ○ g_3_3_11 = Function.mk_fn (fun x ↦ ((2*(x:ℕ)+6:ℕ):nat)) := by
+theorem SetTheory.Set.f_circ_g_3_3_14 :
+    f_3_3_14 ○ g_3_3_14 = Function.mk_fn (fun x ↦ ((2*(x:ℕ)+6:ℕ):nat)) := by
   rw [Function.eq_iff]
   intro x
   rw [Function.comp_eval, Function.eval_of, Function.eval_of, Function.eval_of]
   simp; ring
 
-/-- Lemma 3.3.12 (Composition is associative) -/
+/-- Lemma 3.3.15 (Composition is associative) -/
 theorem SetTheory.Set.comp_assoc {W X Y Z: Set} (h: Function Y Z) (g: Function X Y)
   (f: Function W X) :
     h ○ (g ○ f) = (h ○ g) ○ f := by
@@ -290,73 +290,73 @@ theorem Function.one_to_one_iff' {X Y: Set} (f: Function X Y) :
     f.one_to_one ↔ Function.Injective f.to_fn := by sorry
 
 /--
-  Example 3.3.15.  One half of the example requires the integers, and so is expressed using
+  Example 3.3.18.  One half of the example requires the integers, and so is expressed using
   Mathlib functions instead of Chapter 3 functions.
 -/
-theorem SetTheory.Set.f_3_3_15_one_to_one :
+theorem SetTheory.Set.f_3_3_18_one_to_one :
     (Function.mk_fn (fun (n:nat) ↦ ((n^2:ℕ):nat))).one_to_one := by sorry
 
 example : ¬ Function.Injective (fun (n:ℤ) ↦ n^2) := by sorry
 
 example : Function.Injective (fun (n:ℕ) ↦ n^2) := by sorry
 
-/-- Remark 3.3.16 -/
+/-- Remark 3.3.19 -/
 theorem SetTheory.Set.two_to_one {X Y: Set} {f: Function X Y} (h: ¬ f.one_to_one) :
     ∃ x x': X, x ≠ x' ∧ f x = f x' := by sorry
 
-/-- Definition 3.3.17 (Onto functions) -/
+/-- Definition 3.3.20 (Onto functions) -/
 abbrev Function.onto {X Y: Set} (f: Function X Y) : Prop := ∀ y: Y, ∃ x: X, f x = y
 
 /-- Compatibility with Mathlib's Function.Surjective-/
 theorem Function.onto_iff {X Y: Set} (f: Function X Y) : f.onto ↔ Function.Surjective f.to_fn := by
   sorry
 
-/-- Example 3.3.18 (using Mathlib) -/
+/-- Example 3.3.21 (using Mathlib) -/
 example : ¬ Function.Surjective (fun (n:ℤ) ↦ n^2) := by sorry
 
-abbrev A_3_3_18 := { m:ℤ // ∃ n:ℤ, m = n^2 }
+abbrev A_3_3_21 := { m:ℤ // ∃ n:ℤ, m = n^2 }
 
-example : Function.Surjective (fun (n:ℤ) ↦ ⟨ n^2, by use n ⟩ : ℤ → A_3_3_18) := by sorry
+example : Function.Surjective (fun (n:ℤ) ↦ ⟨ n^2, by use n ⟩ : ℤ → A_3_3_21) := by sorry
 
-/-- Definition 3.3.20 (Bijective functions) -/
+/-- Definition 3.3.23 (Bijective functions) -/
 abbrev Function.bijective {X Y: Set} (f: Function X Y) : Prop := f.one_to_one ∧ f.onto
 
 /-- Compatibility with Mathlib's Function.Bijective-/
 theorem Function.bijective_iff {X Y: Set} (f: Function X Y) :
     f.bijective ↔ Function.Bijective f.to_fn := by sorry
 
-/-- Example 3.3.21 (using Mathlib) -/
-abbrev f_3_3_21 : Fin 3 → ({3,4}:_root_.Set ℕ) := fun x ↦ match x with
+/-- Example 3.3.24 (using Mathlib) -/
+abbrev f_3_3_24 : Fin 3 → ({3,4}:_root_.Set ℕ) := fun x ↦ match x with
 | 0 => ⟨ 3, by norm_num ⟩
 | 1 => ⟨ 3, by norm_num ⟩
 | 2 => ⟨ 4, by norm_num ⟩
 
-example : ¬ Function.Injective f_3_3_21 := by sorry
-example : ¬ Function.Bijective f_3_3_21 := by sorry
+example : ¬ Function.Injective f_3_3_24 := by sorry
+example : ¬ Function.Bijective f_3_3_24 := by sorry
 
-abbrev g_3_3_21 : Fin 2 → ({2,3,4}:_root_.Set ℕ) := fun x ↦ match x with
+abbrev g_3_3_24 : Fin 2 → ({2,3,4}:_root_.Set ℕ) := fun x ↦ match x with
 | 0 => ⟨ 2, by norm_num ⟩
 | 1 => ⟨ 3, by norm_num ⟩
 
-example : ¬ Function.Surjective g_3_3_21 := by sorry
-example : ¬ Function.Bijective g_3_3_21 := by sorry
+example : ¬ Function.Surjective g_3_3_24 := by sorry
+example : ¬ Function.Bijective g_3_3_24 := by sorry
 
-abbrev h_3_3_21 : Fin 3 → ({3,4,5}:_root_.Set ℕ) := fun x ↦ match x with
+abbrev h_3_3_24 : Fin 3 → ({3,4,5}:_root_.Set ℕ) := fun x ↦ match x with
 | 0 => ⟨ 3, by norm_num ⟩
 | 1 => ⟨ 4, by norm_num ⟩
 | 2 => ⟨ 5, by norm_num ⟩
 
-example : Function.Bijective h_3_3_21 := by sorry
+example : Function.Bijective h_3_3_24 := by sorry
 
 /--
-  Example 3.3.22 is formulated using Mathlib rather than the set theory framework here to avoid
+  Example 3.3.25 is formulated using Mathlib rather than the set theory framework here to avoid
   some tedious technical issues (cf. Exercise 3.3.2)
 -/
 example : Function.Bijective (fun n ↦ ⟨ n+1, by omega⟩ : ℕ → { n:ℕ // n ≠ 0 }) := by sorry
 
 example : ¬ Function.Bijective (fun n ↦ n+1) := by sorry
 
-/-- Remark 3.3.24 -/
+/-- Remark 3.3.27 -/
 theorem Function.bijective_incorrect_def :
     ∃ X Y: Set, ∃ f: Function X Y, (∀ x: X, ∃! y: Y, y = f x) ∧ ¬ f.bijective := by sorry
 
@@ -406,11 +406,11 @@ theorem Function.comp_of_surj {X Y Z:Set} {f: Function X Y} {g : Function Y Z} (
 /--
   Exercise 3.3.3 - fill in the sorrys in the statements in  a reasonable fashion.
 -/
-example (X: Set) : (SetTheory.Set.f_3_3_9 X).one_to_one ↔ sorry := by sorry
+example (X: Set) : (SetTheory.Set.f_3_3_11 X).one_to_one ↔ sorry := by sorry
 
-example (X: Set) : (SetTheory.Set.f_3_3_9 X).onto ↔ sorry := by sorry
+example (X: Set) : (SetTheory.Set.f_3_3_11 X).onto ↔ sorry := by sorry
 
-example (X: Set) : (SetTheory.Set.f_3_3_9 X).bijective ↔ sorry := by sorry
+example (X: Set) : (SetTheory.Set.f_3_3_11 X).bijective ↔ sorry := by sorry
 
 /--
   Exercise 3.3.4.  State and prove theorems or counterexamples in the case that `hg` or `hf` is
@@ -420,7 +420,7 @@ theorem Function.comp_cancel_left {X Y Z:Set} {f f': Function X Y} {g : Function
   (heq : g ○ f = g ○ f') (hg: g.one_to_one) : f = f' := by sorry
 
 theorem Function.comp_cancel_right {X Y Z:Set} {f: Function X Y} {g g': Function Y Z}
-  (heq : g ○ f = g' ○ f) (hf: g.onto) : g = g' := by sorry
+  (heq : g ○ f = g' ○ f) (hf: f.onto) : g = g' := by sorry
 
 /--
   Exercise 3.3.5.  State or prove theorems or counterexamples in the case that `f` is replaced

@@ -229,9 +229,7 @@ instance Int.instCommMonoid : CommMonoid Int where
     obtain ⟨ c, d, rfl ⟩ := eq_diff y
     obtain ⟨ e, f, rfl ⟩ := eq_diff z
     simp_rw [mul_eq]
-    congr 1
-    . ring
-    ring
+    congr 1 <;> ring
   one_mul := by sorry
   mul_one := by sorry
 

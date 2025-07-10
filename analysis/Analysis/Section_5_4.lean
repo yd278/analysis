@@ -61,16 +61,16 @@ theorem not_bounded_away_pos_neg {a:ℕ → ℚ} : ¬ (bounded_away_pos a ∧ bo
   sorry
 
 abbrev Real.isPos (x:Real) : Prop :=
-  ∃ a:ℕ → ℚ, bounded_away_pos a ∧ (a:Sequence).isCauchy ∧ x = LIM a
+  ∃ a:ℕ → ℚ, bounded_away_pos a ∧ (a:Sequence).IsCauchy ∧ x = LIM a
 
 abbrev Real.isNeg (x:Real) : Prop :=
-  ∃ a:ℕ → ℚ, bounded_away_neg a ∧ (a:Sequence).isCauchy ∧ x = LIM a
+  ∃ a:ℕ → ℚ, bounded_away_neg a ∧ (a:Sequence).IsCauchy ∧ x = LIM a
 
 theorem Real.isPos_def (x:Real) :
-    Real.isPos x ↔ ∃ a:ℕ → ℚ, bounded_away_pos a ∧ (a:Sequence).isCauchy ∧ x = LIM a := by rfl
+    Real.isPos x ↔ ∃ a:ℕ → ℚ, bounded_away_pos a ∧ (a:Sequence).IsCauchy ∧ x = LIM a := by rfl
 
 theorem Real.isNeg_def (x:Real) :
-    Real.isNeg x ↔ ∃ a:ℕ → ℚ, bounded_away_neg a ∧ (a:Sequence).isCauchy ∧ x = LIM a := by rfl
+    Real.isNeg x ↔ ∃ a:ℕ → ℚ, bounded_away_neg a ∧ (a:Sequence).IsCauchy ∧ x = LIM a := by rfl
 
 /-- Proposition 5.4.4 (basic properties of positive reals) / Exercise 5.4.1 -/
 theorem Real.trichotomous (x:Real) : x = 0 ∨ x.isPos ∨ x.isNeg := by sorry
@@ -242,7 +242,7 @@ instance Real.instIsStrictOrderedRing : IsStrictOrderedRing Real where
   zero_le_one := by sorry
 
 /-- Proposition 5.4.9 (The non-negative reals are closed)-/
-theorem Real.LIM_of_nonneg {a: ℕ → ℚ} (ha: ∀ n, a n ≥ 0) (hcauchy: (a:Sequence).isCauchy) :
+theorem Real.LIM_of_nonneg {a: ℕ → ℚ} (ha: ∀ n, a n ≥ 0) (hcauchy: (a:Sequence).IsCauchy) :
     LIM a ≥ 0 := by
   -- This proof is written to follow the structure of the original text.
   by_contra! hlim
@@ -270,12 +270,12 @@ theorem Real.LIM_of_nonneg {a: ℕ → ℚ} (ha: ∀ n, a n ≥ 0) (hcauchy: (a:
   have claim3 : ¬ Sequence.equiv a b := by
     contrapose! claim2
     rw [Sequence.equiv_def] at claim2
-    exact claim2 (c/2) (half_pos cpos)
+    solve_by_elim [half_pos]
   simp_rw [x, LIM_eq_LIM hcauchy hb_cauchy] at hlim
   contradiction
 
 /-- Corollary 5.4.10 -/
-theorem Real.LIM_mono {a b:ℕ → ℚ} (ha: (a:Sequence).isCauchy) (hb: (b:Sequence).isCauchy)
+theorem Real.LIM_mono {a b:ℕ → ℚ} (ha: (a:Sequence).IsCauchy) (hb: (b:Sequence).IsCauchy)
   (hmono: ∀ n, a n ≤ b n) :
     LIM a ≤ LIM b := by
   -- This proof is written to follow the structure of the original text.
@@ -285,8 +285,8 @@ theorem Real.LIM_mono {a b:ℕ → ℚ} (ha: (a:Sequence).isCauchy) (hb: (b:Sequ
 
 /-- Remark 5.4.11 --/
 theorem Real.LIM_mono_fail :
-    ∃ (a b:ℕ → ℚ), (a:Sequence).isCauchy
-    ∧ (b:Sequence).isCauchy
+    ∃ (a b:ℕ → ℚ), (a:Sequence).IsCauchy
+    ∧ (b:Sequence).IsCauchy
     ∧ ¬ (∀ n, a n > b n)
     ∧ ¬ LIM a > LIM b := by
   use (fun n ↦ 1 + 1/(n:ℚ))
@@ -309,14 +309,14 @@ theorem Real.exists_rat_le_and_nat_ge {x:Real} (hx: x.isPos) :
   . refine ⟨ q, hq, ?_ ⟩
     convert LIM_mono _ hcauchy hbound
     . exact Real.ratCast_def q
-    exact Sequence.isCauchy_of_const q
+    exact Sequence.IsCauchy.const q
   obtain ⟨ N, hN  ⟩ := exists_nat_gt r
   use N
   calc
     x ≤ r := by
       rw [Real.ratCast_def r]
       convert LIM_mono hcauchy _ _
-      . exact Sequence.isCauchy_of_const r
+      . exact Sequence.IsCauchy.const r
       intro n
       specialize this n
       simp at this
@@ -366,11 +366,11 @@ theorem Real.le_add_eps_iff (x y:Real) : ∀ ε > 0, x ≤ y+ε ↔ x ≤ y := b
 theorem Real.dist_le_eps_iff (x y:Real) : ∀ ε > 0, |x-y| ≤ ε ↔ x = y := by sorry
 
 /-- Exercise 5.4.8 -/
-theorem Real.LIM_of_le {x:Real} {a:ℕ → ℚ} (hcauchy: (a:Sequence).isCauchy) (h: ∀ n, a n ≤ x) :
+theorem Real.LIM_of_le {x:Real} {a:ℕ → ℚ} (hcauchy: (a:Sequence).IsCauchy) (h: ∀ n, a n ≤ x) :
     LIM a ≤ x := by sorry
 
 /-- Exercise 5.4.8 -/
-theorem Real.LIM_of_ge {x:Real} {a:ℕ → ℚ} (hcauchy: (a:Sequence).isCauchy) (h: ∀ n, a n ≥ x) :
+theorem Real.LIM_of_ge {x:Real} {a:ℕ → ℚ} (hcauchy: (a:Sequence).IsCauchy) (h: ∀ n, a n ≥ x) :
     LIM a ≥ x := by sorry
 
 theorem Real.max_eq (x y:Real) : max x y = (if x ≥ y then x else y) :=  max_def' x y

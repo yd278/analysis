@@ -131,8 +131,9 @@ theorem lim_of_exp {x:ℝ} (hpos: 0 < x) (hbound: x < 1) :
   have : lim ((fun (n:ℕ) ↦ x^(n+1)):Sequence) = x * L := calc
     _ = lim (x • ((fun (n:ℕ) ↦ x^n):Sequence)) := by
       congr; ext n
+      . rfl
       by_cases h: n ≥ 0
-      all_goals simp [h, pow_succ']
+      all_goals simp [h, pow_succ', HSMul.hSMul, SMul.smul]
     _ = x * lim ((fun (n:ℕ) ↦ x^n):Sequence) := by
       exact (Sequence.lim_smul x hconv).2
     _ = _ := rfl

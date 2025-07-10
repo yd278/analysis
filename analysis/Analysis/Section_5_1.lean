@@ -37,15 +37,24 @@ structure Sequence where
 instance Sequence.instCoeFun : CoeFun Sequence (fun _ ↦ ℤ → ℚ) where
   coe := fun a ↦ a.seq
 
-/-- Functions from ℕ to ℚ can be thought of as sequences. -/
-instance Sequence.instCoe : Coe (ℕ → ℚ) Sequence where
-  coe := fun a ↦ {
+/--
+Functions from ℕ to ℚ can be thought of as sequences starting from 0; `ofNatFun` performs this conversion.
+
+The `coe` attribute allows the delaborator to print `Sequence.ofNatFun f` as `↑f`, which is more concise; you may safely remove this if you prefer the more explicit notation.
+-/
+@[coe]
+def Sequence.ofNatFun (a : ℕ → ℚ) : Sequence where
     n₀ := 0
     seq := fun n ↦ if n ≥ 0 then a n.toNat else 0
     vanish := by
       intro n hn
       simp [hn]
-  }
+
+/--
+If `a : ℕ → ℚ` is used in a context where a `Sequence` is expected, automatically coerce `a` to `Sequence.ofNatFun a` (which will be pretty-printed as `↑a`)
+-/
+instance : Coe (ℕ → ℚ) Sequence where
+  coe := Sequence.ofNatFun
 
 abbrev Sequence.mk' (n₀:ℤ) (a: { n // n ≥ n₀ } → ℚ) : Sequence where
   n₀ := n₀
@@ -54,12 +63,17 @@ abbrev Sequence.mk' (n₀:ℤ) (a: { n // n ≥ n₀ } → ℚ) : Sequence where
     intro n hn
     simp [hn]
 
-
 lemma Sequence.eval_mk {n n₀:ℤ} (a: { n // n ≥ n₀ } → ℚ) (h: n ≥ n₀) :
     (Sequence.mk' n₀ a) n = a ⟨ n, h ⟩ := by simp [seq, h]
 
 @[simp]
-lemma Sequence.eval_coe (n:ℕ) (a: ℕ → ℚ) : (a:Sequence) n = a n := by simp [seq]
+lemma Sequence.eval_coe (n:ℕ) (a: ℕ → ℚ) : (a:Sequence) n = a n := by norm_cast
+
+@[simp]
+lemma Sequence.eval_coe_at_int (n:ℤ) (a: ℕ → ℚ) : (a:Sequence) n = if n ≥ 0 then a n.toNat else 0 := by norm_cast
+
+@[simp]
+lemma Sequence.n0_coe (a: ℕ → ℚ) : (a:Sequence).n₀ = 0 := by norm_cast
 
 /-- Example 5.1.2 -/
 abbrev Sequence.squares : Sequence := ((fun n:ℕ ↦ (n^2:ℚ)):Sequence)
@@ -98,38 +112,30 @@ namespace Chapter5
 5.1.3 - definition of ε-steadiness for a sequence starting at 0
 -/
 lemma Rat.isSteady_of_coe (ε : ℚ) (a:ℕ → ℚ) :
-    ε.steady (a:Sequence) ↔ ∀ n m : ℕ, ε.close (a n) (a m) := by
+    ε.steady a ↔ ∀ n m : ℕ, ε.close (a n) (a m) := by
   constructor
   · intro h n m
     specialize h n (by simp) m (by simp)
-    dsimp at h
-    exact h
+    simp_all
   intro h n hn m hm
-  dsimp at hn hm
   lift n to ℕ using hn
   lift m to ℕ using hm
   simp [h n m]
 
-def ThreesFun := (fun _:ℕ ↦ (3:ℚ))
-
 /--
-Not in textbook: the sequence 2, 2 ... in 1-steady
+Not in textbook: the sequence 2, 2 ... is 1-steady
 Intended as a demonstration of `Rat.isSteady_of_coe`
 -/
-example : (1:ℚ).steady (ThreesFun:Sequence) := by
-  rw [Rat.isSteady_of_coe]
-  unfold ThreesFun Rat.close
-  intro n m
-  simp
+example : (1:ℚ).steady ((fun _:ℕ ↦ (3:ℚ)):Sequence) := by
+  simp [Rat.isSteady_of_coe, Rat.close]
 
 /--
 Compare: if you need to work with `Rat.steady` on the coercion directly, there will be side conditions `hn : n ≥ 0` and `hm : m ≥ 0` that you will need to deal with.
 -/
-example : (1:ℚ).steady (ThreesFun:Sequence) := by
-  unfold ThreesFun Rat.steady Rat.close
+example : (1:ℚ).steady ( (fun _:ℕ ↦ (3:ℚ)):Sequence) := by
+  unfold Rat.steady Rat.close
   intro n hn m hm
-  dsimp at * -- Not strictly necessary, but cleans up the proof state so you can see what's going on
-  simp [hn, hm]
+  simp_all [Sequence.n0_coe, Sequence.eval_coe_at_int]
 
 /-- Example 5.1.5 -/
 example : (1:ℚ).steady ((fun n:ℕ ↦ if Even n then (1:ℚ) else (0:ℚ)):Sequence) := by sorry
@@ -193,17 +199,17 @@ lemma Sequence.ex_5_1_7_c : (0.1:ℚ).eventuallySteady ((fun n:ℕ ↦ (n+1:ℚ)
 lemma Sequence.ex_5_1_7_d {ε:ℚ} (hε:ε>0) :
     ε.eventuallySteady ((fun n:ℕ ↦ if n=0 then (10:ℚ) else (0:ℚ) ):Sequence) := by sorry
 
-abbrev Sequence.isCauchy (a:Sequence) : Prop := ∀ ε > (0:ℚ), ε.eventuallySteady a
+abbrev Sequence.IsCauchy (a:Sequence) : Prop := ∀ ε > (0:ℚ), ε.eventuallySteady a
 
 lemma Sequence.isCauchy_def (a:Sequence) :
-  a.isCauchy ↔ ∀ ε > (0:ℚ), ε.eventuallySteady a := by rfl
+  a.IsCauchy ↔ ∀ ε > (0:ℚ), ε.eventuallySteady a := by rfl
 
-lemma Sequence.isCauchy_of_coe (a:ℕ → ℚ) :
-    (a:Sequence).isCauchy ↔ ∀ ε > (0:ℚ), ∃ N, ∀ j ≥ N, ∀ k ≥ N,
+lemma Sequence.IsCauchy.coe (a:ℕ → ℚ) :
+    (a:Sequence).IsCauchy ↔ ∀ ε > (0:ℚ), ∃ N, ∀ j ≥ N, ∀ k ≥ N,
     Section_4_3.dist (a j) (a k) ≤ ε := by sorry
 
-lemma Sequence.isCauchy_of_mk {n₀:ℤ} (a: {n // n ≥ n₀} → ℚ) :
-    (mk' n₀ a).isCauchy ↔ ∀ ε > (0:ℚ), ∃ N ≥ n₀, ∀ j ≥ N, ∀ k ≥ N,
+lemma Sequence.IsCauchy.mk {n₀:ℤ} (a: {n // n ≥ n₀} → ℚ) :
+    (mk' n₀ a).IsCauchy ↔ ∀ ε > (0:ℚ), ∃ N ≥ n₀, ∀ j ≥ N, ∀ k ≥ N,
     Section_4_3.dist (mk' n₀ a j) (mk' n₀ a k) ≤ ε := by sorry
 
 noncomputable def Sequence.sqrt_two : Sequence :=
@@ -221,46 +227,44 @@ theorem Sequence.ex_5_1_10_b : (0.1:ℚ).steady (sqrt_two.from 1) := by sorry
 
 theorem Sequence.ex_5_1_10_c : (0.1:ℚ).eventuallySteady sqrt_two := by sorry
 
+
 /-- Proposition 5.1.11 -/
-theorem Sequence.harmonic_steady : (mk' 1 (fun n ↦ (1:ℚ)/n)).isCauchy := by
-  -- This is proof is probably longer than it needs to be; there should be a shorter proof that
-  -- is still in the spirit of  the proof in the book.
-  rw [isCauchy_of_mk (fun n ↦ (1:ℚ)/n)]
+theorem Sequence.harmonic_steady : (mk' 1 (fun n ↦ (1:ℚ)/n)).IsCauchy := by
+  rw [IsCauchy.mk]
   intro ε hε
-  have : ∃ N:ℕ, N > 1/ε := exists_nat_gt (1 / ε)
-  obtain ⟨ N, hN ⟩ := this
+  -- We go by reverse from the book - first choose N such that N > 1/ε
+  obtain ⟨ N, hN : N > 1/ε ⟩ := exists_nat_gt (1 / ε)
   use N
-  have hN' : (N:ℤ) > 0 := by
+  have hN' : N > 0 := by
     have : (1/ε) > 0 := by positivity
-    replace hN := this.trans hN
-    simp at hN ⊢; assumption
+    have hN := this.trans hN
+    norm_cast at *
   constructor
-  . simp at hN' ⊢; linarith
+  . norm_cast
   intro j hj k hk
-  have hj' : (j:ℚ) ≥ 0 := by simp; linarith
-  have hj'' : (1:ℚ)/j ≤ (1:ℚ)/N := by
-    gcongr
-    . simp at hN' ⊢; assumption
-    . simp at hj ⊢; qify at hj; assumption
-  have hj''' : (1:ℚ)/j ≥ 0 := by positivity
-  have hj'''' : j ≥ 1 := by simp at hj'; linarith
-  have hk' : (k:ℚ) ≥ 0 := by simp; linarith
-  have hk'' : (1:ℚ)/k ≤ (1:ℚ)/N := by
-    gcongr
-    . simp at hN' ⊢; assumption
-    . simp at hk ⊢; qify at hk; assumption
-  have hk''' : (1:ℚ)/k ≥ 0 := by positivity
-  have hk'''' : k ≥ 1 := by simp at hk'; linarith
+  lift j to ℕ using (by linarith)
+  lift k to ℕ using (by linarith)
+  norm_cast at hj hk
+  simp [show j ≥ 1 by linarith, show k ≥ 1 by linarith]
+
   have hdist : Section_4_3.dist ((1:ℚ)/j) ((1:ℚ)/k) ≤ (1:ℚ)/N := by
     rw [Section_4_3.dist_eq, abs_le']
+    /-
+    We establish the following bounds:
+    - 1/j ∈ [0, 1/N]
+    - 1/k ∈ [0, 1/N]
+    These imply that the distance between 1/j and 1/k is at most 1/N - when they are as "far apart" as possible.
+    -/
+    have hj'' : 1/j ≤ (1:ℚ)/N := by gcongr
+    have hj''' : (0:ℚ) ≤ 1/j := by positivity
+    have hk'' : 1/k ≤ (1:ℚ)/N := by gcongr
+    have hk''' : (0:ℚ) ≤ 1/k := by positivity
     constructor <;> linarith
-  simp [seq, hj'''', hk'''']
   convert hdist.trans _ using 2
   . simp
   . simp
-  rw [div_le_iff₀, mul_comm, ←div_le_iff₀ hε]
-  . exact le_of_lt hN
-  simp at hN' ⊢; assumption
+  rw [div_le_iff₀ (by positivity), mul_comm, ←div_le_iff₀ hε]
+  exact le_of_lt hN
 
 abbrev BoundedBy {n:ℕ} (a: Fin n → ℚ) (M:ℚ) : Prop :=
   ∀ i, |a i| ≤ M
@@ -295,7 +299,7 @@ example : ¬ ((fun n:ℕ ↦ (-1)^n * (n+1:ℚ)):Sequence).isBounded := by sorry
 example : ((fun n:ℕ ↦ (-1:ℚ)^n):Sequence).isBounded := by sorry
 
 /-- Example 5.1.13 -/
-example : ¬ ((fun n:ℕ ↦ (-1:ℚ)^n):Sequence).isCauchy := by sorry
+example : ¬ ((fun n:ℕ ↦ (-1:ℚ)^n):Sequence).IsCauchy := by sorry
 
 /-- Lemma 5.1.14 -/
 lemma bounded_of_finite {n:ℕ} (a: Fin n → ℚ) : ∃ M ≥ 0,  BoundedBy a M := by
@@ -322,7 +326,7 @@ lemma bounded_of_finite {n:ℕ} (a: Fin n → ℚ) : ∃ M ≥ 0,  BoundedBy a M
   simp [hm]
 
 /-- Lemma 5.1.15 (Cauchy sequences are bounded) / Exercise 5.1.1 -/
-lemma Sequence.isBounded_of_isCauchy {a:Sequence} (h: a.isCauchy) : a.isBounded := by
+lemma Sequence.isBounded_of_isCauchy {a:Sequence} (h: a.IsCauchy) : a.isBounded := by
   sorry
 
 end Chapter5
