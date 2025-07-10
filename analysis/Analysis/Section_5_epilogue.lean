@@ -16,7 +16,7 @@ Filling the sorries here requires both the Chapter5.Real API and the Mathlib API
 natural numbers `ℝ`.  As such, they are excellent exercises to prepare you for the aforementioned
 transition.
 
---/
+-/
 
 namespace Chapter5
 

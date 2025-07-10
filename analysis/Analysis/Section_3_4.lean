@@ -9,19 +9,21 @@ text. When there is a choice between a more idiomatic Lean solution and a more f
 translation, I have generally chosen the latter. In particular, there will be places where the
 Lean code could be "golfed" to be more elegant and idiomatic, but I have consciously avoided
 doing so.
+-/
+namespace Chapter3
 
+export SetTheory (Set Object nat)
+
+variable [SetTheory] (X Y S : Set) (f : x → Y)
+
+
+/-!
 Main constructions and results of this section:
 
 - Images and inverse images of (Mathlib) functions, within the framework of Section 3.1 set
   theory. (The Section 3.2 functions are now deprecated and will not be used further.)
 - Connection with Mathlib's image `f '' S` and preimage `f ⁻¹' S` notions.
 -/
-
-namespace Chapter3
-
-export SetTheory (Set Object nat)
-
-variable [SetTheory]
 
 /-- Definition 3.4.1.  Interestingly, the definition does not require S to be a subset of X. -/
 abbrev SetTheory.Set.image {X Y:Set} (f:X → Y) (S: Set) : Set :=

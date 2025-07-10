@@ -11,7 +11,7 @@ sequences, in particular using the language of filters.
 
 -/
 
-/-- Identification with the Cauchy sequence support in `Mathlib.Algebra.Order.CauSeq.Basic` -/
+/-- Identification with the Cauchy sequence support in Mathlib/Algebra/Order/CauSeq/Basic -/
 theorem Chapter6.Sequence.Cauchy_iff_CauSeq (a: ℕ → ℝ) :
     (a:Sequence).isCauchy ↔ IsCauSeq _root_.abs a := by
   simp_rw [isCauchy_of_coe, Real.dist_eq, IsCauSeq]
@@ -33,7 +33,7 @@ theorem Chapter6.Sequence.Cauchy_iff_CauSeq (a: ℕ → ℝ) :
     _ ≤ ε/2 + ε/2 := by apply le_of_lt; gcongr; exact h n hn; exact h m hm
     _ = _ := by linarith
 
-/-- Identification with the Cauchy sequence support in `Mathlib.Topology.UniformSpace.Cauchy` -/
+/-- Identification with the Cauchy sequence support in Mathlib/Topology/UniformSpace/Cauchy -/
 theorem Chapter6.Sequence.Cauchy_iff_CauchySeq (a: ℕ → ℝ) :
     (a:Sequence).isCauchy ↔ CauchySeq a := by
   rw [Cauchy_iff_CauSeq]
@@ -154,7 +154,7 @@ theorem Chapter6.Sequence.Monotone_iff (a:ℕ → ℝ): (a:Sequence).isMonotone 
 
 theorem Chapter6.Sequence.Antitone_iff (a:ℕ → ℝ): (a:Sequence).isAntitone ↔ Antitone a := by sorry
 
-/-- Identification with `Filter.MapClusterPt` -/
+/-- Identification with `MapClusterPt` -/
 theorem Chapter6.Sequence.limit_point_iff (a:ℕ → ℝ) (L:ℝ) :
     (a:Sequence).limit_point L ↔ MapClusterPt L Filter.atTop a := by
   simp_rw [limit_point_def, mapClusterPt_iff_frequently,
