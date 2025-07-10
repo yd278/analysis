@@ -4,7 +4,7 @@ import Mathlib.Tactic
 # Analysis I, Section 8.1
 
 I have attempted to make the translation as faithful a paraphrasing as possible of the original
-text. hen there is a choice between a more idiomatic Lean solution and a more faithful
+text. When there is a choice between a more idiomatic Lean solution and a more faithful
 translation, I have generally chosen the latter. In particular, there will be places where the
 Lean code could be "golfed" to be more elegant and idiomatic, but I have consciously avoided
 doing so.
@@ -13,6 +13,7 @@ Main constructions and results of this section:
 
 - Custom notions for "equal cardinality", "countable", and "at most countable".  Note that Mathlib's
 `Countable` typeclass corresponds to what we call "at most countable" in this text.
+- Countability of the integers and rationals
 
 Note that as the Chapter 3 set theory has been deprecated, we will not re-use relevant constructions from that theory here, replacing them with Mathlib counterparts instead.
 
@@ -82,6 +83,14 @@ theorem CountablyInfinite.iff (X : Type) : CountablyInfinite X ↔ Nonempty (Den
 /-- Equivalence with Mathlib's `Countable` typeclass -/
 theorem CountablyInfinite.iff' (X : Type) : CountablyInfinite X ↔ Countable X ∧ Infinite X := by
   rw [iff, nonempty_denumerable_iff]
+
+theorem CountablyInfinite.toCountable {X : Type} (hX: CountablyInfinite X) : Countable X := by
+  rw [iff'] at hX; tauto
+
+theorem CountablyInfinite.toInfinite {X : Type} (hX: CountablyInfinite X) : Infinite X := by
+  rw [iff'] at hX; tauto
+
+
 
 theorem AtMostCountable.iff (X : Type) : AtMostCountable X ↔ Countable X := by
   have h1 := CountablyInfinite.iff' X
@@ -238,6 +247,17 @@ theorem AtMostCountable.subset {X: Type} (hX : AtMostCountable X) (Y: Set X) : A
     rw [AtMostCountable.equiv ⟨ f', hf' ⟩ ]
     exact Nat.atMostCountable_subset _
   simp [AtMostCountable, show Finite Y by infer_instance]
+
+theorem AtMostCountable.subset' {A: Type} {X Y: Set A} (hX: AtMostCountable X) (hY: Y ⊆ X) : AtMostCountable Y := by
+  set Y' := { x : X | ↑x ∈ Y }
+  have : AtMostCountable Y' := subset hX _
+  apply (AtMostCountable.equiv _).mp this
+  use (fun y ↦ ⟨ y.val.val, y.property ⟩ )
+  constructor
+  . rintro ⟨ ⟨ y, hy⟩, hy2 ⟩ ⟨ ⟨ y', hy' ⟩, hy2' ⟩ h
+    simp [Y'] at hy hy2 hy' hy2' h ⊢; assumption
+  rintro ⟨ y, hy ⟩
+  use ⟨ ⟨ y, hY hy ⟩, by aesop ⟩
 
 /-- Proposition 8.1.8 / Exercise 8.1.4 -/
 theorem AtMostCountable.image_nat (Y: Type) (f: ℕ → Y) : AtMostCountable (f '' Set.univ) := by

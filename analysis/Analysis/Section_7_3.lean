@@ -45,6 +45,33 @@ theorem Series.converges_of_nonneg_iff {s : Series} (h : s.nonneg) : s.converges
     linarith
   exact hfin
 
+theorem Series.sum_of_nonneg_lt {s : Series} (h : s.nonneg) {M:ℝ} (hM: ∀ N, s.partial N ≤ M) : s.sum ≤ M := by
+  have : ∃ M, ∀ N, s.partial N ≤ M  := by use M
+  rw [←converges_of_nonneg_iff h] at this
+  simp [sum, this]
+  have hconv := this.choose_spec
+  set L := this.choose
+  simp [convergesTo] at hconv
+  exact le_of_tendsto' hconv hM
+
+theorem Series.partial_le_sum_of_nonneg {s : Series} (hnon : s.nonneg) (hconv : s.converges) (N : ℤ) :
+  s.partial N ≤ s.sum := by
+  apply Monotone.ge_of_tendsto (partial_of_nonneg hnon)
+  simp [sum, hconv]
+  convert hconv.choose_spec
+
+/-- Some useful nonnegativity lemmas for later applications. -/
+theorem Series.partial_nonneg {s : Series} (hnon : s.nonneg) (N : ℤ) : 0 ≤ s.partial N := by
+  simp [Series.partial]
+  apply Finset.sum_nonneg
+  intro n _; exact hnon _
+
+theorem Series.sum_of_nonneg {s:Series} (hnon : s.nonneg) : 0 ≤ s.sum := by
+  by_cases h: s.converges <;> simp [Series.sum, h]
+  have := h.choose_spec
+  set L := h.choose
+  apply ge_of_tendsto' this (partial_nonneg hnon)
+
 /-- Corollary 7.3.2 (Comparison test) / Exercise 7.3.1 -/
 theorem Series.converges_of_le {s t : Series} (hm : s.m = t.m) (hcomp : ∀ n ≥ s.m, |s.seq n| ≤ t.seq n) (hconv : t.converges) : s.absConverges ∧ |s.sum| ≤ s.abs.sum ∧ s.abs.sum ≤ t.sum := by sorry
 
