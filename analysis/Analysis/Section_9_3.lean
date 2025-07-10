@@ -10,6 +10,11 @@ text.  When there is a choice between a more idiomatic Lean solution and a more 
 translation, I have generally chosen the latter.  In particular, there will be places where
 the Lean code could be "golfed" to be more elegant and idiomatic, but I have consciously avoided
 doing so.
+-/
+
+variable (f : ℝ → ℝ) (X : Set ℝ)
+
+/-!
 
 Main constructions and results of this section:
 

@@ -26,10 +26,10 @@ A module is generated for each, containing the literate page. Its name is the mo
 importing `Book.Analysis.Section_2_1`. The page itself is named identically to its module.
 -/
 def sections := #[
-  (`Analysis.Section_2_epilogue, "Equivalence of naturals"),
   (`Analysis.Section_2_1, "The Peano Axioms"),
   (`Analysis.Section_2_2, "Addition"),
   (`Analysis.Section_2_3, "Multiplication"),
+  (`Analysis.Section_2_epilogue, "Equivalence of naturals"),
   (`Analysis.Section_3_1, "Fundamentals"),
   (`Analysis.Section_3_2, "Russell's paradox"),
   (`Analysis.Section_3_3, "Functions"),

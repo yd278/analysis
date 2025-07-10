@@ -9,13 +9,23 @@ text. When there is a choice between a more idiomatic Lean solution and a more f
 translation, I have generally chosen the latter. In particular, there will be places where the
 Lean code could be "golfed" to be more elegant and idiomatic, but I have consciously avoided
 doing so.
+-/
+
+namespace Chapter3
+
+export SetTheory (Set Object nat)
+
+variable [SetTheory] (X Y : Set)
+
+
+/-!
 
 Main constructions and results of this section:
 
 - A notion of function `Function X Y` between two sets `X`, `Y` in the set theory of Section 3.1
 - Various relations with the Mathlib notion of a function `X → Y` between two types `X`, `Y`.
   (Note from Section 3.1 that every `Set` `X` can also be viewed as a subtype
-  `{ x:Object // x ∈ X }` of `Object`.)
+  `{x : Object // x ∈ X }` of `Object`.)
 - Basic function properties and operations, such as composition, one-to-one and onto functions,
   and inverses.
 
@@ -25,17 +35,12 @@ formalism for some of the examples involving number systems such as `ℤ` or `�
 implemented in the Chapter 3 framework.
 -/
 
-namespace Chapter3
 
 /-
 We will work here with the version `nat` of the natural numbers internal to the Chapter 3 set
 theory, though usually we will use coercions to then immediately translate to the Mathlib
 natural numbers `ℕ`.
 -/
-export SetTheory (Set Object nat)
-
-variable [SetTheory]
-
 /--
   Definition 3.3.1. `Function X Y` is the structure of functions from `X` to `Y`.
   Analogous to the Mathlib type `X → Y`.
@@ -59,7 +64,7 @@ noncomputable abbrev Function.to_fn {X Y: Set} (f: Function X Y) (x:X) : Y := f 
 
 theorem Function.to_fn_eval {X Y: Set} (f: Function X Y) (x:X) : f.to_fn x = f x := rfl
 
-/-- Converting a Mathlib function to a Chapter 3 function -/
+/-- Converting a Mathlib function to a Chapter 3 `Function` -/
 abbrev Function.mk_fn {X Y: Set} (f: X → Y) : Function X Y :=
   Function.mk (fun x y ↦ y = f x) (by
     intro x

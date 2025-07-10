@@ -15,7 +15,7 @@ so.
 Main constructions and results of this section:
 
 - Definition of the "Chapter 2" natural numbers, `Chapter2.Nat`, abbreviated as `Nat` within the
-  `Chapter2` namespace. (In the book, the natural numbers are treated in a purely axiomatic
+  Chapter2 namespace. (In the book, the natural numbers are treated in a purely axiomatic
   fashion, as a type that obeys the Peano axioms; but here we take advantage of Lean's native
   inductive types to explicitly construct a version of the natural numbers that obey those
   axioms.  One could also proceed more axiomatically, as is done in Section 3 for set theory, but

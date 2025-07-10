@@ -12,15 +12,18 @@ translation, I have generally chosen the latter.  In particular, there will be p
 the Lean code could be "golfed" to be more elegant and idiomatic, but I have consciously avoided
 doing so.
 
-Main constructions and results of this section:
-- API for Mathlib's `UniformContinousOn`
-- Continuous functions on compact intervls are uniformly continuous
-
 -/
 
 open Chapter6
 
 namespace Chapter9
+
+/-!
+Main constructions and results of this section:
+- API for Mathlib's `UniformContinuousOn`
+- Continuous functions on compact intervls are uniformly continuous
+
+-/
 
 example : ContinuousOn (fun x:ℝ ↦ 1/x) (Set.Icc 0 2) := by
   sorry
