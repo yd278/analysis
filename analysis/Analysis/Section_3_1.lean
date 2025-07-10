@@ -138,7 +138,7 @@ abbrev SetTheory.Set.ext {X Y:Set} (h: ∀ x, x ∈ X ↔ x ∈ Y) : X = Y := Se
 theorem SetTheory.Set.ext_iff (X Y: Set) : X = Y ↔ ∀ x, x ∈ X ↔ x ∈ Y := by
   constructor
   . intro h; subst h; simp
-  . intro h; apply ext; exact h
+  . exact ext
 
 instance SetTheory.Set.instEmpty : EmptyCollection Set where
   emptyCollection := SetTheory.emptyset
@@ -436,14 +436,12 @@ theorem SetTheory.Set.specification_axiom'' {A:Set} (P: A → Prop) (x:Object) :
     x ∈ A.specify P ↔ ∃ h:x ∈ A, P ⟨ x, h ⟩ := by
   constructor
   . intro h
-    have h' := specification_axiom h
-    use h'
-    rw [←specification_axiom' P ⟨ x, h' ⟩ ]
-    simp [h]
+    use specification_axiom h
+    simp [←specification_axiom' P, h]
   intro h
   obtain ⟨ h, hP ⟩ := h
-  rw [←specification_axiom' P ⟨ x,h ⟩ ] at hP
-  simp at hP; assumption
+  simp [←specification_axiom' P] at hP
+  assumption
 
 theorem SetTheory.Set.specify_subset {A:Set} (P: A → Prop) : A.specify P ⊆ A := by sorry
 

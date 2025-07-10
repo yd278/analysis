@@ -91,23 +91,13 @@ theorem SetTheory.Set.mem_preimage' {X Y:Set} (f:X → Y) (U: Set) (x:Object) :
   constructor
   . intro h
     by_cases hx: x ∈ X
-    . set x': X := ⟨ x, hx ⟩
-      use x'
-      have : x = x'.val := by rfl
-      constructor
-      . exact this
-      . rw [this] at h
-        rw [mem_preimage] at h
-        exact h
-    . exfalso
-      rw [preimage] at h
-      have := X.specification_axiom h
-      contradiction
-  . intro h
-    obtain ⟨ x', hx', hfx' ⟩ := h
-    rw [← hx']
-    rw [mem_preimage]
-    exact hfx'
+    . use ⟨ x, hx ⟩
+      have := mem_preimage f U ⟨ x, hx ⟩
+      simp_all
+    . rw [preimage] at h
+      simp_all [X.specification_axiom h]
+  . rintro ⟨ x', hx', hfx' ⟩
+    rwa [← hx', mem_preimage]
 
 /-- Connection with Mathlib's notion of preimage. -/
 theorem SetTheory.Set.preimage_eq {X Y:Set} (f:X → Y) (U: Set) :

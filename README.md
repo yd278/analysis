@@ -60,7 +60,7 @@ In order to align the formalization with Mathlib conventions, a small number of 
   - Section 7.5: The root and ratio tests ([Verso page](https://teorth.github.io/analysis/sec75/)) ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Section_7_5.html)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Section_7_5.lean))
 - Chapter 8: Infinite sets
   - Section 8.1: Countability ([Verso page](https://teorth.github.io/analysis/sec81/)) ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Section_8_1.html)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Section_8_1.lean))
-  - _Section 8.2: Summation on infinite sets (planned)_
+  - Section 8.2: Summation on infinite sets ([Verso page](https://teorth.github.io/analysis/sec82/)) ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Section_8_2.html)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Section_8_2.lean))
   - _Section 8.3: Uncountable sets (planned)_
   - _Section 8.4: The axiom of choice (planned)_
   - _Section 8.5: Ordered sets (planned)_
