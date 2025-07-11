@@ -102,10 +102,8 @@ lemma Sequence.equiv_example :
         gcongr
         apply le_trans _ (pow_le_pow_left₀ (show 0 ≤ (2:ℚ) by norm_num)
           (show (2:ℚ) ≤ 10 by norm_num) _)
-        convert Nat.cast_le.mpr (Section_4_3.two_pow_geq (N+1)) using 1
-        . simp
-        . simp
-        all_goals infer_instance
+        convert Nat.cast_le.mpr (Section_4_3.two_pow_geq (N+1)) using 1 <;> try infer_instance
+        all_goals simp
     have : ∃ N:ℕ, N > 2/ε := exists_nat_gt (2 / ε)
     obtain ⟨ N, hN ⟩ := this
     use N

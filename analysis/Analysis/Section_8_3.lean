@@ -14,9 +14,7 @@ doing so.
 Main constructions and results of this section:
 
 - Uncountable sets
-
-Some non-trivial API is provided beyond what is given in the textbook in order connect these
-notions with existing summation notions.
+- Cantor's theorem; uncountability of the reals
 
 -/
 
@@ -76,13 +74,10 @@ theorem Uncountable.real : Uncountable ℝ := by
     unfold a
     rw [one_div_pow, Real.rpow_neg (by norm_num), one_div]; simp
   have h_decomp {A B C: Set ℕ} (hC : C = A ∪ B) (hAB: ∀ n, n ∉ A ∩ B) :  ∑' n:C, a n = ∑' n:A, a n + ∑' n:B, a n := by
-    convert Summable.tsum_union_disjoint ?_ ?_ ?_
+    convert Summable.tsum_union_disjoint ?_ ?_ ?_ <;> try infer_instance
     . rw [hC]
-    . infer_instance
-    . infer_instance
     . rw [Set.disjoint_iff_inter_eq_empty]; ext n; simp [hAB n]
-    . exact hsummable _
-    exact hsummable _
+    all_goals exact hsummable _
   have h_nonneg (A:Set ℕ) : ∑' n:A, a n ≥ 0 := by
     simp [a]; positivity
   have h_congr {A B: Set ℕ} (hAB: A = B) : ∑' n:A, a n = ∑' n:B, a n  := by rw [hAB]
@@ -197,6 +192,7 @@ theorem Schroder_Bernstein_lemma {X: Type} {A B C: Set X} (hAB: A ⊆ B) (hBC: B
   let g : A → B := fun x ↦ if h: x ∈ ⋃ n, D n ∧ ∃ y:B, f ⟨↑y, hBC y.property⟩ = x then h.2.choose else ⟨ ↑x, hAB x.property ⟩
   Function.Bijective g
   := by
+  extract_lets D g
   sorry
 
 abbrev LeCard (X Y: Type) : Prop := ∃ f: X → Y, Function.Injective f
@@ -231,21 +227,5 @@ abbrev CardOrder : Preorder Type := {
 /-- Exercise 8.3.5 -/
 example (X:Type) : ¬ CountablyInfinite (Set X) := by
   sorry
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 end Chapter8

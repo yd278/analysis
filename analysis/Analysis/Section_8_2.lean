@@ -571,7 +571,4 @@ theorem Series.permute_diverges_of_divergent' {a: ℕ → ℝ} (ha: (a:Series).c
   ∃ f : ℕ → ℕ,  Function.Bijective f ∧ Filter.Tendsto (fun N ↦ ((a ∘ f:Series).partial N : EReal)) Filter.atTop (nhds ⊥) := by
   sorry
 
-
-
-
 end Chapter8
