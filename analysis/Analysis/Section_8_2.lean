@@ -17,9 +17,12 @@ Main constructions and results of this section:
 
 - Absolute convergence and summation on countably infinite or general sets
 - Connections with Mathlib's `Summable` and `tsum`
+- The Riemann rearrangement theorem
 
 Some non-trivial API is provided beyond what is given in the textbook in order connect these
 notions with existing summation notions.
+
+After this section, the summation notation developed here will be deprecated in favor of Mathlib's API for `Summable` and `tsum`.
 
 -/
 
@@ -264,7 +267,8 @@ theorem AbsConvergent'.countable_supp {X:Type} {f:X → ℝ} (hf: AbsConvergent'
   AtMostCountable { x | f x ≠ 0 } := by
     sorry
 
-theorem AbsConvergent'.restrict {X:Type} {f:X → ℝ} (hf: AbsConvergent' f) (A: Set X) :
+/-- Compare with Mathlib's `Summable.subtype`-/
+theorem AbsConvergent'.subtype {X:Type} {f:X → ℝ} (hf: AbsConvergent' f) (A: Set X) :
   AbsConvergent' (fun x:A ↦ f x) := by
   apply BddAbove.mono _ hf
   intro z hz
@@ -297,7 +301,7 @@ theorem Sum'.of_countable_supp {X:Type} {f:X → ℝ} {A: Set X} (hA: CountablyI
   AbsConvergent' (fun x:A ↦ f x) ∧ Sum' f = Sum (fun x:A ↦ f x) := by
   -- We can adapt the proof of `AbsConvergent'.of_countable` to establish absolute convergence on A.
   have hconv' : AbsConvergent (fun x:A ↦ f x) :=
-    (AbsConvergent'.of_countable hA).mp (hconv.restrict A)
+    (AbsConvergent'.of_countable hA).mp (hconv.subtype A)
   rw [AbsConvergent'.of_countable hA]
   refine ⟨ hconv', ?_ ⟩
   unfold Sum'
@@ -333,7 +337,7 @@ theorem Sum'.of_countable_supp {X:Type} {f:X → ℝ} {A: Set X} (hA: CountablyI
     apply tendsto_nhds_unique  _ hsum
     have hconv'' : AbsConvergent (fun x:E ↦ f x) := by
       rw [←AbsConvergent'.of_countable]
-      . exact hconv.restrict E
+      . exact hconv.subtype E
       apply (CountablyInfinite.equiv _).mp hE'; use ι
     replace := Sum.eq (hι.comp ha_bij) (AbsConvergent.comp (hι.comp ha_bij) hconv'')
     replace := this.comp tendsto_natCast_atTop_atTop
@@ -453,7 +457,7 @@ theorem Sum'.eq_tsum {X:Type} (f:X → ℝ) (h: AbsConvergent' f) :
     have : ((f ∘ Subtype.val) ∘ g:Series).absConverges := by
       apply AbsConvergent.comp hg
       simp [←AbsConvergent'.of_countable hE]
-      exact h.restrict E
+      exact h.subtype E
     replace this := Sum.eq hg this
     convert Series.convergesTo_uniq this _
     replace : ∑' x, f x = ∑' n, f (g n) := calc
@@ -494,7 +498,7 @@ theorem Sum'.sub {X:Type} {f g:X → ℝ} (hf: AbsConvergent' f) (hg: AbsConverg
   rw [(smul hg (-1)).2]; ring
 
 /-- Proposition 8.2.6 (c) (Absolutely convergent series laws) / Exercise 8.2.3.  The first
-    part of this proposition has been moved to `AbsConvergent'.restrict`. -/
+    part of this proposition has been moved to `AbsConvergent'.subtype`. -/
 theorem Sum'.of_disjoint_union {X:Type} {f:X → ℝ} (hf: AbsConvergent' f) {X₁ X₂ : Set X} (hdisj: Disjoint X₁ X₂):
   Sum' (fun x: (X₁ ∪ X₂: Set X) ↦ f x) = Sum' (fun x : X₁ ↦ f x) + Sum' (fun x : X₂ ↦ f x) := by
   sorry
