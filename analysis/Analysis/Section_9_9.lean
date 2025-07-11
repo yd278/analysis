@@ -38,6 +38,7 @@ example (x : ℝ) :
   let x₀ : ℝ := 1
   let δ : ℝ := 1/11
   |x-x₀| ≤ δ → |f x - f x₀| ≤ ε := by
+  extract_lets f ε x₀ δ
   sorry
 
 example (x:ℝ) :
@@ -46,6 +47,8 @@ example (x:ℝ) :
   let x₀ : ℝ := 0.1
   let δ : ℝ := 1/1010
   |x-x₀| ≤ δ → |f x - f x₀| ≤ ε := by
+  -- note: there is currently a bug with `extract_lets` in that `let` statements with identically
+  -- assigned values are not being handled correctly.
   sorry
 
 example (x:ℝ) :
@@ -54,6 +57,7 @@ example (x:ℝ) :
   let x₀ : ℝ := 1
   let δ : ℝ := 0.05
   |x-x₀| ≤ δ → |g x - g x₀| ≤ ε := by
+  extract_lets g ε x₀ δ
   sorry
 
 example (x₀ x : ℝ) :
@@ -61,6 +65,7 @@ example (x₀ x : ℝ) :
   let ε : ℝ := 0.1
   let δ : ℝ := 0.05
   |x-x₀| ≤ δ → |g x - g x₀| ≤ ε := by
+  extract_lets g ε δ
   sorry
 
 /-- Definition 9.9.2.  Here we use the Mathlib term `UniformContinuousOn` -/

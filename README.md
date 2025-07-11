@@ -122,10 +122,12 @@ In order to align the formalization with Mathlib conventions, a small number of 
     - [The natural number game](https://adam.math.hhu.de/)
     - [Mathematics in Lean](https://leanprover-community.github.io/mathematics_in_lean/)  - Lean textbook by Jeremy Avigad and Patrick Massot
 - [Mathlib documentation](https://leanprover-community.github.io/mathlib4_docs/)
+  - [Mathlib help files](https://seasawher.github.io/mathlib4-help/)
   - [Moogle](https://moogle-morphlabs.vercel.app/) - semantic search engine for Mathlib
   - [Loogle](https://loogle.lean-lang.org/) - expression matching search engine for Mathlib
   - [LeanSearch](https://leansearch.net/) - Natural language search engine for Mathlib
   - [List of Mathlib tactics](https://github.com/haruhisa-enomoto/mathlib4-all-tactics/blob/main/all-tactics.md)
+    - [Lean tactics cheat sheet](https://github.com/fpvandoorn/LeanCourse24/blob/master/lean-tactics.pdf)
 - Lean extensions:
   - [Canonical](https://github.com/chasenorman/Canonical)
   - [Duper](https://github.com/leanprover-community/duper)
