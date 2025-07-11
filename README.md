@@ -62,7 +62,7 @@ In order to align the formalization with Mathlib conventions, a small number of 
   - Section 8.1: Countability ([Verso page](https://teorth.github.io/analysis/sec81/)) ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Section_8_1.html)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Section_8_1.lean))
   - Section 8.2: Summation on infinite sets ([Verso page](https://teorth.github.io/analysis/sec82/)) ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Section_8_2.html)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Section_8_2.lean))
   - Section 8.3: Uncountable sets ([Verso page](https://teorth.github.io/analysis/sec83/)) ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Section_8_3.html)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Section_8_3.lean))
-  - _Section 8.4: The axiom of choice (planned)_
+  - Section 8.4: The axiom of choice ([Verso page](https://teorth.github.io/analysis/sec84/)) ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Section_8_4.html)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Section_8_4.lean))
   - _Section 8.5: Ordered sets (planned)_
 - Chapter 9: Continuous functions on `ℝ`
   - Section 9.1: Subsets of the real line ([Verso page](https://teorth.github.io/analysis/sec91/)) ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Section_9_1.html)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Section_9_1.lean))
