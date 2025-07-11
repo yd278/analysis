@@ -191,8 +191,7 @@ theorem Nat.monotone_enum_of_infinite (X : Set ℕ) [Infinite X] : ∃! f : ℕ 
     solve_by_elim
   have hf_surjective : Function.Surjective f := by
     rintro ⟨ x, hx ⟩
-    simp [f]
-    by_contra!
+    simp [f]; by_contra!
     have h1 (n:ℕ) : x ∈ { x ∈ X | ∀ (m:ℕ) (h:m < n), x ≠ a m } := by
       sorry
     have h2 (n:ℕ) : x ≥ a n := by
@@ -201,8 +200,7 @@ theorem Nat.monotone_enum_of_infinite (X : Set ℕ) [Infinite X] : ∃! f : ℕ 
     have h3 (n:ℕ) : a n ≥ n := by
       sorry
     have h4 (n:ℕ) : x ≥ n := (h3 n).trans (h2 n)
-    specialize h4 (x+1)
-    linarith
+    linarith [h4 (x+1)]
   have hf_bijective : Function.Bijective f := ⟨ hf_injective, hf_surjective ⟩
   apply ExistsUnique.intro f ⟨ hf_bijective, ha_mono ⟩
   rintro g ⟨ hg_bijective, hg_mono ⟩
@@ -320,11 +318,9 @@ theorem CountablyInfinite.lower_diag : CountablyInfinite { n : ℕ × ℕ | n.2 
   let f' : A → f '' Set.univ := fun p ↦ ⟨ f p, by aesop ⟩
   have hf' : Function.Bijective f' := by
     constructor
-    . intro p q hpq; simp [f'] at hpq
-      solve_by_elim
+    . intro p q hpq; simp [f'] at hpq; solve_by_elim
     rintro ⟨ l, hl ⟩; simp at hl
-    obtain ⟨ n, m, q, rfl ⟩ := hl
-    use ⟨ (n, m), q ⟩
+    obtain ⟨ n, m, q, rfl ⟩ := hl; use ⟨ (n, m), q ⟩
   have : AtMostCountable A := by
     rw [AtMostCountable.equiv ⟨ f', hf' ⟩]
     exact Nat.atMostCountable_subset _
@@ -367,7 +363,7 @@ theorem Rat.countablyInfinite : CountablyInfinite ℚ := by
   have hfin : ¬ Finite ℚ := by
     by_contra!
     replace : Finite (Set.univ : Set ℕ) := by
-      apply Finite.Set.finite_of_finite_image (f := fun n:ℕ ↦ (n:ℚ)) _ _
+      apply Finite.Set.finite_of_finite_image (f := fun n:ℕ ↦ (n:ℚ))
       intro x _ y _; simp
     rw [Set.finite_coe_iff, Set.finite_univ_iff,←not_infinite_iff_finite] at this
     exact this (by infer_instance)

@@ -14,7 +14,9 @@ doing so.
 Main constructions and results of this section:
 
 - Uncountable sets
-- Cantor's theorem; uncountability of the reals
+
+Some non-trivial API is provided beyond what is given in the textbook in order connect these
+notions with existing summation notions.
 
 -/
 
@@ -29,7 +31,7 @@ theorem EqualCard.power_set_false (X:Type) : ¬ EqualCard X (Set X) := by
   obtain ⟨ x, hx ⟩ := hf.2 A
   by_cases h : x ∈ A <;> have h' := h
   . simp [A] at h'
-    rw [hx] at h'; contradiction
+    simp_all
   rw [←hx] at h'
   have : x ∈ A := by simp [A, h']
   contradiction
@@ -82,8 +84,7 @@ theorem Uncountable.real : Uncountable ℝ := by
     simp [a]; positivity
   have h_congr {A B: Set ℕ} (hAB: A = B) : ∑' n:A, a n = ∑' n:B, a n  := by rw [hAB]
   have : Function.Injective f := by
-    intro A B hAB
-    by_contra!
+    intro A B hAB; by_contra!
     rw [←Set.symmDiff_nonempty] at this
     replace this := Nat.min_spec this
     set n₀ := Nat.min (symmDiff A B)
@@ -94,7 +95,7 @@ theorem Uncountable.real : Uncountable ℝ := by
       specialize this hAB.symm
         (by simp [symmDiff_comm]; tauto)
         (by intro n hn; specialize h2 n (by tauto); simp [symmDiff_comm, n₀, h2])
-        (by simp [symmDiff_comm]; exact h1)
+        (by simp [symmDiff_comm]; assumption)
       assumption
     replace h2 {n:ℕ} (hn: n < n₀) : n ∈ A ↔ n ∈ B := by
       contrapose! hn
@@ -115,7 +116,7 @@ theorem Uncountable.real : Uncountable ℝ := by
         congr
         all_goals {
           apply h_decomp
-          . ext n; simp; rw [le_iff_lt_or_eq]; tauto
+          . ext n; simp [le_iff_lt_or_eq]
           intro n hn; simp at hn; linarith
         }
       _ = ((∑' n:{n ∈ A|n < n₀}, a n + a n₀) + ∑' n:{n ∈ A|n > n₀}, a n) -
@@ -143,8 +144,7 @@ theorem Uncountable.real : Uncountable ℝ := by
             . ext n; simp; tauto
             intro n hn; simp at hn; tauto
           _ ≥ ∑' (n : {n ∈ B|n > n₀}), a n + 0 := by
-            gcongr
-            apply h_nonneg
+            gcongr; solve_by_elim
           _ = _ := by simp
       _ = 0 + (10:ℝ)^(-(n₀:ℝ)) + 0 - (1 / (9:ℝ)) * (10:ℝ)^(-(n₀:ℝ)) := by
         congr
@@ -192,7 +192,6 @@ theorem Schroder_Bernstein_lemma {X: Type} {A B C: Set X} (hAB: A ⊆ B) (hBC: B
   let g : A → B := fun x ↦ if h: x ∈ ⋃ n, D n ∧ ∃ y:B, f ⟨↑y, hBC y.property⟩ = x then h.2.choose else ⟨ ↑x, hAB x.property ⟩
   Function.Bijective g
   := by
-  extract_lets D g
   sorry
 
 abbrev LeCard (X Y: Type) : Prop := ∃ f: X → Y, Function.Injective f
@@ -227,5 +226,21 @@ abbrev CardOrder : Preorder Type := {
 /-- Exercise 8.3.5 -/
 example (X:Type) : ¬ CountablyInfinite (Set X) := by
   sorry
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 end Chapter8
