@@ -310,7 +310,7 @@ theorem Sequence.Cauchy_iff_convergent (a:Sequence) :
   have hup (ε:ℝ) (hε: ε>0) : L_plus - L_minus ≤ 2*ε := by
     specialize h ε hε
     obtain ⟨ N, hN, hsteady ⟩ := h
-    unfold Real.steady Real.Close at hsteady
+    unfold Real.Steady Real.Close at hsteady
     have hN0 : N ≥ (a.from N).m := by
       simp [Sequence.from, hN]
     have hN1 : (a.from N).seq N = a.seq N := by
