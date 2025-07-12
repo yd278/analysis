@@ -192,7 +192,7 @@ theorem Real.LUB_exist {E: Set Real} (hE: Set.Nonempty E) (hbound: BddAbove E): 
   set a : ℕ → ℚ := fun n ↦ (m n:ℚ) / (n+1)
   set b : ℕ → ℚ := fun n ↦ 1 / (n+1)
   have claim1 (n: ℕ) := Real.LUB_claim1 n hE hbound
-  have hb : (b:Sequence).IsCauchy := Cauchy_of_harmonic
+  have hb : (b:Sequence).IsCauchy := IsCauchy.harmonic
   have hm1 (n:ℕ) : (a n:Real) ∈ upperBounds E := (claim1 n).exists.choose_spec.1
   have hm2 (n:ℕ) : ¬ ((a - b) n: Real) ∈ upperBounds E := (claim1 n).exists.choose_spec.2
   have claim2 (N:ℕ) := Real.LUB_claim2 E N a b (fun n ↦ rfl) (fun n ↦ hm1 n) (fun n ↦ hm2 n)
