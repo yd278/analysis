@@ -49,7 +49,7 @@ lemma ratPow_continuous {x α:ℝ} (hx: x > 0) {q: ℕ → ℚ}
   intro n hn m hm
   simp at hn hm
   specialize hq n (by simp [hn]) m (by simp [hm])
-  simp [Real.close, hn, hm, Real.dist_eq] at hq ⊢
+  simp [Close, hn, hm, Real.dist_eq] at hq ⊢
   have : 0 ≤ (N:ℤ) := by simp
   lift n to ℕ using (by linarith)
   lift m to ℕ using (by linarith)
@@ -128,7 +128,7 @@ lemma ratPow_lim_uniq {x α:ℝ} (hx: x > 0) {q q': ℕ → ℚ}
   specialize h4 K (by simp [K, hK1, hK2])
   simp [hn, Real.dist_eq, abs_le', K, hK1, hK2] at h3 h4 ⊢
   specialize hr n (by simp [hn])
-  simp [Real.close, hn, abs_le'] at hr
+  simp [Close, hn, abs_le'] at hr
   rcases lt_trichotomy x 1 with h | h | h
   . sorry
   . simp [h]; linarith

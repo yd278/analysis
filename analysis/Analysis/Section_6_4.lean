@@ -19,7 +19,7 @@ Main constructions and results of this section:
 
 -/
 
-abbrev Real.adherent (ε:ℝ) (a:Chapter6.Sequence) (x:ℝ) := ∃ n ≥ a.m, ε.close (a n) x
+abbrev Real.adherent (ε:ℝ) (a:Chapter6.Sequence) (x:ℝ) := ∃ n ≥ a.m, ε.Close (a n) x
 
 abbrev Real.continually_adherent (ε:ℝ) (a:Chapter6.Sequence) (x:ℝ) :=
   ∀ N ≥ a.m, ε.adherent (a.from N) x
@@ -310,7 +310,7 @@ theorem Sequence.Cauchy_iff_convergent (a:Sequence) :
   have hup (ε:ℝ) (hε: ε>0) : L_plus - L_minus ≤ 2*ε := by
     specialize h ε hε
     obtain ⟨ N, hN, hsteady ⟩ := h
-    unfold Real.steady Real.close at hsteady
+    unfold Real.steady Real.Close at hsteady
     have hN0 : N ≥ (a.from N).m := by
       simp [Sequence.from, hN]
     have hN1 : (a.from N).seq N = a.seq N := by

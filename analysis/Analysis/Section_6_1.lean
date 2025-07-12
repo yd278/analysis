@@ -23,13 +23,13 @@ Main constructions and results of this section:
 /- Definition 6.1.1 (Distance).  Here we use the Mathlib distance. -/
 #check Real.dist_eq
 
-abbrev Real.close (ε x y : ℝ) : Prop := dist x y ≤ ε
+abbrev Real.Close (ε x y : ℝ) : Prop := dist x y ≤ ε
 
 /--
   Definition 6.1.2 (ε-close). This is similar to the previous notion of ε-closeness, but where
   all quantities are real instead of rational.
 -/
-theorem Real.close_def (ε x y : ℝ) : ε.close x y ↔ dist x y ≤ ε := by rfl
+theorem Real.close_def (ε x y : ℝ) : ε.Close x y ↔ dist x y ≤ ε := by rfl
 
 namespace Chapter6
 
@@ -93,11 +93,11 @@ end Chapter6
 
 /-- Definition 6.1.3 (ε-steady) -/
 abbrev Real.steady (ε: ℝ) (a: Chapter6.Sequence) : Prop :=
-  ∀ n ≥ a.m, ∀ m ≥ a.m, ε.close (a n) (a m)
+  ∀ n ≥ a.m, ∀ m ≥ a.m, ε.Close (a n) (a m)
 
 /-- Definition 6.1.3 (ε-steady) -/
 lemma Real.steady_def (ε: ℝ) (a: Chapter6.Sequence) :
-  ε.steady a ↔ ∀ n ≥ a.m, ∀ m ≥ a.m, ε.close (a n) (a m) := by rfl
+  ε.steady a ↔ ∀ n ≥ a.m, ∀ m ≥ a.m, ε.Close (a n) (a m) := by rfl
 
 /-- Definition 6.1.3 (Eventually ε-steady) -/
 abbrev Real.eventuallySteady (ε: ℝ) (a: Chapter6.Sequence) : Prop :=
@@ -177,7 +177,7 @@ theorem Sequence.isCauchy_of_rat (a: Chapter5.Sequence) : a.IsCauchy ↔ (a:Sequ
 end Chapter6
 
 /-- Definition 6.1.5 -/
-abbrev Real.close_seq (ε: ℝ) (a: Chapter6.Sequence) (L:ℝ) : Prop := ∀ n ≥ a.m, ε.close (a n) L
+abbrev Real.close_seq (ε: ℝ) (a: Chapter6.Sequence) (L:ℝ) : Prop := ∀ n ≥ a.m, ε.Close (a n) L
 
 /-- Definition 6.1.5 -/
 theorem Real.close_seq_def (ε: ℝ) (a: Chapter6.Sequence) (L:ℝ) :
