@@ -86,10 +86,10 @@ theorem Chapter6.Sequence.tendsto_iff_Tendsto' (a: Sequence) (L:ℝ) : a.TendsTo
   exact le_of_lt hN
 
 theorem Chapter6.Sequence.converges_iff_Tendsto (a: ℕ → ℝ) :
-    (a:Sequence).convergent ↔ ∃ L, Filter.Tendsto a Filter.atTop (nhds L) := by
+    (a:Sequence).Convergent ↔ ∃ L, Filter.Tendsto a Filter.atTop (nhds L) := by
   simp_rw [←tendsto_iff_Tendsto]
 
-theorem Chapter6.Sequence.converges_iff_Tendsto' (a: Sequence) : a.convergent ↔ ∃ L, Filter.Tendsto a.seq Filter.atTop (nhds L) := by
+theorem Chapter6.Sequence.converges_iff_Tendsto' (a: Sequence) : a.Convergent ↔ ∃ L, Filter.Tendsto a.seq Filter.atTop (nhds L) := by
   simp_rw [←tendsto_iff_Tendsto']
 
 /-- A technicality: `CauSeq.IsComplete ℝ` was established for `_root_.abs` but not for `norm`. -/
@@ -108,7 +108,7 @@ theorem Chapter6.Sequence.lim_eq_CauSeq_lim (a:ℕ → ℝ) (ha: (a:Sequence).Is
 
 /-- Identification with `Bornology.IsBounded` -/
 theorem Chapter6.Sequence.isBounded_iff_isBounded_range (a:ℕ → ℝ):
-    (a:Sequence).isBounded ↔ Bornology.IsBounded (Set.range a) := by
+    (a:Sequence).IsBounded ↔ Bornology.IsBounded (Set.range a) := by
   simp [isBounded_def, BoundedBy_def, Metric.isBounded_iff]
   constructor
   . intro h

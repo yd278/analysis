@@ -67,7 +67,7 @@ theorem Sequence.lim_of_power_decay {k:ℕ} :
         Real.rpow_le_rpow_iff  (by positivity) (by positivity) (by positivity)]
     simp [hn]
   replace ha' := convergent_of_antitone ha ha'
-  have hpow (n:ℕ): (a^(n+1)).convergent ∧ lim (a^(n+1)) = (lim a)^(n+1) := by
+  have hpow (n:ℕ): (a^(n+1)).Convergent ∧ lim (a^(n+1)) = (lim a)^(n+1) := by
     induction' n with n ih
     . simp only [zero_add, pow_one, _root_.pow_one, ha', true_and]
     rw [pow_succ]
@@ -96,7 +96,7 @@ theorem Sequence.lim_of_geometric' {x:ℝ} (hx: x = 1) : ((fun (n:ℕ) ↦ x^n):
 
 /-- Lemma 6.5.2 / Exercise 6.5.2 -/
 theorem Sequence.lim_of_geometric'' {x:ℝ} (hx: x = -1 ∨ |x| > 1) :
-    ((fun (n:ℕ) ↦ x^n):Sequence).divergent := by
+    ((fun (n:ℕ) ↦ x^n):Sequence).Divergent := by
   sorry
 
 /-- Lemma 6.5.3 / Exercise 6.5.3 -/
@@ -111,7 +111,7 @@ theorem Sequence.lim_of_rat_power_decay {q:ℚ} (hq: q > 0) :
 
 /-- Exercise 6.5.1 -/
 theorem Sequence.lim_of_rat_power_growth {q:ℚ} (hq: q > 0) :
-    (fun (n:ℕ) ↦ ((n+1:ℝ)^(q:ℝ)):Sequence).divergent := by
+    (fun (n:ℕ) ↦ ((n+1:ℝ)^(q:ℝ)):Sequence).Divergent := by
   sorry
 
 

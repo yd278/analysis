@@ -259,7 +259,7 @@ theorem Sequence.tendsTo_zero_iff (a:Sequence) :
   This helper lemma, implicit in the textbook proofs of Theorem 6.4.18 and Theorem 6.6.8, is made
   explicit here.
 -/
-theorem Sequence.finite_limsup_liminf_of_bounded {a:Sequence} (hbound: a.isBounded) :
+theorem Sequence.finite_limsup_liminf_of_bounded {a:Sequence} (hbound: a.IsBounded) :
     (∃ L_plus:ℝ, a.limsup = L_plus) ∧ (∃ L_minus:ℝ, a.liminf = L_minus) := by
   obtain ⟨ M, hMpos, hbound ⟩ := hbound
   unfold Sequence.BoundedBy at hbound
@@ -294,7 +294,7 @@ theorem Sequence.finite_limsup_liminf_of_bounded {a:Sequence} (hbound: a.isBound
 
 /-- Theorem 6.4.18 (Completeness of the reals) -/
 theorem Sequence.Cauchy_iff_convergent (a:Sequence) :
-  a.IsCauchy ↔ a.convergent := by
+  a.IsCauchy ↔ a.Convergent := by
   -- This proof is written to follow the structure of the original text.
   refine ⟨ ?_, Cauchy_of_convergent ⟩
   intro h

@@ -27,7 +27,7 @@ namespace Chapter6
 /-- Lemma 6.7.1 (Continuity of exponentiation) -/
 lemma ratPow_continuous {x α:ℝ} (hx: x > 0) {q: ℕ → ℚ}
  (hq: ((fun n ↦ (q n:ℝ)):Sequence).TendsTo α) :
- ((fun n ↦ x^(q n:ℝ)):Sequence).convergent := by
+ ((fun n ↦ x^(q n:ℝ)):Sequence).Convergent := by
   -- This proof is rearranged slightly from the original text.
   obtain ⟨ M, hM, hbound ⟩ := Sequence.bounded_of_convergent ⟨ α, hq ⟩
   rcases lt_trichotomy x 1 with h | h | h
@@ -40,7 +40,7 @@ lemma ratPow_continuous {x α:ℝ} (hx: x > 0) {q: ℕ → ℚ}
   obtain ⟨ K, hK, hclose ⟩ := this
   replace hq := Sequence.Cauchy_of_convergent ⟨ α, hq ⟩ (1/(K+1:ℝ)) (by positivity)
   obtain ⟨ N, hN, hq ⟩ := hq
-  simp [Real.close_seq, Real.dist_eq] at hclose hK hN
+  simp [Real.CloseSeq, Real.dist_eq] at hclose hK hN
   lift N to ℕ using hN
   lift K to ℕ using hK
   specialize hclose K (by simp) (by simp)
