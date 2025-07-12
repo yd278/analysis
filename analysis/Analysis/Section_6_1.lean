@@ -148,7 +148,7 @@ instance Chapter5.Sequence.inst_coe_sequence : Coe Chapter5.Sequence Sequence  w
 theorem Chapter5.coe_sequence_eval (a: Chapter5.Sequence) (n:ℤ) : (a:Sequence) n = (a n:ℝ) := rfl
 
 theorem Sequence.is_steady_of_rat (ε:ℚ) (a: Chapter5.Sequence) :
-    ε.steady a ↔ (ε:ℝ).steady (a:Sequence) := by sorry
+    ε.Steady a ↔ (ε:ℝ).steady (a:Sequence) := by sorry
 
 theorem Sequence.is_eventuallySteady_of_rat (ε:ℚ) (a: Chapter5.Sequence) :
     ε.eventuallySteady a ↔ (ε:ℝ).eventuallySteady (a:Sequence) := by sorry

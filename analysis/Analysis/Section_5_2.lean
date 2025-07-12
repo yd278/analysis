@@ -18,40 +18,40 @@ Main constructions and results of this section:
 -/
 
 
-abbrev Rat.close_seq (ε: ℚ) (a b: Chapter5.Sequence) : Prop :=
+abbrev Rat.CloseSeq (ε: ℚ) (a b: Chapter5.Sequence) : Prop :=
   ∀ n, n ≥ a.n₀ → n ≥ b.n₀ → ε.Close (a n) (b n)
 
 abbrev Rat.eventually_close (ε: ℚ) (a b: Chapter5.Sequence) : Prop :=
-  ∃ N, ε.close_seq (a.from N) (b.from N)
+  ∃ N, ε.CloseSeq (a.from N) (b.from N)
 
 namespace Chapter5
 
 /-- Definition 5.2.1 ($ε$-close sequences) -/
 lemma Rat.close_seq_def (ε: ℚ) (a b: Sequence) :
-    ε.close_seq a b ↔ ∀ n, n ≥ a.n₀ → n ≥ b.n₀ → ε.Close (a n) (b n) := by rfl
+    ε.CloseSeq a b ↔ ∀ n, n ≥ a.n₀ → n ≥ b.n₀ → ε.Close (a n) (b n) := by rfl
 
 /-- Example 5.2.2 -/
-example : (0.1:ℚ).close_seq ((fun n:ℕ ↦ ((-1)^n:ℚ)):Sequence)
+example : (0.1:ℚ).CloseSeq ((fun n:ℕ ↦ ((-1)^n:ℚ)):Sequence)
 ((fun n:ℕ ↦ ((1.1:ℚ) * (-1)^n)):Sequence) := by sorry
 
 /-- Example 5.2.2 -/
-example : ¬ (0.1:ℚ).steady ((fun n:ℕ ↦ ((-1)^n:ℚ)):Sequence)
+example : ¬ (0.1:ℚ).Steady ((fun n:ℕ ↦ ((-1)^n:ℚ)):Sequence)
 := by sorry
 
 /-- Example 5.2.2 -/
-example : ¬ (0.1:ℚ).steady ((fun n:ℕ ↦ ((1.1:ℚ) * (-1)^n)):Sequence)
+example : ¬ (0.1:ℚ).Steady ((fun n:ℕ ↦ ((1.1:ℚ) * (-1)^n)):Sequence)
 := by sorry
 
 /-- Definition 5.2.3 (Eventually ε-close sequences) -/
 lemma Rat.eventually_close_def (ε: ℚ) (a b: Sequence) :
-    ε.eventually_close a b ↔ ∃ N, ε.close_seq (a.from N) (b.from N) := by rfl
+    ε.eventually_close a b ↔ ∃ N, ε.CloseSeq (a.from N) (b.from N) := by rfl
 
 /-- Definition 5.2.3 (Eventually ε-close sequences) -/
 lemma Rat.eventually_close_iff (ε: ℚ) (a b: ℕ → ℚ) :
     ε.eventually_close (a:Sequence) (b:Sequence) ↔  ∃ N, ∀ n ≥ N, |a n - b n| ≤ ε := by sorry
 
 /-- Example 5.2.5 -/
-example : ¬ (0.1:ℚ).close_seq ((fun n:ℕ ↦ (1:ℚ)+10^(-(n:ℤ)-1)):Sequence)
+example : ¬ (0.1:ℚ).CloseSeq ((fun n:ℕ ↦ (1:ℚ)+10^(-(n:ℤ)-1)):Sequence)
   ((fun n:ℕ ↦ (1:ℚ)-10^(-(n:ℤ)-1)):Sequence) := by sorry
 
 example : (0.1:ℚ).eventually_close ((fun n:ℕ ↦ (1:ℚ)+10^(-(n:ℤ)-1)):Sequence)
