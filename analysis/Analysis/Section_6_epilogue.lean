@@ -145,14 +145,14 @@ theorem Chapter6.Sequence.inf_eq_sInf (a:ℕ → ℝ):
     (a:Sequence).inf = sInf (Set.range (fun n ↦ (a n:EReal))) := by sorry
 
 theorem Chapter6.Sequence.bddAbove_iff (a:ℕ → ℝ):
-    (a:Sequence).bddAbove ↔ BddAbove (Set.range a) := by sorry
+    (a:Sequence).BddAbove ↔ BddAbove (Set.range a) := by sorry
 
 theorem Chapter6.Sequence.bddBelow_iff (a:ℕ → ℝ):
-    (a:Sequence).bddBelow ↔ BddBelow (Set.range a) := by sorry
+    (a:Sequence).BddBelow ↔ BddBelow (Set.range a) := by sorry
 
 theorem Chapter6.Sequence.Monotone_iff (a:ℕ → ℝ): (a:Sequence).isMonotone ↔ Monotone a := by sorry
 
-theorem Chapter6.Sequence.Antitone_iff (a:ℕ → ℝ): (a:Sequence).isAntitone ↔ Antitone a := by sorry
+theorem Chapter6.Sequence.Antitone_iff (a:ℕ → ℝ): (a:Sequence).IsAntitone ↔ Antitone a := by sorry
 
 /-- Identification with `MapClusterPt` -/
 theorem Chapter6.Sequence.limit_point_iff (a:ℕ → ℝ) (L:ℝ) :

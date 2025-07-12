@@ -363,7 +363,7 @@ def Sequence.tendsTo_real_iff :
   sorry
 
 /-- This definition is needed for Exercises 6.4.8 and 6.4.9. -/
-abbrev Sequence.extended_limit_point (a:Sequence) (x:EReal) : Prop := if x = ⊤ then ¬ a.bddAbove else if x = ⊥ then ¬ a.bddBelow else a.limit_point x.toReal
+abbrev Sequence.extended_limit_point (a:Sequence) (x:EReal) : Prop := if x = ⊤ then ¬ a.BddAbove else if x = ⊥ then ¬ a.BddBelow else a.limit_point x.toReal
 
 
 /-- Exercise 6.4.8 -/
