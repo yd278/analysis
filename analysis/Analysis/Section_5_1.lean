@@ -101,10 +101,10 @@ end Chapter5
 A slight generalization of 5.1.3 - definition of ε-steadiness for a sequence with an arbitrary starting point n₀
 -/
 abbrev Rat.steady (ε: ℚ) (a: Chapter5.Sequence) : Prop :=
-  ∀ n ≥ a.n₀, ∀ m ≥ a.n₀, ε.close (a n) (a m)
+  ∀ n ≥ a.n₀, ∀ m ≥ a.n₀, ε.Close (a n) (a m)
 
 lemma Rat.steady_def (ε: ℚ) (a: Chapter5.Sequence) :
-  ε.steady a ↔ ∀ n ≥ a.n₀, ∀ m ≥ a.n₀, ε.close (a n) (a m) := by rfl
+  ε.steady a ↔ ∀ n ≥ a.n₀, ∀ m ≥ a.n₀, ε.Close (a n) (a m) := by rfl
 
 namespace Chapter5
 
@@ -112,7 +112,7 @@ namespace Chapter5
 5.1.3 - definition of ε-steadiness for a sequence starting at 0
 -/
 lemma Rat.isSteady_of_coe (ε : ℚ) (a:ℕ → ℚ) :
-    ε.steady a ↔ ∀ n m : ℕ, ε.close (a n) (a m) := by
+    ε.steady a ↔ ∀ n m : ℕ, ε.Close (a n) (a m) := by
   constructor
   · intro h n m
     specialize h n (by simp) m (by simp)
@@ -127,13 +127,13 @@ Not in textbook: the sequence 2, 2 ... is 1-steady
 Intended as a demonstration of `Rat.isSteady_of_coe`
 -/
 example : (1:ℚ).steady ((fun _:ℕ ↦ (3:ℚ)):Sequence) := by
-  simp [Rat.isSteady_of_coe, Rat.close]
+  simp [Rat.isSteady_of_coe, Close]
 
 /--
 Compare: if you need to work with `Rat.steady` on the coercion directly, there will be side conditions `hn : n ≥ 0` and `hm : m ≥ 0` that you will need to deal with.
 -/
 example : (1:ℚ).steady ( (fun _:ℕ ↦ (3:ℚ)):Sequence) := by
-  unfold Rat.steady Rat.close
+  unfold Rat.steady Close
   intro n hn m hm
   simp_all [Sequence.n0_coe, Sequence.eval_coe_at_int]
 

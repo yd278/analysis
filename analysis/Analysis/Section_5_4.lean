@@ -251,7 +251,7 @@ theorem Real.LIM_of_nonneg {a: ℕ → ℚ} (ha: ∀ n, a n ≥ 0) (hcauchy: (a:
   obtain ⟨ b, hb, hb_cauchy, hlim ⟩ := hlim
   rw [bounded_away_neg_def] at hb
   obtain ⟨ c, cpos, hb ⟩ := hb
-  have claim1 : ∀ n, ¬ (c/2).close (a n) (b n) := by
+  have claim1 : ∀ n, ¬ (c/2).Close (a n) (b n) := by
     intro n
     specialize ha n
     specialize hb n
