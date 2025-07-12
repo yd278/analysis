@@ -23,54 +23,54 @@ namespace Chapter5
   Definition 5.4.1 (sequences bounded away from zero with sign). Sequences are indexed to start
   from zero as this is more convenient for Mathlib purposes.
 -/
-abbrev bounded_away_pos (a:ℕ → ℚ) : Prop :=
+abbrev BoundedAwayPos (a:ℕ → ℚ) : Prop :=
   ∃ (c:ℚ), c > 0 ∧ ∀ n, a n ≥ c
 
 /-- Definition 5.4.1 (sequences bounded away from zero with sign). -/
-abbrev bounded_away_neg (a:ℕ → ℚ) : Prop :=
+abbrev BoundedAwayNeg (a:ℕ → ℚ) : Prop :=
   ∃ (c:ℚ), c > 0 ∧ ∀ n, a n ≤ -c
 
 /-- Definition 5.4.1 (sequences bounded away from zero with sign). -/
-theorem bounded_away_pos_def (a:ℕ → ℚ) : bounded_away_pos a ↔ ∃ (c:ℚ), c > 0 ∧ ∀ n, a n ≥ c := by
+theorem bounded_away_pos_def (a:ℕ → ℚ) : BoundedAwayPos a ↔ ∃ (c:ℚ), c > 0 ∧ ∀ n, a n ≥ c := by
   rfl
 
 /-- Definition 5.4.1 (sequences bounded away from zero with sign). -/
-theorem bounded_away_neg_def (a:ℕ → ℚ) : bounded_away_neg a ↔ ∃ (c:ℚ), c > 0 ∧ ∀ n, a n ≤ -c := by
+theorem bounded_away_neg_def (a:ℕ → ℚ) : BoundedAwayNeg a ↔ ∃ (c:ℚ), c > 0 ∧ ∀ n, a n ≤ -c := by
   rfl
 
 /-- Examples 5.4.2 -/
-example : bounded_away_pos (fun n ↦ 1 + 10^(-(n:ℤ)-1)) := by sorry
+example : BoundedAwayPos (fun n ↦ 1 + 10^(-(n:ℤ)-1)) := by sorry
 
 /-- Examples 5.4.2 -/
-example : bounded_away_neg (fun n ↦ - - 10^(-(n:ℤ)-1)) := by sorry
+example : BoundedAwayNeg (fun n ↦ - - 10^(-(n:ℤ)-1)) := by sorry
 
 /-- Examples 5.4.2 -/
-example : ¬ bounded_away_pos (fun n ↦ (-1)^n) := by sorry
+example : ¬ BoundedAwayPos (fun n ↦ (-1)^n) := by sorry
 
-example : ¬ bounded_away_neg (fun n ↦ (-1)^n) := by sorry
+example : ¬ BoundedAwayNeg (fun n ↦ (-1)^n) := by sorry
 
 example : BoundedAwayZero (fun n ↦ (-1)^n) := by sorry
 
-theorem bounded_away_zero_of_pos {a:ℕ → ℚ} (ha: bounded_away_pos a) : BoundedAwayZero a := by
+theorem bounded_away_zero_of_pos {a:ℕ → ℚ} (ha: BoundedAwayPos a) : BoundedAwayZero a := by
   sorry
 
-theorem bounded_away_zero_of_neg {a:ℕ → ℚ} (ha: bounded_away_neg a) : BoundedAwayZero a := by
+theorem bounded_away_zero_of_neg {a:ℕ → ℚ} (ha: BoundedAwayNeg a) : BoundedAwayZero a := by
   sorry
 
-theorem not_bounded_away_pos_neg {a:ℕ → ℚ} : ¬ (bounded_away_pos a ∧ bounded_away_neg a) := by
+theorem not_bounded_away_pos_neg {a:ℕ → ℚ} : ¬ (BoundedAwayPos a ∧ BoundedAwayNeg a) := by
   sorry
 
 abbrev Real.isPos (x:Real) : Prop :=
-  ∃ a:ℕ → ℚ, bounded_away_pos a ∧ (a:Sequence).IsCauchy ∧ x = LIM a
+  ∃ a:ℕ → ℚ, BoundedAwayPos a ∧ (a:Sequence).IsCauchy ∧ x = LIM a
 
 abbrev Real.isNeg (x:Real) : Prop :=
-  ∃ a:ℕ → ℚ, bounded_away_neg a ∧ (a:Sequence).IsCauchy ∧ x = LIM a
+  ∃ a:ℕ → ℚ, BoundedAwayNeg a ∧ (a:Sequence).IsCauchy ∧ x = LIM a
 
 theorem Real.isPos_def (x:Real) :
-    Real.isPos x ↔ ∃ a:ℕ → ℚ, bounded_away_pos a ∧ (a:Sequence).IsCauchy ∧ x = LIM a := by rfl
+    Real.isPos x ↔ ∃ a:ℕ → ℚ, BoundedAwayPos a ∧ (a:Sequence).IsCauchy ∧ x = LIM a := by rfl
 
 theorem Real.isNeg_def (x:Real) :
-    Real.isNeg x ↔ ∃ a:ℕ → ℚ, bounded_away_neg a ∧ (a:Sequence).IsCauchy ∧ x = LIM a := by rfl
+    Real.isNeg x ↔ ∃ a:ℕ → ℚ, BoundedAwayNeg a ∧ (a:Sequence).IsCauchy ∧ x = LIM a := by rfl
 
 /-- Proposition 5.4.4 (basic properties of positive reals) / Exercise 5.4.1 -/
 theorem Real.trichotomous (x:Real) : x = 0 ∨ x.isPos ∨ x.isNeg := by sorry

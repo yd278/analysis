@@ -243,17 +243,17 @@ instance ExtendedReal.real_coe : Coe ExtendedReal Real where
   | real x => x
   | infty => 0
 
-abbrev ExtendedReal.is_finite (X : ExtendedReal) : Prop := match X with
+abbrev ExtendedReal.IsFinite (X : ExtendedReal) : Prop := match X with
   | neg_infty => False
   | real _ => True
   | infty => False
 
-theorem ExtendedReal.finite_eq_coe {X: ExtendedReal} (hX: X.is_finite) :
+theorem ExtendedReal.finite_eq_coe {X: ExtendedReal} (hX: X.IsFinite) :
     X = ((X:Real):ExtendedReal) := by
   cases X
-  . simp [is_finite] at hX
+  . simp [IsFinite] at hX
   . simp [coe_real, real_coe]
-  simp [is_finite] at hX
+  simp [IsFinite] at hX
 
 open Classical in
 /-- Definition 5.5.10 (Supremum)-/
@@ -280,8 +280,8 @@ theorem ExtendedReal.sup_of_bounded {E: Set Real} (hnon: E.Nonempty) (hb: BddAbo
   convert (Real.LUB_exist hnon hb).choose_spec
 
 theorem ExtendedReal.sup_of_bounded_finite {E: Set Real} (hnon: E.Nonempty) (hb: BddAbove E) :
-    (sup E).is_finite := by
-  simp [sup, hnon, hb, is_finite]
+    (sup E).IsFinite := by
+  simp [sup, hnon, hb, IsFinite]
 
 /-- Proposition 5.5.12 -/
 theorem Real.exist_sqrt_two : ∃ x:Real, x^2 = 2 := by
@@ -384,8 +384,8 @@ theorem ExtendedReal.inf_of_bounded {E: Set Real} (hnon: E.Nonempty) (hb: BddBel
   convert (Real.GLB_exist hnon hb).choose_spec
 
 theorem ExtendedReal.inf_of_bounded_finite {E: Set Real} (hnon: E.Nonempty) (hb: BddBelow E) :
-    (inf E).is_finite := by
-  simp [inf, hnon, hb, is_finite]
+    (inf E).IsFinite := by
+  simp [inf, hnon, hb, IsFinite]
 
 /-- Helper lemma for Exercise 5.5.1. -/
 theorem Real.mem_neg (E: Set Real) (x:Real) : x ∈ -E ↔ -x ∈ E := Set.mem_neg
