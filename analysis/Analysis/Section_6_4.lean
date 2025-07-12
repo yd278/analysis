@@ -19,31 +19,31 @@ Main constructions and results of this section:
 
 -/
 
-abbrev Real.adherent (ε:ℝ) (a:Chapter6.Sequence) (x:ℝ) := ∃ n ≥ a.m, ε.Close (a n) x
+abbrev Real.Adherent (ε:ℝ) (a:Chapter6.Sequence) (x:ℝ) := ∃ n ≥ a.m, ε.Close (a n) x
 
-abbrev Real.continually_adherent (ε:ℝ) (a:Chapter6.Sequence) (x:ℝ) :=
-  ∀ N ≥ a.m, ε.adherent (a.from N) x
+abbrev Real.ContinuallyAdherent (ε:ℝ) (a:Chapter6.Sequence) (x:ℝ) :=
+  ∀ N ≥ a.m, ε.Adherent (a.from N) x
 
 namespace Chapter6
 
 abbrev Sequence.LimitPoint (a:Sequence) (x:ℝ) : Prop :=
-  ∀ ε > (0:ℝ), ε.continually_adherent a x
+  ∀ ε > (0:ℝ), ε.ContinuallyAdherent a x
 
 theorem Sequence.limit_point_def (a:Sequence) (x:ℝ) :
   a.LimitPoint x ↔ ∀ ε > 0, ∀ N ≥ a.m, ∃ n ≥ N, |a n - x| ≤ ε := by
-    unfold LimitPoint Real.continually_adherent Real.adherent
+    unfold LimitPoint Real.ContinuallyAdherent Real.Adherent
     sorry
 
 noncomputable abbrev Example_6_4_3 : Sequence := (fun (n:ℕ) ↦ 1 - (10:ℝ)^(-(n:ℤ)-1))
 
 /-- Example 6.4.3 -/
-example : (0.1:ℝ).adherent Example_6_4_3 0.8 := by sorry
+example : (0.1:ℝ).Adherent Example_6_4_3 0.8 := by sorry
 
 /-- Example 6.4.3 -/
-example : ¬ (0.1:ℝ).continually_adherent Example_6_4_3 0.8 := by sorry
+example : ¬ (0.1:ℝ).ContinuallyAdherent Example_6_4_3 0.8 := by sorry
 
 /-- Example 6.4.3 -/
-example : (0.1:ℝ).continually_adherent Example_6_4_3 1 := by sorry
+example : (0.1:ℝ).ContinuallyAdherent Example_6_4_3 1 := by sorry
 
 /-- Example 6.4.3 -/
 example : Example_6_4_3.LimitPoint 1 := by sorry
@@ -52,10 +52,10 @@ noncomputable abbrev Example_6_4_4 : Sequence :=
   (fun (n:ℕ) ↦ (-1:ℝ)^n * (1 + (10:ℝ)^(-(n:ℤ)-1)))
 
 /-- Example 6.4.4 -/
-example : (0.1:ℝ).adherent Example_6_4_4 1 := by sorry
+example : (0.1:ℝ).Adherent Example_6_4_4 1 := by sorry
 
 /-- Example 6.4.4 -/
-example : (0.1:ℝ).continually_adherent Example_6_4_4 1 := by sorry
+example : (0.1:ℝ).ContinuallyAdherent Example_6_4_4 1 := by sorry
 
 /-- Example 6.4.4 -/
 example : Example_6_4_4.LimitPoint 1 := by sorry
