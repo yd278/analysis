@@ -71,7 +71,7 @@ example (x₀ x : ℝ) :
 /-- Definition 9.9.2.  Here we use the Mathlib term `UniformContinuousOn` -/
 theorem UniformContinuousOn.iff (f: ℝ → ℝ) (X:Set ℝ) : UniformContinuousOn f X  ↔
   ∀ ε > (0:ℝ), ∃ δ > (0:ℝ), ∀ x₀ ∈ X, ∀ x ∈ X, δ.Close x x₀ → ε.Close (f x) (f x₀) := by
-  simp_rw [Metric.uniformContinuousOn_iff_le, Close]
+  simp_rw [Metric.uniformContinuousOn_iff_le, Real.Close]
   apply forall_congr'; intro ε
   apply imp_congr_right; intro hε
   apply exists_congr; intro δ
@@ -209,7 +209,7 @@ theorem UniformContinuousOn.of_continuousOn {a b:ℝ} {f:ℝ → ℝ}
   have hmem (j:ℕ) : n j ∈ E := Nat.nth_mem_of_infinite hE j
   have hsep (j:ℕ) : |f (x (n j)) - f (y (n j))| > ε := by
     specialize hmem j
-    simp [E, Close, Real.dist_eq] at hmem
+    simp [E, Real.Close, Real.dist_eq] at hmem
     exact hmem
   have hxmem (j:ℕ) : x (n j) ∈ Set.Icc a b := hx (n j)
   have hymem (j:ℕ) : y (n j) ∈ Set.Icc a b := hy (n j)
