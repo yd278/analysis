@@ -54,9 +54,9 @@ abbrev Sequence.bddBelow (a:Sequence) : Prop := ∃ M, a.bddBelowBy M
 
 theorem Sequence.bounded_iff (a:Sequence) : a.IsBounded ↔ a.bddAbove ∧ a.bddBelow := by sorry
 
-theorem Sequence.sup_of_bounded {a:Sequence} (h: a.IsBounded) : a.sup.isFinite := by sorry
+theorem Sequence.sup_of_bounded {a:Sequence} (h: a.IsBounded) : a.sup.IsFinite := by sorry
 
-theorem Sequence.inf_of_bounded {a:Sequence} (h: a.IsBounded) : a.inf.isFinite := by sorry
+theorem Sequence.inf_of_bounded {a:Sequence} (h: a.IsBounded) : a.inf.IsFinite := by sorry
 
 /-- Proposition 6.3.6 (Least upper bound property) / Exercise 6.3.2 -/
 theorem Sequence.le_sup {a:Sequence} {n:ℤ} (hn: n ≥ a.m) : a n ≤ a.sup := by sorry
