@@ -139,7 +139,7 @@ theorem Sequence.IsCauchy.add {a b:ℕ → ℚ}  (ha: (a:Sequence).IsCauchy) (hb
   have h1 := ha j (by omega) k (by omega)
   have h2 := hb j (by omega) k (by omega)
   dsimp
-  rw [← Close] at h1 h2 ⊢
+  rw [← Rat.Close] at h1 h2 ⊢
   convert Section_4_3.add_close h1 h2
   linarith
 

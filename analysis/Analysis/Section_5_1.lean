@@ -127,13 +127,13 @@ Not in textbook: the sequence 2, 2 ... is 1-steady
 Intended as a demonstration of `Rat.isSteady_of_coe`
 -/
 example : (1:ℚ).steady ((fun _:ℕ ↦ (3:ℚ)):Sequence) := by
-  simp [Rat.isSteady_of_coe, Close]
+  simp [Rat.isSteady_of_coe, Rat.Close]
 
 /--
 Compare: if you need to work with `Rat.steady` on the coercion directly, there will be side conditions `hn : n ≥ 0` and `hm : m ≥ 0` that you will need to deal with.
 -/
 example : (1:ℚ).steady ( (fun _:ℕ ↦ (3:ℚ)):Sequence) := by
-  unfold Rat.steady Close
+  unfold Rat.steady Rat.Close
   intro n hn m hm
   simp_all [Sequence.n0_coe, Sequence.eval_coe_at_int]
 
