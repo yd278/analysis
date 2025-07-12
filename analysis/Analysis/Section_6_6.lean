@@ -44,12 +44,12 @@ theorem Sequence.subseq_trans {a b c:ℕ → ℝ} (hab: Sequence.subseq a b) (hb
 
 /-- Proposition 6.6.5 / Exercise 6.6.4 -/
 theorem Sequence.convergent_iff_subseq (a:ℕ → ℝ) (L:ℝ) :
-    (a:Sequence).tendsTo L ↔ ∀ b:ℕ → ℝ, Sequence.subseq a b → (b:Sequence).tendsTo L := by
+    (a:Sequence).TendsTo L ↔ ∀ b:ℕ → ℝ, Sequence.subseq a b → (b:Sequence).TendsTo L := by
   sorry
 
 /-- Proposition 6.6.6 / Exercise 6.6.5 -/
 theorem Sequence.limit_point_iff_subseq (a:ℕ → ℝ) (L:ℝ) :
-    (a:Sequence).limit_point L ↔ ∃ b:ℕ → ℝ, Sequence.subseq a b ∧ (b:Sequence).tendsTo L := by
+    (a:Sequence).limit_point L ↔ ∃ b:ℕ → ℝ, Sequence.subseq a b ∧ (b:Sequence).TendsTo L := by
   sorry
 
 /-- Theorem 6.6.8 (Bolzano-Weierstrass theorem) -/
@@ -74,7 +74,7 @@ def Sequence.exist_subseq_of_subseq :
   (and `open Classical` to avoid any decidability issues)
 -/
 theorem Sequence.subseq_of_unbounded {a:ℕ → ℝ} (ha: ¬ (a:Sequence).isBounded) :
-    ∃ b:ℕ → ℝ, Sequence.subseq a b ∧ (b:Sequence)⁻¹.tendsTo 0 := by
+    ∃ b:ℕ → ℝ, Sequence.subseq a b ∧ (b:Sequence)⁻¹.TendsTo 0 := by
   sorry
 
 

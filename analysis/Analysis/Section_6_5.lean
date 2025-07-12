@@ -18,7 +18,7 @@ Main constructions and results of this section:
 
 namespace Chapter6
 
-theorem Sequence.lim_of_const (c:ℝ) :  ((fun (n:ℕ) ↦ c):Sequence).tendsTo c := by sorry
+theorem Sequence.lim_of_const (c:ℝ) :  ((fun (n:ℕ) ↦ c):Sequence).TendsTo c := by sorry
 
 instance Sequence.inst_pow: Pow Sequence ℕ where
   pow a k := {
@@ -50,7 +50,7 @@ lemma Sequence.pow_succ (a:Sequence) (k:ℕ) : a^(k+1) = a^k * a := by
 
 /-- Corollary 6.5.1 -/
 theorem Sequence.lim_of_power_decay {k:ℕ} :
-    ((fun (n:ℕ) ↦ 1/((n:ℝ)+1)^(1/(k+1:ℝ))):Sequence).tendsTo 0 := by
+    ((fun (n:ℕ) ↦ 1/((n:ℝ)+1)^(1/(k+1:ℝ))):Sequence).TendsTo 0 := by
   -- This proof is written to follow the structure of the original text.
   set a := ((fun (n:ℕ) ↦ 1/((n:ℝ)+1)^(1/(k+1:ℝ))):Sequence)
   have ha : a.bddBelow := by
@@ -87,11 +87,11 @@ theorem Sequence.lim_of_power_decay {k:ℕ} :
   simp only [lim_eq, ha', true_and, pow_eq_zero hlim]
 
 /-- Lemma 6.5.2 / Exercise 6.5.2 -/
-theorem Sequence.lim_of_geometric {x:ℝ} (hx: |x| < 1) : ((fun (n:ℕ) ↦ x^n):Sequence).tendsTo 0 := by
+theorem Sequence.lim_of_geometric {x:ℝ} (hx: |x| < 1) : ((fun (n:ℕ) ↦ x^n):Sequence).TendsTo 0 := by
   sorry
 
 /-- Lemma 6.5.2 / Exercise 6.5.2 -/
-theorem Sequence.lim_of_geometric' {x:ℝ} (hx: x = 1) : ((fun (n:ℕ) ↦ x^n):Sequence).tendsTo 1 := by
+theorem Sequence.lim_of_geometric' {x:ℝ} (hx: x = 1) : ((fun (n:ℕ) ↦ x^n):Sequence).TendsTo 1 := by
   sorry
 
 /-- Lemma 6.5.2 / Exercise 6.5.2 -/
@@ -101,12 +101,12 @@ theorem Sequence.lim_of_geometric'' {x:ℝ} (hx: x = -1 ∨ |x| > 1) :
 
 /-- Lemma 6.5.3 / Exercise 6.5.3 -/
 theorem Sequence.lim_of_roots {x:ℝ} (hx: x > 0) :
-    ((fun (n:ℕ) ↦ x^(1/(n+1:ℝ))):Sequence).tendsTo 1 := by
+    ((fun (n:ℕ) ↦ x^(1/(n+1:ℝ))):Sequence).TendsTo 1 := by
   sorry
 
 /-- Exercise 6.5.1 -/
 theorem Sequence.lim_of_rat_power_decay {q:ℚ} (hq: q > 0) :
-    (fun (n:ℕ) ↦ 1/((n+1:ℝ)^(q:ℝ)):Sequence).tendsTo 0 := by
+    (fun (n:ℕ) ↦ 1/((n+1:ℝ)^(q:ℝ)):Sequence).TendsTo 0 := by
   sorry
 
 /-- Exercise 6.5.1 -/

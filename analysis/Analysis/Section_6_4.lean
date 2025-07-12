@@ -67,7 +67,7 @@ example : Example_6_4_4.limit_point (-1) := by sorry
 example : ¬ Example_6_4_4.limit_point 0 := by sorry
 
 /-- Proposition 6.4.5 / Exercise 6.4.1 -/
-theorem Sequence.limit_point_of_limit {a:Sequence} {x:ℝ} (h: a.tendsTo x) : a.limit_point x := by
+theorem Sequence.limit_point_of_limit {a:Sequence} {x:ℝ} (h: a.TendsTo x) : a.limit_point x := by
   sorry
 
 /--
@@ -202,7 +202,7 @@ theorem Sequence.limit_point_of_liminf {a:Sequence} {L_minus:ℝ} (h: a.liminf =
 
 /-- Proposition 6.4.12(f) / Exercise 6.4.3 -/
 theorem Sequence.tendsTo_iff_eq_limsup_liminf {a:Sequence} (c:ℝ) :
-  a.tendsTo c ↔ a.liminf = c ∧ a.limsup = c := by
+  a.TendsTo c ↔ a.liminf = c ∧ a.limsup = c := by
   sorry
 
 /-- Lemma 6.4.13 (Comparison principle) / Exercise 6.4.4 -/
@@ -223,23 +223,23 @@ theorem Sequence.liminf_mono {a b:Sequence} (hm: a.m = b.m) (hab: ∀ n ≥ a.m,
 
 /-- Corollary 6.4.14 (Squeeze test) / Exercise 6.4.5 -/
 theorem Sequence.lim_of_between {a b c:Sequence} {L:ℝ} (hm: b.m = a.m ∧ c.m = a.m)
-  (hab: ∀ n ≥ a.m, a n ≤ b n ∧ b n ≤ c n) (ha: a.tendsTo L) (hb: b.tendsTo L) :
-    c.tendsTo L := by sorry
+  (hab: ∀ n ≥ a.m, a n ≤ b n ∧ b n ≤ c n) (ha: a.TendsTo L) (hb: b.TendsTo L) :
+    c.TendsTo L := by sorry
 
 /-- Example 6.4.15 -/
-example : ((fun (n:ℕ) ↦ 2/(n+1:ℝ)):Sequence).tendsTo 0 := by
+example : ((fun (n:ℕ) ↦ 2/(n+1:ℝ)):Sequence).TendsTo 0 := by
   sorry
 
 /-- Example 6.4.15 -/
-example : ((fun (n:ℕ) ↦ -2/(n+1:ℝ)):Sequence).tendsTo 0 := by
+example : ((fun (n:ℕ) ↦ -2/(n+1:ℝ)):Sequence).TendsTo 0 := by
   sorry
 
 /-- Example 6.4.15 -/
-example : ((fun (n:ℕ) ↦ (-1)^n/(n+1:ℝ) + 1 / (n+1)^2):Sequence).tendsTo 0 := by
+example : ((fun (n:ℕ) ↦ (-1)^n/(n+1:ℝ) + 1 / (n+1)^2):Sequence).TendsTo 0 := by
   sorry
 
 /-- Example 6.4.15 -/
-example : ((fun (n:ℕ) ↦ (2:ℝ)^(-(n:ℤ))):Sequence).tendsTo 0 := by
+example : ((fun (n:ℕ) ↦ (2:ℝ)^(-(n:ℤ))):Sequence).TendsTo 0 := by
   sorry
 
 abbrev Sequence.abs (a:Sequence) : Sequence where
@@ -252,7 +252,7 @@ abbrev Sequence.abs (a:Sequence) : Sequence where
 
 /-- Corollary 6.4.17 (Zero test for sequences) / Exercise 6.4.7 -/
 theorem Sequence.tendsTo_zero_iff (a:Sequence) :
-  a.tendsTo (0:ℝ) ↔ a.abs.tendsTo (0:ℝ) := by
+  a.TendsTo (0:ℝ) ↔ a.abs.TendsTo (0:ℝ) := by
   sorry
 
 /--
@@ -358,7 +358,7 @@ theorem Sequence.sup_not_strict_mono : ∃ (a b:ℕ → ℝ), (∀ n, a n < b n)
 /- Exercise 6.4.7 -/
 
 def Sequence.tendsTo_real_iff :
-  Decidable (∀ (a:Sequence) (x:ℝ), a.tendsTo x ↔ a.abs.tendsTo x) := by
+  Decidable (∀ (a:Sequence) (x:ℝ), a.TendsTo x ↔ a.abs.TendsTo x) := by
   -- The first line of this construction should be `apply isTrue` or `apply isFalse`.
   sorry
 

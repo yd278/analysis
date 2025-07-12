@@ -41,7 +41,7 @@ theorem Chapter6.Sequence.Cauchy_iff_CauchySeq (a: ℕ → ℝ) :
 
 /-- Identification with `Filter.Tendsto` -/
 theorem Chapter6.Sequence.tendsto_iff_Tendsto (a: ℕ → ℝ) (L:ℝ) :
-    (a:Sequence).tendsTo L ↔ Filter.Tendsto a Filter.atTop (nhds L) := by
+    (a:Sequence).TendsTo L ↔ Filter.Tendsto a Filter.atTop (nhds L) := by
   rw [Metric.tendsto_atTop, tendsTo_iff]
   constructor
   . intro h ε hε
@@ -64,7 +64,7 @@ theorem Chapter6.Sequence.tendsto_iff_Tendsto (a: ℕ → ℝ) (L:ℝ) :
   simp [hpos, ←Real.dist_eq]
   exact le_of_lt hN
 
-theorem Chapter6.Sequence.tendsto_iff_Tendsto' (a: Sequence) (L:ℝ) : a.tendsTo L ↔ Filter.Tendsto a.seq Filter.atTop (nhds L) := by
+theorem Chapter6.Sequence.tendsto_iff_Tendsto' (a: Sequence) (L:ℝ) : a.TendsTo L ↔ Filter.Tendsto a.seq Filter.atTop (nhds L) := by
   rw [Metric.tendsto_atTop, tendsTo_iff]
   constructor
   . intro h ε hε
