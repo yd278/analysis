@@ -49,7 +49,7 @@ theorem Sequence.convergent_iff_subseq (a:ℕ → ℝ) (L:ℝ) :
 
 /-- Proposition 6.6.6 / Exercise 6.6.5 -/
 theorem Sequence.limit_point_iff_subseq (a:ℕ → ℝ) (L:ℝ) :
-    (a:Sequence).limit_point L ↔ ∃ b:ℕ → ℝ, Sequence.subseq a b ∧ (b:Sequence).TendsTo L := by
+    (a:Sequence).LimitPoint L ↔ ∃ b:ℕ → ℝ, Sequence.subseq a b ∧ (b:Sequence).TendsTo L := by
   sorry
 
 /-- Theorem 6.6.8 (Bolzano-Weierstrass theorem) -/

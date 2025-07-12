@@ -156,7 +156,7 @@ theorem Chapter6.Sequence.Antitone_iff (a:ℕ → ℝ): (a:Sequence).IsAntitone 
 
 /-- Identification with `MapClusterPt` -/
 theorem Chapter6.Sequence.limit_point_iff (a:ℕ → ℝ) (L:ℝ) :
-    (a:Sequence).limit_point L ↔ MapClusterPt L Filter.atTop a := by
+    (a:Sequence).LimitPoint L ↔ MapClusterPt L Filter.atTop a := by
   simp_rw [limit_point_def, mapClusterPt_iff_frequently,
            Filter.frequently_atTop, Metric.mem_nhds_iff]
   constructor
