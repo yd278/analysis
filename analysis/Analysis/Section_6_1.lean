@@ -184,28 +184,28 @@ theorem Real.close_seq_def (ε: ℝ) (a: Chapter6.Sequence) (L:ℝ) :
   ε.CloseSeq a L ↔ ∀ n ≥ a.m, dist (a n) L ≤ ε := by rfl
 
 /-- Definition 6.1.5 -/
-abbrev Real.eventually_close (ε: ℝ) (a: Chapter6.Sequence) (L:ℝ) : Prop :=
+abbrev Real.EventuallyClose (ε: ℝ) (a: Chapter6.Sequence) (L:ℝ) : Prop :=
   ∃ N ≥ a.m, ε.CloseSeq (a.from N) L
 
 /-- Definition 6.1.5 -/
-theorem Real.eventually_close_def (ε: ℝ) (a: Chapter6.Sequence) (L:ℝ) :
-  ε.eventually_close a L ↔ ∃ N, (N ≥ a.m) ∧ ε.CloseSeq (a.from N) L := by rfl
+theorem Real.eventuallyClose_def (ε: ℝ) (a: Chapter6.Sequence) (L:ℝ) :
+  ε.EventuallyClose a L ↔ ∃ N, (N ≥ a.m) ∧ ε.CloseSeq (a.from N) L := by rfl
 
 theorem Real.close_seq_mono {a: Chapter6.Sequence} {ε₁ ε₂ L: ℝ} (hε: ε₁ ≤ ε₂)
   (hclose: ε₁.CloseSeq a L) :
     ε₂.CloseSeq a L := by sorry
 
-theorem Real.eventually_close_mono {a: Chapter6.Sequence} {ε₁ ε₂ L: ℝ} (hε: ε₁ ≤ ε₂)
-  (hclose: ε₁.eventually_close a L) :
-    ε₂.eventually_close a L := by sorry
+theorem Real.eventuallyClose_mono {a: Chapter6.Sequence} {ε₁ ε₂ L: ℝ} (hε: ε₁ ≤ ε₂)
+  (hclose: ε₁.EventuallyClose a L) :
+    ε₂.EventuallyClose a L := by sorry
 
 namespace Chapter6
 
 abbrev Sequence.TendsTo (a:Sequence) (L:ℝ) : Prop :=
-  ∀ ε > (0:ℝ), ε.eventually_close a L
+  ∀ ε > (0:ℝ), ε.EventuallyClose a L
 
 theorem Sequence.tendsTo_def (a:Sequence) (L:ℝ) :
-  a.TendsTo L ↔ ∀ ε > (0:ℝ), ε.eventually_close a L := by rfl
+  a.TendsTo L ↔ ∀ ε > (0:ℝ), ε.EventuallyClose a L := by rfl
 
 /-- Exercise 6.1.2 -/
 theorem Sequence.tendsTo_iff (a:Sequence) (L:ℝ) :
@@ -220,7 +220,7 @@ example : (0.1:ℝ).CloseSeq seq_6_1_6 1 := by sorry
 example : ¬ (0.01:ℝ).CloseSeq seq_6_1_6 1 := by sorry
 
 /-- Examples 6.1.6 -/
-example : (0.01:ℝ).eventually_close seq_6_1_6 1 := by sorry
+example : (0.01:ℝ).EventuallyClose seq_6_1_6 1 := by sorry
 
 /-- Examples 6.1.6 -/
 example : seq_6_1_6.TendsTo 1 := by sorry
