@@ -90,18 +90,18 @@ example : ¬ UniformContinuousOn (fun x:ℝ ↦ 1/x) (Set.Icc 0 2) := by
 end Chapter9
 
 /-- Definition 9.9.5.  This is similar but not identical to `Real.close_seq` from Section 6.1. -/
-abbrev Real.close_seqs (ε:ℝ) (a b: Chapter6.Sequence) : Prop :=
+abbrev Real.CloseSeqs (ε:ℝ) (a b: Chapter6.Sequence) : Prop :=
   (a.m = b.m) ∧ ∀ n ≥ a.m, ε.Close (a n) (b n)
 
-abbrev Real.eventually_close_seqs (ε:ℝ) (a b: Chapter6.Sequence) : Prop :=
-  ∃ N ≥ a.m, ε.close_seqs (a.from N) (b.from N)
+abbrev Real.EventuallyCloseSeqs (ε:ℝ) (a b: Chapter6.Sequence) : Prop :=
+  ∃ N ≥ a.m, ε.CloseSeqs (a.from N) (b.from N)
 
 abbrev Chapter6.Sequence.equiv (a b: Sequence) : Prop :=
-  ∀ ε > (0:ℝ), ε.eventually_close_seqs a b
+  ∀ ε > (0:ℝ), ε.EventuallyCloseSeqs a b
 
 /-- Remark 9.9.6 -/
 theorem Chapter6.Sequence.equiv_iff_rat (a b: Sequence) :
-  Sequence.equiv a b ↔ ∀ ε > (0:ℚ), (ε:ℝ).eventually_close_seqs a b := by
+  Sequence.equiv a b ↔ ∀ ε > (0:ℚ), (ε:ℝ).EventuallyCloseSeqs a b := by
   sorry
 
 /-- Lemma 9.9.7 / Exercise 9.9.1 -/
@@ -197,7 +197,7 @@ theorem UniformContinuousOn.of_continuousOn {a b:ℝ} {f:ℝ → ℝ}
   have hE : Infinite E := by
     rw [←not_finite_iff_infinite]
     by_contra! this
-    replace : ε.eventually_close_seqs (fun n ↦ f (x n):Sequence) (fun n ↦ f (y n):Sequence) := by
+    replace : ε.EventuallyCloseSeqs (fun n ↦ f (x n):Sequence) (fun n ↦ f (y n):Sequence) := by
       sorry
     sorry
   have : Countable E := by infer_instance
