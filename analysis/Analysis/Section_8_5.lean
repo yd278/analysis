@@ -61,6 +61,11 @@ LinearOrder.mk (by
   sorry
   )
 
+theorem IsTotal.subtype {X:Type} [PartialOrder X] {A: Set X} (hA: IsTotal X) : IsTotal A := by
+  intro ⟨ x, hx ⟩ ⟨ y, hy ⟩
+  have := hA x y
+  simp_all
+
 theorem IsTotal.subset {X:Type} [PartialOrder X] {A B: Set X} (hA: IsTotal A) (hAB: B ⊆ A) : IsTotal B := by
   intro ⟨ x, hx ⟩ ⟨ y, hy ⟩
   have := hA ⟨ x, hAB hx ⟩ ⟨ y, hAB hy ⟩
@@ -123,6 +128,11 @@ example : WellFoundedLT ℕ := by
 example : ¬ WellFoundedLT ℤ := by sorry
 example : ¬ WellFoundedLT ℚ := by sorry
 example : ¬ WellFoundedLT ℝ := by sorry
+
+/-- Exercise 8.5.8 -/
+theorem IsMax.ofFinite {X:Type} [LinearOrder X] [Finite X] [Nonempty X] : ∃ x:X, IsMax x := by sorry
+
+theorem IsMin.ofFinite {X:Type} [LinearOrder X] [Finite X] [Nonempty X] : ∃ x:X, IsMin x := by sorry
 
 /-- Exercise 8.5.8 -/
 theorem WellFoundedLT.ofFinite {X:Type} [LinearOrder X] [Finite X] : WellFoundedLT X := by sorry
@@ -193,6 +203,10 @@ theorem IsMin.iff_lowerbound' {X:Type} [PartialOrder X] {Y: Set X} (hY: IsTotal 
   obtain ⟨ hx₀, hmin' ⟩ := this
   use ⟨ x₀, hx₀ ⟩
 
+/-- Exercise 8.5.11 -/
+example {X:Type} [PartialOrder X] {Y Y':Set X} (hY: IsTotal Y) (hY': IsTotal Y') (hY_well: WellFoundedLT Y) (hY'_well: WellFoundedLT Y') (hYY': IsTotal (Y ∪ Y': Set X)) : WellFoundedLT (Y ∪ Y': Set X) := by sorry
+
+set_option maxHeartbeats 400000 in
 /-- Lemma 8.5.14-/
 theorem WellFoundedLT.partialOrder {X:Type} [PartialOrder X] (x₀ : X) : ∃ Y : Set X, IsTotal Y ∧ WellFoundedLT Y ∧ (∃ hx₀ : x₀ ∈ Y, IsMin (⟨ x₀, hx₀ ⟩: Y)) ∧ ¬ ∃ x, IsStrictUpperBound Y x := by
   -- This proof is based on the original text with some technical simplifications.
@@ -277,7 +291,7 @@ theorem WellFoundedLT.partialOrder {X:Type} [PartialOrder X] (x₀ : X) : ∃ Y 
     simp [Y_infty] at hx hx'
     obtain ⟨ Y, ⟨ hYΩ₀, hYΩ ⟩, hxY ⟩ := hx
     obtain ⟨ Y', ⟨ hY'Ω₀, hY'Ω ⟩, hxY' ⟩ := hx'
-    specialize this ⟨ ⟨ Y, hYΩ₀⟩, hYΩ ⟩ ⟨ ⟨ Y', hY'Ω₀⟩, hY'Ω ⟩
+    specialize this ⟨ _, hYΩ ⟩ ⟨ _, hY'Ω ⟩
     simp at this ⊢
     rcases this with this | this
     . simp [Ω₀] at hY'Ω₀
@@ -287,25 +301,141 @@ theorem WellFoundedLT.partialOrder {X:Type} [PartialOrder X] (x₀ : X) : ∃ Y 
     replace hYΩ₀ := hYΩ₀.1 ⟨ x, hxY ⟩ ⟨ x', this hxY' ⟩
     simp at hYΩ₀; assumption
   have hwell : WellFoundedLT Y_infty := by
-    rw [iff' htotal]
-    intro A ⟨ ⟨ a, ha⟩, haA ⟩
+    rw [iff' htotal]; intro A ⟨ ⟨ a, ha⟩, haA ⟩
     simp [Y_infty] at ha
     obtain ⟨ Y, ⟨ hYΩ₀, hYΩ⟩, haY ⟩ := ha
-    simp [Ω₀] at hYΩ₀
-    rw [iff' hYΩ₀.1] at hYΩ₀
-    obtain ⟨ ⟨ ⟨ b, hb ⟩, hbY ⟩, hbmin ⟩ := hYΩ₀.2.1 {x:Y | ∃ x':A, (x:X) = x'} (by use ⟨ a, haY ⟩; simp [ha, haA])
+    simp [Ω₀, iff' hYΩ₀.1] at hYΩ₀
+    obtain ⟨ b, hb, hbY, hbmin ⟩ := hYΩ₀.2.1 {x:Y | ∃ x':A, (x:X) = x'} (by use ⟨ a, haY ⟩; simp [ha, haA])
     simp at hbY; obtain ⟨ hbY_infty, hbA ⟩ := hbY
-    rw [IsMin.iff_lowerbound']
-    . sorry
+    rw [IsMin.iff_lowerbound' (IsTotal.subtype htotal)]
+    use ⟨ b, hbY_infty ⟩, hbA
+    intro ⟨ x, hx ⟩ hxA
+    simp [Y_infty] at hx ⊢
+    obtain ⟨ Y', ⟨ hY'Ω₀, hY'Ω ⟩, hxY' ⟩ := hx
     sorry
+  have hY_inftyΩ₀ : Y_infty ∈ Ω₀ := by
+    sorry
+  set sY_infty : X := s ⟨ Y_infty, hY_inftyΩ₀ ⟩
+  have hYs_total : IsTotal (Y_infty ∪ {sY_infty} : Set X) := by
+    sorry
+  have hYs_well : WellFoundedLT (Y_infty ∪ {sY_infty} : Set X) := by
+    sorry
+  have hYs_mem : x₀ ∈ Y_infty ∪ {sY_infty} := by sorry
+  have hYs_min : ∀ x ∈ Y_infty ∪ {sY_infty}, x₀ ≤ x := by sorry
+  have hYs_Ω₀ : (Y_infty ∪ {sY_infty}) ∈ Ω₀ := by
+    simpa only [Ω₀, Set.mem_setOf_eq, hYs_total, hYs_well, hYs_mem, true_and]
+  have hYs_Ω : ⟨ _, hYs_Ω₀ ⟩ ∈ Ω := by
+    simp only [Ω, Set.mem_setOf_eq, Set.mem_diff, Set.union_singleton, Set.mem_insert_iff, Set.mem_singleton_iff]
+    intro x ⟨ hx, hxx₀ ⟩
+    specialize hs ⟨ _, hY_inftyΩ₀ ⟩
+    rw [IsStrictUpperBound.iff] at hs
+    rcases hx with rfl | hx
+    . unfold sY_infty; congr 1
+      apply (Subtype.val_injective _).symm
+      convert hF _
+      . ext y; simp; constructor
+        . intro h; simp [h]; solve_by_elim
+        intro ⟨ h1, h2 ⟩; rcases h1 with h1 | h1
+        . order
+        assumption
+      simp; replace hs := hs (y := x₀) (by simp [hmem]); order
+    have hx' := hx; simp [Y_infty] at hx
+    obtain ⟨ Y, ⟨ hYΩ₀, hYΩ ⟩, hxY ⟩ := hx
+    have hYΩ' := hYΩ; simp [Ω] at hYΩ
+    convert hYΩ x hxY hxx₀ using 2
+    apply Subtype.val_injective
+    rw [hF, hF]
+    . ext y; simp [Y_infty]; intro hyx
+      constructor
+      . intro h
+        rcases h with rfl | h
+        . sorry
+        sorry
+      intro hyY; right; refine ⟨ Y, ⟨ hYΩ₀, hYΩ' ⟩, hyY ⟩
+    all_goals simp [hxY, hx', hxx₀]
+  have hs_mem : sY_infty ∈ Y_infty := by
+    apply Set.mem_iUnion_of_mem ⟨ _, hYs_Ω ⟩
+    aesop
+  replace hs := (hs Y_infty).1
+  contradiction
 
+
+/-- Lemma 8.5.15 (Zorn's lemma) / Exercise 8.5.14 -/
+theorem Zorns_lemma {X:Type} [PartialOrder X] [Nonempty X]
+  (hchain: ∀ Y:Set X, IsTotal Y ∧ Y.Nonempty → ∃ x, IsUpperBound Y x) : ∃ x:X, IsMax x := by
   sorry
 
+/-- Exercise 8.5.1 -/
+def empty_set_partial_order [h₀: LE Empty] : Decidable (∃ h : PartialOrder Empty, h.le = h₀.le) := by
+  sorry
+
+def empty_set_linear_order [h₀: LE Empty] : Decidable (∃ h : LinearOrder Empty, h.le = h₀.le) := by
+  sorry
+
+def empty_set_well_order [h₀: LT Empty]: Decidable (Nonempty (WellFoundedLT Empty)) := by
+  sorry
+
+/-- Exercise 8.5.2 -/
+example : ∃ (X:Type) (h₀: LE X), (∀ x:X, x ≤ x) ∧ (∀ x y:X, x ≤ y → y ≤ x → x = y) ∧ ¬ (∀ x y z:X, x ≤ y → y ≤ z → x ≤ z) := by sorry
+
+example : ∃ (X:Type) (h₀: LE X), (∀ x:X, x ≤ x) ∧ (∀ x y z:X, x ≤ y → y ≤ z → x ≤ z) ∧ ¬ (∀ x y:X, x ≤ y → y ≤ x → x = y) := by sorry
+
+example : ∃ (X:Type) (h₀: LE X), (∀ x y:X, x ≤ y → y ≤ x → x = y) ∧ (∀ x y z:X, x ≤ y → y ≤ z → x ≤ z) ∧ ¬ (∀ x:X, x ≤ x) := by sorry
+
+/-- Exercise 8.5.3 -/
+example : ∃ (h₀: PartialOrder PNat), h₀.le = (fun x y ↦ ∃ n, y = n * x) := by sorry
+
+example : ¬ ∃ (h₀: LinearOrder PNat), h₀.le = (fun x y ↦ ∃ n, y = n * x) := by sorry
+
+/-- Exercise 8.5.4 -/
+example : ¬ ∃ x : {x:ℝ| x > 0}, IsMin x := by sorry
+
+/-- Exercise 8.5.5 -/
+example {X Y:Type} [PartialOrder Y] (f:X → Y) : ∃ h₀: PartialOrder X, h₀.le = (fun x y ↦ f x < f y ∨ x = y) := by sorry
+
+def Ex_8_5_5_b : Decidable (∀ (X Y:Type) (h: LinearOrder Y) (f:X → Y), ∃ h₀: LinearOrder X, h₀.le = (fun x y ↦ f x < f y ∨ x = y)) := by
+  sorry
+
+-- Final part of Exercise 8.5.5; if the answer to the previous part is "no", modify the hypotheses to make it true.
+
+/-- Exercise 8.5.6 -/
+abbrev OrderIdeals (X: Type) [PartialOrder X] : Set (Set X) := Set.Iic '' (Set.univ : Set X)
+
+def OrderIdeals.iso {X: Type} [PartialOrder X] : X ≃o OrderIdeals X := {
+  toFun := fun x ↦ ⟨ Set.Iic x, by simp ⟩
+  invFun := by sorry
+  left_inv := by sorry
+  right_inv := by sorry
+  map_rel_iff' := by sorry
+  }
+
+/-- Exercise 8.5.7 -/
+example {Y:Type} [PartialOrder Y] {x y:Y} (hx: IsMin x) (hy: IsMin y) : x = y := by
+  sorry
+
+example {Y:Type} [PartialOrder Y] {x y:Y} (hx: IsMax x) (hy: IsMax y) : x = y := by
+ sorry
+
+/-- Exercise 8.5.9 -/
+example {X:Type} [LinearOrder X] (hmin: ∀ Y: Set X, Y.Nonempty → ∃ x:Y, IsMin x) (hmax: ∀ Y: Set X, Y.Nonempty → ∃ x:Y, IsMax x) : Finite X := by sorry
 
 
+/-- Exercise 8.5.12.  Here we make a copy of Mathlib's `Lex` wrapper for lexicographical orderings.  This wrapper is needed
+because products `X × Y` of ordered sets are given the default instance of the product partial order instead of
+the lexicographical one. -/
+def Lex' (α : Type) := α
 
+instance Lex'.partialOrder {X Y: Type} [PartialOrder X] [PartialOrder Y] : PartialOrder (Lex' (X × Y)) := {
+  le := fun ⟨ x, y ⟩ ⟨ x', y' ⟩ ↦ (x < x') ∨ (x = x' ∧ y ≤ y')
+  le_refl := by sorry
+  le_antisymm := by sorry
+  le_trans := by sorry
+}
 
+instance Lex'.linearOrder {X Y:Type} [LinearOrder X] [LinearOrder Y] : LinearOrder (Lex' (X × Y)) := by sorry
 
+instance Lex'.WellFoundedLT {X Y:Type} [LinearOrder X] [WellFoundedLT X] [LinearOrder Y] [WellFoundedLT Y]:
+  WellFoundedLT (Lex' (X × Y)) := by sorry
 
 
 
