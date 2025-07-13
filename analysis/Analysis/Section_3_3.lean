@@ -168,16 +168,36 @@ theorem SetTheory.Set.f_3_3_3c_eval''' (n:ℕ) :
 
 /--
   Example 3.3.4 is a little tricky to replicate with the current formalism as the real numbers
-  have not been constructed yet.  Instead, I offer some Mathlib counterparts.  Of course, filling
-  in these sorries will require using some Mathlib API, for instance for the nonnegative real
+  have not been constructed yet.  Instead, I offer some Mathlib counterparts. Of course, writing
+  proofs for these will require using some Mathlib API, for instance for the nonnegative real
   class `NNReal`, and how this class interacts with `ℝ`.
 -/
-example : ¬ ∃ f: ℝ → ℝ, ∀ x y, y = f x ↔ y^2 = x := by sorry
+example : ¬ ∃ f: ℝ → ℝ, ∀ x y, y = f x ↔ y^2 = x := by
+  by_contra h
+  obtain ⟨f, hf⟩ := h
+  set y := f (-1)
+  have h1 := (hf _ y).mp (by rfl)
+  have h2 := sq_nonneg y
+  linarith
 
-example : ¬ ∃ f: NNReal → ℝ, ∀ x y, y = f x ↔ y^2 = x := by sorry
+example : ¬ ∃ f: NNReal → ℝ, ∀ x y, y = f x ↔ y^2 = x := by
+  by_contra h
+  obtain ⟨f, hf⟩ := h
+  set y := f 4
+  have hy := (hf _ y).mp (by rfl)
+  have h1 : 2 = y := (hf 4 2).mpr (by norm_num)
+  have h2 : -2 = y := (hf 4 (-2)).mpr (by rwa [←sq_abs, ←abs_neg, sq_abs, ←h1] at hy)
+  rw [←h1] at h2
+  norm_num at h2
 
-example : ∃ f: NNReal → NNReal, ∀ x y, y = f x ↔ y^2 = x := by sorry
-
+example : ∃ f: NNReal → NNReal, ∀ x y, y = f x ↔ y^2 = x := by
+  use NNReal.sqrt
+  intro x y
+  constructor
+  · intro h
+    rw [h, NNReal.sq_sqrt]
+  · intro h
+    rw [←h, NNReal.sqrt_sq]
 
 /-- Example 3.3.5. The unused variable `_x` is underscored to avoid triggering a linter. -/
 abbrev SetTheory.Set.P_3_3_5 : nat → nat → Prop := fun _x y ↦ y = 7
@@ -218,9 +238,16 @@ theorem SetTheory.Set.f_3_3_10_eq : f_3_3_10a = f_3_3_10b := by
   set n := (x:ℕ)
   simp; ring
 
-example : (fun x:NNReal ↦ (x:ℝ)) = (fun x:NNReal ↦ |(x:ℝ)|) := by sorry
+example : (fun x:NNReal ↦ (x:ℝ)) = (fun x:NNReal ↦ |(x:ℝ)|) := by
+  ext x
+  rw [NNReal.abs_eq]
 
-example : (fun x:ℝ ↦ (x:ℝ)) ≠ (fun x:ℝ ↦ |(x:ℝ)|) := by sorry
+example : (fun x:ℝ ↦ (x:ℝ)) ≠ (fun x:ℝ ↦ |(x:ℝ)|) := by
+  intro h
+  let a := (fun (x:ℝ) ↦ x) (-1)
+  let b := (fun x:ℝ ↦ |(x:ℝ)|) (-1)
+  have hab : a = b := by unfold a; rw [h]
+  norm_num [a, b] at hab
 
 /-- Example 3.3.11 -/
 abbrev SetTheory.Set.f_3_3_11 (X:Set) : Function (∅:Set) X :=
@@ -242,10 +269,11 @@ theorem Function.comp_eval {X Y Z: Set} (g: Function Y Z) (f: Function X Y) (x: 
 
 /--
   Compatibility with Mathlib's composition operation.
-  You may find the `ext` and `simp` tactics to be useful.
 -/
 theorem Function.comp_eq_comp {X Y Z: Set} (g: Function Y Z) (f: Function X Y) :
-    (g ○ f).to_fn = g.to_fn ∘ f.to_fn := by sorry
+    (g ○ f).to_fn = g.to_fn ∘ f.to_fn := by
+  ext x
+  simp only [Function.comp_eval, Function.comp_apply, to_fn_eval]
 
 /-- Example 3.3.14 -/
 abbrev SetTheory.Set.f_3_3_14 : Function nat nat := Function.mk_fn (fun x ↦ (2*x:ℕ))
@@ -287,43 +315,74 @@ theorem Function.one_to_one_iff {X Y: Set} (f: Function X Y) :
   understand Mathlib concepts such as `Function.Injective`.
 -/
 theorem Function.one_to_one_iff' {X Y: Set} (f: Function X Y) :
-    f.one_to_one ↔ Function.Injective f.to_fn := by sorry
+    f.one_to_one ↔ Function.Injective f.to_fn := by
+  rw [one_to_one_iff, Function.Injective]
 
 /--
   Example 3.3.18.  One half of the example requires the integers, and so is expressed using
   Mathlib functions instead of Chapter 3 functions.
 -/
 theorem SetTheory.Set.f_3_3_18_one_to_one :
-    (Function.mk_fn (fun (n:nat) ↦ ((n^2:ℕ):nat))).one_to_one := by sorry
+    (Function.mk_fn (fun (n:nat) ↦ ((n^2:ℕ):nat))).one_to_one := by
+  rw [Function.one_to_one_iff]
+  intro x1 x2 h
+  rw [Function.eval, Function.eval_of] at h
+  simp at h
+  exact h
 
-example : ¬ Function.Injective (fun (n:ℤ) ↦ n^2) := by sorry
+example : ¬ Function.Injective (fun (n:ℤ) ↦ n^2) := by
+  intro h
+  have h1 : (fun n ↦ n ^ 2) 1 = (1:ℤ) := by norm_num
+  have h2 : (fun n ↦ n ^ 2) (-1) = (1:ℤ) := by norm_num
+  nth_rewrite 2 [←h1] at h2
+  specialize h h2
+  contradiction
 
-example : Function.Injective (fun (n:ℕ) ↦ n^2) := by sorry
+example : Function.Injective (fun (n:ℕ) ↦ n^2) := by
+  intro a b h
+  have h1 : a ≥ 0 := by norm_num
+  have h2 : b ≥ 0 := by norm_num
+  have h3 : 2 ≠ 0 := by norm_num
+  rwa [← pow_left_inj₀ h1 h2 h3]
 
 /-- Remark 3.3.19 -/
 theorem SetTheory.Set.two_to_one {X Y: Set} {f: Function X Y} (h: ¬ f.one_to_one) :
-    ∃ x x': X, x ≠ x' ∧ f x = f x' := by sorry
+    ∃ x x': X, x ≠ x' ∧ f x = f x' := by
+  rw [Function.one_to_one] at h
+  push_neg at h
+  exact h
 
 /-- Definition 3.3.20 (Onto functions) -/
 abbrev Function.onto {X Y: Set} (f: Function X Y) : Prop := ∀ y: Y, ∃ x: X, f x = y
 
 /-- Compatibility with Mathlib's Function.Surjective-/
 theorem Function.onto_iff {X Y: Set} (f: Function X Y) : f.onto ↔ Function.Surjective f.to_fn := by
-  sorry
+  rfl
 
 /-- Example 3.3.21 (using Mathlib) -/
-example : ¬ Function.Surjective (fun (n:ℤ) ↦ n^2) := by sorry
+example : ¬ Function.Surjective (fun (n:ℤ) ↦ n^2) := by
+  unfold Function.Surjective
+  push_neg
+  use (-1)
+  intro a
+  have := sq_nonneg a
+  linarith
 
 abbrev A_3_3_21 := { m:ℤ // ∃ n:ℤ, m = n^2 }
 
-example : Function.Surjective (fun (n:ℤ) ↦ ⟨ n^2, by use n ⟩ : ℤ → A_3_3_21) := by sorry
+example : Function.Surjective (fun (n:ℤ) ↦ ⟨ n^2, by use n ⟩ : ℤ → A_3_3_21) := by
+  unfold Function.Surjective
+  rintro ⟨b, ⟨a, ha⟩⟩
+  use a
+  simp only [ha]
 
 /-- Definition 3.3.23 (Bijective functions) -/
 abbrev Function.bijective {X Y: Set} (f: Function X Y) : Prop := f.one_to_one ∧ f.onto
 
 /-- Compatibility with Mathlib's Function.Bijective-/
 theorem Function.bijective_iff {X Y: Set} (f: Function X Y) :
-    f.bijective ↔ Function.Bijective f.to_fn := by sorry
+    f.bijective ↔ Function.Bijective f.to_fn := by
+  rw [Function.bijective, Function.Bijective, one_to_one_iff', onto_iff]
 
 /-- Example 3.3.24 (using Mathlib) -/
 abbrev f_3_3_24 : Fin 3 → ({3,4}:_root_.Set ℕ) := fun x ↦ match x with
@@ -331,34 +390,70 @@ abbrev f_3_3_24 : Fin 3 → ({3,4}:_root_.Set ℕ) := fun x ↦ match x with
 | 1 => ⟨ 3, by norm_num ⟩
 | 2 => ⟨ 4, by norm_num ⟩
 
-example : ¬ Function.Injective f_3_3_24 := by sorry
-example : ¬ Function.Bijective f_3_3_24 := by sorry
+example : ¬ Function.Injective f_3_3_24 := by decide
+example : ¬ Function.Bijective f_3_3_24 := by decide
 
 abbrev g_3_3_24 : Fin 2 → ({2,3,4}:_root_.Set ℕ) := fun x ↦ match x with
 | 0 => ⟨ 2, by norm_num ⟩
 | 1 => ⟨ 3, by norm_num ⟩
 
-example : ¬ Function.Surjective g_3_3_24 := by sorry
-example : ¬ Function.Bijective g_3_3_24 := by sorry
+example : ¬ Function.Surjective g_3_3_24 := by decide
+example : ¬ Function.Bijective g_3_3_24 := by decide
 
 abbrev h_3_3_24 : Fin 3 → ({3,4,5}:_root_.Set ℕ) := fun x ↦ match x with
 | 0 => ⟨ 3, by norm_num ⟩
 | 1 => ⟨ 4, by norm_num ⟩
 | 2 => ⟨ 5, by norm_num ⟩
 
-example : Function.Bijective h_3_3_24 := by sorry
+example : Function.Bijective h_3_3_24 := by decide
 
 /--
   Example 3.3.25 is formulated using Mathlib rather than the set theory framework here to avoid
   some tedious technical issues (cf. Exercise 3.3.2)
 -/
-example : Function.Bijective (fun n ↦ ⟨ n+1, by omega⟩ : ℕ → { n:ℕ // n ≠ 0 }) := by sorry
+example : Function.Bijective (fun n ↦ ⟨ n+1, by omega⟩ : ℕ → { n:ℕ // n ≠ 0 }) := by
+  unfold Function.Bijective
+  constructor
+  · unfold Function.Injective
+    intro x y
+    simp only [Subtype.mk.injEq]
+    omega
+  unfold Function.Surjective
+  · rintro ⟨x, hx⟩
+    use x-1
+    simp only [Subtype.mk.injEq]
+    omega
 
-example : ¬ Function.Bijective (fun n ↦ n+1) := by sorry
+example : ¬ Function.Bijective (fun n ↦ n+1) := by
+  unfold Function.Bijective
+  suffices h : ¬ Function.Surjective (fun n ↦ n+1) by tauto
+  unfold Function.Surjective
+  push_neg
+  use 0
+  intro a
+  symm
+  apply Nat.zero_ne_add_one
 
 /-- Remark 3.3.27 -/
 theorem Function.bijective_incorrect_def :
-    ∃ X Y: Set, ∃ f: Function X Y, (∀ x: X, ∃! y: Y, y = f x) ∧ ¬ f.bijective := by sorry
+    ∃ X Y: Set, ∃ f: Function X Y, (∀ x: X, ∃! y: Y, y = f x) ∧ ¬ f.bijective := by
+  use nat, nat
+  set f := mk_fn fun x ↦ (0: nat)
+  use f
+  constructor
+  · intro x
+    apply existsUnique_of_exists_of_unique
+    · use 0
+      rw [Function.eval]
+    intro y1 y2 h1 h2
+    rw [Function.eval] at *
+    rw [h1, h2]
+  rw [Function.bijective]
+  suffices h : ¬ f.one_to_one by tauto
+  rw [Function.one_to_one_iff]
+  push_neg
+  use 0, 1
+  simp
 
 /--
   We cannot use the notation `f⁻¹` for the inverse because in Mathlib's `Inv` class, the inverse
@@ -384,7 +479,14 @@ theorem Function.inverse_eval {X Y: Set} {f: Function X Y} (h: f.bijective) (y: 
 
 /-- Compatibility with Mathlib's notion of inverse -/
 theorem Function.inverse_eq {X Y: Set} [Nonempty X] {f: Function X Y} (h: f.bijective) :
-    (f.inverse h).to_fn = Function.invFun f.to_fn := by sorry
+    (f.inverse h).to_fn = Function.invFun f.to_fn := by
+  ext y
+  congr
+  symm
+  rw [inverse_eval, ←to_fn]
+  apply Function.rightInverse_invFun
+  have ⟨_, hf⟩ := f.bijective_iff.mp h
+  exact hf
 
 /-- Exercise 3.3.1 -/
 theorem Function.refl {X Y:Set} (f: Function X Y) : f = f := by sorry
