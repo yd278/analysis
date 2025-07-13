@@ -479,7 +479,14 @@ theorem Function.inverse_eval {X Y: Set} {f: Function X Y} (h: f.bijective) (y: 
 
 /-- Compatibility with Mathlib's notion of inverse -/
 theorem Function.inverse_eq {X Y: Set} [Nonempty X] {f: Function X Y} (h: f.bijective) :
-    (f.inverse h).to_fn = Function.invFun f.to_fn := by sorry
+    (f.inverse h).to_fn = Function.invFun f.to_fn := by
+  ext y
+  congr
+  symm
+  rw [inverse_eval, ←to_fn]
+  apply Function.rightInverse_invFun
+  have ⟨_, hf⟩ := f.bijective_iff.mp h
+  exact hf
 
 /-- Exercise 3.3.1 -/
 theorem Function.refl {X Y:Set} (f: Function X Y) : f = f := by sorry
