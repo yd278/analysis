@@ -47,8 +47,7 @@ example (x:ℝ) :
   let x₀ : ℝ := 0.1
   let δ : ℝ := 1/1010
   |x-x₀| ≤ δ → |f x - f x₀| ≤ ε := by
-  -- note: there is currently a bug with `extract_lets` in that `let` statements with identically
-  -- assigned values are not being handled correctly.
+  extract_lets -merge f ε x₀ δ -- need the `-merge` flag due to the collision of `ε` and `x₀`
   sorry
 
 example (x:ℝ) :
