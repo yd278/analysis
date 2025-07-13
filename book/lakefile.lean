@@ -65,6 +65,7 @@ def sections := #[
   (`Analysis.Section_8_2, "Summation on infinite sets"),
   (`Analysis.Section_8_3, "Uncountable sets"),
   (`Analysis.Section_8_4, "The axiom of choice"),
+  (`Analysis.Section_8_5, "Ordered sets"),
   (`Analysis.Section_9_1, "Subsets of the real line"),
   (`Analysis.Section_9_2, "The algebra of real-valued functions"),
   (`Analysis.Section_9_3, "Limiting values of functions"),
