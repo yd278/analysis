@@ -57,10 +57,11 @@ structure Function (X Y: Set) where
   The Chapter 3 definition of a function was nonconstructive, so we have to use the
   axiom of choice here.
 -/
-noncomputable instance Function.inst_coefn (X Y: Set)  : CoeFun (Function X Y) (fun _ ↦ X → Y) where
-  coe := fun f x ↦ Classical.choose (f.unique x)
+noncomputable def Function.to_fn {X Y: Set} (f: Function X Y) : X → Y :=
+  fun x ↦ Classical.choose (f.unique x)
 
-noncomputable abbrev Function.to_fn {X Y: Set} (f: Function X Y) (x:X) : Y := f x
+noncomputable instance Function.inst_coefn (X Y: Set) : CoeFun (Function X Y) (fun _ ↦ X → Y) where
+  coe := Function.to_fn
 
 theorem Function.to_fn_eval {X Y: Set} (f: Function X Y) (x:X) : f.to_fn x = f x := rfl
 
@@ -453,7 +454,7 @@ theorem Function.bijective_incorrect_def :
   rw [Function.one_to_one_iff]
   push_neg
   use 0, 1
-  simp
+  simp [f]
 
 /--
   We cannot use the notation `f⁻¹` for the inverse because in Mathlib's `Inv` class, the inverse
@@ -483,7 +484,7 @@ theorem Function.inverse_eq {X Y: Set} [Nonempty X] {f: Function X Y} (h: f.bije
   ext y
   congr
   symm
-  rw [inverse_eval, ←to_fn]
+  rw [inverse_eval]
   apply Function.rightInverse_invFun
   have ⟨_, hf⟩ := f.bijective_iff.mp h
   exact hf
