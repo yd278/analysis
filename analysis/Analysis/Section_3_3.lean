@@ -488,7 +488,10 @@ theorem Function.inverse_eq {X Y: Set} [Nonempty X] {f: Function X Y} (h: f.bije
   have ⟨_, hf⟩ := f.bijective_iff.mp h
   exact hf
 
-/-- Exercise 3.3.1 -/
+/--
+  Exercise 3.3.1.  Although a proof operating directly on functions would be shorter,
+  the spirit of the exercise is to show these using the `Function.eq_iff` definition.
+-/
 theorem Function.refl {X Y:Set} (f: Function X Y) : f = f := by sorry
 
 theorem Function.symm {X Y:Set} (f g: Function X Y) : f = g ↔ g = f := by sorry
