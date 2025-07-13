@@ -54,10 +54,12 @@ def demoSite : Site := site AnalysisBook.Home /
   "sec33" Book.Analysis.Section_3_3
   "sec34" Book.Analysis.Section_3_4
   "sec35" Book.Analysis.Section_3_5
+  "sec36" Book.Analysis.Section_3_6
   "sec3e" Book.Analysis.Section_3_epilogue
   "sec41" Book.Analysis.Section_4_1
   "sec42" Book.Analysis.Section_4_2
   "sec43" Book.Analysis.Section_4_3
+  "sec44" Book.Analysis.Section_4_4
   "sec51" Book.Analysis.Section_5_1
   "sec52" Book.Analysis.Section_5_2
   "sec53" Book.Analysis.Section_5_3
