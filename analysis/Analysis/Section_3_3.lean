@@ -1,5 +1,6 @@
 import Mathlib.Tactic
 import Analysis.Section_3_1
+import Analysis.Tools.ExistsUnique
 
 /-!
 # Analysis I, Section 3.3
@@ -58,7 +59,7 @@ structure Function (X Y: Set) where
   axiom of choice here.
 -/
 noncomputable def Function.to_fn {X Y: Set} (f: Function X Y) : X → Y :=
-  fun x ↦ Classical.choose (f.unique x)
+  fun x ↦ (f.unique x).choose
 
 noncomputable instance Function.inst_coefn (X Y: Set) : CoeFun (Function X Y) (fun _ ↦ X → Y) where
   coe := Function.to_fn
@@ -67,23 +68,11 @@ theorem Function.to_fn_eval {X Y: Set} (f: Function X Y) (x:X) : f.to_fn x = f x
 
 /-- Converting a Mathlib function to a Chapter 3 `Function` -/
 abbrev Function.mk_fn {X Y: Set} (f: X → Y) : Function X Y :=
-  Function.mk (fun x y ↦ y = f x) (by
-    intro x
-    apply ExistsUnique.intro (f x)
-    . rfl
-    intro y h
-    assumption)
-
+  Function.mk (fun x y ↦ y = f x) (by simp)
 
 /-- Definition 3.3.1 -/
 theorem Function.eval {X Y: Set} (f: Function X Y) (x: X) (y: Y) : y = f x ↔ f.P x y := by
-  constructor
-  . intro h
-    subst h
-    exact (Classical.choose_spec (f.unique x)).1
-  intro h
-  apply (Classical.choose_spec (f.unique x)).2
-  assumption
+  convert ((f.unique x).choose_iff y).symm
 
 @[simp]
 theorem Function.eval_of {X Y: Set} (f: X → Y) (x:X) : (Function.mk_fn f) x = f x := by
@@ -97,8 +86,7 @@ theorem SetTheory.Set.P_3_3_3a_existsUnique (x: nat) : ∃! y: nat, P_3_3_3a x y
   apply ExistsUnique.intro ((x+1:ℕ):nat)
   . simp [P_3_3_3a]
   intro y h
-  simp only [P_3_3_3a, Equiv.symm_apply_eq] at h
-  assumption
+  simpa [P_3_3_3a, Equiv.symm_apply_eq] using h
 
 abbrev SetTheory.Set.f_3_3_3a : Function nat nat := Function.mk P_3_3_3a P_3_3_3a_existsUnique
 
@@ -119,8 +107,7 @@ abbrev SetTheory.Set.P_3_3_3b : nat → nat → Prop := fun x y ↦ (y+1:ℕ) = 
 
 theorem SetTheory.Set.not_P_3_3_3b_existsUnique : ¬ ∀ x, ∃! y: nat, P_3_3_3b x y := by
   by_contra h
-  replace h := ExistsUnique.exists (h (0:nat))
-  obtain ⟨ n, hn ⟩ := h
+  obtain ⟨ n, hn, _ ⟩ := h (0:nat)
   have : ((0:nat):ℕ) = 0 := by simp [OfNat.ofNat]
   simp [P_3_3_3b, this] at hn
 
@@ -131,9 +118,8 @@ theorem SetTheory.Set.P_3_3_3c_existsUnique (x: (nat \ {(0:Object)}: Set)) :
     ∃! y: nat, P_3_3_3c x y := by
   -- Some technical unpacking here due to the subtle distinctions between the `Object` type,
   -- sets converted to subtypes of `Object`, and subsets of those sets.
-  obtain ⟨ x, hx ⟩ := x
-  simp at hx
-  obtain ⟨ hx1, hx2⟩ := hx
+  obtain ⟨ x, hx ⟩ := x; simp at hx
+  obtain ⟨ hx1, hx2 ⟩ := hx
   set n := ((⟨ x, hx1 ⟩:nat):ℕ)
   have : x = (n:nat) := by simp [n]
   simp [P_3_3_3c, this, SetTheory.Object.ofnat_eq'] at hx2 ⊢
@@ -141,8 +127,7 @@ theorem SetTheory.Set.P_3_3_3c_existsUnique (x: (nat \ {(0:Object)}: Set)) :
   apply ExistsUnique.intro ((n-1:ℕ):nat)
   . simp [←hx2]
   intro y hy
-  set m := (y:ℕ)
-  simp [←hy, m]
+  simp [←hy]
 
 abbrev SetTheory.Set.f_3_3_3c : Function (nat \ {(0:Object)}: Set) nat :=
   Function.mk P_3_3_3c P_3_3_3c_existsUnique
@@ -175,30 +160,24 @@ theorem SetTheory.Set.f_3_3_3c_eval''' (n:ℕ) :
 -/
 example : ¬ ∃ f: ℝ → ℝ, ∀ x y, y = f x ↔ y^2 = x := by
   by_contra h
-  obtain ⟨f, hf⟩ := h
-  set y := f (-1)
+  obtain ⟨f, hf⟩ := h; set y := f (-1)
   have h1 := (hf _ y).mp (by rfl)
   have h2 := sq_nonneg y
   linarith
 
 example : ¬ ∃ f: NNReal → ℝ, ∀ x y, y = f x ↔ y^2 = x := by
   by_contra h
-  obtain ⟨f, hf⟩ := h
-  set y := f 4
+  obtain ⟨f, hf⟩ := h; set y := f 4
   have hy := (hf _ y).mp (by rfl)
   have h1 : 2 = y := (hf 4 2).mpr (by norm_num)
   have h2 : -2 = y := (hf 4 (-2)).mpr (by rwa [←sq_abs, ←abs_neg, sq_abs, ←h1] at hy)
-  rw [←h1] at h2
-  norm_num at h2
+  linarith
 
 example : ∃ f: NNReal → NNReal, ∀ x y, y = f x ↔ y^2 = x := by
-  use NNReal.sqrt
-  intro x y
+  use NNReal.sqrt; intro x y
   constructor
-  · intro h
-    rw [h, NNReal.sq_sqrt]
-  · intro h
-    rw [←h, NNReal.sqrt_sq]
+  · intro h; rw [h, NNReal.sq_sqrt]
+  · intro h; rw [←h, NNReal.sqrt_sq]
 
 /-- Example 3.3.5. The unused variable `_x` is underscored to avoid triggering a linter. -/
 abbrev SetTheory.Set.P_3_3_5 : nat → nat → Prop := fun _x y ↦ y = 7
@@ -216,13 +195,9 @@ theorem SetTheory.Set.f_3_3_5_eval (x: nat) : f_3_3_5 x = 7 := by
 theorem Function.eq_iff {X Y: Set} (f g: Function X Y) : f = g ↔ ∀ x: X, f x = g x := by
   constructor
   . intro h; simp [h]
-  intro h
-  ext x y
-  constructor
-  . intro hf
-    rwa [←Function.eval _ _ _, ←h x, Function.eval _ _ _]
-  intro hg
-  rwa [←Function.eval _ _ _, h x, Function.eval _ _ _]
+  intro h; ext x y; constructor
+  . intro hf; rwa [←Function.eval, ←h x, Function.eval]
+  intro hg; rwa [←Function.eval, h x, Function.eval]
 
 /--
   Example 3.3.10 (simplified).  The second part of the example is tricky to replicate in this
@@ -233,15 +208,11 @@ abbrev SetTheory.Set.f_3_3_10a : Function nat nat := Function.mk_fn (fun x ↦ (
 abbrev SetTheory.Set.f_3_3_10b : Function nat nat := Function.mk_fn (fun x ↦ ((x+1)^2:ℕ))
 
 theorem SetTheory.Set.f_3_3_10_eq : f_3_3_10a = f_3_3_10b := by
-  rw [Function.eq_iff]
-  intro x
-  rw [Function.eval_of, Function.eval_of]
-  set n := (x:ℕ)
-  simp; ring
+  simp_rw [Function.eq_iff, Function.eval_of]
+  intros; simp; ring
 
 example : (fun x:NNReal ↦ (x:ℝ)) = (fun x:NNReal ↦ |(x:ℝ)|) := by
-  ext x
-  rw [NNReal.abs_eq]
+  simp_rw [NNReal.abs_eq]
 
 example : (fun x:ℝ ↦ (x:ℝ)) ≠ (fun x:ℝ ↦ |(x:ℝ)|) := by
   intro h
@@ -273,8 +244,7 @@ theorem Function.comp_eval {X Y Z: Set} (g: Function Y Z) (f: Function X Y) (x: 
 -/
 theorem Function.comp_eq_comp {X Y Z: Set} (g: Function Y Z) (f: Function X Y) :
     (g ○ f).to_fn = g.to_fn ∘ f.to_fn := by
-  ext x
-  simp only [Function.comp_eval, Function.comp_apply, to_fn_eval]
+  ext x; simp only [Function.comp_eval, Function.comp_apply, to_fn_eval]
 
 /-- Example 3.3.14 -/
 abbrev SetTheory.Set.f_3_3_14 : Function nat nat := Function.mk_fn (fun x ↦ (2*x:ℕ))
@@ -283,25 +253,20 @@ abbrev SetTheory.Set.g_3_3_14 : Function nat nat := Function.mk_fn (fun x ↦ (x
 
 theorem SetTheory.Set.g_circ_f_3_3_14 :
     g_3_3_14 ○ f_3_3_14 = Function.mk_fn (fun x ↦ ((2*(x:ℕ)+3:ℕ):nat)) := by
-  rw [Function.eq_iff]
-  intro x
-  rw [Function.comp_eval, Function.eval_of, Function.eval_of, Function.eval_of]
+  simp_rw [Function.eq_iff, Function.comp_eval, Function.eval_of]
   simp
 
 theorem SetTheory.Set.f_circ_g_3_3_14 :
     f_3_3_14 ○ g_3_3_14 = Function.mk_fn (fun x ↦ ((2*(x:ℕ)+6:ℕ):nat)) := by
-  rw [Function.eq_iff]
-  intro x
-  rw [Function.comp_eval, Function.eval_of, Function.eval_of, Function.eval_of]
-  simp; ring
+  simp_rw [Function.eq_iff, Function.comp_eval, Function.eval_of]
+  intros; simp; ring
 
 /-- Lemma 3.3.15 (Composition is associative) -/
 theorem SetTheory.Set.comp_assoc {W X Y Z: Set} (h: Function Y Z) (g: Function X Y)
   (f: Function W X) :
     h ○ (g ○ f) = (h ○ g) ○ f := by
-  rw [Function.eq_iff]
-  intro x
-  simp_rw [Function.comp_eval]
+  simp_rw [Function.eq_iff, Function.comp_eval]
+  simp
 
 abbrev Function.one_to_one {X Y: Set} (f: Function X Y) : Prop := ∀ x x': X, x ≠ x' → f x ≠ f x'
 
@@ -327,9 +292,7 @@ theorem SetTheory.Set.f_3_3_18_one_to_one :
     (Function.mk_fn (fun (n:nat) ↦ ((n^2:ℕ):nat))).one_to_one := by
   rw [Function.one_to_one_iff]
   intro x1 x2 h
-  rw [Function.eval, Function.eval_of] at h
-  simp at h
-  exact h
+  simpa [Function.eval, Function.eval_of] using h
 
 example : ¬ Function.Injective (fun (n:ℤ) ↦ n^2) := by
   intro h
@@ -341,17 +304,13 @@ example : ¬ Function.Injective (fun (n:ℤ) ↦ n^2) := by
 
 example : Function.Injective (fun (n:ℕ) ↦ n^2) := by
   intro a b h
-  have h1 : a ≥ 0 := by norm_num
-  have h2 : b ≥ 0 := by norm_num
-  have h3 : 2 ≠ 0 := by norm_num
-  rwa [← pow_left_inj₀ h1 h2 h3]
+  rwa [← pow_left_inj₀ (by norm_num) (by norm_num) (show 2 ≠ 0 by norm_num)]
 
 /-- Remark 3.3.19 -/
 theorem SetTheory.Set.two_to_one {X Y: Set} {f: Function X Y} (h: ¬ f.one_to_one) :
     ∃ x x': X, x ≠ x' ∧ f x = f x' := by
   rw [Function.one_to_one] at h
-  push_neg at h
-  exact h
+  aesop
 
 /-- Definition 3.3.20 (Onto functions) -/
 abbrev Function.onto {X Y: Set} (f: Function X Y) : Prop := ∀ y: Y, ∃ x: X, f x = y
@@ -362,19 +321,15 @@ theorem Function.onto_iff {X Y: Set} (f: Function X Y) : f.onto ↔ Function.Sur
 
 /-- Example 3.3.21 (using Mathlib) -/
 example : ¬ Function.Surjective (fun (n:ℤ) ↦ n^2) := by
-  unfold Function.Surjective
-  push_neg
-  use (-1)
-  intro a
-  have := sq_nonneg a
-  linarith
+  unfold Function.Surjective; push_neg
+  use (-1); intro a
+  linarith [sq_nonneg a]
 
 abbrev A_3_3_21 := { m:ℤ // ∃ n:ℤ, m = n^2 }
 
 example : Function.Surjective (fun (n:ℤ) ↦ ⟨ n^2, by use n ⟩ : ℤ → A_3_3_21) := by
   unfold Function.Surjective
-  rintro ⟨b, ⟨a, ha⟩⟩
-  use a
+  rintro ⟨b, ⟨a, ha⟩⟩; use a
   simp only [ha]
 
 /-- Definition 3.3.23 (Bijective functions) -/
@@ -415,45 +370,34 @@ example : Function.Bijective h_3_3_24 := by decide
 example : Function.Bijective (fun n ↦ ⟨ n+1, by omega⟩ : ℕ → { n:ℕ // n ≠ 0 }) := by
   unfold Function.Bijective
   constructor
-  · unfold Function.Injective
-    intro x y
-    simp only [Subtype.mk.injEq]
-    omega
+  · unfold Function.Injective; intro x y
+    simp only [Subtype.mk.injEq]; omega
   unfold Function.Surjective
-  · rintro ⟨x, hx⟩
-    use x-1
-    simp only [Subtype.mk.injEq]
-    omega
+  · rintro ⟨x, hx⟩; use x-1
+    simp only [Subtype.mk.injEq]; omega
 
 example : ¬ Function.Bijective (fun n ↦ n+1) := by
-  unfold Function.Bijective
-  suffices h : ¬ Function.Surjective (fun n ↦ n+1) by tauto
-  unfold Function.Surjective
-  push_neg
-  use 0
-  intro a
-  symm
-  apply Nat.zero_ne_add_one
+  suffices h : ¬ Function.Surjective (fun n ↦ n+1) by unfold Function.Bijective; tauto
+  unfold Function.Surjective; push_neg
+  use 0; intro a
+  symm; apply Nat.zero_ne_add_one
 
 /-- Remark 3.3.27 -/
 theorem Function.bijective_incorrect_def :
     ∃ X Y: Set, ∃ f: Function X Y, (∀ x: X, ∃! y: Y, y = f x) ∧ ¬ f.bijective := by
   use nat, nat
-  set f := mk_fn fun x ↦ (0: nat)
-  use f
+  set f := mk_fn fun x ↦ (0: nat); use f
   constructor
   · intro x
     apply existsUnique_of_exists_of_unique
-    · use 0
-      rw [Function.eval]
+    · use 0; rw [Function.eval]
     intro y1 y2 h1 h2
     rw [Function.eval] at *
     rw [h1, h2]
   rw [Function.bijective]
   suffices h : ¬ f.one_to_one by tauto
   rw [Function.one_to_one_iff]
-  push_neg
-  use 0, 1
+  push_neg; use 0, 1
   simp [f]
 
 /--
@@ -466,12 +410,10 @@ abbrev Function.inverse {X Y: Set} (f: Function X Y) (h: f.bijective) :
   Function.mk (fun y x ↦ f x = y) (by
     intro y
     apply existsUnique_of_exists_of_unique
-    . obtain ⟨ x, hx ⟩ := h.2 y
-      use x
-    intro x x' hx hx'
-    simp at hx hx'
+    . obtain ⟨ x, hx ⟩ := h.2 y; use x
+    intro x x' hx hx'; simp at hx hx'
     rw [←hx'] at hx
-    apply f.one_to_one_iff.mp h.1 _ _
+    apply f.one_to_one_iff.mp h.1
     simp [hx]
   )
 
@@ -482,8 +424,7 @@ theorem Function.inverse_eval {X Y: Set} {f: Function X Y} (h: f.bijective) (y: 
 theorem Function.inverse_eq {X Y: Set} [Nonempty X] {f: Function X Y} (h: f.bijective) :
     (f.inverse h).to_fn = Function.invFun f.to_fn := by
   ext y
-  congr
-  symm
+  congr; symm
   rw [inverse_eval]
   apply Function.rightInverse_invFun
   have ⟨_, hf⟩ := f.bijective_iff.mp h
