@@ -522,6 +522,7 @@ theorem Function.comp_inv {A B:Set} (f: Function A B) (hf: f.bijective) :
 theorem Function.inv_comp {A B:Set} (f: Function A B) (hf: f.bijective) :
     f.inverse hf ○ f = Function.id A := by sorry
 
+open Classical in
 theorem Function.glue {X Y Z:Set} (hXY: Disjoint X Y) (f: Function X Z) (g: Function Y Z) :
     ∃! h: Function (X ∪ Y) Z, (h ○ Function.inclusion (SetTheory.Set.subset_union_left X Y) = f)
     ∧ (h ○ Function.inclusion (SetTheory.Set.subset_union_right X Y) = g) := by sorry
