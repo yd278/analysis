@@ -156,7 +156,17 @@ theorem SetTheory.Set.image_preimage_f_3_4_2 :
     image f_3_4_2 (preimage f_3_4_2 {1,2,3}) ≠ {1,2,3} := by sorry
 
 /-- Example 3.4.7 (using the Mathlib notion of preimage) -/
-example : (fun n:ℤ ↦ n^2) ⁻¹' {0,1,4} = {-2,-1,0,1,2} := by sorry
+example : (fun n:ℤ ↦ n^2) ⁻¹' {0,1,4} = {-2,-1,0,1,2} := by
+  ext x
+  constructor
+  · rintro (h | h | h)
+    · aesop
+    · aesop
+    have : 2 ^ 2 = (4:ℤ) := by norm_num
+    rw [←h, sq_eq_sq_iff_eq_or_eq_neg] at this
+    aesop
+  intro h
+  aesop
 
 example : (fun n:ℤ ↦ n^2) ⁻¹' ((fun n:ℤ ↦ n^2) '' {-1,0,1,2}) ≠ {-1,0,1,2} := by sorry
 
