@@ -192,7 +192,7 @@ noncomputable abbrev f_3_4_9_c : ({4,7}:Set) → ({0,1}:Set) :=
 
 abbrev f_3_4_9_d : ({4,7}:Set) → ({0,1}:Set) := fun x ↦ ⟨ 1, by simp ⟩
 
-theorem SetTheory.Set.example_3_4_8 (F:Object) :
+theorem SetTheory.Set.example_3_4_9 (F:Object) :
     F ∈ ({0,1}:Set) ^ ({4,7}:Set) ↔ F = object_of f_3_4_9_a
     ∨ F = object_of f_3_4_9_b ∨ F = object_of f_3_4_9_c ∨ F = object_of f_3_4_9_d := by sorry
 
