@@ -677,10 +677,10 @@ lemma SetTheory.Set.nat_equiv_coe_of_coe'' (n:ℕ) : ((ofNat(n):Nat):ℕ) = n :=
 lemma SetTheory.Set.nat_coe_eq_iff' {m: Nat} {n : ℕ} : (m:Object) = (ofNat(n):Object) ↔ (m:ℕ) = ofNat(n) := by
   constructor
   · intro h
-    rw [show m = n by obtain ⟨val, property⟩ := m; subst h; rfl, nat_equiv_coe_of_coe]
-    rfl
+    simp_rw [show m = n by aesop]
+    apply nat_equiv_coe_of_coe
   intro h
-  rw [show m = n by subst h; rw [nat_equiv_coe_of_coe']]
+  rw [show m = n by aesop]
   rfl
 
 
