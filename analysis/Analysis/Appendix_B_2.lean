@@ -136,7 +136,7 @@ theorem RealDecimal.not_inj_one (d: RealDecimal) : (d:ℝ) = 1 ↔ (d = pos (NNR
   sorry
 
 /-- Exercise B.2.3 -/
-abbrev TerminatingDecimal (x:ℝ) : Prop := ∃ n m:ℤ, x = n / (10:ℝ)^m
+abbrev TerminatingDecimal (x:ℝ) : Prop := ∃ (n:ℤ) (m:ℕ), x = n / (10:ℝ)^m
 
 theorem RealDecimal.not_inj_terminating {x:ℝ} (hx: TerminatingDecimal x) : ∃ d₁ d₂:RealDecimal, d₁ ≠ d₂ ∧ ∀ d: RealDecimal, d = x ↔ d = d₁ ∨ d = d₂ := by sorry
 
