@@ -215,8 +215,10 @@ theorem SetTheory.Set.example_3_4_9 (F:Object) :
   · use f_3_4_9_d; exact h.symm
 
 /-- Lemma 3.4.10.  One needs to provide a suitable definition of the power set here. -/
-abbrev SetTheory.Set.powerset (X:Set) : Set := sorry
+abbrev SetTheory.Set.powerset (X:Set) : Set :=
+  (({0,1} ^ X): Set).replace (P := sorry) (by sorry)
 
+open Classical in
 theorem SetTheory.Set.mem_powerset {X:Set} (x:Object) :
     x ∈ powerset X ↔ ∃ Y:Set, x = Y ∧ Y ⊆ X := by sorry
 
