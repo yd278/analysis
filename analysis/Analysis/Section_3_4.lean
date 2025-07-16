@@ -194,7 +194,25 @@ abbrev f_3_4_9_d : ({4,7}:Set) → ({0,1}:Set) := fun x ↦ ⟨ 1, by simp ⟩
 
 theorem SetTheory.Set.example_3_4_9 (F:Object) :
     F ∈ ({0,1}:Set) ^ ({4,7}:Set) ↔ F = object_of f_3_4_9_a
-    ∨ F = object_of f_3_4_9_b ∨ F = object_of f_3_4_9_c ∨ F = object_of f_3_4_9_d := by sorry
+    ∨ F = object_of f_3_4_9_b ∨ F = object_of f_3_4_9_c ∨ F = object_of f_3_4_9_d := by
+  rw [power_set_axiom]
+  constructor
+  · rintro ⟨f, rfl⟩
+    unfold f_3_4_9_a f_3_4_9_b f_3_4_9_c f_3_4_9_d
+    simp [mem_pair] at *
+    have := (f ⟨4, by simp⟩).property
+    have := (f ⟨7, by simp⟩).property
+    by_cases (f ⟨4, by simp⟩).val = (0: Object) <;>
+    by_cases (f ⟨7, by simp⟩).val = (0: Object)
+    · left; ext ⟨_, hx⟩; simp [mem_pair] at hx; aesop
+    · right; left; ext ⟨_, hx⟩; simp [mem_pair] at hx; aesop
+    · right; right; left; ext ⟨_, hx⟩; simp [mem_pair] at hx; aesop
+    · right; right; right; ext ⟨_, hx⟩; simp [mem_pair] at hx; aesop
+  rintro (h | h | h | h)
+  · use f_3_4_9_a; exact h.symm
+  · use f_3_4_9_b; exact h.symm
+  · use f_3_4_9_c; exact h.symm
+  · use f_3_4_9_d; exact h.symm
 
 /-- Lemma 3.4.10.  One needs to provide a suitable definition of the power set here. -/
 abbrev SetTheory.Set.powerset (X:Set) : Set := sorry
@@ -212,7 +230,22 @@ theorem SetTheory.Set.powerset_of_triple (a b c x:Object) :
     ∨ x = ({a,b}:Set)
     ∨ x = ({a,c}:Set)
     ∨ x = ({b,c}:Set)
-    ∨ x = ({a,b,c}:Set) := by sorry
+    ∨ x = ({a,b,c}:Set) := by
+  simp only [mem_powerset, subset_def, mem_triple]
+  constructor
+  · rintro ⟨Y, rfl, hY⟩
+    by_cases ha : a ∈ Y <;>
+    by_cases hb : b ∈ Y <;>
+    by_cases hc : c ∈ Y
+    · right; right; right; right; right; right; right; congr; apply Set.ext; simp; grind
+    · right; right; right; right; left; congr; apply Set.ext; simp; grind
+    · right; right; right; right; right; left; congr; apply Set.ext; simp; grind
+    · right; left; congr; apply Set.ext; simp; grind
+    · right; right; right; right; right; right; left; congr; apply Set.ext; simp; grind
+    · right; right; left; congr; apply Set.ext; simp; grind
+    · right; right; right; left; congr; apply Set.ext; simp; grind
+    · left; congr; apply Set.ext; simp; grind
+  aesop
 
 /-- Axiom 3.12 (Union) -/
 theorem SetTheory.Set.union_axiom (A: Set) (x:Object) :
