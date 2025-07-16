@@ -34,7 +34,7 @@ namespace Section_4_3
 /-- Definition 4.3.1 (Absolute value) -/
 abbrev abs (x:ℚ) : ℚ := if x > 0 then x else (if x < 0 then -x else 0)
 
-theorem abs_of_pos {x: ℚ} (hx: x > 0) : abs x = x := by simp [hx]
+theorem abs_of_pos {x: ℚ} (hx: 0 < x) : abs x = x := by simp [hx]
 
 /-- Definition 4.3.1 (Absolute value) -/
 theorem abs_of_neg {x: ℚ} (hx: x < 0) : abs x = -x := by

@@ -111,7 +111,7 @@ namespace Chapter5
 /--
 5.1.3 - definition of ε-steadiness for a sequence starting at 0
 -/
-lemma Rat.isSteady_of_coe (ε : ℚ) (a:ℕ → ℚ) :
+lemma Rat.IsSteady.coe (ε : ℚ) (a:ℕ → ℚ) :
     ε.Steady a ↔ ∀ n m : ℕ, ε.Close (a n) (a m) := by
   constructor
   · intro h n m
@@ -124,10 +124,10 @@ lemma Rat.isSteady_of_coe (ε : ℚ) (a:ℕ → ℚ) :
 
 /--
 Not in textbook: the sequence 2, 2 ... is 1-steady
-Intended as a demonstration of `Rat.isSteady_of_coe`
+Intended as a demonstration of `Rat.IsSteady.coe`
 -/
 example : (1:ℚ).Steady ((fun _:ℕ ↦ (3:ℚ)):Sequence) := by
-  simp [Rat.isSteady_of_coe, Rat.Close]
+  simp [Rat.IsSteady.coe, Rat.Close]
 
 /--
 Compare: if you need to work with `Rat.steady` on the coercion directly, there will be side conditions `hn : n ≥ 0` and `hm : m ≥ 0` that you will need to deal with.
@@ -178,11 +178,11 @@ lemma Sequence.from_eval (a:Sequence) {n₁ n:ℤ} (hn: n ≥ n₁) :
 end Chapter5
 
 /-- Definition 5.1.6 (Eventually ε-steady) -/
-abbrev Rat.eventuallySteady (ε: ℚ) (a: Chapter5.Sequence) : Prop :=
+abbrev Rat.EventuallySteady (ε: ℚ) (a: Chapter5.Sequence) : Prop :=
   ∃ N ≥ a.n₀, ε.Steady (a.from N)
 
 lemma Rat.eventuallySteady_def (ε: ℚ) (a: Chapter5.Sequence) :
-  ε.eventuallySteady a ↔ ∃ N ≥ a.n₀, ε.Steady (a.from N) := by rfl
+  ε.EventuallySteady a ↔ ∃ N ≥ a.n₀, ε.Steady (a.from N) := by rfl
 
 namespace Chapter5
 
@@ -193,16 +193,16 @@ lemma Sequence.ex_5_1_7_a : ¬ (0.1:ℚ).Steady ((fun n:ℕ ↦ (n+1:ℚ)⁻¹ )
 lemma Sequence.ex_5_1_7_b : (0.1:ℚ).Steady (((fun n:ℕ ↦ (n+1:ℚ)⁻¹ ):Sequence).from 10) := by
   sorry
 
-lemma Sequence.ex_5_1_7_c : (0.1:ℚ).eventuallySteady ((fun n:ℕ ↦ (n+1:ℚ)⁻¹ ):Sequence) := by
+lemma Sequence.ex_5_1_7_c : (0.1:ℚ).EventuallySteady ((fun n:ℕ ↦ (n+1:ℚ)⁻¹ ):Sequence) := by
   sorry
 
 lemma Sequence.ex_5_1_7_d {ε:ℚ} (hε:ε>0) :
-    ε.eventuallySteady ((fun n:ℕ ↦ if n=0 then (10:ℚ) else (0:ℚ) ):Sequence) := by sorry
+    ε.EventuallySteady ((fun n:ℕ ↦ if n=0 then (10:ℚ) else (0:ℚ) ):Sequence) := by sorry
 
-abbrev Sequence.IsCauchy (a:Sequence) : Prop := ∀ ε > (0:ℚ), ε.eventuallySteady a
+abbrev Sequence.IsCauchy (a:Sequence) : Prop := ∀ ε > (0:ℚ), ε.EventuallySteady a
 
 lemma Sequence.isCauchy_def (a:Sequence) :
-  a.IsCauchy ↔ ∀ ε > (0:ℚ), ε.eventuallySteady a := by rfl
+  a.IsCauchy ↔ ∀ ε > (0:ℚ), ε.EventuallySteady a := by rfl
 
 lemma Sequence.IsCauchy.coe (a:ℕ → ℚ) :
     (a:Sequence).IsCauchy ↔ ∀ ε > (0:ℚ), ∃ N, ∀ j ≥ N, ∀ k ≥ N,
@@ -225,11 +225,11 @@ theorem Sequence.ex_5_1_10_a : (1:ℚ).Steady sqrt_two := by sorry
 -/
 theorem Sequence.ex_5_1_10_b : (0.1:ℚ).Steady (sqrt_two.from 1) := by sorry
 
-theorem Sequence.ex_5_1_10_c : (0.1:ℚ).eventuallySteady sqrt_two := by sorry
+theorem Sequence.ex_5_1_10_c : (0.1:ℚ).EventuallySteady sqrt_two := by sorry
 
 
 /-- Proposition 5.1.11 -/
-theorem Sequence.harmonic_steady : (mk' 1 (fun n ↦ (1:ℚ)/n)).IsCauchy := by
+theorem Sequence.IsCauchy.harmonic : (mk' 1 (fun n ↦ (1:ℚ)/n)).IsCauchy := by
   rw [IsCauchy.mk]
   intro ε hε
   -- We go by reverse from the book - first choose N such that N > 1/ε
@@ -273,40 +273,40 @@ abbrev BoundedBy {n:ℕ} (a: Fin n → ℚ) (M:ℚ) : Prop :=
   Definition 5.1.12 (bounded sequences). Here we start sequences from 0 rather than 1 to align
   better with Mathlib conventions.
 -/
-lemma BoundedBy_def {n:ℕ} (a: Fin n → ℚ) (M:ℚ) :
+lemma boundedBy_def {n:ℕ} (a: Fin n → ℚ) (M:ℚ) :
   BoundedBy a M ↔ ∀ i, |a i| ≤ M := by rfl
 
 abbrev Sequence.BoundedBy (a:Sequence) (M:ℚ) : Prop :=
   ∀ n, |a n| ≤ M
 
 /-- Definition 5.1.12 (bounded sequences) -/
-lemma Sequence.BoundedBy_def (a:Sequence) (M:ℚ) :
+lemma Sequence.boundedBy_def (a:Sequence) (M:ℚ) :
   a.BoundedBy M ↔ ∀ n, |a n| ≤ M := by rfl
 
-abbrev Sequence.isBounded (a:Sequence) : Prop := ∃ M ≥ 0, a.BoundedBy M
+abbrev Sequence.IsBounded (a:Sequence) : Prop := ∃ M ≥ 0, a.BoundedBy M
 
 /-- Definition 5.1.12 (bounded sequences) -/
 lemma Sequence.isBounded_def (a:Sequence) :
-  a.isBounded ↔ ∃ M ≥ 0, a.BoundedBy M := by rfl
+  a.IsBounded ↔ ∃ M ≥ 0, a.BoundedBy M := by rfl
 
 /-- Example 5.1.13 -/
 example : BoundedBy ![1,-2,3,-4] 4 := by sorry
 
 /-- Example 5.1.13 -/
-example : ¬ ((fun n:ℕ ↦ (-1)^n * (n+1:ℚ)):Sequence).isBounded := by sorry
+example : ¬ ((fun n:ℕ ↦ (-1)^n * (n+1:ℚ)):Sequence).IsBounded := by sorry
 
 /-- Example 5.1.13 -/
-example : ((fun n:ℕ ↦ (-1:ℚ)^n):Sequence).isBounded := by sorry
+example : ((fun n:ℕ ↦ (-1:ℚ)^n):Sequence).IsBounded := by sorry
 
 /-- Example 5.1.13 -/
 example : ¬ ((fun n:ℕ ↦ (-1:ℚ)^n):Sequence).IsCauchy := by sorry
 
 /-- Lemma 5.1.14 -/
-lemma bounded_of_finite {n:ℕ} (a: Fin n → ℚ) : ∃ M ≥ 0,  BoundedBy a M := by
+lemma IsBounded.finite {n:ℕ} (a: Fin n → ℚ) : ∃ M ≥ 0,  BoundedBy a M := by
   -- this proof is written to follow the structure of the original text.
   induction' n with n hn
   . use 0
-    simp [BoundedBy_def]
+    simp [boundedBy_def]
   set a' : Fin n → ℚ := fun m ↦ a m
   obtain ⟨ M, hpos, hM ⟩ := hn a'
   have h1 : BoundedBy a' (M + |a n|) := by
@@ -326,7 +326,7 @@ lemma bounded_of_finite {n:ℕ} (a: Fin n → ℚ) : ∃ M ≥ 0,  BoundedBy a M
   simp [hm]
 
 /-- Lemma 5.1.15 (Cauchy sequences are bounded) / Exercise 5.1.1 -/
-lemma Sequence.isBounded_of_isCauchy {a:Sequence} (h: a.IsCauchy) : a.isBounded := by
+lemma Sequence.isBounded_of_isCauchy {a:Sequence} (h: a.IsCauchy) : a.IsBounded := by
   sorry
 
 end Chapter5
