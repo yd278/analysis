@@ -151,7 +151,7 @@ theorem Sequence.is_steady_of_rat (ε:ℚ) (a: Chapter5.Sequence) :
     ε.Steady a ↔ (ε:ℝ).Steady (a:Sequence) := by sorry
 
 theorem Sequence.is_eventuallySteady_of_rat (ε:ℚ) (a: Chapter5.Sequence) :
-    ε.eventuallySteady a ↔ (ε:ℝ).EventuallySteady (a:Sequence) := by sorry
+    ε.EventuallySteady a ↔ (ε:ℝ).EventuallySteady (a:Sequence) := by sorry
 
 /-- Proposition 6.1.4 -/
 theorem Sequence.isCauchy_of_rat (a: Chapter5.Sequence) : a.IsCauchy ↔ (a:Sequence).IsCauchy := by
@@ -574,7 +574,7 @@ theorem Sequence.tendsTo_of_shift {a: Sequence} {c:ℝ} (k:ℕ) :
 
 /-- Exercise 6.1.7 -/
 theorem Sequence.isBounded_of_rat (a: Chapter5.Sequence) :
-    a.isBounded ↔ (a:Sequence).IsBounded := by
+    a.IsBounded ↔ (a:Sequence).IsBounded := by
   sorry
 
 /-- Exercise 6.1.9 -/
