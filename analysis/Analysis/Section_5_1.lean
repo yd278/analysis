@@ -111,7 +111,7 @@ namespace Chapter5
 /--
 5.1.3 - definition of ε-steadiness for a sequence starting at 0
 -/
-lemma Rat.IsSteady.coe (ε : ℚ) (a:ℕ → ℚ) :
+lemma Rat.Steady.coe (ε : ℚ) (a:ℕ → ℚ) :
     ε.Steady a ↔ ∀ n m : ℕ, ε.Close (a n) (a m) := by
   constructor
   · intro h n m
@@ -124,10 +124,10 @@ lemma Rat.IsSteady.coe (ε : ℚ) (a:ℕ → ℚ) :
 
 /--
 Not in textbook: the sequence 2, 2 ... is 1-steady
-Intended as a demonstration of `Rat.IsSteady.coe`
+Intended as a demonstration of `Rat.Steady.coe`
 -/
 example : (1:ℚ).Steady ((fun _:ℕ ↦ (3:ℚ)):Sequence) := by
-  simp [Rat.IsSteady.coe, Rat.Close]
+  simp [Rat.Steady.coe, Rat.Close]
 
 /--
 Compare: if you need to work with `Rat.steady` on the coercion directly, there will be side conditions `hn : n ≥ 0` and `hm : m ≥ 0` that you will need to deal with.
