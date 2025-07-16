@@ -65,8 +65,8 @@ theorem Nat.mul_one (m: Nat) : m * 1 = m := by
 lemma Nat.pos_mul_pos {n m: Nat} (h₁: n.IsPos) (h₂: m.IsPos) : (n * m).IsPos := by
   sorry
 
-/-- Lemma 2.3.3 (Positive natural numbers have no zero divisors) / Exercise 2.3.2 -/
-lemma Nat.mul_eq_zero_iff (n m: Nat) : n * m = 0 ↔ n = 0 ∨ m = 0 := by
+/-- Lemma 2.3.3 (Positive natural numbers have no zero divisors) / Exercise 2.3.2. Compare with Mathlib's Nat.mul_eq_zero.  -/
+lemma Nat.mul_eq_zero (n m: Nat) : n * m = 0 ↔ n = 0 ∨ m = 0 := by
   sorry
 
 /-- Proposition 2.3.4 (Distributive law)-/
