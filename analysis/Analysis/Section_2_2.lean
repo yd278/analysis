@@ -115,13 +115,13 @@ instance Nat.addCommMonoid : AddCommMonoid Nat where
   nsmul := nsmulRec
 
 /-- Definition 2.2.7 (Positive natural numbers).-/
-def Nat.isPos (n:Nat) : Prop := n ≠ 0
+def Nat.IsPos (n:Nat) : Prop := n ≠ 0
 
-theorem Nat.isPos_iff (n:Nat) : n.isPos ↔ n ≠ 0 := by rfl
+theorem Nat.isPos_iff (n:Nat) : n.IsPos ↔ n ≠ 0 := by rfl
 
 /-- Proposition 2.2.8 (positive plus natural number is positive).
     Compare with Mathlib's `Nat.add_pos_left` -/
-theorem Nat.add_pos_left {a:Nat} (b:Nat) (ha: a.isPos) : (a + b).isPos := by
+theorem Nat.add_pos_left {a:Nat} (b:Nat) (ha: a.IsPos) : (a + b).IsPos := by
   -- this proof is written to follow the structure of the original text.
   revert b; apply induction
   . rwa [add_zero]
@@ -131,7 +131,7 @@ theorem Nat.add_pos_left {a:Nat} (b:Nat) (ha: a.isPos) : (a + b).isPos := by
   exact this
 
 /-- Compare with Mathlib's `Nat.add_pos_right` -/
-theorem Nat.add_pos_right {a:Nat} (b:Nat) (ha: a.isPos) : (b + a).isPos := by
+theorem Nat.add_pos_right {a:Nat} (b:Nat) (ha: a.IsPos) : (b + a).IsPos := by
   rw [add_comm]
   exact add_pos_left _ ha
 
@@ -143,10 +143,10 @@ theorem Nat.add_eq_zero (a b:Nat) (hab: a + b = 0) : a = 0 ∧ b = 0 := by
   simp only [not_and_or, ←ne_eq] at h
   rcases h with ha | hb
   . rw [← isPos_iff] at ha
-    have : (a + b).isPos := add_pos_left _ ha
+    have : (a + b).IsPos := add_pos_left _ ha
     contradiction
   rw [← isPos_iff] at hb
-  have : (a + b).isPos := add_pos_right _ hb
+  have : (a + b).IsPos := add_pos_right _ hb
   contradiction
 
 /-
@@ -160,7 +160,7 @@ extracts a witness `x` and a proof `hx : P x` of the property from a hypothesis 
 #check ExistsUnique.unique
 
 /-- Lemma 2.2.10 (unique predecessor) / Exercise 2.2.2 -/
-lemma Nat.uniq_succ_eq (a:Nat) (ha: a.isPos) : ∃! b, b++ = a := by
+lemma Nat.uniq_succ_eq (a:Nat) (ha: a.IsPos) : ∃! b, b++ = a := by
   sorry
 
 /-- Definition 2.2.11 (Ordering of the natural numbers)
@@ -242,7 +242,7 @@ theorem Nat.lt_iff_succ_le (a b:Nat) : a < b ↔ a++ ≤ b := by
   sorry
 
 /-- (f) a < b if and only if b = a + d for positive d. -/
-theorem Nat.lt_iff_add_pos (a b:Nat) : a < b ↔ ∃ d:Nat, d.isPos ∧ b = a + d := by
+theorem Nat.lt_iff_add_pos (a b:Nat) : a < b ↔ ∃ d:Nat, d.IsPos ∧ b = a + d := by
   sorry
 
 /-- If a < b then a ̸= b,-/
