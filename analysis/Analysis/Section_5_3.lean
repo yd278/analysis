@@ -151,10 +151,10 @@ theorem Sequence.add_equiv_left {a a':ℕ → ℚ} (b:ℕ → ℚ) (haa': Equiv 
   rw [equiv_def] at haa' ⊢
   intro ε hε
   specialize haa' ε hε
-  rw [Rat.eventually_close_def] at haa' ⊢
+  rw [Rat.eventuallyClose_def] at haa' ⊢
   obtain ⟨ N, haa' ⟩ := haa'
   use N
-  rw [Rat.close_seq_def] at haa' ⊢
+  rw [Rat.closeSeq_def] at haa' ⊢
   simp at haa' ⊢
   intro n hn hN _ _
   specialize haa' n hn hN hn hN
@@ -352,7 +352,7 @@ example : ¬ BoundedAwayZero (fun n ↦ 1 - 10^(-(n:ℤ))) := by sorry
 example : BoundedAwayZero (fun n ↦ 10^(n+1)) := by sorry
 
 /-- Examples 5.3.13 -/
-example : ((fun (n:ℕ) ↦ (10:ℚ)^(n+1)):Sequence).isBounded := by sorry
+example : ((fun (n:ℕ) ↦ (10:ℚ)^(n+1)):Sequence).IsBounded := by sorry
 
 /-- Lemma 5.3.14 -/
 theorem Real.bounded_away_zero_of_nonzero {x:Real} (hx: x ≠ 0) :
@@ -369,7 +369,7 @@ theorem Real.bounded_away_zero_of_nonzero {x:Real} (hx: x ≠ 0) :
   have how : ∀ j ≥ N, |b j| ≥ ε/2 := by sorry
   set a : ℕ → ℚ := fun n ↦ if n < n₀ then (ε/2) else b n
   have not_hard : Sequence.Equiv a b := by sorry
-  have ha : (a:Sequence).IsCauchy := (Sequence.cauchy_of_equiv not_hard).mpr hb
+  have ha : (a:Sequence).IsCauchy := (Sequence.isCauchy_of_equiv not_hard).mpr hb
   refine ⟨ a, ha, ?_, ?_ ⟩
   . rw [bounded_away_zero_def]
     use ε/2, half_pos hε
@@ -494,8 +494,8 @@ theorem Real.mul_right_nocancel : ¬ ∀ (x y z:Real), (hz: z = 0) → (x * z = 
   sorry
 
 /-- Exercise 5.3.4 -/
-theorem Real.equiv_of_bounded {a b:ℕ → ℚ} (ha: (a:Sequence).isBounded) (hab: Sequence.Equiv a b) :
-    (b:Sequence).isBounded := by sorry
+theorem Real.equiv_of_bounded {a b:ℕ → ℚ} (ha: (a:Sequence).IsBounded) (hab: Sequence.Equiv a b) :
+    (b:Sequence).IsBounded := by sorry
 
 /-- Exercise 5.3.5 -/
 theorem IsCauchy.harmonic : ((fun n ↦ 1/((n:ℚ)+1): ℕ → ℚ):Sequence).IsCauchy := by sorry

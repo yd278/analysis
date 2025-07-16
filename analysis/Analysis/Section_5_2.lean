@@ -27,7 +27,7 @@ abbrev Rat.EventuallyClose (ε: ℚ) (a b: Chapter5.Sequence) : Prop :=
 namespace Chapter5
 
 /-- Definition 5.2.1 ($ε$-close sequences) -/
-lemma Rat.close_seq_def (ε: ℚ) (a b: Sequence) :
+lemma Rat.closeSeq_def (ε: ℚ) (a b: Sequence) :
     ε.CloseSeq a b ↔ ∀ n, n ≥ a.n₀ → n ≥ b.n₀ → ε.Close (a n) (b n) := by rfl
 
 /-- Example 5.2.2 -/
@@ -43,11 +43,11 @@ example : ¬ (0.1:ℚ).Steady ((fun n:ℕ ↦ ((1.1:ℚ) * (-1)^n)):Sequence)
 := by sorry
 
 /-- Definition 5.2.3 (Eventually ε-close sequences) -/
-lemma Rat.eventually_close_def (ε: ℚ) (a b: Sequence) :
+lemma Rat.eventuallyClose_def (ε: ℚ) (a b: Sequence) :
     ε.EventuallyClose a b ↔ ∃ N, ε.CloseSeq (a.from N) (b.from N) := by rfl
 
 /-- Definition 5.2.3 (Eventually ε-close sequences) -/
-lemma Rat.eventually_close_iff (ε: ℚ) (a b: ℕ → ℚ) :
+lemma Rat.eventuallyClose_iff (ε: ℚ) (a b: ℕ → ℚ) :
     ε.EventuallyClose (a:Sequence) (b:Sequence) ↔  ∃ N, ∀ n ≥ N, |a n - b n| ≤ ε := by sorry
 
 /-- Example 5.2.5 -/
@@ -120,11 +120,11 @@ lemma Sequence.equiv_example :
 
 
 /-- Exercise 5.2.1 -/
-theorem Sequence.cauchy_of_equiv {a b: ℕ → ℚ} (hab: Equiv a b) :
+theorem Sequence.isCauchy_of_equiv {a b: ℕ → ℚ} (hab: Equiv a b) :
     (a:Sequence).IsCauchy ↔ (b:Sequence).IsCauchy := by sorry
 
 /-- Exercise 5.2.2 -/
-theorem Sequence.bounded_of_close {ε:ℚ} {a b: ℕ → ℚ} (hab: ε.EventuallyClose a b) :
-    (a:Sequence).isBounded ↔ (b:Sequence).isBounded := by sorry
+theorem Sequence.isBounded_of_eventuallyClose {ε:ℚ} {a b: ℕ → ℚ} (hab: ε.EventuallyClose a b) :
+    (a:Sequence).IsBounded ↔ (b:Sequence).IsBounded := by sorry
 
 end Chapter5

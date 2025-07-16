@@ -180,7 +180,7 @@ end Chapter6
 abbrev Real.CloseSeq (ε: ℝ) (a: Chapter6.Sequence) (L:ℝ) : Prop := ∀ n ≥ a.m, ε.Close (a n) L
 
 /-- Definition 6.1.5 -/
-theorem Real.close_seq_def (ε: ℝ) (a: Chapter6.Sequence) (L:ℝ) :
+theorem Real.closeSeq_def (ε: ℝ) (a: Chapter6.Sequence) (L:ℝ) :
   ε.CloseSeq a L ↔ ∀ n ≥ a.m, dist (a n) L ≤ ε := by rfl
 
 /-- Definition 6.1.5 -/
@@ -344,7 +344,7 @@ abbrev Sequence.BoundedBy (a:Sequence) (M:ℝ) : Prop :=
   ∀ n, |a n| ≤ M
 
 /-- Definition 6.1.16 -/
-lemma Sequence.BoundedBy_def (a:Sequence) (M:ℝ) :
+lemma Sequence.boundedBy_def (a:Sequence) (M:ℝ) :
   a.BoundedBy M ↔ ∀ n, |a n| ≤ M := by rfl
 
 /-- Definition 6.1.16 -/

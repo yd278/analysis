@@ -262,7 +262,7 @@ theorem Real.LIM_of_nonneg {a: ℕ → ℚ} (ha: ∀ n, a n ≥ 0) (hcauchy: (a:
       _ ≤ _ := le_abs_self _
   have claim2 : ¬ (c/2).EventuallyClose (a:Sequence) (b:Sequence) := by
     contrapose! claim1
-    rw [Rat.eventually_close_iff] at claim1
+    rw [Rat.eventuallyClose_iff] at claim1
     obtain ⟨ N, claim1 ⟩ := claim1
     specialize claim1 N (le_refl _)
     use N
@@ -304,7 +304,7 @@ theorem Real.exists_rat_le_and_nat_ge {x:Real} (hx: x.isPos) :
   rw [Sequence.isBounded_def] at this
   obtain ⟨ q, hq, hbound ⟩ := hbound
   obtain ⟨ r, hr, this ⟩ := this
-  simp [Sequence.BoundedBy_def] at this
+  simp [Sequence.boundedBy_def] at this
   constructor
   . refine ⟨ q, hq, ?_ ⟩
     convert LIM_mono _ hcauchy hbound
