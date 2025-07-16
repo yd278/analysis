@@ -127,7 +127,7 @@ theorem Rat.coe_Nat_eq (n:ℕ) : (n:Rat) = n // 1 := by
 theorem Rat.of_Nat_eq (n:ℕ) : (ofNat(n):Rat) = (ofNat(n):Nat) // 1 := by
   rfl
 
-lemma Rat.add_of_int (a b:ℤ) : (a:Rat) + (b:Rat) = (a+b:ℤ) := by sorry
+lemma Rat.add_intCast (a b:ℤ) : (a:Rat) + (b:Rat) = (a+b:ℤ) := by sorry
 
 lemma Rat.mul_of_int (a b:ℤ) : (a:Rat) * (b:Rat) = (a*b:ℤ) := by sorry
 
