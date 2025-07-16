@@ -202,6 +202,7 @@ theorem SetTheory.Set.example_3_4_9 (F:Object) :
  -/
 abbrev SetTheory.Set.powerset (X:Set) : Set := sorry
 
+open Classical in
 theorem SetTheory.Set.mem_powerset {X:Set} (x:Object) :
     x ∈ powerset X ↔ ∃ Y:Set, x = Y ∧ Y ⊆ X := by sorry
 
