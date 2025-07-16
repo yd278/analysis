@@ -196,11 +196,9 @@ theorem SetTheory.Set.example_3_4_9 (F:Object) :
     F ∈ ({0,1}:Set) ^ ({4,7}:Set) ↔ F = object_of f_3_4_9_a
     ∨ F = object_of f_3_4_9_b ∨ F = object_of f_3_4_9_c ∨ F = object_of f_3_4_9_d := by sorry
 
-/--
-  Lemma 3.4.10.  One needs to provide a suitable definition of the power set here.
-  See Exercise 3.4.6 (i) for a hint on how to construct it.
- -/
-abbrev SetTheory.Set.powerset (X:Set) : Set := sorry
+/-- Lemma 3.4.10.  One needs to provide a suitable definition of the power set here. -/
+abbrev SetTheory.Set.powerset (X:Set) : Set :=
+  (({0,1} ^ X): Set).replace (P := sorry) (by sorry)
 
 open Classical in
 theorem SetTheory.Set.mem_powerset {X:Set} (x:Object) :
