@@ -123,11 +123,17 @@ example : (fun n:ℤ ↦ n^2) ⁻¹' ((fun n:ℤ ↦ n^2) '' {-1,0,1,2}) ≠ {-1
 instance SetTheory.Set.inst_pow : Pow Set Set where
   pow := SetTheory.pow
 
-/-- I could not make this a coercion because of a technical `semiOutParam` issue. -/
-abbrev SetTheory.Set.object_of {X Y:Set} (f: X → Y) : Object := function_to_object X Y f
+@[coe]
+def SetTheory.Set.coe_of_fun {X Y:Set} (f: X → Y) : Object := function_to_object X Y f
+
+/-- This coercion has to be a `CoeOut` rather than a
+`Coe` because the input type `X → Y` contains
+parameters not present in the output type `Output` -/
+instance SetTheory.Set.inst_coe_of_fun {X Y:Set} : CoeOut (X → Y) Object where
+  coe := coe_of_fun
 
 theorem SetTheory.Set.power_set_axiom {X Y:Set} (F:Object) :
-    F ∈ (X ^ Y) ↔ ∃ f: Y → X, object_of f = F := SetTheory.power_set_axiom X Y F
+    F ∈ (X ^ Y) ↔ ∃ f: Y → X, f = F := SetTheory.power_set_axiom X Y F
 
 /-- Example 3.4.8 -/
 abbrev f_3_4_8_a : ({4,7}:Set) → ({0,1}:Set) := fun x ↦ ⟨ 0, by simp ⟩
@@ -143,14 +149,17 @@ noncomputable abbrev f_3_4_8_c : ({4,7}:Set) → ({0,1}:Set) :=
 abbrev f_3_4_8_d : ({4,7}:Set) → ({0,1}:Set) := fun x ↦ ⟨ 1, by simp ⟩
 
 theorem SetTheory.Set.example_3_4_8 (F:Object) :
-    F ∈ ({0,1}:Set) ^ ({4,7}:Set) ↔ F = object_of f_3_4_8_a
-    ∨ F = object_of f_3_4_8_b ∨ F = object_of f_3_4_8_c ∨ F = object_of f_3_4_8_d := by sorry
+    F ∈ ({0,1}:Set) ^ ({4,7}:Set) ↔ F = f_3_4_8_a
+    ∨ F = f_3_4_8_b ∨ F = f_3_4_8_c ∨ F = f_3_4_8_d := by sorry
 
-/-- Lemma 3.4.9.  One needs to provide a suitable definition of the power set here. -/
+/-- Lemma 3.4.9 / Exercise 3.4.6 (i).  One needs to provide a suitable definition of the power set here. -/
 abbrev SetTheory.Set.powerset (X:Set) : Set := sorry
 
 theorem SetTheory.Set.mem_powerset {X:Set} (x:Object) :
     x ∈ powerset X ↔ ∃ Y:Set, x = Y ∧ Y ⊆ X := by sorry
+
+/-- Exercise 3.4.6(ii): the spirit of this exercise is to prove this result using `SetTheory.Set.mem_powerset` rather than using the power set axiom directly.-/
+theorem SetTheory.Set.power_set_axiom' {X Y:Set} : ∃ Z:Set, ∀ F:Object, F ∈ Z ↔ ∃ f: Y → X, f = F :=  by sorry
 
 /-- Remark 3.4.10 -/
 theorem SetTheory.Set.powerset_of_triple (a b c x:Object) :
@@ -281,7 +290,7 @@ theorem SetTheory.Set.preimage_image_of_inj {X Y:Set} (f:X → Y) :
 
 /-- Exercise 3.4.7 -/
 theorem SetTheory.Set.partial_functions {X Y:Set} :
-    ∃ Z:Set, ∀ F:Object, F ∈ Z ↔ ∃ X' Y':Set, X' ⊆ X ∧ Y' ⊆ Y ∧ ∃ f: X' → Y', F = object_of f := by
+    ∃ Z:Set, ∀ F:Object, F ∈ Z ↔ ∃ X' Y':Set, X' ⊆ X ∧ Y' ⊆ Y ∧ ∃ f: X' → Y', F = f := by
   sorry
 
 /--

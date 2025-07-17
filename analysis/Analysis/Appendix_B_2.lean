@@ -109,7 +109,7 @@ theorem NNRealDecimal.not_inj : (1:NNReal) = (mk 1 fun _ ↦ 0) ∧ (1:NNReal) =
     apply NNReal.rpow_le_one_of_one_le_of_nonpos (by norm_num) (by linarith)
   convert Filter.Tendsto.const_sub (f := fun n:ℕ ↦ (10:NNReal)^(-n:ℝ)) (c := 0) 1 _; simp
   convert NNReal.tendsto_pow_atTop_nhds_zero_of_lt_one
-    (show (1/10:NNReal) < 1 by apply NNReal.div_lt_one_of_lt; norm_num) with n
+    (show (1/10:NNReal) < 1 by bound) with n
   rw [←NNReal.rpow_natCast, one_div, NNReal.inv_rpow, NNReal.rpow_neg]
 
 inductive RealDecimal where
