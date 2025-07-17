@@ -48,7 +48,14 @@ theorem SetTheory.Set.image_eq_specify {X Y:Set} (f:X → Y) (S: Set) :
   to make everything type consistent.
 -/
 theorem SetTheory.Set.image_eq_image {X Y:Set} (f:X → Y) (S: Set):
-    (image f S: _root_.Set Object) = Subtype.val '' (f '' {x | x.val ∈ S}) := by sorry
+    (image f S: _root_.Set Object) = Subtype.val '' (f '' {x | x.val ∈ S}) := by
+  ext y
+  simp only [_root_.Set.mem_setOf, _root_.Set.mem_image, Set.mem_image]
+  constructor
+  · rintro ⟨x, hx, rfl⟩
+    use f x, ⟨x, hx, rfl⟩
+  rintro ⟨_, ⟨x, hx, rfl⟩, rfl⟩
+  use x, hx
 
 theorem SetTheory.Set.image_in_codomain {X Y:Set} (f:X → Y) (S: Set) :
     image f S ⊆ Y := by
@@ -61,10 +68,22 @@ theorem SetTheory.Set.image_in_codomain {X Y:Set} (f:X → Y) (S: Set) :
 /-- Example 3.4.2 -/
 abbrev f_3_4_2 : nat → nat := fun n ↦ (2*n:ℕ)
 
-theorem SetTheory.Set.image_f_3_4_2 : image f_3_4_2 {1,2,3} = {2,4,6} := by sorry
+theorem SetTheory.Set.image_f_3_4_2 : image f_3_4_2 {1,2,3} = {2,4,6} := by
+  rw [ext_iff]
+  intro x
+  simp only [mem_image, mem_triple, f_3_4_2]
+  constructor
+  · rintro ⟨_, (h | h | h), rfl⟩
+    · left; simp_all
+    · right; left; simp_all
+    · right; right; simp_all
+  rintro (h | h | h)
+  · use 1; simp_all
+  · use 2; simp_all
+  · use 3; simp_all
 
 /-- Example 3.4.3 is written using Mathlib's notion of image. -/
-example : (fun n:ℤ ↦ n^2) '' {-1,0,1,2} = {0,1,4} := by sorry
+example : (fun n:ℤ ↦ n^2) '' {-1,0,1,2} = {0,1,4} := by aesop
 
 theorem SetTheory.Set.mem_image_of_eval {X Y:Set} (f:X → Y) (S: Set) (x:X) :
     x.val ∈ S → (f x).val ∈ image f S := by sorry
@@ -101,7 +120,16 @@ theorem SetTheory.Set.mem_preimage' {X Y:Set} (f:X → Y) (U: Set) (x:Object) :
 
 /-- Connection with Mathlib's notion of preimage. -/
 theorem SetTheory.Set.preimage_eq {X Y:Set} (f:X → Y) (U: Set) :
-    ((preimage f U): _root_.Set Object) = Subtype.val '' (f⁻¹' {y | y.val ∈ U}) := by sorry
+    ((preimage f U): _root_.Set Object) = Subtype.val '' (f⁻¹' {y | y.val ∈ U}) := by
+  ext x
+  simp only [_root_.Set.mem_setOf, _root_.Set.mem_image]
+  simp only [Set.mem_preimage', _root_.Set.mem_preimage]
+  constructor
+  · rintro ⟨x', rfl, hy⟩
+    use x', hy
+  rintro ⟨x', hy, rfl⟩
+  simp only [_root_.Set.mem_setOf] at hy
+  use x'
 
 theorem SetTheory.Set.preimage_in_domain {X Y:Set} (f:X → Y) (U: Set) :
     (preimage f U) ⊆ X := by
@@ -109,14 +137,36 @@ theorem SetTheory.Set.preimage_in_domain {X Y:Set} (f:X → Y) (U: Set) :
   rw [preimage] at h
   exact specification_axiom h
 
-/-- Example 3.4.5 -/
-theorem SetTheory.Set.preimage_f_3_4_2 : preimage f_3_4_2 {2,4,6} = {1,2,3} := by sorry
+/-- Example 3.4.6 -/
+theorem SetTheory.Set.preimage_f_3_4_2 : preimage f_3_4_2 {2,4,6} = {1,2,3} := by
+  rw [ext_iff]
+  intro x
+  simp only [mem_preimage', mem_triple, f_3_4_2]
+  constructor
+  · rintro ⟨x, rfl, (h | h | h)⟩
+    · left; simp_all
+    · right; left; simp_all; omega
+    · right; right; simp_all; omega
+  rintro (h | h | h)
+  · use 1; simp_all
+  · use 2; simp_all
+  · use 3; simp_all
 
 theorem SetTheory.Set.image_preimage_f_3_4_2 :
     image f_3_4_2 (preimage f_3_4_2 {1,2,3}) ≠ {1,2,3} := by sorry
 
-/-- Example 3.4.6 (using the Mathlib notion of preimage) -/
-example : (fun n:ℤ ↦ n^2) ⁻¹' {0,1,4} = {-2,-1,0,1,2} := by sorry
+/-- Example 3.4.7 (using the Mathlib notion of preimage) -/
+example : (fun n:ℤ ↦ n^2) ⁻¹' {0,1,4} = {-2,-1,0,1,2} := by
+  ext x
+  constructor
+  · rintro (h | h | h)
+    · aesop
+    · aesop
+    have : 2 ^ 2 = (4:ℤ) := by norm_num
+    rw [←h, sq_eq_sq_iff_eq_or_eq_neg] at this
+    aesop
+  intro h
+  aesop
 
 example : (fun n:ℤ ↦ n^2) ⁻¹' ((fun n:ℤ ↦ n^2) '' {-1,0,1,2}) ≠ {-1,0,1,2} := by sorry
 
@@ -135,18 +185,18 @@ instance SetTheory.Set.inst_coe_of_fun {X Y:Set} : CoeOut (X → Y) Object where
 theorem SetTheory.Set.power_set_axiom {X Y:Set} (F:Object) :
     F ∈ (X ^ Y) ↔ ∃ f: Y → X, f = F := SetTheory.power_set_axiom X Y F
 
-/-- Example 3.4.8 -/
-abbrev f_3_4_8_a : ({4,7}:Set) → ({0,1}:Set) := fun x ↦ ⟨ 0, by simp ⟩
+/-- Example 3.4.9 -/
+abbrev f_3_4_9_a : ({4,7}:Set) → ({0,1}:Set) := fun x ↦ ⟨ 0, by simp ⟩
 
 open Classical in
-noncomputable abbrev f_3_4_8_b : ({4,7}:Set) → ({0,1}:Set) :=
+noncomputable abbrev f_3_4_9_b : ({4,7}:Set) → ({0,1}:Set) :=
   fun x ↦ if x.val = 4 then ⟨ 0, by simp ⟩ else ⟨ 1, by simp ⟩
 
 open Classical in
-noncomputable abbrev f_3_4_8_c : ({4,7}:Set) → ({0,1}:Set) :=
+noncomputable abbrev f_3_4_9_c : ({4,7}:Set) → ({0,1}:Set) :=
   fun x ↦ if x.val = 4 then ⟨ 1, by simp ⟩ else ⟨ 0, by simp ⟩
 
-abbrev f_3_4_8_d : ({4,7}:Set) → ({0,1}:Set) := fun x ↦ ⟨ 1, by simp ⟩
+abbrev f_3_4_9_d : ({4,7}:Set) → ({0,1}:Set) := fun x ↦ ⟨ 1, by simp ⟩
 
 theorem SetTheory.Set.example_3_4_8 (F:Object) :
     F ∈ ({0,1}:Set) ^ ({4,7}:Set) ↔ F = f_3_4_8_a
@@ -198,14 +248,29 @@ theorem SetTheory.Set.powerset_of_triple (a b c x:Object) :
     ∨ x = ({a,b}:Set)
     ∨ x = ({a,c}:Set)
     ∨ x = ({b,c}:Set)
-    ∨ x = ({a,b,c}:Set) := by sorry
+    ∨ x = ({a,b,c}:Set) := by
+  simp only [mem_powerset, subset_def, mem_triple]
+  constructor
+  · rintro ⟨Y, rfl, hY⟩
+    by_cases ha : a ∈ Y <;>
+    by_cases hb : b ∈ Y <;>
+    by_cases hc : c ∈ Y
+    · right; right; right; right; right; right; right; congr; apply Set.ext; simp; grind
+    · right; right; right; right; left; congr; apply Set.ext; simp; grind
+    · right; right; right; right; right; left; congr; apply Set.ext; simp; grind
+    · right; left; congr; apply Set.ext; simp; grind
+    · right; right; right; right; right; right; left; congr; apply Set.ext; simp; grind
+    · right; right; left; congr; apply Set.ext; simp; grind
+    · right; right; right; left; congr; apply Set.ext; simp; grind
+    · left; congr; apply Set.ext; simp; grind
+  aesop
 
-/-- Axiom 3.11 (Union) -/
+/-- Axiom 3.12 (Union) -/
 theorem SetTheory.Set.union_axiom (A: Set) (x:Object) :
     x ∈ union A ↔ ∃ (S:Set), x ∈ S ∧ (S:Object) ∈ A := SetTheory.union_axiom A x
 
-/-- Example 3.4.11 -/
-theorem SetTheory.Set.example_3_4_11 :
+/-- Example 3.4.12 -/
+theorem SetTheory.Set.example_3_4_12 :
     union { (({2,3}:Set):Object), (({3,4}:Set):Object), (({4,5}:Set):Object) } = {2,3,4,5} := by
   sorry
 

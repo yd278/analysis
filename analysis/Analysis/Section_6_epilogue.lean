@@ -109,7 +109,7 @@ theorem Chapter6.Sequence.lim_eq_CauSeq_lim (a:ℕ → ℝ) (ha: (a:Sequence).Is
 /-- Identification with `Bornology.IsBounded` -/
 theorem Chapter6.Sequence.isBounded_iff_isBounded_range (a:ℕ → ℝ):
     (a:Sequence).IsBounded ↔ Bornology.IsBounded (Set.range a) := by
-  simp [isBounded_def, BoundedBy_def, Metric.isBounded_iff]
+  simp [isBounded_def, boundedBy_def, Metric.isBounded_iff]
   constructor
   . intro h
     obtain ⟨ M, hM, h ⟩ := h
