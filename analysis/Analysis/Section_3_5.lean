@@ -40,7 +40,7 @@ theorem OrderedPair.eq (x y x' y' : Object) :
     (⟨ x, y ⟩ : OrderedPair) = (⟨ x', y' ⟩ : OrderedPair) ↔ x = x' ∧ y = y' := by aesop
 
 /-- Exercise 3.5.1 -/
-abbrev OrderedPair.toObject : OrderedPair ↪ Object where
+def OrderedPair.toObject : OrderedPair ↪ Object where
   toFun p := ({ (({p.fst}:Set):Object), (({p.fst, p.snd}:Set):Object) }:Set)
   inj' := by sorry
 
