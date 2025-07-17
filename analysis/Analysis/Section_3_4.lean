@@ -230,9 +230,15 @@ abbrev SetTheory.Set.powerset (X:Set) : Set :=
   (({0,1} ^ X): Set).replace (P := sorry) (by sorry)
 
 open Classical in
-/-- Lemma 3.4.10 / Exercise 3.4.6 (i) -/
+/-- Exercise 3.4.6 (i) -/
 theorem SetTheory.Set.mem_powerset {X:Set} (x:Object) :
     x ∈ powerset X ↔ ∃ Y:Set, x = Y ∧ Y ⊆ X := by sorry
+
+/-- Lemma 3.4.10 -/
+theorem SetTheory.Set.exists_powerset {X:Set} (x:Object) :
+   ∃ (Z: Set), x ∈ Z ↔ ∃ Y:Set, x = Y ∧ Y ⊆ X := by
+  use powerset X
+  apply mem_powerset
 
 /- As noted in errata, Exercise 3.4.6 (ii) is replaced by Exercise 3.5.11. -/
 
