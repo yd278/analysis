@@ -104,6 +104,16 @@ In order to align the formalization with Mathlib conventions, a small number of 
   - B.1: The decimal representation of natural numbers ([Verso page](https://teorth.github.io/analysis/appB1/)) ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Appendix_B_1.html)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Appendix_B_1.lean))
   - B.2: The decimal representation of real numbers ([Verso page](https://teorth.github.io/analysis/appB2/)) ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Appendix_B_2.html)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Appendix_B_2.lean))
 
+## Additional content
+
+I am using this repository to host some other minor Lean content unrelated to the text book:
+
+- A formalization of physical units
+  - Support for systems of units ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Misc/UnitsSystem.lean)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Misc/UnitsSystem.lean))
+    - Examples of use ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Misc/UnitsSystemExamples.lean)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Misc/UnitsSystemExamples.lean))
+  - The SI system of units ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Misc/SI.lean)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Misc/SI.lean))
+    - Examples of use ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Misc/SIExamples.lean)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Misc/SIExamples.lean))
+
 ## Other resources
 
 - [Web page for this project](https://teorth.github.io/analysis/)
