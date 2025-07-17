@@ -205,7 +205,7 @@ abbrev f_3_4_9_d : ({4,7}:Set) → ({0,1}:Set) := fun x ↦ ⟨ 1, by simp ⟩
 theorem SetTheory.Set.example_3_4_9 (F:Object) :
     F ∈ ({0,1}:Set) ^ ({4,7}:Set) ↔ F = f_3_4_9_a
     ∨ F = f_3_4_9_b ∨ F = f_3_4_9_c ∨ F = f_3_4_9_d := by
-  rw [power_set_axiom]
+  rw [powerset_axiom]
   constructor
   · rintro ⟨f, rfl⟩
     unfold f_3_4_9_a f_3_4_9_b f_3_4_9_c f_3_4_9_d
