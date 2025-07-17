@@ -186,6 +186,7 @@ instance SetTheory.Set.inst_coe_of_fun {X Y:Set} : CoeOut (X → Y) Object where
 theorem SetTheory.Set.coe_of_fun_inj {X Y:Set} (f g:X → Y) : (f:Object) = (g:Object) ↔ f = g := by
   simp [coe_of_fun]
 
+/-- Axiom 3.11 (Power set axiom) --/
 theorem SetTheory.Set.powerset_axiom {X Y:Set} (F:Object) :
     F ∈ (X ^ Y) ↔ ∃ f: Y → X, f = F := SetTheory.powerset_axiom X Y F
 
@@ -232,7 +233,12 @@ open Classical in
 theorem SetTheory.Set.mem_powerset {X:Set} (x:Object) :
     x ∈ powerset X ↔ ∃ Y:Set, x = Y ∧ Y ⊆ X := by sorry
 
-/-- Exercise 3.4.6(ii): the spirit of this exercise is to prove this result using `SetTheory.Set.mem_powerset` rather than using the power set axiom directly.-/
+theorem SetTheory.Set.exists_powerset {X:Set} (x:Object) :
+   ∃ (P: Set), x ∈ P ↔ ∃ Y:Set, x = Y ∧ Y ⊆ X := by
+  use powerset X
+  apply mem_powerset
+
+/-- Exercise 3.4.6(ii): the spirit of this exercise is to prove this result using `SetTheory.Set.exists_powerset` rather than using the power set axiom directly.-/
 theorem SetTheory.Set.powerset_axiom' {X Y:Set} : ∃ Z:Set, ∀ F:Object, F ∈ Z ↔ ∃ f: Y → X, f = F :=  by sorry
 
 /-- Remark 3.4.11 -/
