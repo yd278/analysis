@@ -284,14 +284,12 @@ theorem SetTheory.Set.mem_iUnion {I:Set} (A: I → Set) (x:Object) :
     x ∈ iUnion I A ↔ ∃ α:I, x ∈ A α := by
   rw [union_axiom]
   constructor
-  . intro h
-    obtain ⟨ S, hx, hS ⟩ := h
+  . intro ⟨ S, hx, hS ⟩
     rw [replacement_axiom] at hS
     obtain ⟨ α, hα ⟩ := hS
     simp_all
     use α.val, α.property
-  intro h
-  obtain ⟨ α, hx ⟩ := h
+  intro ⟨ α, hx ⟩
   refine ⟨ A α, hx, ?_ ⟩
   rw [replacement_axiom]
   use α
