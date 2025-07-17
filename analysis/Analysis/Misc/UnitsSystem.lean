@@ -1,6 +1,15 @@
 import Mathlib.Tactic
 import Mathlib.Algebra.Group.MinimalAxioms
 
+/-! A framework to formalize units (such as length, time, mass, velocity, etc.) in Lean.
+-/
+
+/- Dimensions of units are measured by an additive group `Dimensions`, which will typically be a
+free moduleian group on a finite number of generators, representing fundamental units such as length,
+mass, and time.  We bundle this together in a class `UnitsSystem`.  To use this system, we create
+an instance of it, allowing in particular the additive group `Dimensions` to be accessed freely
+within the `UnitsSystem` namespace.
+-/
 
 class UnitsSystem where
   Dimensions: Type*
@@ -10,10 +19,27 @@ namespace UnitsSystem
 
 variable [UnitsSystem]
 
+
+/-- The additive group structure of `Dimensions` needs to be explicitly registered as an instance.-/
 instance Dimensions.instAddCommGroup : AddCommGroup Dimensions := UnitsSystem.addCommGroup
 
+
+/-- The two key types here are `Formal` and `Scalar d`.  `Scalar d` is the space of scalar
+quantities whose units are given by `d:Dimensions`.  Collectively, they generate a graded commutative
+ ring `Formal`, which can be conveniently described using the existing Mathlib structure
+ `AddMonoidAlgebra`.  Algebraic manipulations of scalar quantities will be most conveniently
+ handled by casting these quantities into the commutative ring  `Formal`, where one can use
+ standard Mathlib tactics such as `ring`.
+
+In principle one could also develop vector-valued quantities with dimension, but for now we
+restrict attention to scalar quantities only.
+-/
 abbrev Formal := AddMonoidAlgebra ℝ Dimensions
 
+/-- The data `val` of a scalar quantity can be interpreted as the numerical value of that
+quantity with respect to some standard set of units (e.g., SI units).  The philosophy is however to try not to access this data directly, but
+rely as much as possible on the rest of the API which is intended to hide
+the unit-specific `val` as an "implementation detail". -/
 @[ext]
 structure Scalar (d:Dimensions) where
   val : ℝ
@@ -21,15 +47,29 @@ structure Scalar (d:Dimensions) where
 theorem Scalar.val_inj {d:Dimensions} (q₁ q₂:Scalar d) :
   q₁.val = q₂.val ↔ q₁ = q₂ := by aesop
 
-def Scalar.cast {d d':Dimensions}  (q: Scalar d) (h : d' = d := by abel) : Scalar d' := _root_.cast (by rw [h]) q
+/-- We will encounter a technical issue with Lean's type system, namely that the type `Scalar d`
+and `Scalar d'` are not identical if `d'` and `d` are merely propositionally equal (as opposed
+to definitionally equal); for instance, `Scalar (d₁+d₂)` and `Scalar (d₂+d₁)` are distinct types.
+Technically, this renders multiplication on scalar types noncommutative. To get around this, we
+create a casting operator, where the propositional equality is attempted to be resolved by the Lean
+tactic `module` whenever possible.  Unfortunately, the casting operator from `Scalar d` to `Scalar d'`
+cannot be captured by standard Lean coercion classes such as `Coe` or `CoeOut` as each of the types
+here contain parameters not present in the other.-/
+def Scalar.cast {d d':Dimensions}  (q: Scalar d) (h : d' = d := by module) : Scalar d' :=
+  _root_.cast (by rw [h]) q
 
-theorem Scalar.cast_eq {d d':Dimensions} (q: Scalar d) (q': Scalar d') (h: d = d' := by abel) : q.val = q'.val ↔ q = q'.cast h := by aesop
+theorem Scalar.cast_eq {d d':Dimensions} (q: Scalar d) (q': Scalar d') (h: d = d' := by module)
+  : q.val = q'.val ↔ q = q'.cast h := by aesop
 
-theorem Scalar.cast_eq_symm {d d':Dimensions} (q: Scalar d) (q': Scalar d') (h: d = d' := by abel) : q = q'.cast h ↔ q' = q.cast h.symm := by aesop
+theorem Scalar.cast_eq_symm {d d':Dimensions} (q: Scalar d) (q': Scalar d') (h: d = d' := by module)
+  : q = q'.cast h ↔ q' = q.cast h.symm := by aesop
 
 @[simp]
-theorem Scalar.cast_val {d d':Dimensions} (q: Scalar d) (h: d' = d := by abel) : (q.cast h).val = q.val := by aesop
+theorem Scalar.cast_val {d d':Dimensions} (q: Scalar d) (h: d' = d := by module)
+  : (q.cast h).val = q.val := by aesop
 
+/-- The existing Mathlib method `AddMonoidAlgebra.single` is perfect for embedding each type of
+scalar into the formal graded ring `Formal`. -/
 @[coe]
 noncomputable def Scalar.toFormal {d:Dimensions} (q:Scalar d) : Formal :=
   AddMonoidAlgebra.single d q.val
@@ -37,6 +77,11 @@ noncomputable def Scalar.toFormal {d:Dimensions} (q:Scalar d) : Formal :=
 noncomputable instance Scalar.instCoeFormal (d: Dimensions) : CoeOut (Scalar d) Formal where
   coe := toFormal
 
+/-- Many identities  involving several types of `Scalar`s can be dealt with by applying
+`simp [←toFormal_inj]` to move everything to `Formal`.  A large number of further `simp` lemmas
+in this file are then designed to simplify such `Formal` expressions, often by pushing casting
+operators inward back to the `Scalar` types.  As such, there will be significant overlap between
+the `simp` and `norm_cast` tags. -/
 @[simp]
 theorem Scalar.toFormal_inj {d: Dimensions} (q₁ q₂:Scalar d) :
   (q₁:Formal) = (q₂:Formal) ↔ q₁ = q₂ := by
@@ -46,8 +91,10 @@ theorem Scalar.toFormal_inj {d: Dimensions} (q₁ q₂:Scalar d) :
     simpa using h
   intro h; simp [h]
 
+/-- Conveniently, casts from one scalar to another will automatically disappear when moving to
+`Formal`. -/
 @[simp]
-theorem Scalar.toFormal_cast {d d': Dimensions} (q:Scalar d) (h:d' = d := by abel) :
+theorem Scalar.toFormal_cast {d d': Dimensions} (q:Scalar d) (h:d' = d := by module) :
   ((q.cast h):Formal) = (q:Formal) := by
   subst h
   simp_all only [cast, _root_.cast_eq]
@@ -58,17 +105,23 @@ instance Scalar.instZero {d:Dimensions} : Zero (Scalar d) where
 @[simp]
 theorem Scalar.val_zero {d:Dimensions} : (0:Scalar d).val = 0 := rfl
 
+/-- We will use the `NeZero` class to tag some scalars as non-zero; this becomes relevant when
+using such scalars as units.   One could also introduce API to tag some scalars as positive, but
+we currently are not implementing this. -/
 theorem Scalar.neZero_iff {d:Dimensions} (q:Scalar d) : NeZero q ↔ q.val ≠ 0 := by simp [_root_.neZero_iff, ←val_inj]
 
 @[simp, norm_cast]
 theorem Scalar.toFormal_zero {d:Dimensions} : ((0:Scalar d):Formal) = 0 := by simp [toFormal]
 
+/-- In the next few lines of code we give `Scalar d` the structure of a real vector space,
+which is of course compatible with the real vector space structure on `Formal`. -/
 instance Scalar.instAdd {d:Dimensions} : Add (Scalar d) where
   add q₁ q₂ := ⟨q₁.val + q₂.val⟩
 
 @[simp]
 theorem Scalar.val_add {d:Dimensions} (q₁ q₂:Scalar d) : (q₁ + q₂).val = q₁.val + q₂.val := rfl
 
+/-- Note how the `simp` lemma is in the direction of pushing casts inward. -/
 @[simp,norm_cast]
 theorem Scalar.toFormal_add {d:Dimensions} (q₁ q₂:Scalar d) : ((q₁ + q₂:Scalar d):Formal) = (q₁:Formal) + (q₂:Formal) := by
   simp [toFormal, MonoidAlgebra.single_add]
@@ -89,14 +142,15 @@ theorem Scalar.toFormal_neg {d:Dimensions} (q:Scalar d) : ((-q:Scalar d):Formal)
 
 instance Scalar.instAddGroup {d:Dimensions} : AddGroup (Scalar d) :=
 AddGroup.ofLeftAxioms
-  (by intros; rw [←toFormal_inj]; push_cast; abel)
-  (by intros; rw [←toFormal_inj]; push_cast; abel)
-  (by intros; rw [←toFormal_inj]; push_cast; abel)
+  (by intros; rw [←toFormal_inj]; push_cast; module)
+  (by intros; rw [←toFormal_inj]; push_cast; module)
+  (by intros; rw [←toFormal_inj]; push_cast; module)
 
 instance Scalar.instAddCommGroup {d:Dimensions} : AddCommGroup (Scalar d) where
   add_comm q₁ q₂ := by
-    rw [←toFormal_inj]; push_cast; abel
+    rw [←toFormal_inj]; push_cast; module
 
+/-- The dimensionless scalars `Scalar 0` can be identified with real numbers. -/
 @[coe]
 def Scalar.ofReal (r:ℝ) : Scalar 0 := ⟨ r ⟩
 
@@ -113,6 +167,10 @@ theorem Scalar.coe_zero : ((0:ℝ):Scalar 0) = 0 := by
 theorem Scalar.neZero_coe_iff {r:ℝ} : NeZero (r:Scalar 0) ↔ r ≠ 0 := by
   simp [neZero_iff]
 
+@[simp]
+theorem Scalar.coe_inj {r s:ℝ} : (r:Scalar 0) = (s:Scalar 0) ↔ r = s := by
+  simp [ofReal]
+
 @[norm_cast,simp]
 theorem Scalar.coe_add (r s:ℝ) : ((r+s:ℝ):Scalar 0) = (r:Scalar 0) + (s:Scalar 0) := by
   simp [ofReal]; rfl
@@ -125,7 +183,8 @@ theorem Scalar.coe_neg (r:ℝ) : ((-r:ℝ):Scalar 0) = -(r:Scalar 0) := by
 theorem Scalar.coe_sub (r s:ℝ) : ((r-s:ℝ):Scalar 0) = (r:Scalar 0) - (s:Scalar 0) := by
   simp [ofReal]; rfl
 
-
+/-- It is convenient to view the real numbers as a subring of the `Formal` ring, thus identifying
+scalar multiplication with ordinary multiplication. -/
 noncomputable instance Formal.instCoeReal : Coe ℝ Formal where
   coe r := ((r:Scalar 0):Formal)
 
@@ -140,12 +199,23 @@ theorem Formal.coe_one : ((1:ℝ):Formal) = 1 := by
 instance Scalar.instSMul {d:Dimensions} : SMul ℝ (Scalar d) where
   smul c q := ⟨c * q.val⟩
 
+@[norm_cast,simp]
+theorem Formal.coe_nat (n:ℕ) : ((n:ℝ):Formal) = (n:Formal) := by
+  rfl
+
+@[norm_cast,simp]
+theorem Formal.coe_int (n:ℤ) : ((n:ℝ):Formal) = (n:Formal) := by
+  rfl
+
+
 @[simp]
 theorem Scalar.val_smul {d:Dimensions} (c:ℝ) (q:Scalar d) : (c • q).val = c * q.val := rfl
 
 @[norm_cast,simp]
-theorem Scalar.toFormal_smul {d:Dimensions} (c:ℝ) (q:Scalar d) : ((c • q:Scalar d):Formal) = (c:Formal) * (q:Formal) := by
+theorem Scalar.toFormal_smul {d:Dimensions} (c:ℝ) (q:Scalar d)
+  : ((c • q:Scalar d):Formal) = (c:Formal) * (q:Formal) := by
   simp [toFormal, AddMonoidAlgebra.single_mul_single]
+
 
 @[simp]
 theorem Formal.smul_eq_mul (c:ℝ) (x:Formal) : c • x = (c:Formal) * x := by
@@ -161,11 +231,11 @@ theorem Formal.smul_eq_mul' (c:ℕ) (x:Formal) : c • x = (c:Formal) * x := by
 theorem Formal.smul_eq_mul'' (c:ℤ) (x:Formal) : c • x = (c:Formal) * x := by
   simp [Scalar.toFormal]
 
-
 @[norm_cast,simp]
 theorem Scalar.coe_mul (r s:ℝ) : ((r*s:ℝ):Scalar 0) = r • (s:Scalar 0) := by
   ext; simp [ofReal]
 
+/-- We are finally able to view `Scalar` as a vector space over `ℝ` as promised. -/
 instance Scalar.instModule {d:Dimensions} : Module ℝ (Scalar d) where
   smul_add c q₁ q₂ := by simp [←toFormal_inj]; ring
   add_smul c1 c2 q := by simp [←toFormal_inj]; ring
@@ -174,6 +244,18 @@ instance Scalar.instModule {d:Dimensions} : Module ℝ (Scalar d) where
   mul_smul c1 c2 q := by simp [←toFormal_inj]; ring
   smul_zero c := by simp [←toFormal_inj]
 
+@[norm_cast,simp]
+theorem Scalar.toFormal_smul' {d:Dimensions} (c:ℕ) (q:Scalar d)
+  : ((c • q:Scalar d):Formal) = (c:Formal) * (q:Formal) := by
+  simp [←Nat.cast_smul_eq_nsmul ℝ]
+
+@[norm_cast,simp]
+theorem Scalar.toFormal_smul'' {d:Dimensions} (c:ℤ) (q:Scalar d)
+  : ((c • q:Scalar d):Formal) = (c:Formal) * (q:Formal) := by
+  simp [←Int.cast_smul_eq_zsmul ℝ]
+
+/-- One can multiply a `Scalar d₁` and `Scalar d₂` quantities to obtain a `Scalar (d₁+d₂)` quantity,
+in a manner compatible with multiplication in `Formal`. -/
 instance Scalar.instHMul {d₁ d₂:Dimensions} : HMul (Scalar d₁) (Scalar d₂) (Scalar (d₁ + d₂)) where
   hMul q₁ q₂ := ⟨q₁.val * q₂.val⟩
 
@@ -186,6 +268,8 @@ theorem Scalar.toFormal_hMul {d₁ d₂:Dimensions} (q₁:Scalar d₁) (q₂:Sca
   ((q₁ * q₂:Scalar _):Formal) = (q₁:Formal) * (q₂:Formal) := by
   simp [toFormal, AddMonoidAlgebra.single_mul_single]
 
+/-- Similarly, one can raise a `Scalar d` quantity to a natural number power `n` to obtain a `Scalar (n • d)` quantity.  One could also implement exponentiation to an integer, but I have elected
+not to do this, implementing an inversion relation instead. -/
 noncomputable def Scalar.pow {d:Dimensions} (q: Scalar d) (n:ℕ) : Scalar (n • d) := ⟨ q.val^n ⟩
 
 /-- One cannot use the Mathlib classes `Pow` or `HPow` here because the output type `Scalar (n • d)` depends on the input `n`.  As the symbol `^` is reserved for such classes, we use the symbol `**` isntead.-/
@@ -224,13 +308,18 @@ theorem Scalar.inv_mul_self {d:Dimensions} (q:Scalar d) [h:NeZero q] :  (q.inv:F
 
 @[simp]
 theorem Scalar.inv_coe (r:ℝ) :  ((r:Scalar 0).inv:Formal) = ((r⁻¹:ℝ):Scalar 0) := by
-  rw [←toFormal_cast _ (show 0 = -0 by abel)]; congr
+  rw [←toFormal_cast _ (show 0 = -0 by module)]; congr
   symm; simp [←cast_eq]
 
 @[simp]
 theorem Scalar.mul_inv {d₁ d₂:Dimensions} (q₁:Scalar d₁) (q₂:Scalar d₂) : (q₁ * q₂).inv = ((q₁.inv) * (q₂.inv)).cast := by
   simp [←toFormal_inj, toFormal]; congr 1; ring
 
+@[simp]
+theorem Scalar.pow_inv {d:Dimensions} (q:Scalar d) (n:ℕ) : (q ** n).inv = (q.inv ** n).cast := by
+  simp [←toFormal_inj, toFormal]
+
+/-- Multiplication and inversion combine to give division in the usual fashion.-/
 noncomputable instance Scalar.instHDiv {d₁ d₂:Dimensions} : HDiv (Scalar d₁) (Scalar d₂) (Scalar (d₁ - d₂)) where
   hDiv q₁ q₂ := ⟨q₁.val / q₂.val⟩
 
@@ -242,8 +331,9 @@ theorem Scalar.val_hDiv {d₁ d₂:Dimensions} (q₁:Scalar d₁) (q₂:Scalar d
 theorem Scalar.toFormal_hDiv {d₁ d₂:Dimensions} (q₁:Scalar d₁) (q₂:Scalar d₂) :
   ((q₁ / q₂:Scalar _):Formal) = (q₁:Formal) * (q₂.inv:Formal) := by
   simp [toFormal, AddMonoidAlgebra.single_mul_single]
-  congr; abel
+  congr; module
 
+/-- THe standard unit of `Scalar d` is the quantity whose data `val` is equal to 1. -/
 def StandardUnit (d:Dimensions) : Scalar d := ⟨ 1 ⟩
 
 @[simp]
@@ -276,6 +366,7 @@ theorem StandardUnit.inv (d:Dimensions) : (StandardUnit d).inv = StandardUnit (-
 theorem StandardUnit.div (d₁ d₂:Dimensions) : StandardUnit d₁ / StandardUnit d₂ = StandardUnit (d₁-d₂) := by
   simp [←Scalar.val_inj]
 
+/-- `unit.in q` is `q:Scalar d` measured in terms of `unit:Scalar d`. -/
 noncomputable def Scalar.in {d:Dimensions} (unit q:Scalar d) : ℝ := q.val / unit.val
 
 @[simp]
@@ -289,6 +380,12 @@ theorem Scalar.in_def {d:Dimensions} (unit q:Scalar d) [h: NeZero unit] : q = (u
 @[simp]
 theorem Scalar.in_smul {d:Dimensions} (c:ℝ) (unit q:Scalar d) : unit.in (c • q) = c * unit.in q := by
   simp [←val_inj]; ring
+
+theorem Scalar.in_inj {d:Dimensions} (unit q₁ q₂:Scalar d) [h: NeZero unit] : unit.in q₁ = unit.in q₂ ↔ q₁ = q₂ := by
+  simp [neZero_iff] at h
+  simp [←val_inj, in_def, h]
+  field_simp
+
 
 
 
