@@ -37,13 +37,14 @@ restrict attention to scalar quantities only.
 abbrev Formal := AddMonoidAlgebra ℝ Dimensions
 
 /-- The data `val` of a scalar quantity can be interpreted as the numerical value of that
-quantity with respect to some standard set of units (e.g., SI units).  The philosophy is however to try not to access this data directly, but
-rely as much as possible on the rest of the API which is intended to hide
-the unit-specific `val` as an "implementation detail". -/
+quantity with respect to some standard set of units (e.g., SI units). -/
 @[ext]
 structure Scalar (d:Dimensions) where
   val : ℝ
 
+/- One has the option to `work in coordinates` in a given calculation by using `simp [←val_inj]` (or `simp [←cast_eq]` below, if casting is required).  Or one can adopt
+a `coordinate-free` approach in which any tool directly accessing `val` is avoided.
+This library allows for both approaches to be employed. -/
 theorem Scalar.val_inj {d:Dimensions} (q₁ q₂:Scalar d) :
   q₁.val = q₂.val ↔ q₁ = q₂ := by aesop
 
@@ -58,6 +59,7 @@ here contain parameters not present in the other.-/
 def Scalar.cast {d d':Dimensions}  (q: Scalar d) (h : d' = d := by module) : Scalar d' :=
   _root_.cast (by rw [h]) q
 
+/-- This is a variant of `Scalar.val_inj` that handles casts.-/
 theorem Scalar.cast_eq {d d':Dimensions} (q: Scalar d) (q': Scalar d') (h: d = d' := by module)
   : q.val = q'.val ↔ q = q'.cast h := by aesop
 
@@ -244,6 +246,12 @@ instance Scalar.instModule {d:Dimensions} : Module ℝ (Scalar d) where
   mul_smul c1 c2 q := by simp [←toFormal_inj]; ring
   smul_zero c := by simp [←toFormal_inj]
 
+@[simp]
+theorem Scalar.val_smul' {d:Dimensions} (c:ℕ) (q:Scalar d) : (c • q).val = c * q.val := by simp [←Nat.cast_smul_eq_nsmul ℝ]
+
+@[simp]
+theorem Scalar.val_smul'' {d:Dimensions} (c:ℤ) (q:Scalar d) : (c • q).val = c * q.val := by simp [←Int.cast_smul_eq_zsmul ℝ]
+
 @[norm_cast,simp]
 theorem Scalar.toFormal_smul' {d:Dimensions} (c:ℕ) (q:Scalar d)
   : ((c • q:Scalar d):Formal) = (c:Formal) * (q:Formal) := by
@@ -332,6 +340,42 @@ theorem Scalar.toFormal_hDiv {d₁ d₂:Dimensions} (q₁:Scalar d₁) (q₂:Sca
   ((q₁ / q₂:Scalar _):Formal) = (q₁:Formal) * (q₂.inv:Formal) := by
   simp [toFormal, AddMonoidAlgebra.single_mul_single]
   congr; module
+
+noncomputable instance Scalar.instHDiv' {d:Dimensions} : HDiv (Scalar d) ℝ  (Scalar d) where
+  hDiv q r := ⟨q.val / r⟩
+
+noncomputable instance Scalar.instHDiv'' {d:Dimensions} : HDiv (Scalar d) ℕ (Scalar d) where
+  hDiv q n := q / (n:ℝ)
+
+noncomputable instance Scalar.instHDiv''' {d:Dimensions} : HDiv (Scalar d) ℤ (Scalar d) where
+  hDiv q n := q / (n:ℝ)
+
+@[simp]
+theorem Scalar.val_hDiv' {d:Dimensions} (q:Scalar d) (r:ℝ) :
+  (q / r).val = q.val / r := rfl
+
+@[simp]
+theorem Scalar.val_hDiv'' {d:Dimensions} (q:Scalar d) (n:ℕ) :
+  (q / n).val = q.val / n := rfl
+
+@[simp]
+theorem Scalar.val_hDiv''' {d:Dimensions} (q:Scalar d) (n:ℤ) :
+  (q / n).val = q.val / n := rfl
+
+
+@[norm_cast,simp]
+theorem Scalar.toFormal_hDiv' {d:Dimensions} (q:Scalar d) (r:ℝ) :
+  ((q / r:Scalar _):Formal) = (q:Formal) * ((r⁻¹:ℝ):Formal) := by
+  simp [toFormal, AddMonoidAlgebra.single_mul_single]
+  congr
+
+@[norm_cast,simp]
+theorem Scalar.toFormal_hDiv'' {d:Dimensions} (q:Scalar d) (n:ℕ) :
+  ((q / n:Scalar _):Formal) = (q:Formal) * (((n:ℝ)⁻¹:ℝ):Formal) := toFormal_hDiv' _ _
+
+@[norm_cast,simp]
+theorem Scalar.toFormal_hDiv''' {d:Dimensions} (q:Scalar d) (n:ℤ) :
+  ((q / n:Scalar _):Formal) = (q:Formal) * (((n:ℝ)⁻¹:ℝ):Formal) := toFormal_hDiv' _ _
 
 /-- THe standard unit of `Scalar d` is the quantity whose data `val` is equal to 1. -/
 def StandardUnit (d:Dimensions) : Scalar d := ⟨ 1 ⟩
