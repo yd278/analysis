@@ -123,7 +123,7 @@ noncomputable instance : Chapter3.SetTheory.{u + 1,u + 1} where
       simp only [ZFSet.pair_inj, existsAndEq, hs, ↓reduceDIte, and_self, SetLike.coe_eq_coe,
         true_and, true_iff] at h
       rw [← h] }
-  power_set_axiom X Y F := by
+  powerset_axiom X Y F := by
     simp only [Fin.isValue, Function.Embedding.coeFn_mk]
     rw [ZFSet.mem_funs, ZFSet.IsFunc]
     constructor

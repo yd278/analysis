@@ -173,11 +173,21 @@ example : (fun n:ℤ ↦ n^2) ⁻¹' ((fun n:ℤ ↦ n^2) '' {-1,0,1,2}) ≠ {-1
 instance SetTheory.Set.inst_pow : Pow Set Set where
   pow := SetTheory.pow
 
-/-- I could not make this a coercion because of a technical `semiOutParam` issue. -/
-abbrev SetTheory.Set.object_of {X Y:Set} (f: X → Y) : Object := function_to_object X Y f
+@[coe]
+def SetTheory.Set.coe_of_fun {X Y:Set} (f: X → Y) : Object := function_to_object X Y f
 
-theorem SetTheory.Set.power_set_axiom {X Y:Set} (F:Object) :
-    F ∈ (X ^ Y) ↔ ∃ f: Y → X, object_of f = F := SetTheory.power_set_axiom X Y F
+/-- This coercion has to be a `CoeOut` rather than a
+`Coe` because the input type `X → Y` contains
+parameters not present in the output type `Output` -/
+instance SetTheory.Set.inst_coe_of_fun {X Y:Set} : CoeOut (X → Y) Object where
+  coe := coe_of_fun
+
+@[simp]
+theorem SetTheory.Set.coe_of_fun_inj {X Y:Set} (f g:X → Y) : (f:Object) = (g:Object) ↔ f = g := by
+  simp [coe_of_fun]
+
+theorem SetTheory.Set.powerset_axiom {X Y:Set} (F:Object) :
+    F ∈ (X ^ Y) ↔ ∃ f: Y → X, f = F := SetTheory.powerset_axiom X Y F
 
 /-- Example 3.4.9 -/
 abbrev f_3_4_9_a : ({4,7}:Set) → ({0,1}:Set) := fun x ↦ ⟨ 0, by simp ⟩
@@ -193,13 +203,13 @@ noncomputable abbrev f_3_4_9_c : ({4,7}:Set) → ({0,1}:Set) :=
 abbrev f_3_4_9_d : ({4,7}:Set) → ({0,1}:Set) := fun x ↦ ⟨ 1, by simp ⟩
 
 theorem SetTheory.Set.example_3_4_9 (F:Object) :
-    F ∈ ({0,1}:Set) ^ ({4,7}:Set) ↔ F = object_of f_3_4_9_a
-    ∨ F = object_of f_3_4_9_b ∨ F = object_of f_3_4_9_c ∨ F = object_of f_3_4_9_d := by
-  rw [power_set_axiom]
+    F ∈ ({0,1}:Set) ^ ({4,7}:Set) ↔ F = f_3_4_9_a
+    ∨ F = f_3_4_9_b ∨ F = f_3_4_9_c ∨ F = f_3_4_9_d := by
+  rw [powerset_axiom]
   constructor
   · rintro ⟨f, rfl⟩
     unfold f_3_4_9_a f_3_4_9_b f_3_4_9_c f_3_4_9_d
-    simp [mem_pair] at *
+    simp [coe_of_fun_inj, mem_pair] at *
     have := (f ⟨4, by simp⟩).property
     have := (f ⟨7, by simp⟩).property
     by_cases (f ⟨4, by simp⟩).val = (0: Object) <;>
@@ -214,13 +224,16 @@ theorem SetTheory.Set.example_3_4_9 (F:Object) :
   · use f_3_4_9_c; exact h.symm
   · use f_3_4_9_d; exact h.symm
 
-/-- Lemma 3.4.10.  One needs to provide a suitable definition of the power set here. -/
+/-- Lemma 3.4.10 / Exercise 3.4.6 (i).  One needs to provide a suitable definition of the power set here. -/
 abbrev SetTheory.Set.powerset (X:Set) : Set :=
   (({0,1} ^ X): Set).replace (P := sorry) (by sorry)
 
 open Classical in
 theorem SetTheory.Set.mem_powerset {X:Set} (x:Object) :
     x ∈ powerset X ↔ ∃ Y:Set, x = Y ∧ Y ⊆ X := by sorry
+
+/-- Exercise 3.4.6(ii): the spirit of this exercise is to prove this result using `SetTheory.Set.mem_powerset` rather than using the power set axiom directly.-/
+theorem SetTheory.Set.powerset_axiom' {X Y:Set} : ∃ Z:Set, ∀ F:Object, F ∈ Z ↔ ∃ f: Y → X, f = F :=  by sorry
 
 /-- Remark 3.4.11 -/
 theorem SetTheory.Set.powerset_of_triple (a b c x:Object) :
@@ -271,14 +284,12 @@ theorem SetTheory.Set.mem_iUnion {I:Set} (A: I → Set) (x:Object) :
     x ∈ iUnion I A ↔ ∃ α:I, x ∈ A α := by
   rw [union_axiom]
   constructor
-  . intro h
-    obtain ⟨ S, hx, hS ⟩ := h
+  . intro ⟨ S, hx, hS ⟩
     rw [replacement_axiom] at hS
     obtain ⟨ α, hα ⟩ := hS
     simp_all
     use α.val, α.property
-  intro h
-  obtain ⟨ α, hx ⟩ := h
+  intro ⟨ α, hx ⟩
   refine ⟨ A α, hx, ?_ ⟩
   rw [replacement_axiom]
   use α
@@ -366,7 +377,7 @@ theorem SetTheory.Set.preimage_image_of_inj {X Y:Set} (f:X → Y) :
 
 /-- Exercise 3.4.7 -/
 theorem SetTheory.Set.partial_functions {X Y:Set} :
-    ∃ Z:Set, ∀ F:Object, F ∈ Z ↔ ∃ X' Y':Set, X' ⊆ X ∧ Y' ⊆ Y ∧ ∃ f: X' → Y', F = object_of f := by
+    ∃ Z:Set, ∀ F:Object, F ∈ Z ↔ ∃ X' Y':Set, X' ⊆ X ∧ Y' ⊆ Y ∧ ∃ f: X' → Y', F = f := by
   sorry
 
 /--

@@ -88,8 +88,7 @@ theorem PiecewiseConstantWith.congr {f g:ℝ → ℝ} {I: BoundedInterval} {P: P
   simp [PiecewiseConstantWith]
   apply forall_congr'; intro J
   apply imp_congr_right; intro hJ
-  apply ConstantOn.congr
-  intro x hx
+  apply ConstantOn.congr; intro x hx
   have := P.contains _ hJ; rw [subset_iff] at this
   exact h x (this hx)
 
@@ -175,11 +174,8 @@ noncomputable abbrev PiecewiseConstantWith.integ (f:ℝ → ℝ) {I: BoundedInte
 theorem PiecewiseConstantWith.integ_congr {f g:ℝ → ℝ} {I: BoundedInterval} {P: Partition I}
   (h: ∀ x ∈ (I:Set ℝ), f x = g x) : PiecewiseConstantWith.integ f P = PiecewiseConstantWith.integ g P := by
   simp only [integ, Subtype.forall]
-  apply Finset.sum_congr rfl
-  intro J hJ
-  congr 1
-  apply constant_value_on_congr
-  intro x hx
+  apply Finset.sum_congr rfl; intro J hJ; congr 1
+  apply constant_value_on_congr; intro x hx
   have := P.contains _ hJ; rw [subset_iff] at this
   simp [h x (this hx)]
 

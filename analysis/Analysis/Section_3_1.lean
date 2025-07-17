@@ -48,7 +48,7 @@ class SetTheory where
   pow : Set → Set → Set -- Axiom 3.11
   function_to_object (X: Set) (Y: Set) :
     (Subtype (mem . X) → Subtype (mem . Y)) ↪ Object -- Axiom 3.11
-  power_set_axiom (X: Set) (Y: Set) (F:Object) :
+  powerset_axiom (X: Set) (Y: Set) (F:Object) :
     mem F (pow X Y) ↔ ∃ f: Subtype (mem . Y) → Subtype (mem . X),
     function_to_object Y X f = F -- Axiom 3.11
   union : Set → Set -- Axiom 3.12
