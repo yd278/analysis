@@ -186,6 +186,7 @@ instance SetTheory.Set.inst_coe_of_fun {X Y:Set} : CoeOut (X → Y) Object where
 theorem SetTheory.Set.coe_of_fun_inj {X Y:Set} (f g:X → Y) : (f:Object) = (g:Object) ↔ f = g := by
   simp [coe_of_fun]
 
+/-- Axiom 3.11 (Power set axiom) --/
 theorem SetTheory.Set.powerset_axiom {X Y:Set} (F:Object) :
     F ∈ (X ^ Y) ↔ ∃ f: Y → X, f = F := SetTheory.powerset_axiom X Y F
 
@@ -224,16 +225,22 @@ theorem SetTheory.Set.example_3_4_9 (F:Object) :
   · use f_3_4_9_c; exact h.symm
   · use f_3_4_9_d; exact h.symm
 
-/-- Lemma 3.4.10 / Exercise 3.4.6 (i).  One needs to provide a suitable definition of the power set here. -/
+/-- Exercise 3.4.6 (i). One needs to provide a suitable definition of the power set here. -/
 abbrev SetTheory.Set.powerset (X:Set) : Set :=
   (({0,1} ^ X): Set).replace (P := sorry) (by sorry)
 
 open Classical in
+/-- Exercise 3.4.6 (i) -/
 theorem SetTheory.Set.mem_powerset {X:Set} (x:Object) :
     x ∈ powerset X ↔ ∃ Y:Set, x = Y ∧ Y ⊆ X := by sorry
 
-/-- Exercise 3.4.6(ii): the spirit of this exercise is to prove this result using `SetTheory.Set.mem_powerset` rather than using the power set axiom directly.-/
-theorem SetTheory.Set.powerset_axiom' {X Y:Set} : ∃ Z:Set, ∀ F:Object, F ∈ Z ↔ ∃ f: Y → X, f = F :=  by sorry
+/-- Lemma 3.4.10 -/
+theorem SetTheory.Set.exists_powerset {X:Set} (x:Object) :
+   ∃ (Z: Set), x ∈ Z ↔ ∃ Y:Set, x = Y ∧ Y ⊆ X := by
+  use powerset X
+  apply mem_powerset
+
+/- As noted in errata, Exercise 3.4.6 (ii) is replaced by Exercise 3.5.11. -/
 
 /-- Remark 3.4.11 -/
 theorem SetTheory.Set.powerset_of_triple (a b c x:Object) :
