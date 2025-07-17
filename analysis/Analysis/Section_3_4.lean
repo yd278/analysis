@@ -274,7 +274,10 @@ theorem SetTheory.Set.example_3_4_12 :
 /-- Connection with Mathlib union -/
 theorem SetTheory.Set.union_eq (A: Set) :
     (union A : _root_.Set Object) =
-    ⋃₀ { S : _root_.Set Object | ∃ S':Set, S = S' ∧ (S':Object) ∈ A } := by sorry
+    ⋃₀ { S : _root_.Set Object | ∃ S':Set, S = S' ∧ (S':Object) ∈ A } := by
+  ext x
+  simp only [union_axiom, Set.mem_sUnion]
+  aesop
 
 /-- Indexed union -/
 abbrev SetTheory.Set.iUnion (I: Set) (A: I → Set) : Set :=
@@ -298,12 +301,24 @@ open Classical in
 noncomputable abbrev SetTheory.Set.index_example : ({1,2,3}:Set) → Set :=
   fun i ↦ if i.val = 1 then {2,3} else if i.val = 2 then {3,4} else {4,5}
 
-theorem SetTheory.Set.iUnion_example : iUnion {1,2,3} index_example = {2,3,4,5} := by sorry
+theorem SetTheory.Set.iUnion_example : iUnion {1,2,3} index_example = {2,3,4,5} := by
+  apply Set.ext;
+  intro x
+  simp only [mem_iUnion, index_example, Insert.insert]
+  constructor
+  · aesop
+  simp only [mem_union, Subtype.exists]
+  rintro (h | h | h)
+  · use 1; aesop
+  · use 2; aesop
+  · use 3; aesop
 
 /-- Connection with Mathlib indexed union
 -/
 theorem SetTheory.Set.iUnion_eq (I: Set) (A: I → Set) :
-    (iUnion I A : _root_.Set Object) = ⋃ α, (A α: _root_.Set Object) := by sorry
+    (iUnion I A : _root_.Set Object) = ⋃ α, (A α: _root_.Set Object) := by
+  ext x
+  simp only [mem_iUnion, _root_.Set.mem_setOf_eq, _root_.Set.mem_iUnion]
 
 theorem SetTheory.Set.iUnion_of_empty (A: (∅:Set) → Set) : iUnion (∅:Set) A = ∅ := by sorry
 
