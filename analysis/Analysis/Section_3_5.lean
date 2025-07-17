@@ -142,7 +142,7 @@ noncomputable abbrev SetTheory.Set.prod_equiv_prod (X Y:Set) :
 
 /-- Definition 3.5.7 -/
 abbrev SetTheory.Set.tuple {I:Set} {X: I → Set} (a: ∀ i, X i) : Object :=
-  object_of ((fun i ↦ ⟨ a i, by rw [mem_iUnion]; use i; exact (a i).property ⟩):I → iUnion I X)
+  ((fun i ↦ ⟨ a i, by rw [mem_iUnion]; use i; exact (a i).property ⟩):I → iUnion I X)
 
 /-- Definition 3.5.7 -/
 abbrev SetTheory.Set.iProd {I: Set} (X: I → Set) : Set :=
@@ -432,11 +432,11 @@ theorem SetTheory.Set.is_graph {X Y G:Set} (hG: G ⊆ X ×ˢ Y)
     ∃! f: X → Y, G = graph f := by sorry
 
 /--
-  Exercise 3.5.11. This trivially follows from `SetTheory.Set.power_set_axiom'`, but the
+  Exercise 3.5.11. This trivially follows from `SetTheory.Set.powerset_axiom'`, but the
   exercise is to derive it from `SetTheory.Set.mem_powerset` instead.
 -/
-theorem SetTheory.Set.power_set_axiom' (X Y:Set) :
-    ∃! S:Set, ∀(F:Object), F ∈ S ↔ ∃ f: Y → X, object_of f = F := sorry
+theorem SetTheory.Set.powerset_axiom'' (X Y:Set) :
+    ∃! S:Set, ∀(F:Object), F ∈ S ↔ ∃ f: Y → X, f = F := sorry
 
 /-- Exercise 3.5.12, with errata from web site incorporated -/
 theorem SetTheory.Set.recursion (X: Type) (f: nat → X → X) (c:X) :
