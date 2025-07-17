@@ -432,10 +432,10 @@ theorem SetTheory.Set.is_graph {X Y G:Set} (hG: G ⊆ X ×ˢ Y)
     ∃! f: X → Y, G = graph f := by sorry
 
 /--
-  Exercise 3.5.11. This trivially follows from `SetTheory.Set.powerset_axiom'`, but the
-  exercise is to derive it from `SetTheory.Set.mem_powerset` instead.
+  Exercise 3.5.11. This trivially follows from `SetTheory.Set.powerset_axiom`, but the
+  exercise is to derive it from `SetTheory.Set.exists_powerset` instead.
 -/
-theorem SetTheory.Set.powerset_axiom'' (X Y:Set) :
+theorem SetTheory.Set.powerset_axiom' (X Y:Set) :
     ∃! S:Set, ∀(F:Object), F ∈ S ↔ ∃ f: Y → X, f = F := sorry
 
 /-- Exercise 3.5.12, with errata from web site incorporated -/
