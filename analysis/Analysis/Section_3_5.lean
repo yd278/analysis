@@ -157,7 +157,7 @@ theorem SetTheory.Set.mem_iProd {I: Set} {X: I → Set} (t:Object) :
     use a
   intro ⟨ a, ha ⟩
   have h : t ∈ (I.iUnion X)^I := by
-    rw [power_set_axiom, ha]
+    rw [powerset_axiom, ha]
     use fun i ↦ ⟨ a i, by rw [mem_iUnion]; use i; exact (a i).property ⟩
   use h, a
 
