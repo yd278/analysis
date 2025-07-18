@@ -210,7 +210,7 @@ lemma Sequence.IsCauchy.coe (a:ℕ → ℚ) :
     Section_4_3.dist (a j) (a k) ≤ ε := by
   constructor
   · intro h ε hε
-    obtain ⟨ N, hN, h' ⟩ := h  ε hε
+    obtain ⟨ N, hN, h' ⟩ := h ε hε
     lift N to ℕ using hN
     use N
     intro j hj k hk

@@ -128,7 +128,7 @@ lemma Sequence.IsCauchy.coe (a:ℕ → ℝ) :
     (a:Sequence).IsCauchy ↔ ∀ ε > 0, ∃ N, ∀ j ≥ N, ∀ k ≥ N, dist (a j) (a k) ≤ ε := by
   constructor
   · intro h ε hε
-    obtain ⟨ N, hN, h' ⟩ := h  ε hε
+    obtain ⟨ N, hN, h' ⟩ := h ε hε
     lift N to ℕ using hN
     use N
     intro j hj k hk
