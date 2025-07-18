@@ -235,8 +235,8 @@ theorem SetTheory.Set.mem_powerset {X:Set} (x:Object) :
     x ∈ powerset X ↔ ∃ Y:Set, x = Y ∧ Y ⊆ X := by sorry
 
 /-- Lemma 3.4.10 -/
-theorem SetTheory.Set.exists_powerset {X:Set} (x:Object) :
-   ∃ (Z: Set), x ∈ Z ↔ ∃ Y:Set, x = Y ∧ Y ⊆ X := by
+theorem SetTheory.Set.exists_powerset (X:Set) :
+   ∃ (Z: Set), ∀ x, x ∈ Z ↔ ∃ Y:Set, x = Y ∧ Y ⊆ X := by
   use powerset X
   apply mem_powerset
 
