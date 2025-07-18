@@ -14,7 +14,7 @@ sequences, in particular using the language of filters.
 /-- Identification with the Cauchy sequence support in Mathlib/Algebra/Order/CauSeq/Basic -/
 theorem Chapter6.Sequence.Cauchy_iff_CauSeq (a: ℕ → ℝ) :
     (a:Sequence).IsCauchy ↔ IsCauSeq _root_.abs a := by
-  simp_rw [isCauchy_of_coe, Real.dist_eq, IsCauSeq]
+  simp_rw [IsCauchy.coe, Real.dist_eq, IsCauSeq]
   constructor
   . intro h ε hε
     specialize h (ε/2) (half_pos hε)
