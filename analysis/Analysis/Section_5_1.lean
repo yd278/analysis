@@ -261,15 +261,60 @@ lemma Rat.eventuallySteady_def (ε: ℚ) (a: Chapter5.Sequence) :
 namespace Chapter5
 
 
-/-- Example 5.1.7 -/
-lemma Sequence.ex_5_1_7_a : ¬ (0.1:ℚ).Steady ((fun n:ℕ ↦ (n+1:ℚ)⁻¹ ):Sequence) := by sorry
+/--
+Example 5.1.7
 
+The sequence 1, 1/2, 1/3, ... is not 0.1-steady
+-/
+lemma Sequence.ex_5_1_7_a : ¬ (0.1:ℚ).Steady ((fun n:ℕ ↦ (n+1:ℚ)⁻¹ ):Sequence) := by
+  intro h
+  rw [Rat.Steady.coe] at h
+  specialize h 0 2
+  unfold Rat.Close at h
+  norm_num at h
+  rw [abs_of_nonneg (by positivity)] at h
+  norm_num at h
+
+/--
+Example 5.1.7
+
+The sequence a_10, a_11, a_12, ... is 0.1-steady
+-/
 lemma Sequence.ex_5_1_7_b : (0.1:ℚ).Steady (((fun n:ℕ ↦ (n+1:ℚ)⁻¹ ):Sequence).from 10) := by
-  sorry
+  rw [Rat.Steady]
+  intro n hn m hm
+  simp at hn hm
+  lift n to ℕ using (by omega)
+  lift m to ℕ using (by omega)
+  simp_all [hn, hm]
+  unfold Rat.Close
+  wlog h : m ≤ n
+  · specialize this m n (by omega) (by omega) (by omega)
+    rwa [abs_sub_comm] at this
+  rw [abs_sub_comm]
+  have : ((n:ℚ) + 1)⁻¹ ≤ ((m:ℚ) + 1)⁻¹ := by gcongr
+  rw [abs_of_nonneg (by linarith), show (0.1:ℚ) = (10:ℚ)⁻¹  - 0 by norm_num]
+  gcongr
+  · norm_cast
+    omega
+  positivity
 
+/--
+Example 5.1.7
+
+The sequence 1, 1/2, 1/3, ... is eventually 0.1-steady
+-/
 lemma Sequence.ex_5_1_7_c : (0.1:ℚ).EventuallySteady ((fun n:ℕ ↦ (n+1:ℚ)⁻¹ ):Sequence) := by
-  sorry
+  use 10
+  constructor
+  · simp
+  exact ex_5_1_7_b
 
+/--
+Example 5.1.7
+
+The sequence 10, 0, 0, ... is eventually ε-steady for every ε > 0. Left as an exercise.
+-/
 lemma Sequence.ex_5_1_7_d {ε:ℚ} (hε:ε>0) :
     ε.EventuallySteady ((fun n:ℕ ↦ if n=0 then (10:ℚ) else (0:ℚ) ):Sequence) := by sorry
 
@@ -364,16 +409,39 @@ lemma Sequence.isBounded_def (a:Sequence) :
   a.IsBounded ↔ ∃ M ≥ 0, a.BoundedBy M := by rfl
 
 /-- Example 5.1.13 -/
-example : BoundedBy ![1,-2,3,-4] 4 := by sorry
+example : BoundedBy ![1,-2,3,-4] 4 := by
+  intro i
+  fin_cases i <;> norm_num
 
 /-- Example 5.1.13 -/
 example : ¬ ((fun n:ℕ ↦ (-1)^n * (n+1:ℚ)):Sequence).IsBounded := by sorry
 
 /-- Example 5.1.13 -/
-example : ((fun n:ℕ ↦ (-1:ℚ)^n):Sequence).IsBounded := by sorry
+example : ((fun n:ℕ ↦ (-1:ℚ)^n):Sequence).IsBounded := by
+  use 1
+  constructor
+  · norm_num
+  intro i
+  obtain h | h := Decidable.em (0 ≤ i) <;> simp [h]
+
 
 /-- Example 5.1.13 -/
-example : ¬ ((fun n:ℕ ↦ (-1:ℚ)^n):Sequence).IsCauchy := by sorry
+example : ¬ ((fun n:ℕ ↦ (-1:ℚ)^n):Sequence).IsCauchy := by
+  rw [Sequence.IsCauchy.coe]
+  by_contra h
+  specialize h (1/2 : ℚ) (by norm_num)
+  obtain ⟨ N, h ⟩ := h
+  specialize h N (by omega) (N+1) (by omega)
+  obtain h' | h' := Decidable.em (Even N)
+  · rw [Even.neg_one_pow h', Odd.neg_one_pow (Even.add_one h')] at h
+    unfold Section_4_3.dist at h
+    norm_num at h
+  have h' : Odd N := by exact Nat.not_even_iff_odd.mp h'
+  rw [Odd.neg_one_pow h'] at h
+  have : Even (N+1) := by exact Odd.add_one h'
+  rw [Even.neg_one_pow this] at h
+  unfold Section_4_3.dist at h
+  norm_num at h
 
 /-- Lemma 5.1.14 -/
 lemma IsBounded.finite {n:ℕ} (a: Fin n → ℚ) : ∃ M ≥ 0,  BoundedBy a M := by
