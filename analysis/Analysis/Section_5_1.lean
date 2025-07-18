@@ -137,28 +137,102 @@ example : (1:ℚ).Steady ( (fun _:ℕ ↦ (3:ℚ)):Sequence) := by
   intro n hn m hm
   simp_all [Sequence.n0_coe, Sequence.eval_coe_at_int]
 
-/-- Example 5.1.5 -/
-example : (1:ℚ).Steady ((fun n:ℕ ↦ if Even n then (1:ℚ) else (0:ℚ)):Sequence) := by sorry
+/--
+Example 5.1.5
 
-/-- Example 5.1.5 -/
-example : ¬ (0.5:ℚ).Steady ((fun n:ℕ ↦ if Even n then (1:ℚ) else (0:ℚ)):Sequence) := by sorry
+The sequence `1, 0, 1, 0, ...` is 1-steady.
+-/
+example : (1:ℚ).Steady ((fun n:ℕ ↦ if Even n then (1:ℚ) else (0:ℚ)):Sequence) := by
+  rw [Rat.Steady.coe]
+  intro n m
+  -- Split into 4 cases base on whether n and m are even or odd
+  obtain h | h := Decidable.em (Even n) <;> obtain h' | h' := Decidable.em (Even m)
+  all_goals {
+    -- In each case, we know the exact value of a n and a m
+    simp [h, h']
+    unfold Rat.Close
+    norm_num
+  }
+/--
+Example 5.1.5
 
-/-- Example 5.1.5 -/
-example : (0.1:ℚ).Steady ((fun n:ℕ ↦ (10:ℚ) ^ (-(n:ℤ)-1) ):Sequence) := by sorry
+The sequence `1, 0, 1, 0, ...` is not ½-steady.
+-/
+example : ¬ (0.5:ℚ).Steady ((fun n:ℕ ↦ if Even n then (1:ℚ) else (0:ℚ)):Sequence) := by
+  rw [Rat.Steady.coe]
+  by_contra h
+  specialize h 0 1
+  unfold Rat.Close at h
+  norm_num at h
 
-/-- Example 5.1.5 -/
+/--
+Example 5.1.5
+
+The sequence 0.1, 0.01, 0.001, ... is 0.1-steady.
+-/
+example : (0.1:ℚ).Steady ((fun n:ℕ ↦ (10:ℚ) ^ (-(n:ℤ)-1) ):Sequence) := by
+  rw [Rat.Steady.coe]
+  intro n m
+  unfold Rat.Close
+  wlog h : m ≤ n
+  · specialize this m n (by linarith)
+    rwa [abs_sub_comm]
+  rw [abs_sub_comm, abs_of_nonneg (by
+    have : (10:ℚ) ^ (-(n:ℤ)-1) ≤ (10:ℚ) ^ (-(m:ℤ)-1) := by
+      gcongr
+      norm_num
+    linarith)]
+  rw [show  (0.1:ℚ) = (10:ℚ)^(-1:ℤ) - 0 by norm_num]
+  gcongr
+  norm_num
+  linarith
+  positivity
+
+/--
+Example 5.1.5
+
+The sequence 0.1, 0.01, 0.001, ... is not 0.01-steady. Left as an exercise.
+-/
 example : ¬(0.01:ℚ).Steady ((fun n:ℕ ↦ (10:ℚ) ^ (-(n:ℤ)-1) ):Sequence) := by sorry
 
-/-- Example 5.1.5 -/
+/-- Example 5.1.5
+
+The sequence 1, 2, 4, 8, ... is not ε-steady for any ε. Left as an exercise.
+-/
 example (ε:ℚ) : ¬ ε.Steady ((fun n:ℕ ↦ (2 ^ (n+1):ℚ) ):Sequence) := by sorry
 
-/-- Example 5.1.5 -/
-example (ε:ℚ) (hε: ε>0) : ε.Steady ((fun _:ℕ ↦ (2:ℚ) ):Sequence) := by sorry
+/-- Example 5.1.5
 
-example : (10:ℚ).Steady ((fun n:ℕ ↦ if n = 0 then (10:ℚ) else (0:ℚ)):Sequence) := by sorry
+The sequence 2, 2, 2, ... is ε-steady for any ε > 0.
+-/
+example (ε:ℚ) (hε: ε>0) : ε.Steady ((fun _:ℕ ↦ (2:ℚ) ):Sequence) := by
+  rw [Rat.Steady.coe]
+  intro n m
+  unfold Rat.Close
+  norm_num
+  positivity
 
+/--
+The sequence 10, 0, 0, ... is 10-steady.
+-/
+example : (10:ℚ).Steady ((fun n:ℕ ↦ if n = 0 then (10:ℚ) else (0:ℚ)):Sequence) := by
+  rw [Rat.Steady.coe]
+  intro n m
+  unfold Rat.Close
+  -- Split into 4 cases based on whether n and m are 0 or not
+  obtain h | h := Decidable.em (n = 0) <;> obtain h' | h' := Decidable.em (m = 0) <;> simp [h, h']
+
+
+/--
+The sequence 10, 0, 0, ... is not ε-steady for any smaller value of ε.
+-/
 example (ε:ℚ) (hε:ε<10):  ¬ ε.Steady ((fun n:ℕ ↦ if n = 0 then (10:ℚ) else (0:ℚ)):Sequence) := by
-  sorry
+  intro h
+  rw [Rat.Steady.coe] at h
+  specialize h 0 1
+  unfold Rat.Close at h
+  norm_num at h
+  linarith
 
 variable (n₁ n₀ : ℤ)
 
