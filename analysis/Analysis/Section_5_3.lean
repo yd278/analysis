@@ -289,7 +289,7 @@ theorem Real.IsCauchy.neg (a:ℕ → ℚ) (ha: (a:Sequence).IsCauchy) :
     ((-a:ℕ → ℚ):Sequence).IsCauchy := by sorry
 
 
-/-- Proposition 5.3.11 -/
+/-- Proposition 5.3.11 (laws of algebra) -/
 noncomputable instance Real.addGroup_inst : AddGroup Real :=
 AddGroup.ofLeftAxioms (by sorry) (by sorry) (by sorry)
 
