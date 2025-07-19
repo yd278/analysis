@@ -204,9 +204,35 @@ abbrev Sequence.IsCauchy (a:Sequence) : Prop := ∀ ε > (0:ℚ), ε.EventuallyS
 lemma Sequence.isCauchy_def (a:Sequence) :
   a.IsCauchy ↔ ∀ ε > (0:ℚ), ε.EventuallySteady a := by rfl
 
+/-- Definition of Cauchy sequences, for a sequence starting at 0 -/
 lemma Sequence.IsCauchy.coe (a:ℕ → ℚ) :
     (a:Sequence).IsCauchy ↔ ∀ ε > (0:ℚ), ∃ N, ∀ j ≥ N, ∀ k ≥ N,
-    Section_4_3.dist (a j) (a k) ≤ ε := by sorry
+    Section_4_3.dist (a j) (a k) ≤ ε := by
+  constructor
+  · intro h ε hε
+    obtain ⟨ N, hN, h' ⟩ := h ε hε
+    lift N to ℕ using hN
+    use N
+    intro j hj k hk
+    simp [Rat.steady_def] at h'
+    specialize h' j (by omega) k (by omega)
+    simp_all [hj, hk, h']
+    exact h'
+
+  intro h ε hε
+  obtain ⟨ N, h' ⟩ := h ε hε
+  use max N 0
+  constructor
+  · simp
+  intro n hn m hm
+  simp at hn hm
+  have npos : 0 ≤ n := by omega
+  have mpos : 0 ≤ m := by omega
+  simp [hn, hm, npos, mpos]
+  lift n to ℕ using npos
+  lift m to ℕ using mpos
+  specialize h' n (by omega) m (by omega)
+  norm_cast
 
 lemma Sequence.IsCauchy.mk {n₀:ℤ} (a: {n // n ≥ n₀} → ℚ) :
     (mk' n₀ a).IsCauchy ↔ ∀ ε > (0:ℚ), ∃ N ≥ n₀, ∀ j ≥ N, ∀ k ≥ N,

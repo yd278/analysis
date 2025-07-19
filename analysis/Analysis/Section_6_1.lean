@@ -123,10 +123,35 @@ abbrev Sequence.IsCauchy (a:Sequence) : Prop := ∀ ε > (0:ℝ), ε.EventuallyS
 lemma Sequence.isCauchy_def (a:Sequence) :
   a.IsCauchy ↔ ∀ ε > (0:ℝ), ε.EventuallySteady a := by rfl
 
-lemma Sequence.isCauchy_of_coe (a:ℕ → ℝ) :
-    (a:Sequence).IsCauchy ↔ ∀ ε > 0, ∃ N, ∀ j ≥ N, ∀ k ≥ N, dist (a j) (a k) ≤ ε := by sorry
+/-- This is almost the same as Chapter5.Sequence.IsCauchy.coe -/
+lemma Sequence.IsCauchy.coe (a:ℕ → ℝ) :
+    (a:Sequence).IsCauchy ↔ ∀ ε > 0, ∃ N, ∀ j ≥ N, ∀ k ≥ N, dist (a j) (a k) ≤ ε := by
+  constructor
+  · intro h ε hε
+    obtain ⟨ N, hN, h' ⟩ := h ε hε
+    lift N to ℕ using hN
+    use N
+    intro j hj k hk
+    simp [Real.steady_def] at h'
+    specialize h' j (by omega) k (by omega)
+    simp_all [hj, hk, h']
 
-lemma Sequence.isCauchy_of_mk {n₀:ℤ} (a: {n // n ≥ n₀} → ℝ) :
+  intro h ε hε
+  obtain ⟨ N, h' ⟩ := h ε hε
+  use max N 0
+  constructor
+  · simp
+  intro n hn m hm
+  simp at hn hm
+  have npos : 0 ≤ n := by omega
+  have mpos : 0 ≤ m := by omega
+  simp [hn, hm, npos, mpos]
+  lift n to ℕ using npos
+  lift m to ℕ using mpos
+  specialize h' n (by omega) m (by omega)
+  norm_cast
+
+lemma Sequence.IsCauchy.mk {n₀:ℤ} (a: {n // n ≥ n₀} → ℝ) :
     (mk' n₀ a).IsCauchy
     ↔ ∀ ε > 0, ∃ N ≥ n₀, ∀ j ≥ N, ∀ k ≥ N, dist (mk' n₀ a j) (mk' n₀ a k) ≤ ε := by sorry
 
