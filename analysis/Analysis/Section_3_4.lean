@@ -163,8 +163,7 @@ example : (fun n:ℤ ↦ n^2) ⁻¹' {0,1,4} = {-2,-1,0,1,2} := by
     have : 2 ^ 2 = (4:ℤ) := by norm_num
     rw [←h, sq_eq_sq_iff_eq_or_eq_neg] at this
     aesop
-  intro h
-  aesop
+  intro h; aesop
 
 example : (fun n:ℤ ↦ n^2) ⁻¹' ((fun n:ℤ ↦ n^2) '' {-1,0,1,2}) ≠ {-1,0,1,2} := by sorry
 
@@ -254,9 +253,7 @@ theorem SetTheory.Set.powerset_of_triple (a b c x:Object) :
   simp only [mem_powerset, subset_def, mem_triple]
   constructor
   · rintro ⟨Y, rfl, hY⟩
-    by_cases ha : a ∈ Y <;>
-    by_cases hb : b ∈ Y <;>
-    by_cases hc : c ∈ Y
+    by_cases ha : a ∈ Y <;> by_cases hb : b ∈ Y <;> by_cases hc : c ∈ Y
     · right; right; right; right; right; right; right; congr; apply Set.ext; simp; grind
     · right; right; right; right; left; congr; apply Set.ext; simp; grind
     · right; right; right; right; right; left; congr; apply Set.ext; simp; grind
@@ -280,9 +277,7 @@ theorem SetTheory.Set.example_3_4_12 :
 theorem SetTheory.Set.union_eq (A: Set) :
     (union A : _root_.Set Object) =
     ⋃₀ { S : _root_.Set Object | ∃ S':Set, S = S' ∧ (S':Object) ∈ A } := by
-  ext x
-  simp only [union_axiom, Set.mem_sUnion]
-  aesop
+  ext x; simp only [union_axiom, Set.mem_sUnion]; aesop
 
 /-- Indexed union -/
 abbrev SetTheory.Set.iUnion (I: Set) (A: I → Set) : Set :=
@@ -349,12 +344,12 @@ theorem SetTheory.Set.preimage_eq_image_of_inv {X Y V:Set} (f:X → Y) (f_inv: Y
 /- Exercise 3.4.2.  State and prove an assertion connecting `preimage f (image f S)` and `S`. -/
 -- theorem SetTheory.Set.preimage_of_image {X Y:Set} (f:X → Y) (S: Set) (hS: S ⊆ X) : sorry := by sorry
 
-/- Exercise 3.4.2.  State and prove an assertion connecting `image f (preimage f U)` and `U`. -/
--- Interestingly, it is not needed for U to be a subset of Y.
+/- Exercise 3.4.2.  State and prove an assertion connecting `image f (preimage f U)` and `U`.
+Interestingly, it is not needed for U to be a subset of Y. -/
 -- theorem SetTheory.Set.preimage_of_image {X Y:Set} (f:X → Y) (U: Set) : sorry := by sorry
 
-/- Exercise 3.4.2.  State and prove an assertion connecting `preimage f (image f (preimage f U))` and `U`. -/
--- Interestingly, it is not needed for U to be a subset of Y.
+/- Exercise 3.4.2.  State and prove an assertion connecting `preimage f (image f (preimage f U))` and `U`.
+Interestingly, it is not needed for U to be a subset of Y.-/
 -- theorem SetTheory.Set.preimage_of_image {X Y:Set} (f:X → Y) (U: Set) : sorry := by sorry
 
 /--
@@ -370,11 +365,11 @@ theorem SetTheory.Set.image_of_union {X Y:Set} (f:X → Y) (A B: Set) :
     image f (A ∪ B) = (image f A) ∪ (image f B) := by sorry
 
 def SetTheory.Set.image_of_inter' : Decidable (∀ X Y:Set, ∀ f:X → Y, ∀ A B: Set, image f (A ∩ B) = (image f A) ∩ (image f B)) := by
-  -- the first line of this construction should be either `apply isTrue` or `apply isFalse`
+  -- The first line of this construction should be either `apply isTrue` or `apply isFalse`
   sorry
 
 def SetTheory.Set.image_of_diff' : Decidable (∀ X Y:Set, ∀ f:X → Y, ∀ A B: Set, image f (A \ B) = (image f A) \ (image f B)) := by
-  -- the first line of this construction should be either `apply isTrue` or `apply isFalse`
+  -- The first line of this construction should be either `apply isTrue` or `apply isFalse`
   sorry
 
 /-- Exercise 3.4.4 -/
