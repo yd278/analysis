@@ -345,8 +345,7 @@ noncomputable abbrev Partition.join {I J K:BoundedInterval} (P: Partition I) (Q:
       rcases hK with hKP | hKQ
       . exact (P.exists_unique x hx).unique ⟨ hKP, hxK ⟩ ⟨ hLP, hxL ⟩
       replace hxK := (BoundedInterval.subset_iff _ _).mp (Q.contains K hKQ) hxK
-      have := h.1
-      apply_fun (fun A ↦ x ∈ A) at this
+      have := congr(x ∈ $(h.1))
       simp [hx, hxK] at this
     obtain ⟨ L, hLQ, hxL ⟩ := (Q.exists_unique x hx).exists
     apply ExistsUnique.intro L (by aesop)
@@ -354,8 +353,7 @@ noncomputable abbrev Partition.join {I J K:BoundedInterval} (P: Partition I) (Q:
     simp at hK
     rcases hK with hKP | hKQ
     . replace hxK := (BoundedInterval.subset_iff _ _).mp (P.contains K hKP) hxK
-      have := h.1
-      apply_fun (fun A ↦ x ∈ A) at this
+      have := congr(x ∈ $(h.1))
       simp [hx, hxK] at this
     exact (Q.exists_unique x hx).unique ⟨ hKQ, hxK ⟩ ⟨ hLQ, hxL ⟩
   contains L hL := by

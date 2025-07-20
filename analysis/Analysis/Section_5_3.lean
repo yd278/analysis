@@ -4,7 +4,7 @@ import Mathlib.Algebra.Group.MinimalAxioms
 
 
 /-!
-# Analysis I, Section 5.3
+# Analysis I, Section 5.3: The construction of the real numbers
 
 I have attempted to make the translation as faithful a paraphrasing as possible of the original
 text. When there is a choice between a more idiomatic Lean solution and a more faithful
@@ -14,9 +14,9 @@ doing so.
 
 Main constructions and results of this section:
 
-- Notion of a formal limit of a Cauchy sequence
-- Construction of a real number type `Chapter5.Real`
-- Basic arithmetic operations and properties
+- Notion of a formal limit of a Cauchy sequence.
+- Construction of a real number type `Chapter5.Real`.
+- Basic arithmetic operations and properties.
 -/
 
 namespace Chapter5
@@ -53,11 +53,9 @@ instance CauchySequence.instCoeFun : CoeFun CauchySequence (fun _ ↦ ℕ → �
 theorem CauchySequence.coe_to_sequence (a: CauchySequence) :
     ((a:ℕ → ℚ):Sequence) = a.toSequence := by
   apply Sequence.ext
-  simp only [Sequence.n0_coe]
-  . rw [a.zero]
+  . simp only [Sequence.n0_coe]; rw [a.zero]
   ext n
-  by_cases h:n ≥ 0
-  all_goals simp [h]
+  by_cases h:n ≥ 0 <;> simp [h]
   rw [a.vanish]
   rw [a.zero]
   exact lt_of_not_ge h
@@ -109,8 +107,7 @@ theorem Real.eq_lim (x:Real) : ∃ (a:ℕ → ℚ), (a:Sequence).IsCauchy ∧ x 
   have : ((a:ℕ → ℚ):Sequence) = a.toSequence := CauchySequence.coe_to_sequence a
   rw [this, LIM_def (by convert a.cauchy)]
   refine ⟨ a.cauchy, ?_ ⟩
-  congr
-  ext n; simp
+  congr; ext n; simp
   change a.seq n = ((a:ℕ → ℚ):Sequence).seq n
   rw [this]
 
@@ -118,11 +115,9 @@ theorem Real.eq_lim (x:Real) : ∃ (a:ℕ → ℚ), (a:Sequence).IsCauchy ∧ x 
 theorem Real.LIM_eq_LIM {a b:ℕ → ℚ} (ha: (a:Sequence).IsCauchy) (hb: (b:Sequence).IsCauchy) :
   LIM a = LIM b ↔ Sequence.Equiv a b := by
   constructor
-  . intro h
-    replace h := Quotient.exact h
+  . intro h; replace h := Quotient.exact h
     rwa [dif_pos ha, dif_pos hb, CauchySequence.equiv_iff] at h
-  intro h
-  apply Quotient.sound
+  intro h; apply Quotient.sound
   rwa [dif_pos ha, dif_pos hb, CauchySequence.equiv_iff]
 
 /--Lemma 5.3.6 (Sum of Cauchy sequences is Cauchy)-/
@@ -149,15 +144,12 @@ theorem Sequence.add_equiv_left {a a':ℕ → ℚ} (b:ℕ → ℚ) (haa': Equiv 
     Equiv (a + b) (a' + b) := by
   -- This proof is written to follow the structure of the original text.
   rw [equiv_def] at haa' ⊢
-  intro ε hε
-  specialize haa' ε hε
+  intro ε hε; specialize haa' ε hε
   rw [Rat.eventuallyClose_def] at haa' ⊢
-  obtain ⟨ N, haa' ⟩ := haa'
-  use N
+  obtain ⟨ N, haa' ⟩ := haa'; use N
   rw [Rat.closeSeq_def] at haa' ⊢
   simp at haa' ⊢
-  intro n hn hN _ _
-  specialize haa' n hn hN hn hN
+  intro n hn hN _ _; specialize haa' n hn hN hn hN
   simp [hn, hN] at haa' ⊢
   convert Section_4_3.add_close haa' (Section_4_3.close_refl (b n.toNat))
   simp
@@ -166,13 +158,13 @@ theorem Sequence.add_equiv_left {a a':ℕ → ℚ} (b:ℕ → ℚ) (haa': Equiv 
 theorem Sequence.add_equiv_right {b b':ℕ → ℚ} (a:ℕ → ℚ) (hbb': Equiv b b') :
     Equiv (a + b) (a + b') := by
   simp_rw [add_comm]
-  exact add_equiv_left a hbb'
+  exact add_equiv_left _ hbb'
 
 /--Lemma 5.3.7 (Sum of equivalent sequences is equivalent)-/
 theorem Sequence.add_equiv {a b a' b':ℕ → ℚ} (haa': Equiv a a')
   (hbb': Equiv b b') :
     Equiv (a + b) (a' + b') :=
-  equiv_trans (add_equiv_left b haa') (add_equiv_right a' hbb')
+  equiv_trans (add_equiv_left _ haa') (add_equiv_right _ hbb')
 
 /-- Definition 5.3.4 (Addition of reals) -/
 noncomputable instance Real.add_inst : Add Real where
@@ -182,8 +174,7 @@ noncomputable instance Real.add_inst : Add Real where
       change LIM ((a:ℕ → ℚ) + (b:ℕ → ℚ)) = LIM ((a':ℕ → ℚ) + (b':ℕ → ℚ))
       rw [LIM_eq_LIM]
       . exact Sequence.add_equiv haa' hbb'
-      all_goals apply Sequence.IsCauchy.add
-      all_goals rw [CauchySequence.coe_to_sequence]
+      all_goals apply Sequence.IsCauchy.add <;> rw [CauchySequence.coe_to_sequence]
       . exact a.cauchy
       . exact b.cauchy
       . exact a'.cauchy
@@ -222,8 +213,8 @@ theorem Sequence.mul_equiv
 (haa': Equiv a a')
 (hbb': Equiv b b') :
     Equiv (a * b) (a' * b') := by
-  have h1 : Equiv (a * b) (a * b') := mul_equiv_right a ha hbb'
-  have h2 : Equiv (a * b') (a' * b') := mul_equiv_left b' hb' haa'
+  have h1 : Equiv (a * b) (a * b') := mul_equiv_right _ ha hbb'
+  have h2 : Equiv (a * b') (a' * b') := mul_equiv_left _ hb' haa'
   exact equiv_trans h1 h2
 
 /-- Definition 5.3.9 (Product of reals) -/

@@ -841,7 +841,7 @@ theorem SetTheory.Set.coe_inj' (X Y:Set) :
     (X : _root_.Set Object) = (Y : _root_.Set Object) ↔ X = Y := by
   constructor
   . intro h; apply ext; intro x
-    apply_fun (x ∈ ·) at h
+    replace h := congr(x ∈ $h)
     simpa using h
   rintro rfl; rfl
 

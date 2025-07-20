@@ -89,7 +89,7 @@ theorem Scalar.toFormal_inj {d: Dimensions} (q₁ q₂:Scalar d) :
   (q₁:Formal) = (q₂:Formal) ↔ q₁ = q₂ := by
   constructor
   . simp [toFormal, ←val_inj]; intro h
-    apply_fun (fun x ↦ x d) at h
+    replace h := congr($h d)
     simpa using h
   intro h; simp [h]
 

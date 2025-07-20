@@ -1,7 +1,7 @@
 import Mathlib.Tactic
 
 /-!
-# Analysis I, Section 4.4
+# Analysis I, Section 4.4: gaps in the rational numbers
 
 I have attempted to make the translation as faithful a paraphrasing as possible of the original
 text. When there is a choice between a more idiomatic Lean solution and a more faithful
@@ -18,7 +18,6 @@ API; one can set oneself the exercise of doing so.
 -/
 
 /-- Proposition 4.4.1 (Interspersing of integers by rationals) / Exercise 4.4.1 -/
-
 theorem Rat.between_int (x:ℚ) : ∃! n:ℤ, n ≤ x ∧ x < n+1 := by
   sorry
 
@@ -59,11 +58,11 @@ theorem Nat.not_even_and_odd (n:ℕ) : ¬ (Even n ∧ Odd n) := by
   sorry
 
 #check Nat.rec
+
 /-- Proposition 4.4.4 / Exercise 4.4.3  -/
 theorem Rat.not_exist_sqrt_two : ¬ ∃ x:ℚ, x^2 = 2 := by
   -- This proof is written to follow the structure of the original text.
-  by_contra h
-  obtain ⟨ x, hx ⟩ := h
+  by_contra h; obtain ⟨ x, hx ⟩ := h
   have hnon : x ≠ 0 := by aesop
   wlog hpos : x > 0
   . have hneg : -x > 0 := by
@@ -84,7 +83,7 @@ theorem Rat.not_exist_sqrt_two : ¬ ∃ x:ℚ, x^2 = 2 := by
   have hP : ∃ p, P p := by
     obtain ⟨ p, q, hp, hq, hpq ⟩ := hrep
     use p
-    refine ⟨ hp, q, hq, hpq ⟩
+    exact ⟨ hp, q, hq, hpq ⟩
   have hiter (p:ℕ) (hPp: P p) : ∃ q, q < p ∧ P q := by
     rcases p.even_or_odd'' with hp | hp
     . rw [even_iff_exists_two_mul] at hp
@@ -131,13 +130,11 @@ theorem Rat.exist_approx_sqrt_two {ε:ℚ} (hε:ε>0) : ∃ x ≥ (0:ℚ), x^2 <
     simp [add_mul]
     apply lt_of_le_of_ne h
     have := not_exist_sqrt_two
-    simp at this ⊢
-    exact this _
+    simp at this ⊢; exact this _
   obtain ⟨ n, hn ⟩ := Nat.exists_gt (2/ε)
   rw [gt_iff_lt, div_lt_iff₀' (by positivity), mul_comm,
       ←sq_lt_sq₀ (by norm_num) (by positivity)] at hn
-  specialize this n
-  linarith
+  specialize this n; linarith
 
 /-- Example 4.4.6 -/
 example :

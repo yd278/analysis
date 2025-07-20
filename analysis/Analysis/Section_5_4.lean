@@ -3,7 +3,7 @@ import Analysis.Section_5_3
 
 
 /-!
-# Analysis I, Section 5.4
+# Analysis I, Section 5.4: Ordering the reals
 
 I have attempted to make the translation as faithful a paraphrasing as possible of the original
 text. When there is a choice between a more idiomatic Lean solution and a more faithful
@@ -80,16 +80,14 @@ theorem Real.not_zero_pos (x:Real) : ¬ (x = 0 ∧ x.isPos) := by sorry
 
 theorem Real.nonzero_of_pos {x:Real} (hx: x.isPos) : x ≠ 0 := by
     have := not_zero_pos x
-    simp [hx] at this ⊢
-    assumption
+    simpa [hx] using this
 
 /-- Proposition 5.4.4 (basic properties of positive reals) / Exercise 5.4.1 -/
 theorem Real.not_zero_neg (x:Real) : ¬ (x = 0 ∧ x.isNeg) := by sorry
 
 theorem Real.nonzero_of_neg {x:Real} (hx: x.isNeg) : x ≠ 0 := by
     have := not_zero_neg x
-    simp [hx] at this ⊢
-    assumption
+    simpa [hx] using this
 
 /-- Proposition 5.4.4 (basic properties of positive reals) / Exercise 5.4.1 -/
 theorem Real.not_pos_neg (x:Real) : ¬ (x.isPos ∧ x.isNeg) := by sorry
@@ -129,10 +127,10 @@ theorem Real.abs_of_neg (x:Real) (hx: x.isNeg) : Real.abs x = -x := by
 theorem Real.abs_of_zero : Real.abs 0 = 0 := by
   have hpos: ¬ (0:Real).isPos := by
     have := Real.not_zero_pos 0
-    simp only [true_and] at this; assumption
+    simpa only [true_and] using this
   have hneg: ¬ (0:Real).isNeg := by
     have := Real.not_zero_neg 0
-    simp only [true_and] at this; assumption
+    simpa only [true_and] using this
   simp [Real.abs, hpos, hneg]
 
 /-- Definition 5.4.6 (Ordering of the reals) -/
@@ -297,29 +295,23 @@ theorem Real.LIM_mono_fail :
 theorem Real.exists_rat_le_and_nat_ge {x:Real} (hx: x.isPos) :
     (∃ q:ℚ, q > 0 ∧ (q:Real) ≤ x) ∧ ∃ N:ℕ, x < (N:Real) := by
   -- This proof is written to follow the structure of the original text.
-  rw [isPos_def] at hx
-  obtain ⟨ a, hbound, hcauchy, heq ⟩ := hx
+  rw [isPos_def] at hx; obtain ⟨ a, hbound, hcauchy, heq ⟩ := hx
+  rw [boundedAwayPos_def] at hbound; obtain ⟨ q, hq, hbound ⟩ := hbound
   have := Sequence.isBounded_of_isCauchy hcauchy
-  rw [boundedAwayPos_def] at hbound
-  rw [Sequence.isBounded_def] at this
-  obtain ⟨ q, hq, hbound ⟩ := hbound
-  obtain ⟨ r, hr, this ⟩ := this
+  rw [Sequence.isBounded_def] at this; obtain ⟨ r, hr, this ⟩ := this
   simp [Sequence.boundedBy_def] at this
   constructor
   . refine ⟨ q, hq, ?_ ⟩
-    convert LIM_mono _ hcauchy hbound
-    . exact Real.ratCast_def q
-    exact Sequence.IsCauchy.const q
-  obtain ⟨ N, hN  ⟩ := exists_nat_gt r
-  use N
+    convert LIM_mono (Sequence.IsCauchy.const _) hcauchy hbound
+    exact Real.ratCast_def q
+  obtain ⟨ N, hN ⟩ := exists_nat_gt r; use N
   calc
     x ≤ r := by
       rw [Real.ratCast_def r]
       convert LIM_mono hcauchy _ _
       . exact Sequence.IsCauchy.const r
       intro n
-      specialize this n
-      simp at this
+      specialize this n; simp at this
       exact (le_abs_self _).trans this
     _ < ((N:ℚ):Real) := by simp [←Real.lt_of_coe,hN]
     _ = N := by rfl
@@ -330,8 +322,7 @@ theorem Real.le_mul {ε:Real} (hε: ε.isPos) (x:Real) : ∃ M:ℕ, M > 0 ∧ M 
   rcases trichotomous x with hx | hx | hx
   . use 1; rw [isPos_iff] at hε; simp [hx, hε]
   . obtain ⟨ N, hN ⟩ := (exists_rat_le_and_nat_ge (div_of_pos hx hε)).2
-    set M := N+1
-    refine ⟨ M, by positivity, ?_ ⟩
+    set M := N+1; refine ⟨ M, by positivity, ?_ ⟩
     replace hN : x/ε < M := hN.trans (by simp [M])
     replace hN := mul_lt_mul_right hN hε
     simp

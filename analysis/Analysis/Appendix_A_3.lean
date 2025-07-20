@@ -18,10 +18,10 @@ example {A B C D: Prop} (hAC: A → C) (hCD: C → D) (hDB: D → B): A → B :=
 /-- Proposition A.3.2 -/
 example {x:ℝ} : x = Real.pi → Real.sin (x/2) + 1 = 2 := by
   intro h
-  apply_fun (fun x ↦ x/2) at h
-  apply_fun (fun x ↦ Real.sin x) at h
+  replace h := congr($h/2)
+  replace h := congr(Real.sin $h)
   simp at h
-  apply_fun (fun x ↦ x + 1) at h
+  replace h := congr($h + 1)
   convert h
   norm_num
 
@@ -110,5 +110,3 @@ example {A B C D:Prop} (hBC: B → C) (hAD: A → D) (hCD: D → ¬ C) : A → �
   have hD : D := hAD hA
   have hC' : ¬ C := hCD hD
   contradiction
-
-
