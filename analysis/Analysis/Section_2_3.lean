@@ -2,10 +2,10 @@ import Mathlib.Tactic
 import Analysis.Section_2_2
 
 /-!
-# Analysis I, Section 2.3
+# Analysis I, Section 2.3: Multiplication
 
-This file is a translation of Section 2.3 of Analysis I to Lean 4.
-All numbering refers to the original text.
+This file is a translation of Section 2.3 of Analysis I to Lean 4. All numbering refers to the
+original text.
 
 I have attempted to make the translation as faithful a paraphrasing as possible of the original
 text. When there is a choice between a more idiomatic Lean solution and a more faithful
@@ -16,7 +16,7 @@ doing so.
 Main constructions and results of this section:
 
 - Definition of multiplication and exponentiation for the "Chapter 2" natural numbers,
-  `Chapter2.Nat`
+  `Chapter2.Nat`.
 
 Note: at the end of this chapter, the `Chapter2.Nat` class will be deprecated in favor of the
 standard Mathlib class `_root_.Nat`, or `ℕ`.  However, we will develop the properties of
@@ -28,6 +28,7 @@ namespace Chapter2
 /-- Definition 2.3.1 (Multiplication of natural numbers) -/
 abbrev Nat.mul (n m : Nat) : Nat := Nat.recurse (fun _ prod ↦ prod + m) 0 n
 
+/-- This instance allows for the `*` notation to be used for natural number multiplication. -/
 instance Nat.instMul : Mul Nat where
   mul := mul
 
@@ -65,7 +66,8 @@ theorem Nat.mul_one (m: Nat) : m * 1 = m := by
 lemma Nat.pos_mul_pos {n m: Nat} (h₁: n.IsPos) (h₂: m.IsPos) : (n * m).IsPos := by
   sorry
 
-/-- Lemma 2.3.3 (Positive natural numbers have no zero divisors) / Exercise 2.3.2. Compare with Mathlib's Nat.mul_eq_zero.  -/
+/-- Lemma 2.3.3 (Positive natural numbers have no zero divisors) / Exercise 2.3.2.
+    Compare with Mathlib's `Nat.mul_eq_zero`.  -/
 lemma Nat.mul_eq_zero (n m: Nat) : n * m = 0 ↔ n = 0 ∨ m = 0 := by
   sorry
 
@@ -87,7 +89,8 @@ theorem Nat.add_mul (a b c: Nat) : (a + b)*c = a*c + b*c := by
 theorem Nat.mul_assoc (a b c: Nat) : (a * b) * c = a * (b * c) := by
   sorry
 
-/-- (Not from textbook)  Nat is a commutative semiring. -/
+/-- (Not from textbook)  Nat is a commutative semiring.
+    This allows tactics such as `ring` to apply to the Chapter 2 natural numbers. -/
 instance Nat.instCommSemiring : CommSemiring Nat where
   left_distrib := mul_add
   right_distrib := add_mul

@@ -14,6 +14,7 @@ variable (m:Mass) (v:Speed) (F:Force) (p:Momentum) (E:Energy) (h:Length) (t:Time
 #check E = m * c**2
 #check E = m * v**2 / 2 + m * g * h
 -- #check E = m * c**3  -- fails to typecheck
+-- #check m + v -- fails to typecheck
 
 example (hv : v = 60 • kilo meter / hour) : (StandardUnit _).in v = 50/(3:ℝ) := by
   simp [←Scalar.val_inj, hour, minute, kilo, meter, second, hv]
