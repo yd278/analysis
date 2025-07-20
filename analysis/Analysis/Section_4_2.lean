@@ -24,9 +24,12 @@ Main constructions and results of this section:
   integers `a b:ℤ`, up to equivalence.  (This is a quotient of a scaffolding type
   `Section_4_2.PreRat`, which consists of formal differences without any equivalence imposed.)
 
-- field operations and order on these rationals, as well as an embedding of ℕ and ℤ
+- Field operations and order on these rationals, as well as an embedding of ℕ and ℤ.
 
 - Equivalence with the Mathlib rationals `_root_.Rat` (or `ℚ`), which we will use going forward.
+
+Note: here (and in the sequel) we use Mathlib's natural numbers `ℕ` and integers `ℤ` rather than
+the Chapter 2 natural numbers and Section 4.1 integers.
 -/
 
 
