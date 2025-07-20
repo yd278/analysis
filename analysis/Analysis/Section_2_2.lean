@@ -117,7 +117,7 @@ instance Nat.addCommMonoid : AddCommMonoid Nat where
 
 /-- This illustration of the `abel` tactic is not from the
     textbook. -/
-example (a b c d:ℕ) : (a+b)+(c+0+d) = (b+c)+(d+a) := by abel
+example (a b c d:Nat) : (a+b)+(c+0+d) = (b+c)+(d+a) := by abel
 
 /-- Definition 2.2.7 (Positive natural numbers).-/
 def Nat.IsPos (n:Nat) : Prop := n ≠ 0
@@ -264,14 +264,17 @@ theorem Nat.not_lt_of_gt (a b:Nat) : a < b ∧ a > b → False := by
   have := ne_of_lt _ _ h.1
   contradiction
 
+/-- This lemma was a `why?` statement from Proposition 2.2.13,
+but is more broadly useful, so is extracted here. -/
+theorem Nat.zero_le (a:Nat) : 0 ≤ a := by
+  sorry
 
 /-- Proposition 2.2.13 (Trichotomy of order for natural numbers) / Exercise 2.2.4
     Compare with Mathlib's `trichotomous`. -/
 theorem Nat.trichotomous (a b:Nat) : a < b ∨ a = b ∨ a > b := by
   -- This proof is written to follow the structure of the original text.
   revert a; apply induction
-  . have why : 0 ≤ b := by
-      sorry
+  . have why : 0 ≤ b := b.zero_le
     replace why := (Nat.le_iff_lt_or_eq _ _).mp why
     tauto
   intro a ih
@@ -326,7 +329,7 @@ instance Nat.linearOrder : LinearOrder Nat where
 
 /-- This illustration of the `order` tactic is not from the
     textbook. -/
-example (a b c d:ℕ) (hab: a ≤ b) (hbc: b ≤ c) (hcd: c ≤ d)
+example (a b c d:Nat) (hab: a ≤ b) (hbc: b ≤ c) (hcd: c ≤ d)
         (hda: d ≤ a) : a = c := by order
 
 /-- (Not from textbook) Nat has the structure of an ordered monoid. This allows for tactics
@@ -338,8 +341,8 @@ instance Nat.isOrderedAddMonoid : IsOrderedAddMonoid Nat where
 
 /-- This illustration of the `gcongr` tactic is not from the
     textbook. -/
-example (a b c d e:ℕ) (hab: a ≤ b) (hbc: b < c) (hde: d ≤ e) :
-  a+d < c + e := by
+example (a b c d e:Nat) (hab: a ≤ b) (hbc: b < c) (hde: d < e) :
+  a+d ≤ c + e := by
   gcongr
   order
 

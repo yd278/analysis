@@ -101,6 +101,11 @@ instance Nat.instCommSemiring : CommSemiring Nat where
   mul_one := mul_one
   mul_comm := mul_comm
 
+/-- This illustration of the `ring` tactic is not from the
+    textbook. -/
+example (a b c d:ℕ) : (a+b)*1*(c+d) = d*b+a*c+c*b+a*d+0 := by ring
+
+
 /-- Proposition 2.3.6 (Multiplication preserves order) -/
 theorem Nat.mul_lt_mul_of_pos_right {a b c: Nat} (h: a < b) (hc: c.IsPos) : a * c < b * c := by
   -- This proof is written to follow the structure of the original text.
@@ -125,8 +130,6 @@ theorem Nat.mul_lt_mul_of_pos_left {a b c: Nat} (h: a < b) (hc: c.IsPos) : c * a
 theorem Nat.mul_gt_mul_of_pos_left {a b c: Nat} (h: a > b) (hc: c.IsPos) :
     c * a > c * b := mul_lt_mul_of_pos_left h hc
 
-
-
 /-- Corollary 2.3.7 (Cancellation law) -/
 lemma Nat.mul_cancel_right {a b c: Nat} (h: a * c = b * c) (hc: c.IsPos) : a = b := by
   -- This proof is written to follow the structure of the original text.
@@ -146,9 +149,13 @@ instance Nat.isOrderedRing : IsOrderedRing Nat where
   mul_le_mul_of_nonneg_left := by sorry
   mul_le_mul_of_nonneg_right := by sorry
 
+example (a b c d:Nat) (hab: a ≤ b) : c*a*d ≤ c*b*d := by
+  gcongr
+  . exact d.zero_le
+  exact c.zero_le
 
 /-- Proposition 2.3.9 (Euclid's division lemma) / Exercise 2.3.5 -/
-theorem Nat.exists_div_mod (n :Nat) {q: Nat} (hq: q.IsPos) :
+theorem Nat.exists_div_mod (n:Nat) {q: Nat} (hq: q.IsPos) :
     ∃ m r: Nat, 0 ≤ r ∧ r < q ∧ n = m * q + r := by
   sorry
 
