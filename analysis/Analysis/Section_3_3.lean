@@ -138,7 +138,7 @@ abbrev SetTheory.Set.coe_nonzero (n:ℕ) (h: n ≠ 0): (Nat \ {(0:Object)}: Set)
   ⟩
 
 theorem SetTheory.Set.f_3_3_3c_eval' (n: ℕ) : f_3_3_3c (coe_nonzero (n+1) (by positivity)) = n := by
-  symm; rw [f_3_3_3c_eval]; simp
+  symm; simp [f_3_3_3c_eval]
 
 theorem SetTheory.Set.f_3_3_3c_eval'' : f_3_3_3c (coe_nonzero 4 (by positivity)) = 3 := by
   convert f_3_3_3c_eval' 3
@@ -160,10 +160,10 @@ example : ¬ ∃ f: ℝ → ℝ, ∀ x y, y = f x ↔ y^2 = x := by
 
 example : ¬ ∃ f: NNReal → ℝ, ∀ x y, y = f x ↔ y^2 = x := by
   by_contra h
-  obtain ⟨f, hf⟩ := h; set y := f 4
-  have hy := (hf _ y).mp (by rfl)
-  have h1 : 2 = y := (hf 4 2).mpr (by norm_num)
-  have h2 : -2 = y := (hf 4 (-2)).mpr (by rwa [←sq_abs, ←abs_neg, sq_abs, ←h1] at hy)
+  obtain ⟨f, hf⟩ := h; specialize hf 4; set y := f 4
+  have hy := (hf y).mp (by rfl)
+  have h1 : 2 = y := (hf 2).mpr (by norm_num)
+  have h2 : -2 = y := (hf (-2)).mpr (by norm_num)
   linarith
 
 example : ∃ f: NNReal → NNReal, ∀ x y, y = f x ↔ y^2 = x := by

@@ -4,7 +4,7 @@ import Mathlib.SetTheory.ZFC.Basic
 import Analysis.Section_3_1
 
 /-!
-# Analysis I, Chapter 3 epilogue
+# Analysis I, Chapter 3 epilogue: Connections with ZFSet
 
 In this epilogue we show that the `ZFSet` type in Mathlib (derived as a quotient from the
 `PSet` type) can be used to create models of the `SetTheory' class studied in this chapter, so long as we work in a universe of level at
@@ -19,11 +19,9 @@ lemma PSet.ofNat_mem_ofNat_of_lt (m n : ℕ) : n < m → ofNat n ∈ ofNat m := 
   intro h
   induction h with
   | refl =>
-    rw [ofNat]
-    exact mem_insert (ofNat n) (ofNat n)
+    rw [ofNat]; exact mem_insert (ofNat n) (ofNat n)
   | step hm ih =>
-    rw [ofNat]
-    exact mem_insert_of_mem (ofNat _) ih
+    rw [ofNat]; exact mem_insert_of_mem (ofNat _) ih
 
 lemma PSet.mem_ofNat_iff (n m : ℕ) : ofNat n ∈ ofNat m ↔ n < m := by
   constructor
@@ -95,7 +93,7 @@ noncomputable instance : Chapter3.SetTheory.{u + 1,u + 1} where
       rw [← hz']
       apply Exists.choose_spec
     · intro ⟨z,hzA,hz'⟩
-      use z,⟨hzA,fun _ => ⟨s,hz'⟩⟩
+      use z, ⟨hzA,fun _ => ⟨s,hz'⟩⟩
       apply hp ⟨z,hzA⟩
       rw [dif_pos ⟨hzA,⟨s,hz'⟩⟩]
       use Exists.choose_spec _
@@ -105,8 +103,7 @@ noncomputable instance : Chapter3.SetTheory.{u + 1,u + 1} where
     simp only [Function.Embedding.coeFn_mk, not_exists, not_and, forall_eq', forall_exists_index]
     intro x hx
     obtain ⟨y,hy⟩ := ZFSet.regularity A (by
-      rintro rfl
-      exact ZFSet.notMem_empty x hx)
+      rintro rfl; exact ZFSet.notMem_empty x hx)
     use y, hy.left
     intro z hzA hzy
     have : z ∈ A ∩ y := ZFSet.mem_inter.mpr ⟨hzA,hzy⟩
@@ -117,8 +114,7 @@ noncomputable instance : Chapter3.SetTheory.{u + 1,u + 1} where
     inj' := by
       intro x y h
       ext1 ⟨s,hs⟩
-      simp only at h
-      simp_rw [ZFSet.ext_iff, ZFSet.mem_map] at h
+      simp only at h; simp_rw [ZFSet.ext_iff, ZFSet.mem_map] at h
       specialize h (s.pair (x ⟨s,hs⟩).val)
       simp only [ZFSet.pair_inj, existsAndEq, hs, ↓reduceDIte, and_self, SetLike.coe_eq_coe,
         true_and, true_iff] at h
@@ -145,8 +141,7 @@ noncomputable instance : Chapter3.SetTheory.{u + 1,u + 1} where
       simp only [Fin.isValue, ZFSet.mem_map, ZFSet.pair_inj, existsAndEq, true_and]
       constructor
       · intro s hs
-        simp only [Fin.isValue, ZFSet.mem_map] at hs
-        obtain ⟨y,hy,rfl⟩ := hs
+        simp only [Fin.isValue, ZFSet.mem_map] at hs; obtain ⟨y,hy,rfl⟩ := hs
         rw [dif_pos hy, ZFSet.pair_mem_prod]
         use hy
         exact (f ⟨y,hy⟩).property

@@ -111,14 +111,14 @@ instance SetTheory.objects_mem_sets : Membership Object Set where
   mem X x := mem x X
 
 -- Now we can use the `∈` notation between our `Object` and `Set`.
-example (X: Set) (x: Object) : Prop := x ∈ X
+example (X: Set) (x: Object) : x ∈ X ↔ SetTheory.mem x X := by rfl
 
 /-- Axiom 3.1 (Sets are objects)-/
 instance SetTheory.sets_are_objects : Coe Set Object where
   coe X := set_to_object X
 
 -- Now we can treat a `Set` as an `Object` when needed.
-example (X Y: Set) : Prop := (X: Object) ∈ Y
+example (X: Set) : (X: Object) = SetTheory.set_to_object X := rfl
 
 /-- Axiom 3.1 (Sets are objects)-/
 theorem SetTheory.Set.coe_eq {X Y:Set} (h: (X: Object) = (Y: Object)) : X = Y :=
@@ -144,7 +144,7 @@ instance SetTheory.Set.instEmpty : EmptyCollection Set where
   emptyCollection := emptyset
 
 -- Now we can use the `∅` notation to refer to `SetTheory.emptyset`.
-example : ∅ = SetTheory.emptyset := by rfl
+example : ∅ = SetTheory.emptyset := rfl
 
 -- Make everything we define in `SetTheory.Set.*` accessible directly.
 open SetTheory.Set
@@ -183,7 +183,7 @@ instance SetTheory.Set.instSingleton : Singleton Object Set where
   singleton := singleton
 
 -- Now we can use the `{x}` notation for a single element `Set`.
-example (x: Object) : Set := {x}
+example (x: Object) : {x} = SetTheory.singleton x := rfl
 
 /--
   Axiom 3.3(a) (singleton).
@@ -199,7 +199,7 @@ instance SetTheory.Set.instUnion : Union Set where
   union := union_pair
 
 -- Now we can use the `X ∪ Y` notation for a union of two `Set`s.
-example (X Y: Set) : Set := X ∪ Y
+example (X Y: Set) : X ∪ Y = SetTheory.union_pair X Y := rfl
 
 /-- Axiom 3.4 (Pairwise union)-/
 @[simp]
@@ -245,14 +245,14 @@ abbrev SetTheory.Set.empty : Set := ∅
 abbrev SetTheory.Set.singleton_empty : Set := {(empty: Object)}
 abbrev SetTheory.Set.pair_empty : Set := {(empty: Object), (singleton_empty: Object)}
 
-/-- Exercise 3.1.2-/
+/-- Exercise 3.1.2 -/
 theorem SetTheory.Set.emptyset_neq_singleton : empty ≠ singleton_empty := by
   sorry
 
-/-- Exercise 3.1.2-/
+/-- Exercise 3.1.2 -/
 theorem SetTheory.Set.emptyset_neq_pair : empty ≠ pair_empty := by sorry
 
-/-- Exercise 3.1.2-/
+/-- Exercise 3.1.2 -/
 theorem SetTheory.Set.singleton_empty_neq_pair : singleton_empty ≠ pair_empty := by
   sorry
 
@@ -322,7 +322,7 @@ instance SetTheory.Set.instSubset : HasSubset Set where
   Subset X Y := ∀ x, x ∈ X → x ∈ Y
 
 -- Now we can use `⊆` for a subset relationship between two `Set`s.
-example (X Y: Set) : Prop := X ⊆ Y
+example (X Y: Set) : X ⊆ Y ↔ ∀ x, x ∈ X → x ∈ Y := by rfl
 
 /--
   Definition 3.1.14.
@@ -332,7 +332,7 @@ instance SetTheory.Set.instSSubset : HasSSubset Set where
   SSubset X Y := X ⊆ Y ∧ X ≠ Y
 
 -- Now we can use `⊂` for a strict subset relationship between two `Set`s.
-example (X Y: Set) : Prop := X ⊂ Y
+example (X Y: Set) : X ⊂ Y ↔ X ⊆ Y ∧ X ≠ Y := by rfl
 
 /-- Definition 3.1.14. -/
 theorem SetTheory.Set.subset_def (X Y:Set) : X ⊆ Y ↔ ∀ x, x ∈ X → x ∈ Y := by rfl
@@ -454,7 +454,7 @@ instance SetTheory.Set.instIntersection : Inter Set where
   inter X Y := X.specify (fun x ↦ x.val ∈ Y)
 
 -- Now we can use the `X ∩ Y` notation for an intersection of two `Set`s.
-example (X Y: Set) : Set := X ∩ Y
+example (X Y: Set) : X ∩ Y = X.specify (fun x ↦ x.val ∈ Y) := rfl
 
 /-- Definition 3.1.22 (Intersections) -/
 @[simp]
@@ -471,7 +471,7 @@ instance SetTheory.Set.instSDiff : SDiff Set where
   sdiff X Y := X.specify (fun x ↦ x.val ∉ Y)
 
 -- Now we can use the `X \ Y` notation for a difference of two `Set`s.
-example (X Y: Set) : Set := X \ Y
+example (X Y: Set) : X \ Y = X.specify (fun x ↦ x.val ∉ Y) := rfl
 
 /-- Definition 3.1.26 (Difference sets) -/
 @[simp]
@@ -729,12 +729,10 @@ example : ({1, 2, 3, 4}:Set) \ {2,4,6} = {1, 3} := by
   aesop
 
 /-- Example 3.1.30 -/
-
 example : ({3,5,9}:Set).replace (P := fun x y ↦ ∃ (n:ℕ), x.val = n ∧ y = (n+1:ℕ)) (by aesop)
   = {4,6,10} := by sorry
 
 /-- Example 3.1.31 -/
-
 example : ({3,5,9}:Set).replace (P := fun _ y ↦ y=1) (by aesop) = {1} := by
   apply ext
   simp only [replacement_axiom]
