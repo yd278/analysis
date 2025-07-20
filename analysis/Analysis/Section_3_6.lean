@@ -125,7 +125,8 @@ theorem SetTheory.Set.card_uniq {X:Set} {n m:ℕ} (h1: X.has_card n) (h2: X.has_
     exact pos_card_nonempty (by omega) h2
   intro X m h1 h2
   have : X ≠ ∅ := pos_card_nonempty (by omega) h1
-  obtain x' := nonempty_def this
+  obtain ⟨ x, hx ⟩ := nonempty_def this
+  set x':X := ⟨ x, hx ⟩
   have : m ≥ 1 := by
     by_contra! hm; simp at hm
     rw [hm, has_card_zero] at h2; contradiction
