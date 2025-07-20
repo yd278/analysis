@@ -2,28 +2,26 @@ import Mathlib.Tactic
 import Analysis.Section_3_1
 
 /-!
-# Analysis I, Section 3.4
+# Analysis I, Section 3.4: Images and inverse images
 
 I have attempted to make the translation as faithful a paraphrasing as possible of the original
 text. When there is a choice between a more idiomatic Lean solution and a more faithful
 translation, I have generally chosen the latter. In particular, there will be places where the
 Lean code could be "golfed" to be more elegant and idiomatic, but I have consciously avoided
 doing so.
--/
-namespace Chapter3
 
-export SetTheory (Set Object nat)
-
-variable [SetTheory] (X : Type) (S : _root_.Set X) (f : X → X)
-
-
-/-!
 Main constructions and results of this section:
 
 - Images and inverse images of (Mathlib) functions, within the framework of Section 3.1 set
   theory. (The Section 3.3 functions are now deprecated and will not be used further.)
 - Connection with Mathlib's image `f '' S` and preimage `f ⁻¹' S` notions.
 -/
+
+namespace Chapter3
+
+export SetTheory (Set Object nat)
+
+variable [SetTheory] (X : Type) (S : _root_.Set X) (f : X → X)
 
 /-- Definition 3.4.1.  Interestingly, the definition does not require S to be a subset of X. -/
 abbrev SetTheory.Set.image {X Y:Set} (f:X → Y) (S: Set) : Set :=
