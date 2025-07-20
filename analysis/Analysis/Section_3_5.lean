@@ -4,7 +4,7 @@ import Analysis.Section_3_2
 import Analysis.Section_3_4
 
 /-!
-# Analysis I, Section 3.5
+# Analysis I, Section 3.5: Cartesian products
 
 I have attempted to make the translation as faithful a paraphrasing as possible of the original
 text. When there is a choice between a more idiomatic Lean solution and a more faithful
@@ -14,10 +14,10 @@ doing so.
 
 Main constructions and results of this section:
 
-- Ordered pairs and n-tuples
-- Cartesian products and n-fold products
-- Finite choice
-- Connections with Mathlib counterparts such as `Set.pi` and `Set.prod`
+- Ordered pairs and n-tuples.
+- Cartesian products and n-fold products.
+- Finite choice.
+- Connections with Mathlib counterparts such as `Set.pi` and `Set.prod`.
 
 --/
 
@@ -27,7 +27,8 @@ export SetTheory (Set Object nat)
 
 variable [SetTheory]
 
-/-- Definition 3.5.1 (Ordered pair) -/
+/-- Definition 3.5.1 (Ordered pair).  One could also have used `Object × Object` to
+define `OrderedPair` here. -/
 @[ext]
 structure OrderedPair where
   fst: Object
@@ -70,6 +71,8 @@ abbrev SetTheory.Set.cartesian (X Y:Set) : Set :=
 /-- This instance enables the ×ˢ notation for Cartesian product. -/
 instance SetTheory.Set.inst_SProd : SProd Set Set Set where
   sprod := cartesian
+
+example (X Y:Set) : X ×ˢ Y = SetTheory.Set.cartesian X Y := rfl
 
 theorem SetTheory.Set.mem_cartesian (z:Object) (X Y:Set) :
     z ∈ X ×ˢ Y ↔ ∃ x:X, ∃ y:Y, z = (⟨x, y⟩:OrderedPair) := by

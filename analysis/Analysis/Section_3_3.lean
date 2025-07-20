@@ -3,23 +3,13 @@ import Analysis.Section_3_1
 import Analysis.Tools.ExistsUnique
 
 /-!
-# Analysis I, Section 3.3
+# Analysis I, Section 3.3: Functions
 
 I have attempted to make the translation as faithful a paraphrasing as possible of the original
 text. When there is a choice between a more idiomatic Lean solution and a more faithful
 translation, I have generally chosen the latter. In particular, there will be places where the
 Lean code could be "golfed" to be more elegant and idiomatic, but I have consciously avoided
 doing so.
--/
-
-namespace Chapter3
-
-export SetTheory (Set Object nat)
-
-variable [SetTheory] (X Y : Set)
-
-
-/-!
 
 Main constructions and results of this section:
 
@@ -34,14 +24,19 @@ In the rest of the book we will deprecate the Chapter 3 version of a function, a
 Mathlib notion of a function instead.  Even within this section, we will switch to the Mathlib
 formalism for some of the examples involving number systems such as `ℤ` or `ℝ` that have not been
 implemented in the Chapter 3 framework.
--/
 
-
-/-
-We will work here with the version `nat` of the natural numbers internal to the Chapter 3 set
+We will work here with the version `Nat` of the natural numbers internal to the Chapter 3 set
 theory, though usually we will use coercions to then immediately translate to the Mathlib
 natural numbers `ℕ`.
 -/
+
+
+namespace Chapter3
+
+export SetTheory (Set Object)
+
+variable [SetTheory]
+
 /--
   Definition 3.3.1. `Function X Y` is the structure of functions from `X` to `Y`.
   Analogous to the Mathlib type `X → Y`.
@@ -80,21 +75,21 @@ theorem Function.eval_of {X Y: Set} (f: X → Y) (x:X) : (Function.mk_fn f) x = 
 
 
 /-- Example 3.3.3.   -/
-abbrev P_3_3_3a : nat → nat → Prop := fun x y ↦ (y:ℕ) = (x:ℕ)+1
+abbrev P_3_3_3a : Nat → Nat → Prop := fun x y ↦ (y:ℕ) = (x:ℕ)+1
 
-theorem SetTheory.Set.P_3_3_3a_existsUnique (x: nat) : ∃! y: nat, P_3_3_3a x y := by
-  apply ExistsUnique.intro ((x+1:ℕ):nat)
+theorem SetTheory.Set.P_3_3_3a_existsUnique (x: Nat) : ∃! y: Nat, P_3_3_3a x y := by
+  apply ExistsUnique.intro ((x+1:ℕ):Nat)
   . simp [P_3_3_3a]
   intro y h
   simpa [P_3_3_3a, Equiv.symm_apply_eq] using h
 
-abbrev SetTheory.Set.f_3_3_3a : Function nat nat := Function.mk P_3_3_3a P_3_3_3a_existsUnique
+abbrev SetTheory.Set.f_3_3_3a : Function Nat Nat := Function.mk P_3_3_3a P_3_3_3a_existsUnique
 
-theorem SetTheory.Set.f_3_3_3a_eval (x y: nat) : y = f_3_3_3a x ↔ (y:ℕ) = (x+1:ℕ) :=
+theorem SetTheory.Set.f_3_3_3a_eval (x y: Nat) : y = f_3_3_3a x ↔ (y:ℕ) = (x+1:ℕ) :=
   Function.eval _ _ _
 
 
-theorem SetTheory.Set.f_3_3_3a_eval' (n: ℕ) : f_3_3_3a (n:nat) = (n+1:ℕ) := by
+theorem SetTheory.Set.f_3_3_3a_eval' (n: ℕ) : f_3_3_3a (n:Nat) = (n+1:ℕ) := by
   symm
   simp only [f_3_3_3a_eval, nat_equiv_coe_of_coe]
 
@@ -103,40 +98,39 @@ theorem SetTheory.Set.f_3_3_3a_eval'' : f_3_3_3a 4 = 5 :=  f_3_3_3a_eval' 4
 theorem SetTheory.Set.f_3_3_3a_eval''' (n:ℕ) : f_3_3_3a (2*n+3: ℕ) = (2*n+4:ℕ) := by
   convert f_3_3_3a_eval' _
 
-abbrev SetTheory.Set.P_3_3_3b : nat → nat → Prop := fun x y ↦ (y+1:ℕ) = (x:ℕ)
+abbrev SetTheory.Set.P_3_3_3b : Nat → Nat → Prop := fun x y ↦ (y+1:ℕ) = (x:ℕ)
 
-theorem SetTheory.Set.not_P_3_3_3b_existsUnique : ¬ ∀ x, ∃! y: nat, P_3_3_3b x y := by
+theorem SetTheory.Set.not_P_3_3_3b_existsUnique : ¬ ∀ x, ∃! y: Nat, P_3_3_3b x y := by
   by_contra h
-  obtain ⟨ n, hn, _ ⟩ := h (0:nat)
-  have : ((0:nat):ℕ) = 0 := by simp [OfNat.ofNat]
+  obtain ⟨ n, hn, _ ⟩ := h (0:Nat)
+  have : ((0:Nat):ℕ) = 0 := by simp [OfNat.ofNat]
   simp [P_3_3_3b, this] at hn
 
-abbrev SetTheory.Set.P_3_3_3c : (nat \ {(0:Object)}: Set) → nat → Prop :=
+abbrev SetTheory.Set.P_3_3_3c : (Nat \ {(0:Object)}: Set) → Nat → Prop :=
   fun x y ↦ ((y+1:ℕ):Object) = x
 
-theorem SetTheory.Set.P_3_3_3c_existsUnique (x: (nat \ {(0:Object)}: Set)) :
-    ∃! y: nat, P_3_3_3c x y := by
+theorem SetTheory.Set.P_3_3_3c_existsUnique (x: (Nat \ {(0:Object)}: Set)) :
+    ∃! y: Nat, P_3_3_3c x y := by
   -- Some technical unpacking here due to the subtle distinctions between the `Object` type,
   -- sets converted to subtypes of `Object`, and subsets of those sets.
   obtain ⟨ x, hx ⟩ := x; simp at hx
   obtain ⟨ hx1, hx2 ⟩ := hx
-  set n := ((⟨ x, hx1 ⟩:nat):ℕ)
-  have : x = (n:nat) := by simp [n]
+  set n := ((⟨ x, hx1 ⟩:Nat):ℕ)
+  have : x = (n:Nat) := by simp [n]
   simp [P_3_3_3c, this, SetTheory.Object.ofnat_eq'] at hx2 ⊢
   replace hx2 : n = (n-1) + 1 := by omega
-  apply ExistsUnique.intro ((n-1:ℕ):nat)
+  apply ExistsUnique.intro ((n-1:ℕ):Nat)
   . simp [←hx2]
-  intro y hy
-  simp [←hy]
+  intro y hy; simp [←hy]
 
-abbrev SetTheory.Set.f_3_3_3c : Function (nat \ {(0:Object)}: Set) nat :=
+abbrev SetTheory.Set.f_3_3_3c : Function (Nat \ {(0:Object)}: Set) Nat :=
   Function.mk P_3_3_3c P_3_3_3c_existsUnique
 
-theorem SetTheory.Set.f_3_3_3c_eval (x: (nat \ {(0:Object)}: Set)) (y: nat) :
+theorem SetTheory.Set.f_3_3_3c_eval (x: (Nat \ {(0:Object)}: Set)) (y: Nat) :
     y = f_3_3_3c x ↔ ((y+1:ℕ):Object) = x := Function.eval _ _ _
 
-/-- Create a version of a non-zero `n` inside `nat \ {0}` for any natural number n. -/
-abbrev SetTheory.Set.coe_nonzero (n:ℕ) (h: n ≠ 0): (nat \ {(0:Object)}: Set) :=
+/-- Create a version of a non-zero `n` inside `Nat \ {0}` for any natural number n. -/
+abbrev SetTheory.Set.coe_nonzero (n:ℕ) (h: n ≠ 0): (Nat \ {(0:Object)}: Set) :=
   ⟨((n:ℕ):Object), by
     simp [SetTheory.Object.ofnat_eq',h]
     rw [←SetTheory.Object.ofnat_eq]
@@ -144,7 +138,7 @@ abbrev SetTheory.Set.coe_nonzero (n:ℕ) (h: n ≠ 0): (nat \ {(0:Object)}: Set)
   ⟩
 
 theorem SetTheory.Set.f_3_3_3c_eval' (n: ℕ) : f_3_3_3c (coe_nonzero (n+1) (by positivity)) = n := by
-  symm; rw [f_3_3_3c_eval]; simp
+  symm; simp [f_3_3_3c_eval]
 
 theorem SetTheory.Set.f_3_3_3c_eval'' : f_3_3_3c (coe_nonzero 4 (by positivity)) = 3 := by
   convert f_3_3_3c_eval' 3
@@ -154,9 +148,8 @@ theorem SetTheory.Set.f_3_3_3c_eval''' (n:ℕ) :
 
 /--
   Example 3.3.4 is a little tricky to replicate with the current formalism as the real numbers
-  have not been constructed yet.  Instead, I offer some Mathlib counterparts. Of course, writing
-  proofs for these will require using some Mathlib API, for instance for the nonnegative real
-  class `NNReal`, and how this class interacts with `ℝ`.
+  have not been constructed yet.  Instead, I offer some Mathlib counterparts, using the
+  Mathlib API for `NNReal` and `ℝ`.
 -/
 example : ¬ ∃ f: ℝ → ℝ, ∀ x y, y = f x ↔ y^2 = x := by
   by_contra h
@@ -167,10 +160,10 @@ example : ¬ ∃ f: ℝ → ℝ, ∀ x y, y = f x ↔ y^2 = x := by
 
 example : ¬ ∃ f: NNReal → ℝ, ∀ x y, y = f x ↔ y^2 = x := by
   by_contra h
-  obtain ⟨f, hf⟩ := h; set y := f 4
-  have hy := (hf _ y).mp (by rfl)
-  have h1 : 2 = y := (hf 4 2).mpr (by norm_num)
-  have h2 : -2 = y := (hf 4 (-2)).mpr (by rwa [←sq_abs, ←abs_neg, sq_abs, ←h1] at hy)
+  obtain ⟨f, hf⟩ := h; specialize hf 4; set y := f 4
+  have hy := (hf y).mp (by rfl)
+  have h1 : 2 = y := (hf 2).mpr (by norm_num)
+  have h2 : -2 = y := (hf (-2)).mpr (by norm_num)
   linarith
 
 example : ∃ f: NNReal → NNReal, ∀ x y, y = f x ↔ y^2 = x := by
@@ -180,15 +173,15 @@ example : ∃ f: NNReal → NNReal, ∀ x y, y = f x ↔ y^2 = x := by
   · intro h; rw [←h, NNReal.sqrt_sq]
 
 /-- Example 3.3.5. The unused variable `_x` is underscored to avoid triggering a linter. -/
-abbrev SetTheory.Set.P_3_3_5 : nat → nat → Prop := fun _x y ↦ y = 7
+abbrev SetTheory.Set.P_3_3_5 : Nat → Nat → Prop := fun _x y ↦ y = 7
 
-theorem SetTheory.Set.P_3_3_5_existsUnique (x: nat) : ∃! y: nat, P_3_3_5 x y := by
+theorem SetTheory.Set.P_3_3_5_existsUnique (x: Nat) : ∃! y: Nat, P_3_3_5 x y := by
   apply ExistsUnique.intro 7
   all_goals simp [P_3_3_5]
 
-abbrev SetTheory.Set.f_3_3_5 : Function nat nat := Function.mk P_3_3_5 P_3_3_5_existsUnique
+abbrev SetTheory.Set.f_3_3_5 : Function Nat Nat := Function.mk P_3_3_5 P_3_3_5_existsUnique
 
-theorem SetTheory.Set.f_3_3_5_eval (x: nat) : f_3_3_5 x = 7 := by
+theorem SetTheory.Set.f_3_3_5_eval (x: Nat) : f_3_3_5 x = 7 := by
   symm; rw [Function.eval]
 
 /-- Definition 3.3.8 (Equality of functions) -/
@@ -203,9 +196,9 @@ theorem Function.eq_iff {X Y: Set} (f g: Function X Y) : f = g ↔ ∀ x: X, f x
   Example 3.3.10 (simplified).  The second part of the example is tricky to replicate in this
   formalism, so a Mathlib substitute is offered instead.
 -/
-abbrev SetTheory.Set.f_3_3_10a : Function nat nat := Function.mk_fn (fun x ↦ (x^2 + 2*x + 1:ℕ))
+abbrev SetTheory.Set.f_3_3_10a : Function Nat Nat := Function.mk_fn (fun x ↦ (x^2 + 2*x + 1:ℕ))
 
-abbrev SetTheory.Set.f_3_3_10b : Function nat nat := Function.mk_fn (fun x ↦ ((x+1)^2:ℕ))
+abbrev SetTheory.Set.f_3_3_10b : Function Nat Nat := Function.mk_fn (fun x ↦ ((x+1)^2:ℕ))
 
 theorem SetTheory.Set.f_3_3_10_eq : f_3_3_10a = f_3_3_10b := by
   simp_rw [Function.eq_iff, Function.eval_of]
@@ -247,17 +240,17 @@ theorem Function.comp_eq_comp {X Y Z: Set} (g: Function Y Z) (f: Function X Y) :
   ext x; simp only [Function.comp_eval, Function.comp_apply, to_fn_eval]
 
 /-- Example 3.3.14 -/
-abbrev SetTheory.Set.f_3_3_14 : Function nat nat := Function.mk_fn (fun x ↦ (2*x:ℕ))
+abbrev SetTheory.Set.f_3_3_14 : Function Nat Nat := Function.mk_fn (fun x ↦ (2*x:ℕ))
 
-abbrev SetTheory.Set.g_3_3_14 : Function nat nat := Function.mk_fn (fun x ↦ (x+3:ℕ))
+abbrev SetTheory.Set.g_3_3_14 : Function Nat Nat := Function.mk_fn (fun x ↦ (x+3:ℕ))
 
 theorem SetTheory.Set.g_circ_f_3_3_14 :
-    g_3_3_14 ○ f_3_3_14 = Function.mk_fn (fun x ↦ ((2*(x:ℕ)+3:ℕ):nat)) := by
+    g_3_3_14 ○ f_3_3_14 = Function.mk_fn (fun x ↦ ((2*(x:ℕ)+3:ℕ):Nat)) := by
   simp_rw [Function.eq_iff, Function.comp_eval, Function.eval_of]
   simp
 
 theorem SetTheory.Set.f_circ_g_3_3_14 :
-    f_3_3_14 ○ g_3_3_14 = Function.mk_fn (fun x ↦ ((2*(x:ℕ)+6:ℕ):nat)) := by
+    f_3_3_14 ○ g_3_3_14 = Function.mk_fn (fun x ↦ ((2*(x:ℕ)+6:ℕ):Nat)) := by
   simp_rw [Function.eq_iff, Function.comp_eval, Function.eval_of]
   intros; simp; ring
 
@@ -289,7 +282,7 @@ theorem Function.one_to_one_iff' {X Y: Set} (f: Function X Y) :
   Mathlib functions instead of Chapter 3 functions.
 -/
 theorem SetTheory.Set.f_3_3_18_one_to_one :
-    (Function.mk_fn (fun (n:nat) ↦ ((n^2:ℕ):nat))).one_to_one := by
+    (Function.mk_fn (fun (n:Nat) ↦ ((n^2:ℕ):Nat))).one_to_one := by
   rw [Function.one_to_one_iff]
   intro x1 x2 h
   simpa [Function.eval, Function.eval_of] using h
@@ -385,8 +378,8 @@ example : ¬ Function.Bijective (fun n ↦ n+1) := by
 /-- Remark 3.3.27 -/
 theorem Function.bijective_incorrect_def :
     ∃ X Y: Set, ∃ f: Function X Y, (∀ x: X, ∃! y: Y, y = f x) ∧ ¬ f.bijective := by
-  use nat, nat
-  set f := mk_fn fun x ↦ (0: nat); use f
+  use Nat, Nat
+  set f := mk_fn fun x ↦ (0: Nat); use f
   constructor
   · intro x
     apply existsUnique_of_exists_of_unique

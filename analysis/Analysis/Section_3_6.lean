@@ -2,7 +2,7 @@ import Mathlib.Tactic
 import Analysis.Section_3_5
 
 /-!
-# Analysis I, Section 3.6
+# Analysis I, Section 3.6: Cardinality of sets
 
 I have attempted to make the translation as faithful a paraphrasing as possible of the original
 text. When there is a choice between a more idiomatic Lean solution and a more faithful
@@ -79,8 +79,8 @@ theorem SetTheory.Set.pos_card_nonempty {n:ℕ} (h: n ≥ 1) {X:Set} (hX: X.has_
   rw [has_card_iff] at hX
   obtain ⟨ f, hf ⟩ := hX
   sorry
-  -- obtain a contradiction from the fact that `f` is a bijection
-  -- from the empty set to a non-empty set
+  -- obtain a contradiction from the fact that `f` is a bijection  from the empty set to a
+  -- non-empty set.
 
 /-- Exercise 3.6.2a -/
 theorem SetTheory.Set.has_card_zero {X:Set} : X.has_card 0 ↔ X = ∅ := by sorry
@@ -90,24 +90,20 @@ theorem SetTheory.Set.card_erase {n:ℕ} (h: n ≥ 1) {X:Set} (hX: X.has_card n)
     (X \ {x.val}).has_card (n-1) := by
   -- This proof is written to follow the structure of the original text, though with some extra
   -- notations to track some coercions that are "invisible" in the human-readable proof.
-  rw [has_card_iff] at hX
-  obtain ⟨ f, hf ⟩ := hX
-  classical
+  rw [has_card_iff] at hX; obtain ⟨ f, hf ⟩ := hX
   set X' : Set := X \ {x.val}
   set ι : X' → X := fun y ↦ ⟨ y.val, by have := y.property; simp [X'] at this; tauto ⟩
   have := (f x).property
-  rw [mem_Fin] at this
-  obtain ⟨ m₀, hm₀, hm₀f ⟩ := this
+  rw [mem_Fin] at this; obtain ⟨ m₀, hm₀, hm₀f ⟩ := this
 
   set g : X' → Fin (n-1) := fun y ↦ by
     have hy := y.property
-    simp [X'] at hy
-    obtain ⟨ hy1, hy2 ⟩ := hy
+    simp [X'] at hy; obtain ⟨ hy1, hy2 ⟩ := hy
     have := (f ⟨ y.val, hy1⟩).property
     rw [mem_Fin] at this
-    set hmm := this.choose_spec.2
-    set hmn := this.choose_spec.1
+    have ⟨ hmn, hmm ⟩ := this.choose_spec
     set m' := this.choose
+    classical
     cases m'.decLt m₀ with
     | isTrue hlt =>
       exact Fin_mk _ m' (by omega)
@@ -123,25 +119,20 @@ theorem SetTheory.Set.card_erase {n:ℕ} (h: n ≥ 1) {X:Set} (hX: X.has_card n)
 /-- Proposition 3.6.8 (Uniqueness of cardinality) -/
 theorem SetTheory.Set.card_uniq {X:Set} {n m:ℕ} (h1: X.has_card n) (h2: X.has_card m) : n = m := by
   -- This proof is written to follow the structure of the original text.
-  revert X m
-  induction' n with n hn
+  revert X m; induction' n with n hn
   . intro X m h1 h2
-    rw [has_card_zero] at h1
-    contrapose! h1
+    rw [has_card_zero] at h1; contrapose! h1
     exact pos_card_nonempty (by omega) h2
   intro X m h1 h2
   have : X ≠ ∅ := pos_card_nonempty (by omega) h1
   obtain ⟨ x, hx ⟩ := nonempty_def this
-  set x' : X := ⟨ x, hx ⟩
+  set x':X := ⟨ x, hx ⟩
   have : m ≥ 1 := by
-    by_contra! hm
-    simp at hm
-    rw [hm, has_card_zero] at h2
-    contradiction
+    by_contra! hm; simp at hm
+    rw [hm, has_card_zero] at h2; contradiction
   have hc : (X \ {x'.val}).has_card (n+1-1) := card_erase (by omega) h1 x'
   have hc' : (X \ {x'.val}).has_card (m-1) := card_erase this h2 x'
-  simp at hc
-  specialize hn hc hc'
+  simp at hc; specialize hn hc hc'
   omega
 
 example : ({0,1,2}:Set).has_card 3 := by sorry
@@ -161,17 +152,14 @@ theorem SetTheory.Set.bounded_on_finite {n:ℕ} (f: Fin n → nat) : ∃ M, ∀ 
 theorem SetTheory.Set.nat_infinite : infinite nat := by
   -- This proof is written to follow the structure of the original text.
   unfold infinite
-  by_contra this
-  obtain ⟨ n, hn⟩ := this
-  simp [has_card] at hn
-  replace hn := Setoid.symm hn
+  by_contra this; obtain ⟨ n, hn⟩ := this
+  simp [has_card] at hn; replace hn := Setoid.symm hn
   simp [HasEquiv.Equiv, Setoid.r, EqualCard] at hn
   obtain ⟨ f, hf ⟩ := hn
   obtain ⟨ M, hM ⟩ := bounded_on_finite f
   replace hf := hf.surjective (M+1:ℕ)
-  have :∀ i, f i ≠ (M+1:ℕ) := by
-    intro i
-    specialize hM i; contrapose! hM
+  have : ∀ i, f i ≠ (M+1:ℕ) := by
+    intro i; specialize hM i; contrapose! hM
     apply_fun nat_equiv.symm at hM
     simp_all
   contrapose! this; exact hf

@@ -2,10 +2,7 @@ import Mathlib.Tactic
 import Mathlib.Algebra.Group.MinimalAxioms
 
 /-!
-# Analysis I, Section 4.1
-
-This file is a translation of Section 4.1 of Analysis I to Lean 4.
-All numbering refers to the original text.
+# Analysis I, Section 4.1: The integers
 
 I have attempted to make the translation as faithful a paraphrasing as possible of the original
 text. When there is a choice between a more idiomatic Lean solution and a more faithful
@@ -23,7 +20,7 @@ Main constructions and results of this section:
   natural numbers `a b:ℕ`, up to equivalence.  (This is a quotient of a scaffolding type
   `Section_4_1.PreInt`, which consists of formal differences without any equivalence imposed.)
 
-- ring operations and order these integers, as well as an embedding of ℕ
+- ring operations and order these integers, as well as an embedding of ℕ.
 
 - Equivalence with the Mathlib integers `_root_.Int` (or `ℤ`), which we will use going forward.
 
