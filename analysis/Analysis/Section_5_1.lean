@@ -2,19 +2,14 @@ import Mathlib.Tactic
 import Analysis.Section_4_3
 
 /-!
-# Analysis I, Section 5.1
+# Analysis I, Section 5.1: Cauchy sequences
 
 I have attempted to make the translation as faithful a paraphrasing as possible of the original
 text. When there is a choice between a more idiomatic Lean solution and a more faithful
 translation, I have generally chosen the latter. In particular, there will be places where the
 Lean code could be "golfed" to be more elegant and idiomatic, but I have consciously avoided
 doing so.
--/
 
-namespace Chapter5
-variable (ε : ℚ)
-
-/-!
 Main constructions and results of this section:
 
 - Notion of a sequence of rationals
@@ -22,6 +17,8 @@ Main constructions and results of this section:
 
 -/
 
+
+namespace Chapter5
 
 /--
   Definition 5.1.1 (Sequence). To avoid some technicalities involving dependent types, we extend
@@ -62,9 +59,7 @@ instance : Coe (ℕ → ℚ) Sequence where
 abbrev Sequence.mk' (n₀:ℤ) (a: { n // n ≥ n₀ } → ℚ) : Sequence where
   n₀ := n₀
   seq := fun n ↦ if h : n ≥ n₀ then a ⟨n, h⟩ else 0
-  vanish := by
-    intro n hn
-    simp [hn]
+  vanish := by intro n hn; simp [hn]
 
 lemma Sequence.eval_mk {n n₀:ℤ} (a: { n // n ≥ n₀ } → ℚ) (h: n ≥ n₀) :
     (Sequence.mk' n₀ a) n = a ⟨ n, h ⟩ := by simp [seq, h]
@@ -101,7 +96,8 @@ example (n:ℤ) (hn: n ≥ 3) : Sequence.squares_from_three n = n^2 := Sequence.
 end Chapter5
 
 /--
-A slight generalization of 5.1.3 - definition of ε-steadiness for a sequence with an arbitrary starting point n₀
+A slight generalization of Definition 5.1.3 - definition of ε-steadiness for a sequence with an
+arbitrary starting point n₀
 -/
 abbrev Rat.Steady (ε: ℚ) (a: Chapter5.Sequence) : Prop :=
   ∀ n ≥ a.n₀, ∀ m ≥ a.n₀, ε.Close (a n) (a m)
@@ -112,7 +108,7 @@ lemma Rat.steady_def (ε: ℚ) (a: Chapter5.Sequence) :
 namespace Chapter5
 
 /--
-5.1.3 - definition of ε-steadiness for a sequence starting at 0
+Definition 5.1.3 - definition of ε-steadiness for a sequence starting at 0
 -/
 lemma Rat.Steady.coe (ε : ℚ) (a:ℕ → ℚ) :
     ε.Steady a ↔ ∀ n m : ℕ, ε.Close (a n) (a m) := by
@@ -133,7 +129,8 @@ example : (1:ℚ).Steady ((fun _:ℕ ↦ (3:ℚ)):Sequence) := by
   simp [Rat.Steady.coe, Rat.Close]
 
 /--
-Compare: if you need to work with `Rat.Steady` on the coercion directly, there will be side conditions `hn : n ≥ 0` and `hm : m ≥ 0` that you will need to deal with.
+Compare: if you need to work with `Rat.Steady` on the coercion directly, there will be side
+conditions `hn : n ≥ 0` and `hm : m ≥ 0` that you will need to deal with.
 -/
 example : (1:ℚ).Steady ((fun _:ℕ ↦ (3:ℚ)):Sequence) := by
   unfold Rat.Steady Rat.Close
@@ -141,14 +138,12 @@ example : (1:ℚ).Steady ((fun _:ℕ ↦ (3:ℚ)):Sequence) := by
   simp_all [Sequence.n0_coe, Sequence.eval_coe_at_int]
 
 /--
-Example 5.1.5
-
-The sequence `1, 0, 1, 0, ...` is 1-steady.
+Example 5.1.5: The sequence `1, 0, 1, 0, ...` is 1-steady.
 -/
 example : (1:ℚ).Steady ((fun n:ℕ ↦ if Even n then (1:ℚ) else (0:ℚ)):Sequence) := by
   rw [Rat.Steady.coe]
   intro n m
-  -- Split into 4 cases base on whether n and m are even or odd
+  -- Split into four cases base on whether n and m are even or odd
   obtain h | h := Decidable.em (Even n) <;> obtain h' | h' := Decidable.em (Even m)
   all_goals {
     -- In each case, we know the exact value of a n and a m
@@ -158,71 +153,53 @@ example : (1:ℚ).Steady ((fun n:ℕ ↦ if Even n then (1:ℚ) else (0:ℚ)):Se
   }
 
 /--
-Example 5.1.5
-
-The sequence `1, 0, 1, 0, ...` is not ½-steady.
+Example 5.1.5: The sequence `1, 0, 1, 0, ...` is not ½-steady.
 -/
 example : ¬ (0.5:ℚ).Steady ((fun n:ℕ ↦ if Even n then (1:ℚ) else (0:ℚ)):Sequence) := by
   rw [Rat.Steady.coe]
-  by_contra h
-  specialize h 0 1
-  unfold Rat.Close at h
+  by_contra h; specialize h 0 1; unfold Rat.Close at h
   norm_num at h
 
 /--
-Example 5.1.5
-
-The sequence 0.1, 0.01, 0.001, ... is 0.1-steady.
+Example 5.1.5: The sequence 0.1, 0.01, 0.001, ... is 0.1-steady.
 -/
 example : (0.1:ℚ).Steady ((fun n:ℕ ↦ (10:ℚ) ^ (-(n:ℤ)-1) ):Sequence) := by
   rw [Rat.Steady.coe]
-  intro n m
-  unfold Rat.Close
+  intro n m; unfold Rat.Close
   wlog h : m ≤ n
   · specialize this m n (by linarith)
     rwa [abs_sub_comm]
   rw [abs_sub_comm, abs_of_nonneg (by
-    have : (10:ℚ) ^ (-(n:ℤ)-1) ≤ (10:ℚ) ^ (-(m:ℤ)-1) := by
-      gcongr
-      norm_num
+    have : (10:ℚ) ^ (-(n:ℤ)-1) ≤ (10:ℚ) ^ (-(m:ℤ)-1) := by gcongr; norm_num
     linarith)]
   rw [show  (0.1:ℚ) = (10:ℚ)^(-1:ℤ) - 0 by norm_num]
   gcongr
-  norm_num
-  linarith
+  . norm_num
+  . linarith
   positivity
 
 /--
-Example 5.1.5
-
-The sequence 0.1, 0.01, 0.001, ... is not 0.01-steady. Left as an exercise.
+Example 5.1.5: The sequence 0.1, 0.01, 0.001, ... is not 0.01-steady. Left as an exercise.
 -/
 example : ¬(0.01:ℚ).Steady ((fun n:ℕ ↦ (10:ℚ) ^ (-(n:ℤ)-1) ):Sequence) := by sorry
 
-/-- Example 5.1.5
-
-The sequence 1, 2, 4, 8, ... is not ε-steady for any ε. Left as an exercise.
+/-- Example 5.1.5: The sequence 1, 2, 4, 8, ... is not ε-steady for any ε. Left as an exercise.
 -/
 example (ε:ℚ) : ¬ ε.Steady ((fun n:ℕ ↦ (2 ^ (n+1):ℚ) ):Sequence) := by sorry
 
-/-- Example 5.1.5
-
-The sequence 2, 2, 2, ... is ε-steady for any ε > 0.
+/-- Example 5.1.5:The sequence 2, 2, 2, ... is ε-steady for any ε > 0.
 -/
 example (ε:ℚ) (hε: ε>0) : ε.Steady ((fun _:ℕ ↦ (2:ℚ) ):Sequence) := by
   rw [Rat.Steady.coe]
-  intro n m
-  unfold Rat.Close
-  norm_num
-  positivity
+  intro n m; unfold Rat.Close
+  norm_num; positivity
 
 /--
 The sequence 10, 0, 0, ... is 10-steady.
 -/
 example : (10:ℚ).Steady ((fun n:ℕ ↦ if n = 0 then (10:ℚ) else (0:ℚ)):Sequence) := by
   rw [Rat.Steady.coe]
-  intro n m
-  unfold Rat.Close
+  intro n m; unfold Rat.Close
   -- Split into 4 cases based on whether n and m are 0 or not
   obtain h | h := Decidable.em (n = 0) <;> obtain h' | h' := Decidable.em (m = 0) <;> simp [h, h']
 
@@ -230,12 +207,9 @@ example : (10:ℚ).Steady ((fun n:ℕ ↦ if n = 0 then (10:ℚ) else (0:ℚ)):S
 The sequence 10, 0, 0, ... is not ε-steady for any smaller value of ε.
 -/
 example (ε:ℚ) (hε:ε<10):  ¬ ε.Steady ((fun n:ℕ ↦ if n = 0 then (10:ℚ) else (0:ℚ)):Sequence) := by
-  intro h
-  rw [Rat.Steady.coe] at h
-  specialize h 0 1
-  unfold Rat.Close at h
-  norm_num at h
-  linarith
+  intro h; rw [Rat.Steady.coe] at h
+  specialize h 0 1; unfold Rat.Close at h
+  norm_num at h; linarith
 
 variable (n₁ n₀ : ℤ)
 
@@ -249,8 +223,7 @@ abbrev Sequence.from (a:Sequence) (n₁:ℤ) : Sequence :=
 lemma Sequence.from_eval (a:Sequence) {n₁ n:ℤ} (hn: n ≥ n₁) :
   (a.from n₁) n = a n := by
   simp [Sequence.from, seq, hn]
-  intro h
-  exact (a.vanish n h).symm
+  intro h; exact (a.vanish n h).symm
 
 end Chapter5
 
@@ -265,28 +238,21 @@ namespace Chapter5
 
 
 /--
-Example 5.1.7
-
-The sequence 1, 1/2, 1/3, ... is not 0.1-steady
+Example 5.1.7: The sequence 1, 1/2, 1/3, ... is not 0.1-steady
 -/
 lemma Sequence.ex_5_1_7_a : ¬ (0.1:ℚ).Steady ((fun n:ℕ ↦ (n+1:ℚ)⁻¹ ):Sequence) := by
-  intro h
-  rw [Rat.Steady.coe] at h
-  specialize h 0 2
-  unfold Rat.Close at h
+  intro h; rw [Rat.Steady.coe] at h
+  specialize h 0 2; unfold Rat.Close at h
   norm_num at h
   rw [abs_of_nonneg (by positivity)] at h
   norm_num at h
 
 /--
-Example 5.1.7
-
-The sequence a_10, a_11, a_12, ... is 0.1-steady
+Example 5.1.7: The sequence a_10, a_11, a_12, ... is 0.1-steady
 -/
 lemma Sequence.ex_5_1_7_b : (0.1:ℚ).Steady (((fun n:ℕ ↦ (n+1:ℚ)⁻¹ ):Sequence).from 10) := by
   rw [Rat.Steady]
-  intro n hn m hm
-  simp at hn hm
+  intro n hn m hm; simp at hn hm
   lift n to ℕ using (by omega)
   lift m to ℕ using (by omega)
   simp_all [hn, hm]
@@ -298,14 +264,11 @@ lemma Sequence.ex_5_1_7_b : (0.1:ℚ).Steady (((fun n:ℕ ↦ (n+1:ℚ)⁻¹ ):S
   have : ((n:ℚ) + 1)⁻¹ ≤ ((m:ℚ) + 1)⁻¹ := by gcongr
   rw [abs_of_nonneg (by linarith), show (0.1:ℚ) = (10:ℚ)⁻¹  - 0 by norm_num]
   gcongr
-  · norm_cast
-    omega
+  · norm_cast; omega
   positivity
 
 /--
-Example 5.1.7
-
-The sequence 1, 1/2, 1/3, ... is eventually 0.1-steady
+Example 5.1.7: The sequence 1, 1/2, 1/3, ... is eventually 0.1-steady
 -/
 lemma Sequence.ex_5_1_7_c : (0.1:ℚ).EventuallySteady ((fun n:ℕ ↦ (n+1:ℚ)⁻¹ ):Sequence) := by
   use 10
@@ -330,18 +293,14 @@ lemma Sequence.isCauchy_def (a:Sequence) :
 lemma Sequence.IsCauchy.coe (a:ℕ → ℚ) :
     (a:Sequence).IsCauchy ↔ ∀ ε > (0:ℚ), ∃ N, ∀ j ≥ N, ∀ k ≥ N,
     Section_4_3.dist (a j) (a k) ≤ ε := by
-  constructor
-  · intro h ε hε
-    obtain ⟨ N, hN, h' ⟩ := h ε hε
-    lift N to ℕ using hN
-    use N
+  constructor <;> intro h ε hε
+  · obtain ⟨ N, hN, h' ⟩ := h ε hε
+    lift N to ℕ using hN; use N
     intro j hj k hk
     simp [Rat.steady_def] at h'
     specialize h' j (by omega) k (by omega)
     simp_all [hj, hk, h']
     exact h'
-
-  intro h ε hε
   obtain ⟨ N, h' ⟩ := h ε hε
   use max N 0
   constructor
@@ -359,9 +318,8 @@ lemma Sequence.IsCauchy.coe (a:ℕ → ℚ) :
 lemma Sequence.IsCauchy.mk {n₀:ℤ} (a: {n // n ≥ n₀} → ℚ) :
     (mk' n₀ a).IsCauchy ↔ ∀ ε > (0:ℚ), ∃ N ≥ n₀, ∀ j ≥ N, ∀ k ≥ N,
     Section_4_3.dist (mk' n₀ a j) (mk' n₀ a k) ≤ ε := by
-  constructor
-  · intro h ε hε
-    obtain ⟨ N, hN, h' ⟩ := h ε hε
+  constructor <;> intro h ε hε
+  · obtain ⟨ N, hN, h' ⟩ := h ε hε
     use N
     dsimp at hN
     constructor
@@ -371,18 +329,13 @@ lemma Sequence.IsCauchy.mk {n₀:ℤ} (a: {n // n ≥ n₀} → ℚ) :
     specialize h' j (by omega) k (by omega)
     simp_all [show n₀ ≤ j by omega, hj, show n₀ ≤ k by omega]
     exact h'
-
-  intro h ε hε
   obtain ⟨ N, hN, h' ⟩ := h ε hε
   use max n₀ N
   constructor
   · simp
   intro n hn m hm
-  simp at hn hm
-  simp [hn, hm]
-  specialize h' n (by omega) m (by omega)
-  simp [hn, hm] at h'
-  exact h'
+  simp_all
+  exact h' n (by omega) m (by omega)
 
 noncomputable def Sequence.sqrt_two : Sequence :=
   (fun n:ℕ ↦ ((⌊ (Real.sqrt 2)*10^n ⌋ / 10^n):ℚ))
@@ -513,9 +466,8 @@ lemma IsBounded.finite {n:ℕ} (a: Fin n → ℚ) : ∃ M ≥ 0,  BoundedBy a M 
   constructor
   . positivity
   intro m
-  rcases Fin.eq_castSucc_or_eq_last m with hm | hm
-  . obtain ⟨ j, hj ⟩ := hm
-    convert h1 j
+  rcases Fin.eq_castSucc_or_eq_last m with ⟨ j, hj ⟩ | hm
+  . convert h1 j
     simp [hj]
   convert h2
   simp [hm]

@@ -111,7 +111,7 @@ theorem Nat.mul_lt_mul_of_pos_right {a b c: Nat} (h: a < b) (hc: c.IsPos) : a * 
   -- This proof is written to follow the structure of the original text.
   rw [lt_iff_add_pos] at h
   obtain ⟨ d, hdpos, hd ⟩ := h
-  apply_fun (· * c) at hd
+  replace h := congr($h * c)
   rw [add_mul] at hd
   have hdcpos : (d * c).IsPos := pos_mul_pos hdpos hc
   rw [lt_iff_add_pos]

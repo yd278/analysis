@@ -3,7 +3,7 @@ import Analysis.Section_5_1
 
 
 /-!
-# Analysis I, Section 5.2
+# Analysis I, Section 5.2: Equivalent Cauchy sequences
 
 I have attempted to make the translation as faithful a paraphrasing as possible of the original
 text. When there is a choice between a more idiomatic Lean solution and a more faithful
@@ -12,8 +12,8 @@ Lean code could be "golfed" to be more elegant and idiomatic, but I have conscio
 
 Main constructions and results of this section:
 
-- Notion of an ε-close and eventually ε-close sequences of rationals
-- Notion of an equivalent Cauchy sequence of rationals
+- Notion of an ε-close and eventually ε-close sequences of rationals.
+- Notion of an equivalent Cauchy sequence of rationals.
 
 -/
 
@@ -104,8 +104,7 @@ lemma Sequence.equiv_example :
           (show (2:ℚ) ≤ 10 by norm_num) _)
         convert Nat.cast_le.mpr (Section_4_3.two_pow_geq (N+1)) using 1 <;> try infer_instance
         all_goals simp
-    have : ∃ N:ℕ, N > 2/ε := exists_nat_gt (2 / ε)
-    obtain ⟨ N, hN ⟩ := this
+    obtain ⟨ N, hN ⟩ := exists_nat_gt (2 / ε)
     use N
     apply (hN' N).trans
     rw [div_le_iff₀ (by positivity)]
