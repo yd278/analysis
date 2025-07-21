@@ -2,7 +2,7 @@ import Mathlib.Tactic
 import Analysis.Section_11_1
 
 /-!
-# Analysis I, Section 11.2
+# Analysis I, Section 11.2: Piecewise constant functions
 
 I have attempted to make the translation as faithful a paraphrasing as possible of the original
 text. When there is a choice between a more idiomatic Lean solution and a more faithful
@@ -11,8 +11,8 @@ Lean code could be "golfed" to be more elegant and idiomatic, but I have conscio
 doing so.
 
 Main constructions and results of this section:
-- Piecewise constant functions
-- The piecewise constant integral
+- Piecewise constant functions.
+- The piecewise constant integral.
 
 -/
 
@@ -90,7 +90,7 @@ theorem PiecewiseConstantWith.congr {f g:ℝ → ℝ} {I: BoundedInterval} {P: P
   apply imp_congr_right; intro hJ
   apply ConstantOn.congr; intro x hx
   have := P.contains _ hJ; rw [subset_iff] at this
-  exact h x (this hx)
+  solve_by_elim
 
 /-- Definition 11.2.5 (Piecewise constant functions I) -/
 abbrev PiecewiseConstantOn (f:ℝ → ℝ) (I: BoundedInterval) : Prop := ∃ P : Partition I, PiecewiseConstantWith f P
@@ -177,7 +177,7 @@ theorem PiecewiseConstantWith.integ_congr {f g:ℝ → ℝ} {I: BoundedInterval}
   apply Finset.sum_congr rfl; intro J hJ; congr 1
   apply constant_value_on_congr; intro x hx
   have := P.contains _ hJ; rw [subset_iff] at this
-  simp [h x (this hx)]
+  aesop
 
 /-- Example 11.2.12 -/
 noncomputable abbrev f_11_2_12 : ℝ → ℝ := fun x ↦
@@ -308,14 +308,5 @@ theorem PiecewiseConstantOn.integ_of_join {I J K: BoundedInterval} (hIJK: K.join
   {f: ℝ → ℝ} (h: PiecewiseConstantOn f K) :
   PiecewiseConstantOn.integ f K = PiecewiseConstantOn.integ f I + PiecewiseConstantOn.integ f J := by
   sorry
-
-
-
-
-
-
-
-
-
 
 end Chapter11
