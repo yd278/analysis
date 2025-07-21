@@ -17,7 +17,12 @@ Main constructions and results of this section:
 - Connection with Mathilb's filter convergence concepts
 - Limit laws for functions
 
-Technical point: in the text, the functions `f` studied are defined only on subsets `X` of `ℝ`, and left undefined elsewhere.  However, in Lean, this then creates some fiddly conversions when trying to restrict `f` to various subsets of `X` (which, technically, are not precisely subsets of `ℝ`, though they can be coerced to such).  To avoid this issue we will deviate from the text by having our functions defined on all of `ℝ` (with the understanding that they are assigned "junk" values outside of the domain `X` of interest).
+Technical point: in the text, the functions `f` studied are defined only on subsets `X` of `ℝ`, and
+left undefined elsewhere.  However, in Lean, this then creates some fiddly conversions when trying
+to restrict `f` to various subsets of `X` (which, technically, are not precisely subsets of `ℝ`,
+though they can be coerced to such).  To avoid this issue we will deviate from the text by having
+our functions defined on all of `ℝ` (with the understanding that they are assigned "junk" values
+outside of the domain `X` of interest).
 -/
 
 /-- Definition 9.3.1 -/
