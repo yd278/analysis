@@ -3,7 +3,7 @@ import Mathlib.Analysis.SpecialFunctions.Trigonometric.Basic
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.Deriv
 
 /-!
-# Analysis I, Appendix A.6
+# Analysis I, Appendix A.6: Some examples of proofs and quantifiers
 
 Some examples of proofs and quantifiers in Lean
 
@@ -72,4 +72,3 @@ example : ∃ ε > 0, ∀ x, 0 < x ∧ x < ε → sin x > x / 2 := by
   convert hcosy using 1
   . ring
   field_simp
-
