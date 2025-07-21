@@ -39,17 +39,46 @@ theorem boundedAwayNeg_def (a:ℕ → ℚ) : BoundedAwayNeg a ↔ ∃ (c:ℚ), c
   rfl
 
 /-- Examples 5.4.2 -/
-example : BoundedAwayPos (fun n ↦ 1 + 10^(-(n:ℤ)-1)) := by sorry
+example : BoundedAwayPos (fun n ↦ 1 + 10^(-(n:ℤ)-1)) := by
+  use 1
+  constructor
+  norm_num
+  intro n
+  simp
+  positivity
 
 /-- Examples 5.4.2 -/
-example : BoundedAwayNeg (fun n ↦ - - 10^(-(n:ℤ)-1)) := by sorry
+example : BoundedAwayNeg (fun n ↦ -1 - 10^(-(n:ℤ)-1)) := by
+  use 1
+  constructor
+  norm_num
+  intro n
+  simp
+  positivity
 
 /-- Examples 5.4.2 -/
-example : ¬ BoundedAwayPos (fun n ↦ (-1)^n) := by sorry
+example : ¬ BoundedAwayPos (fun n ↦ (-1)^n) := by
+  by_contra h
+  obtain ⟨ c, h1, h2 ⟩ := h
+  specialize h2 1
+  simp at h2
+  linarith
 
-example : ¬ BoundedAwayNeg (fun n ↦ (-1)^n) := by sorry
+/-- Examples 5.4.2 -/
+example : ¬ BoundedAwayNeg (fun n ↦ (-1)^n) := by
+  by_contra h
+  obtain ⟨ c, h1, h2 ⟩ := h
+  specialize h2 0
+  simp at h2
+  linarith
 
-example : BoundedAwayZero (fun n ↦ (-1)^n) := by sorry
+/-- Examples 5.4.2 -/
+example : BoundedAwayZero (fun n ↦ (-1)^n) := by
+  use 1
+  constructor
+  norm_num
+  intro n
+  simp
 
 theorem bounded_away_zero_of_pos {a:ℕ → ℚ} (ha: BoundedAwayPos a) : BoundedAwayZero a := by
   sorry
