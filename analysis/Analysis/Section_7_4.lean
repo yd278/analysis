@@ -217,7 +217,7 @@ theorem Series.absConverges_of_permute {a:ℕ → ℝ} (ha : (a:Series).absConve
     _ = ∑ n ∈ Finset.image f (Finset.Iic M'.toNat), a n := by
       symm
       apply Finset.sum_image
-      intros; solve_by_elim [hf.1]
+      solve_by_elim [hf.1]
     _ = _ := by
       convert Finset.sum_union _ using 2
       . simp [X, why]
