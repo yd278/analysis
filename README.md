@@ -113,6 +113,8 @@ I am using this repository to host some other minor Lean content unrelated to th
     - Examples of use ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Misc/UnitsSystemExamples.lean)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Misc/UnitsSystemExamples.lean))
   - The SI system of units ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Misc/SI.lean)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Misc/SI.lean))
     - Examples of use ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Misc/SIExamples.lean)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Misc/SIExamples.lean))
+- A formalization of finite choice avoiding Lean's axiom of choice
+  - [Documentation](https://teorth.github.io/analysis/docs/Analysis/Misc/FiniteChoice.lean) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Misc/FiniteChoice.lean))
 
 ## Other resources
 
