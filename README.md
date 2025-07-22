@@ -109,12 +109,13 @@ In order to align the formalization with Mathlib conventions, a small number of 
 I am using this repository to host some other minor Lean content unrelated to the text book:
 
 - A formalization of physical units
-  - Support for systems of units ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Misc/UnitsSystem.lean)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Misc/UnitsSystem.lean))
-    - Examples of use ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Misc/UnitsSystemExamples.lean)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Misc/UnitsSystemExamples.lean))
-  - The SI system of units ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Misc/SI.lean)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Misc/SI.lean))
-    - Examples of use ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Misc/SIExamples.lean)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Misc/SIExamples.lean))
+  - Support for systems of units ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Misc/UnitsSystem.html)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Misc/UnitsSystem.lean))
+    - Examples of use ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Misc/UnitsSystemExamples.html)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Misc/UnitsSystemExamples.lean))
+  - The SI system of units ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Misc/SI.html)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Misc/SI.lean))
+    - Examples of use ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Misc/SIExamples.html)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Misc/SIExamples.lean))
 - A formalization of finite choice avoiding Lean's axiom of choice
-  - [Documentation](https://teorth.github.io/analysis/docs/Analysis/Misc/FiniteChoice.lean) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Misc/FiniteChoice.lean))
+  - [Documentation](https://teorth.github.io/analysis/docs/Analysis/Misc/FiniteChoice.html) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Misc/FiniteChoice.lean))
+- Some finite probability theory [Documentation](https://teorth.github.io/analysis/docs/Analysis/Misc/Probability.html) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Misc/Probability.lean))
 
 ## Other resources
 

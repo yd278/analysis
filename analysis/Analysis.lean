@@ -77,3 +77,5 @@ import Analysis.Misc.UnitsSystem
 import Analysis.Misc.UnitsSystemExamples
 import Analysis.Misc.SI
 import Analysis.Misc.SIExamples
+import Analysis.Misc.FiniteChoice
+import Analysis.Misc.Probability
