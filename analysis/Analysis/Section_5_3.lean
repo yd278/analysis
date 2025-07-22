@@ -292,11 +292,11 @@ AddGroup.ofLeftAxioms (by sorry) (by sorry) (by sorry)
 
 theorem Real.sub_eq_add_neg (x y:Real) : x - y = x + (-y) := rfl
 
-theorem Real.IsCauchy.sub {a b:ℕ → ℚ} (ha: (a:Sequence).IsCauchy) (hb: (b:Sequence).IsCauchy) :
+theorem Sequence.IsCauchy.sub {a b:ℕ → ℚ} (ha: (a:Sequence).IsCauchy) (hb: (b:Sequence).IsCauchy) :
     ((a-b:ℕ → ℚ):Sequence).IsCauchy := by sorry
 
 /-- LIM distributes over subtraction -/
-theorem Real.LIM_sub {a b:ℕ → ℚ} (ha: (a:Sequence).IsCauchy) (hb: (b:Sequence).IsCauchy) :
+theorem Real.LIM.sub {a b:ℕ → ℚ} (ha: (a:Sequence).IsCauchy) (hb: (b:Sequence).IsCauchy) :
   LIM a - LIM b = LIM (a - b) := by sorry
 
 /-- ratCast distributes over subtraction -/
@@ -342,7 +342,7 @@ theorem bounded_away_zero_def (a:ℕ → ℚ) : BoundedAwayZero a ↔
   ∃ (c:ℚ), c > 0 ∧ ∀ n, |a n| ≥ c := by rfl
 
 /-- Examples 5.3.13 -/
-example : BoundedAwayZero (fun n ↦ (-1)^n) := by sorry
+example : BoundedAwayZero (fun n ↦ (-1)^n) := by use 1; simp
 
 /-- Examples 5.3.13 -/
 example : ¬ BoundedAwayZero (fun n ↦ 10^(-(n:ℤ)-1)) := by sorry
@@ -351,7 +351,14 @@ example : ¬ BoundedAwayZero (fun n ↦ 10^(-(n:ℤ)-1)) := by sorry
 example : ¬ BoundedAwayZero (fun n ↦ 1 - 10^(-(n:ℤ))) := by sorry
 
 /-- Examples 5.3.13 -/
-example : BoundedAwayZero (fun n ↦ 10^(n+1)) := by sorry
+example : BoundedAwayZero (fun n ↦ 10^(n+1)) := by
+  use 1, by norm_num
+  intro n
+  dsimp
+  rw [abs_of_nonneg (by positivity), show (1:ℚ) = 10^0 by norm_num]
+  gcongr
+  . norm_num
+  . omega
 
 /-- Examples 5.3.13 -/
 example : ¬ ((fun (n:ℕ) ↦ (10:ℚ)^(n+1)):Sequence).IsBounded := by sorry
@@ -474,8 +481,18 @@ theorem Real.self_mul_inv {x:Real} (hx: x ≠ 0) : x * x⁻¹ = 1 := by
 theorem Real.inv_mul_self {x:Real} (hx: x ≠ 0) : x⁻¹ * x = 1 := by
   sorry
 
+lemma BoundedAwayZero.const {q : ℚ} (hq : q ≠ 0) : BoundedAwayZero fun _ ↦ q := by
+  use |q|
+  simp [hq]
+
 theorem Real.inv_ratCast (q:ℚ) : (q:Real)⁻¹ = (q⁻¹:ℚ) := by
-  sorry
+  obtain h | h := Decidable.em (q = 0)
+  . rw [h, ← show (0:Real) = (0:ℚ) by norm_cast]
+    norm_num
+    norm_cast
+  . rw [ratCast_def, ratCast_def, inv_def (BoundedAwayZero.const h) (by apply Sequence.IsCauchy.const)]
+    congr
+
 
 /-- Default definition of division -/
 noncomputable instance Real.instDivInvMonoid : DivInvMonoid Real where
