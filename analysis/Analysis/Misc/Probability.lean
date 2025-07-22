@@ -1,17 +1,64 @@
 import Mathlib.Tactic
-import Mathlib.Probability.Notation
 
-open MeasureTheory ProbabilityTheory
+/-! Some finite probability theory -/
 
-structure MeasureTheory.Extension (X Y: Type*) [MeasureSpace X] [MeasureSpace Y] where
-  π : X → Y
-  extension : MeasurePreserving π
+namespace ProbabilityTheory
 
-/-- An embedding, a.k.a. a bundled injective function. -/
-infixr:25 " ↠ " => MeasureTheory.Extension
+class FinitelyAdditive (A:Type*) [BooleanAlgebra A] where
+  prob : A → ℝ
+  prob_top : prob ⊤ = 1
+  prob_nonneg (E:A) : 0 ≤ prob E
+  prob_disj_sup {E F:A} (hEF: Disjoint E F) : prob (E ⊔ F) = prob E + prob F
 
-instance MeasureTheory.Extension.instFunLike {X Y:Type*} [MeasureSpace X] [MeasureSpace Y] : FunLike (X ↠ Y) X Y where
-  coe := π
+namespace FinitelyAdditive
+
+instance instFunLike (A:Type*) [BooleanAlgebra A] : FunLike (FinitelyAdditive A) A ℝ where
+  coe ℙ := ℙ.prob
   coe_injective' f g h := by { cases f; cases g; congr }
 
-theorem MeasureTheory.Extension.measure_preimage {X Y: Type*} [MeasureSpace X] [MeasureSpace Y] (f: X ↠ Y) {E:Set Y} (hE: MeasurableSet E) :ℙ (⇑f ⁻¹' E) = ℙ E := MeasureTheory.MeasurePreserving.measure_preimage f.extension (MeasurableSet.nullMeasurableSet hE)
+variable {A:Type*} [BooleanAlgebra A] (ℙ: FinitelyAdditive A)
+
+@[simp]
+theorem top : ℙ ⊤ = 1 := ℙ.prob_top
+
+theorem nonneg (E:A) : 0 ≤ ℙ E := ℙ.prob_nonneg E
+
+theorem disj_sup {E F:A} (hEF: Disjoint E F) : ℙ (E ⊔ F) = ℙ E + ℙ F := ℙ.prob_disj_sup hEF
+
+@[simp]
+theorem bot : ℙ ⊥ = 0 := by
+  have : Disjoint (⊥:A) ⊥ := fun ⦃x⦄ a _ ↦ a
+  replace := ℙ.disj_sup this
+  simpa using this
+
+@[simp]
+theorem compl (E:A) : ℙ Eᶜ = 1 - ℙ E := by
+  have : Disjoint Eᶜ E := disjoint_compl_left
+  replace := ℙ.disj_sup this
+  simp at this
+  linarith
+
+theorem le_one (E:A) : ℙ E ≤ 1 := by
+  linarith [ℙ.compl E, ℙ.nonneg Eᶜ]
+
+theorem ge_eq_add_diff {E F:A} (hEF: E ≤ F) : ℙ F = ℙ (F \ E) + ℙ E := by
+  have : Disjoint (F \ E) E := disjoint_sdiff_self_left
+  replace := ℙ.disj_sup this
+  rwa [sdiff_sup_cancel hEF] at this
+
+theorem mono {E F:A} (hEF: E ≤ F) : ℙ E ≤ ℙ F := by
+  linarith [ℙ.nonneg (F \ E), ℙ.ge_eq_add_diff hEF]
+
+theorem sup_add_inf (E F:A) : ℙ (E ⊔ F) + ℙ (E ⊓ F) = ℙ E + ℙ F := by
+  have h₁ : E ⊓ F ≤ E := inf_le_left; replace h₁ := ℙ.ge_eq_add_diff h₁
+  have h₂ : F ≤ E ⊔ F := le_sup_right; replace h₂ := ℙ.ge_eq_add_diff h₂
+  simp at h₁ h₂
+  linarith
+
+theorem sup_le_add (E F:A) : ℙ (E ⊔ F) ≤ ℙ E + ℙ F := by
+  linarith [ℙ.sup_add_inf E F, ℙ.nonneg (E ⊓ F)]
+
+
+
+end FinitelyAdditive
+end ProbabilityTheory
