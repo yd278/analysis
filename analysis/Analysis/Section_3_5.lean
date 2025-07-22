@@ -115,6 +115,33 @@ theorem SetTheory.Set.pair_eq_fst_snd {X Y:Set} (z:X ×ˢ Y) :
   simp only [hx, EmbeddingLike.apply_eq_iff_eq, OrderedPair.eq] at hy ⊢
   simp [hy.1]
 
+def SetTheory.Set.mk_cartesian {X Y:Set} (x:X) (y:Y) : X ×ˢ Y :=
+  ⟨(⟨ x, y ⟩:OrderedPair), by rw [mem_cartesian]; use x, y⟩
+
+@[simp]
+theorem SetTheory.Set.fst_of_mk_cartesian {X Y:Set} (x:X) (y:Y) :
+    fst (mk_cartesian x y) = x := by
+  let z := mk_cartesian x y
+  obtain ⟨ y', hy ⟩ := ((mem_cartesian _ _ _).mp z.property).choose_spec
+  change z.val = (⟨ fst z, y' ⟩:OrderedPair) at hy
+  unfold z at hy
+  rw [mk_cartesian] at hy ⊢
+  rw [EmbeddingLike.apply_eq_iff_eq, OrderedPair.eq] at hy
+  rw [Subtype.val_inj] at hy
+  rw [← hy.1]
+
+@[simp]
+theorem SetTheory.Set.snd_of_mk_cartesian {X Y:Set} (x:X) (y:Y) :
+    snd (mk_cartesian x y) = y := by
+  let z := mk_cartesian x y
+  obtain ⟨ x', hx ⟩ := (exists_comm.mp ((mem_cartesian _ _ _).mp z.property)).choose_spec
+  change z.val = (⟨ x', snd z ⟩:OrderedPair) at hx
+  unfold z at hx
+  rw [mk_cartesian] at hx ⊢
+  rw [EmbeddingLike.apply_eq_iff_eq, OrderedPair.eq] at hx
+  repeat rw [Subtype.val_inj] at hx
+  rw [← hx.2]
+
 noncomputable abbrev SetTheory.Set.uncurry {X Y Z:Set} (f: X → Y → Z) : X ×ˢ Y → Z :=
   fun z ↦ f (fst z) (snd z)
 
