@@ -182,7 +182,7 @@ theorem Real.LUB_exist {E: Set Real} (hE: Set.Nonempty E) (hbound: BddAbove E): 
   set S := LIM a
   have claim4 : S = LIM (a - b) := by
     have : LIM b = 0 := LIM.harmonic
-    simp [←LIM.sub claim3 hb, S, this]
+    simp [←LIM_sub claim3 hb, S, this]
   use S
   rw [isLUB_def, upperBound_def]
   constructor

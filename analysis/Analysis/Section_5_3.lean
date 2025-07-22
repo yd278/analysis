@@ -296,7 +296,7 @@ theorem Sequence.IsCauchy.sub {a b:ℕ → ℚ} (ha: (a:Sequence).IsCauchy) (hb:
     ((a-b:ℕ → ℚ):Sequence).IsCauchy := by sorry
 
 /-- LIM distributes over subtraction -/
-theorem Real.LIM.sub {a b:ℕ → ℚ} (ha: (a:Sequence).IsCauchy) (hb: (b:Sequence).IsCauchy) :
+theorem Real.LIM_sub {a b:ℕ → ℚ} (ha: (a:Sequence).IsCauchy) (hb: (b:Sequence).IsCauchy) :
   LIM a - LIM b = LIM (a - b) := by sorry
 
 /-- ratCast distributes over subtraction -/

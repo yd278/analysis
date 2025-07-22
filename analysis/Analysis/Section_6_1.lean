@@ -504,7 +504,7 @@ theorem Sequence.tendsTo_sub {a b:Sequence} {L M:ℝ} (ha: a.TendsTo L) (hb: b.T
     (a - b).TendsTo (L - M) := by
   sorry
 
-theorem Sequence.LIM.sub {a b:Sequence} (ha: a.Convergent) (hb: b.Convergent) :
+theorem Sequence.LIM_sub {a b:Sequence} (ha: a.Convergent) (hb: b.Convergent) :
     (a - b).Convergent ∧ lim (a - b) = lim a - lim b := by
   sorry
 

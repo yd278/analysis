@@ -321,7 +321,7 @@ theorem Real.LIM_mono {a b:ℕ → ℚ} (ha: (a:Sequence).IsCauchy) (hb: (b:Sequ
     LIM a ≤ LIM b := by
   -- This proof is written to follow the structure of the original text.
   have := LIM_of_nonneg (a := b - a) (by intro n; simp [hmono n]) (Sequence.IsCauchy.sub hb ha)
-  rw [←Real.LIM.sub hb ha] at this
+  rw [←Real.LIM_sub hb ha] at this
   linarith
 
 /-- Remark 5.4.11 --/
