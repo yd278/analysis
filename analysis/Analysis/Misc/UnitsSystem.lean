@@ -15,14 +15,12 @@ class UnitsSystem where
   Dimensions: Type*
   addCommGroup: AddCommGroup Dimensions
 
+/- The additive group structure of `Dimensions` needs to be explicitly registered as an instance. -/
+attribute [instance] UnitsSystem.addCommGroup
+
 namespace UnitsSystem
 
 variable [UnitsSystem]
-
-
-/-- The additive group structure of `Dimensions` needs to be explicitly registered as an instance.-/
-instance Dimensions.instAddCommGroup : AddCommGroup Dimensions := UnitsSystem.addCommGroup
-
 
 /-- The two key types here are `Formal` and `Scalar d`.  `Scalar d` is the space of scalar
 quantities whose units are given by `d:Dimensions`.  Collectively, they generate a graded commutative
