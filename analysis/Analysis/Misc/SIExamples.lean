@@ -47,4 +47,7 @@ example {w : SqrtFrequency} (hw : w = 2 • sqrt_hertz) : hertz.in (w**2) = 4 :=
   simp [←Scalar.val_inj, half_frequency_unit, frequency_unit, hw]
   norm_num
 
+/-- An example of a non-negative scalar type -/
+abbrev NNTemperature := { t:Temperature // t ≥ 0 }
+
 end SI
