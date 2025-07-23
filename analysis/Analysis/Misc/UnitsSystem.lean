@@ -1,5 +1,6 @@
 import Mathlib.Tactic
 import Mathlib.Algebra.Group.InjSurj
+import Mathlib.Order.Defs.PartialOrder
 
 /-! A framework to formalize units (such as length, time, mass, velocity, etc.) in Lean.
 -/
@@ -380,7 +381,31 @@ theorem Scalar.toFormal_hDiv'' {d:Dimensions} (q:Scalar d) (n:ℕ) :
 theorem Scalar.toFormal_hDiv''' {d:Dimensions} (q:Scalar d) (n:ℤ) :
   ((q / n:Scalar _):Formal) = (q:Formal) * (((n:ℝ)⁻¹:ℝ):Formal) := toFormal_hDiv' _ _
 
-/-- THe standard unit of `Scalar d` is the quantity whose data `val` is equal to 1. -/
+
+instance Scalar.instLE (d:Dimensions) : LE (Scalar d) where
+  le x y := x.val ≤ y.val
+
+theorem Scalar.val_le {d:Dimensions} (x y:Scalar d) :
+  x ≤ y ↔ x.val ≤ y.val := by rfl
+
+noncomputable instance Scalar.instLinearOrder (d:Dimensions) : LinearOrder (Scalar d) where
+  le_refl := by simp [val_le]
+  le_trans := by simp [val_le]; intros; order
+  lt_iff_le_not_le := by simp [val_le]
+  le_antisymm := by simp [val_le, ←val_inj]; intros; order
+  le_total := by simp [val_le]; intros; apply LinearOrder.le_total
+  toDecidableLE := Classical.decRel _
+
+theorem Scalar.val_lt {d:Dimensions} (x y:Scalar d) :
+  x < y ↔ x.val < y.val := by simp only [lt_iff_not_ge, val_le]
+
+noncomputable instance Scalar.instOrderedSMul (d:Dimensions) : OrderedSMul ℝ (Scalar d) where
+  smul_lt_smul_of_pos := by simp [val_lt]; intros; gcongr
+  lt_of_smul_lt_smul_of_pos := by simp [val_lt]; intro _ _ _ _ h2; rwa [←mul_lt_mul_iff_of_pos_left h2]
+
+-- TODO: add in some `gcongr` lemmas for this order
+
+/-- The standard unit of `Scalar d` is the quantity whose data `val` is equal to 1. -/
 def StandardUnit (d:Dimensions) : Scalar d := ⟨ 1 ⟩
 
 @[simp]
