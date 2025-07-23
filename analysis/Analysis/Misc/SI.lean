@@ -1,5 +1,6 @@
 import Mathlib.Tactic
 import Analysis.Misc.UnitsSystem
+import Mathlib.Algebra.Group.MinimalAxioms
 
 
 /-- The SI unit system. -/

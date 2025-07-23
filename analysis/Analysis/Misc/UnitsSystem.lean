@@ -40,14 +40,15 @@ quantity with respect to some standard set of units (e.g., SI units). -/
 structure Scalar (d:Dimensions) where
   val : ℝ
 
+theorem Scalar.val_injective (d : Dimensions) : Function.Injective (Scalar.val (d := d)) :=
+  fun x y h => by aesop
+
 /- One has the option to `work in coordinates` in a given calculation by using `simp [←val_inj]` (or `simp [←cast_eq]` below, if casting is required).  Or one can adopt
 a `coordinate-free` approach in which any tool directly accessing `val` is avoided.
 This library allows for both approaches to be employed. -/
 theorem Scalar.val_inj {d:Dimensions} (q₁ q₂:Scalar d) :
-  q₁.val = q₂.val ↔ q₁ = q₂ := by aesop
+  q₁.val = q₂.val ↔ q₁ = q₂ := Scalar.val_injective _ |>.eq_iff
 
-theorem Scalar.val_injective (d : Dimensions) : Function.Injective (Scalar.val (d := d)) :=
-  fun x y h => by aesop
 
 /-- We will encounter a technical issue with Lean's type system, namely that the type `Scalar d`
 and `Scalar d'` are not identical if `d'` and `d` are merely propositionally equal (as opposed
