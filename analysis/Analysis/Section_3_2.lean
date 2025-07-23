@@ -49,13 +49,10 @@ theorem SetTheory.Set.axiom_of_regularity {A:Set} (h: A ≠ ∅) :
     ∃ x:A, ∀ S:Set, x.val = S → Disjoint S A := by
   obtain ⟨ x, h, h' ⟩ := SetTheory.regularity_axiom A (nonempty_def h)
   use ⟨x, h⟩
-  intro S hS
-  specialize h' S hS
+  intro S hS; specialize h' S hS
   rw [disjoint_iff, eq_empty_iff_forall_notMem]
-  contrapose! h'
-  simp at h'
-  obtain ⟨ y, h1, h2 ⟩ := h'
-  exact ⟨ y, h2, h1 ⟩
+  contrapose! h'; simp at h'
+  aesop
 
 /--
   Exercise 3.2.1.  The spirit of the exercise is to establish these results without using either

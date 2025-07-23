@@ -47,7 +47,7 @@ theorem SetTheory.Set.image_eq_specify {X Y:Set} (f:X → Y) (S: Set) :
 -/
 theorem SetTheory.Set.image_eq_image {X Y:Set} (f:X → Y) (S: Set):
     (image f S: _root_.Set Object) = Subtype.val '' (f '' {x | x.val ∈ S}) := by
-  ext y
+  ext
   simp only [_root_.Set.mem_setOf, _root_.Set.mem_image, Set.mem_image]
   constructor
   · rintro ⟨x, hx, rfl⟩
@@ -57,7 +57,7 @@ theorem SetTheory.Set.image_eq_image {X Y:Set} (f:X → Y) (S: Set):
 
 theorem SetTheory.Set.image_in_codomain {X Y:Set} (f:X → Y) (S: Set) :
     image f S ⊆ Y := by
-  intro x h
+  intro _ h
   rw [mem_image] at h
   obtain ⟨ x', hx', hf ⟩ := h
   rw [← hf]
@@ -68,7 +68,7 @@ abbrev f_3_4_2 : nat → nat := fun n ↦ (2*n:ℕ)
 
 theorem SetTheory.Set.image_f_3_4_2 : image f_3_4_2 {1,2,3} = {2,4,6} := by
   rw [ext_iff]
-  intro x
+  intros
   simp only [mem_image, mem_triple, f_3_4_2]
   constructor
   · rintro ⟨_, (h | h | h), rfl⟩
@@ -113,7 +113,7 @@ theorem SetTheory.Set.mem_preimage' {X Y:Set} (f:X → Y) (U: Set) (x:Object) :
       simp_all
     . rw [preimage] at h
       simp_all [X.specification_axiom h]
-  . rintro ⟨ x', hx', hfx' ⟩
+  . intro ⟨ x', hx', hfx' ⟩
     rwa [← hx', mem_preimage]
 
 /-- Connection with Mathlib's notion of preimage. -/
@@ -163,7 +163,7 @@ example : (fun n:ℤ ↦ n^2) ⁻¹' {0,1,4} = {-2,-1,0,1,2} := by
     have : 2 ^ 2 = (4:ℤ) := by norm_num
     rw [←h, sq_eq_sq_iff_eq_or_eq_neg] at this
     aesop
-  intro h; aesop
+  intros; aesop
 
 example : (fun n:ℤ ↦ n^2) ⁻¹' ((fun n:ℤ ↦ n^2) '' {-1,0,1,2}) ≠ {-1,0,1,2} := by sorry
 
@@ -254,14 +254,15 @@ theorem SetTheory.Set.powerset_of_triple (a b c x:Object) :
   constructor
   · rintro ⟨Y, rfl, hY⟩
     by_cases ha : a ∈ Y <;> by_cases hb : b ∈ Y <;> by_cases hc : c ∈ Y
-    · right; right; right; right; right; right; right; congr; apply Set.ext; simp; grind
-    · right; right; right; right; left; congr; apply Set.ext; simp; grind
-    · right; right; right; right; right; left; congr; apply Set.ext; simp; grind
-    · right; left; congr; apply Set.ext; simp; grind
-    · right; right; right; right; right; right; left; congr; apply Set.ext; simp; grind
-    · right; right; left; congr; apply Set.ext; simp; grind
-    · right; right; right; left; congr; apply Set.ext; simp; grind
-    · left; congr; apply Set.ext; simp; grind
+    on_goal 8 => left
+    on_goal 4 => right; left
+    on_goal 6 => right; right; left
+    on_goal 7 => right; right; right; left
+    on_goal 2 => right; right; right; right; left
+    on_goal 3 => right; right; right; right; right; left
+    on_goal 5 => right; right; right; right; right; right; left
+    on_goal 1 => right; right; right; right; right; right; right
+    all_goals congr; apply Set.ext; simp; grind
   aesop
 
 /-- Axiom 3.12 (Union) -/
@@ -287,7 +288,7 @@ theorem SetTheory.Set.mem_iUnion {I:Set} (A: I → Set) (x:Object) :
     x ∈ iUnion I A ↔ ∃ α:I, x ∈ A α := by
   rw [union_axiom]
   constructor
-  . intro ⟨ S, hx, hS ⟩
+  . intro ⟨ _, _, hS ⟩
     rw [replacement_axiom] at hS
     obtain ⟨ α, hα ⟩ := hS
     simp_all

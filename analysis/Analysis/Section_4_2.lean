@@ -63,8 +63,7 @@ theorem Rat.eq (a c:ℤ) {b d:ℤ} (hb: b ≠ 0) (hd: d ≠ 0): a // b = c // d 
 theorem Rat.eq_diff (n:Rat) : ∃ a b, b ≠ 0 ∧ n = a // b := by
   apply Quot.ind _ n; intro ⟨ a, b, h ⟩
   use a, b; refine ⟨ h, ?_ ⟩
-  simp [formalDiv, h]
-  rfl
+  simp [formalDiv, h]; rfl
 
 /--
   Decidability of equality. Hint: modify the proof of `DecidableEq Int` from the previous
@@ -117,14 +116,11 @@ instance Rat.instNatCast : NatCast Rat where
 instance Rat.instOfNat {n:ℕ} : OfNat Rat n where
   ofNat := (n:ℤ) // 1
 
-theorem Rat.coe_Int_eq (a:ℤ) : (a:Rat) = a // 1 := by
-  rfl
+theorem Rat.coe_Int_eq (a:ℤ) : (a:Rat) = a // 1 := rfl
 
-theorem Rat.coe_Nat_eq (n:ℕ) : (n:Rat) = n // 1 := by
-  rfl
+theorem Rat.coe_Nat_eq (n:ℕ) : (n:Rat) = n // 1 := rfl
 
-theorem Rat.of_Nat_eq (n:ℕ) : (ofNat(n):Rat) = (ofNat(n):Nat) // 1 := by
-  rfl
+theorem Rat.of_Nat_eq (n:ℕ) : (ofNat(n):Rat) = (ofNat(n):Nat) // 1 := rfl
 
 /-- intCast distributes over addition -/
 lemma Rat.intCast_add (a b:ℤ) : (a:Rat) + (b:Rat) = (a+b:ℤ) := by sorry
@@ -133,8 +129,7 @@ lemma Rat.intCast_add (a b:ℤ) : (a:Rat) + (b:Rat) = (a+b:ℤ) := by sorry
 lemma Rat.intCast_mul (a b:ℤ) : (a:Rat) * (b:Rat) = (a*b:ℤ) := by sorry
 
 /-- intCast commutes with negation -/
-lemma Rat.intCast_neg (a:ℤ) : - (a:Rat) = (-a:ℤ) := by
-  rfl
+lemma Rat.intCast_neg (a:ℤ) : - (a:Rat) = (-a:ℤ) := rfl
 
 theorem Rat.coe_Int_inj : Function.Injective (fun n:ℤ ↦ (n:Rat)) := by sorry
 
@@ -148,12 +143,10 @@ instance Rat.instInv : Inv Rat where
 )
 
 lemma Rat.inv_eq (a:ℤ) {b:ℤ} (hb: b ≠ 0) : (a // b)⁻¹ = b // a := by
-  convert Quotient.lift_mk _ _ _
-  all_goals simp [hb]
+  convert Quotient.lift_mk _ _ _ <;> simp [hb]
 
 @[simp]
-theorem Rat.inv_zero : (0:Rat)⁻¹ = 0 := by
-  rfl
+theorem Rat.inv_zero : (0:Rat)⁻¹ = 0 := rfl
 
 /-- Proposition 4.2.4 (laws of algebra) / Exercise 4.2.3 -/
 instance Rat.addGroup_inst : AddGroup Rat :=
@@ -168,7 +161,7 @@ AddGroup.ofLeftAxioms (by
   have hbdf : b*d*f ≠ 0 := Int.mul_ne_zero hbd hf
 
   rw [add_eq _ _ hb hd, add_eq _ _ hbd hf, add_eq _ _ hd hf,
-      add_eq _ _ hb hdf, ←mul_assoc b d f, eq _ _ hbdf hbdf]
+      add_eq _ _ hb hdf, ←mul_assoc b, eq _ _ hbdf hbdf]
   ring
 )
  (by sorry) (by sorry)
@@ -216,7 +209,7 @@ theorem Rat.div_eq (q r:Rat) : q/r = q * r⁻¹ := by rfl
 instance Rat.instField : Field Rat where
   exists_pair_ne := by sorry
   mul_inv_cancel := by sorry
-  inv_zero := by rfl
+  inv_zero := rfl
   ratCast_def := by
     intro q
     set num := q.num
@@ -232,8 +225,8 @@ example : (3//4) / (5//6) = 9 // 10 := by sorry
 
 def Rat.coe_int_hom : ℤ →+* Rat where
   toFun n := (n:Rat)
-  map_zero' := by rfl
-  map_one' := by rfl
+  map_zero' := rfl
+  map_one' := rfl
   map_add' := by sorry
   map_mul' := by sorry
 
