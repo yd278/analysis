@@ -103,24 +103,21 @@ theorem SetTheory.Set.card_erase {n:ℕ} (h: n ≥ 1) {X:Set} (hX: X.has_card n)
     rw [mem_Fin] at this
     have ⟨ hmn, hmm ⟩ := this.choose_spec
     set m' := this.choose
-    classical
     cases m'.decLt m₀ with
-    | isTrue hlt =>
-      exact Fin_mk _ m' (by omega)
+    | isTrue hlt => exact Fin_mk _ m' (by omega)
     | isFalse hlt =>
       have : m' ≠ m₀ := by
         contrapose! hy2
         rwa [hy2,←hm₀f,Subtype.val_inj, hf.injective.eq_iff,←Subtype.val_inj] at hmm
       exact Fin_mk _ (m'-1) (by omega)
   have hg : Function.Bijective g := by sorry
-  have : EqualCard X' (Fin (n-1)) := by use g
-  exact this
+  use g
 
 /-- Proposition 3.6.8 (Uniqueness of cardinality) -/
 theorem SetTheory.Set.card_uniq {X:Set} {n m:ℕ} (h1: X.has_card n) (h2: X.has_card m) : n = m := by
   -- This proof is written to follow the structure of the original text.
   revert X m; induction' n with n hn
-  . intro X m h1 h2
+  . intro _ _ h1 h2
     rw [has_card_zero] at h1; contrapose! h1
     exact pos_card_nonempty (by omega) h2
   intro X m h1 h2
@@ -130,8 +127,8 @@ theorem SetTheory.Set.card_uniq {X:Set} {n m:ℕ} (h1: X.has_card n) (h2: X.has_
   have : m ≥ 1 := by
     by_contra! hm; simp at hm
     rw [hm, has_card_zero] at h2; contradiction
-  have hc : (X \ {x'.val}).has_card (n+1-1) := card_erase (by omega) h1 x'
-  have hc' : (X \ {x'.val}).has_card (m-1) := card_erase this h2 x'
+  have hc : (X \ {x}).has_card (n+1-1) := card_erase (by omega) h1 x'
+  have hc' : (X \ {x}).has_card (m-1) := card_erase this h2 x'
   simp at hc; specialize hn hc hc'
   omega
 
@@ -151,8 +148,7 @@ theorem SetTheory.Set.bounded_on_finite {n:ℕ} (f: Fin n → nat) : ∃ M, ∀ 
 /-- Theorem 3.6.12 -/
 theorem SetTheory.Set.nat_infinite : infinite nat := by
   -- This proof is written to follow the structure of the original text.
-  unfold infinite
-  by_contra this; obtain ⟨ n, hn⟩ := this
+  by_contra this; obtain ⟨n, hn⟩ := this
   simp [has_card] at hn; replace hn := Setoid.symm hn
   simp [HasEquiv.Equiv, Setoid.r, EqualCard] at hn
   obtain ⟨ f, hf ⟩ := hn
@@ -162,7 +158,7 @@ theorem SetTheory.Set.nat_infinite : infinite nat := by
     intro i; specialize hM i; contrapose! hM
     apply_fun nat_equiv.symm at hM
     simp_all
-  contrapose! this; exact hf
+  tauto
 
 /-- It is convenient for Lean purposes to give infinite sets the ``junk`` cardinality of zero. -/
 noncomputable abbrev SetTheory.Set.card (X:Set) : ℕ := by

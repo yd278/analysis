@@ -36,10 +36,8 @@ instance PreInt.instSetoid : Setoid PreInt where
     symm := by sorry
     trans := by
       -- This proof is written to follow the structure of the original text.
-      intro ⟨ a,b ⟩ ⟨ c,d ⟩ ⟨ e,f ⟩ h1 h2
-      simp at h1 h2 ⊢
-      have h3 := congrArg₂ (· + ·) h1 h2
-      simp at h3
+      intro ⟨ a,b ⟩ ⟨ c,d ⟩ ⟨ e,f ⟩ h1 h2; simp at h1 h2 ⊢
+      have h3 := congrArg₂ (· + ·) h1 h2; simp at h3
       have : (a + f) + (c + d) = (e + b) + (c + d) := calc
         (a + f) + (c + d) = a + d + (c + f) := by abel
         _ = c + b + (e + d) := h3
@@ -175,14 +173,12 @@ theorem Int.trichotomous (x:Int) : x = 0 ∨ x.IsPos ∨ x.IsNeg := by
   have := _root_.trichotomous (r := LT.lt) a b
   rcases this with h_lt | h_eq | h_gt
   . obtain ⟨ c,rfl ⟩ := Nat.exists_eq_add_of_lt h_lt
-    right; right; refine ⟨ c+1, ?_, ?_ ⟩
-    . linarith
+    right; right; refine ⟨ c+1, by linarith, ?_ ⟩
     simp_rw [natCast_eq, neg_eq, eq]
     abel
   . left; simp_rw [h_eq, ofNat_eq, eq, add_zero, zero_add]
   obtain ⟨ c, rfl ⟩ := Nat.exists_eq_add_of_lt h_gt
-  right; left; refine ⟨ c+1, ?_, ?_ ⟩
-  . linarith
+  right; left; refine ⟨ c+1, by linarith, ?_ ⟩
   simp_rw [natCast_eq, eq]
   abel
 

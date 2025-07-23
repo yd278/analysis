@@ -266,7 +266,7 @@ theorem SetTheory.Set.mem_Fin (n:ℕ) (x:Object) : x ∈ Fin n ↔ ∃ m, m < n 
     use ((⟨ x, h1 ⟩:nat):ℕ)
     simp [h2]
     calc
-      x = (⟨ x, h1 ⟩:nat) := by rfl
+      x = (⟨ x, h1 ⟩:nat) := rfl
       _ = _ :=  by congr; simp
   intro ⟨ m, hm, h ⟩
   use (by rw [h, ←SetTheory.Object.ofnat_eq]; exact (m:nat).property)
@@ -307,7 +307,7 @@ theorem SetTheory.Set.finite_choice {n:ℕ} {X: Fin n → Set} (h: ∀ i, X i �
   induction' n with n hn
   . have : Fin 0 = ∅ := by
       rw [eq_empty_iff_forall_notMem]
-      intro x
+      intros
       by_contra! h
       simp [specification_axiom''] at h
     have empty (i:Fin 0) : X i := False.elim (by rw [this] at i; exact not_mem_empty i i.property)
@@ -316,8 +316,7 @@ theorem SetTheory.Set.finite_choice {n:ℕ} {X: Fin n → Set} (h: ∀ i, X i �
     use empty
   set X' : Fin n → Set := fun i ↦ X (Fin_embed n (n+1) (by linarith) i)
   have hX' (i: Fin n) : X' i ≠ ∅ := h _
-  specialize hn hX'
-  obtain ⟨ x'_obj, hx' ⟩ := nonempty_def hn
+  obtain ⟨ x'_obj, hx' ⟩ := nonempty_def (hn hX')
   rw [mem_iProd] at hx'
   obtain ⟨ x', rfl ⟩ := hx'
   set last : Fin (n+1) := Fin_mk (n+1) n (by linarith)

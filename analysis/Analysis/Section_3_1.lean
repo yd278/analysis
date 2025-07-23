@@ -682,7 +682,6 @@ lemma SetTheory.Set.nat_coe_eq_iff' {m: Nat} {n : ℕ} : (m:Object) = (ofNat(n):
 /-- Example 3.1.16 (simplified).  -/
 example : ({3, 5}:Set) ⊆ {1, 3, 5} := by
   simp only [subset_def, mem_pair, mem_triple]
-  intro x hx
   tauto
 
 

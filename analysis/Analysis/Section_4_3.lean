@@ -39,7 +39,7 @@ theorem abs_of_pos {x: ℚ} (hx: 0 < x) : abs x = x := by simp [hx]
 /-- Definition 4.3.1 (Absolute value) -/
 theorem abs_of_neg {x: ℚ} (hx: x < 0) : abs x = -x := by
   simp [abs, hx]
-  intro hx'; linarith
+  intros; linarith
 
 /-- Definition 4.3.1 (Absolute value) -/
 theorem abs_of_zero : abs 0 = 0 := by rfl
