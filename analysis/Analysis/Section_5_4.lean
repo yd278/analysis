@@ -80,14 +80,28 @@ example : BoundedAwayZero (fun n ↦ (-1)^n) := by
   intro n
   simp
 
-theorem bounded_away_zero_of_pos {a:ℕ → ℚ} (ha: BoundedAwayPos a) : BoundedAwayZero a := by
-  sorry
+theorem BoundedAwayZero.boundedAwayPos {a:ℕ → ℚ} (ha: BoundedAwayPos a) : BoundedAwayZero a := by
+  obtain ⟨ c, h1, h2 ⟩ := ha
+  use c, h1
+  intro n
+  specialize h2 n
+  rwa [abs_of_nonneg (by linarith)]
 
-theorem bounded_away_zero_of_neg {a:ℕ → ℚ} (ha: BoundedAwayNeg a) : BoundedAwayZero a := by
-  sorry
 
-theorem not_bounded_away_pos_neg {a:ℕ → ℚ} : ¬ (BoundedAwayPos a ∧ BoundedAwayNeg a) := by
-  sorry
+theorem BoundedAwayZero.boundedAwayNeg {a:ℕ → ℚ} (ha: BoundedAwayNeg a) : BoundedAwayZero a := by
+  obtain ⟨ c, h1, h2 ⟩ := ha
+  use c
+  constructor
+  exact h1
+  intro n
+  specialize h2 n
+  rw [abs_of_neg (by linarith)]
+  linarith
+
+theorem not_boundedAwayPos_boundedAwayNeg {a:ℕ → ℚ} : ¬ (BoundedAwayPos a ∧ BoundedAwayNeg a) := by
+  by_contra h
+  obtain ⟨ ⟨ _, _, h2⟩ , ⟨ _, _, h4 ⟩ ⟩ := h
+  linarith [h2 0, h4 0]
 
 abbrev Real.isPos (x:Real) : Prop :=
   ∃ a:ℕ → ℚ, BoundedAwayPos a ∧ (a:Sequence).IsCauchy ∧ x = LIM a
@@ -306,7 +320,7 @@ theorem Real.LIM_mono {a b:ℕ → ℚ} (ha: (a:Sequence).IsCauchy) (hb: (b:Sequ
   (hmono: ∀ n, a n ≤ b n) :
     LIM a ≤ LIM b := by
   -- This proof is written to follow the structure of the original text.
-  have := LIM_of_nonneg (a := b - a) (by intro n; simp [hmono n]) (IsCauchy.sub hb ha)
+  have := LIM_of_nonneg (a := b - a) (by intro n; simp [hmono n]) (Sequence.IsCauchy.sub hb ha)
   rw [←Real.LIM_sub hb ha] at this
   linarith
 
