@@ -482,8 +482,18 @@ theorem Real.mul_right_nocancel : ¬ ∀ (x y z:Real), (hz: z = 0) → (x * z = 
 theorem Real.IsBounded.equiv {a b:ℕ → ℚ} (ha: (a:Sequence).IsBounded) (hab: Sequence.Equiv a b) :
     (b:Sequence).IsBounded := by sorry
 
-/-- Exercise 5.3.5 -/
-theorem IsCauchy.harmonic : ((fun n ↦ 1/((n:ℚ)+1): ℕ → ℚ):Sequence).IsCauchy := by sorry
+/--
+  Same as `Sequence.IsCauchy.harmonic` but reindexing the sequence as a₀ = 1, a₁ = 1/2, ...
+  This form is more convenient for the upcoming proof of Theorem 5.5.9.
+-/
+theorem Sequence.IsCauchy.harmonic' : ((fun n ↦ 1/((n:ℚ)+1): ℕ → ℚ):Sequence).IsCauchy := by
+  rw [coe]
+  intro ε hε
+  obtain ⟨ N, h1, h2 ⟩ := (Sequence.IsCauchy.mk _).mp Sequence.IsCauchy.harmonic ε hε
+  use N.toNat
+  intro j _ k _
+  specialize h2 (j+1) (by omega) (k+1) (by omega)
+  simp_all
 
 /-- Exercise 5.3.5 -/
 theorem Real.LIM.harmonic : LIM (fun n ↦ 1/((n:ℚ)+1)) = 0 := by sorry
