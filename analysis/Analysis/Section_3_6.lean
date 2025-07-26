@@ -88,28 +88,26 @@ theorem SetTheory.Set.has_card_zero {X:Set} : X.has_card 0 ↔ X = ∅ := by sor
 /-- Lemma 3.6.9 -/
 theorem SetTheory.Set.card_erase {n:ℕ} (h: n ≥ 1) {X:Set} (hX: X.has_card n) (x:X) :
     (X \ {x.val}).has_card (n-1) := by
-  -- This proof is written to follow the structure of the original text, though with some extra
-  -- notations to track some coercions that are "invisible" in the human-readable proof.
+  -- This proof has been rewritten from the original text to try to make it friendlier to
+  -- formalize in Lean.
   rw [has_card_iff] at hX; obtain ⟨ f, hf ⟩ := hX
   set X' : Set := X \ {x.val}
-  set ι : X' → X := fun y ↦ ⟨ y.val, by have := y.property; simp [X'] at this; tauto ⟩
-  have := (f x).property
-  rw [mem_Fin] at this; obtain ⟨ m₀, hm₀, hm₀f ⟩ := this
-
-  set g : X' → Fin (n-1) := fun y ↦ by
-    have hy := y.property
-    simp [X'] at hy; obtain ⟨ hy1, hy2 ⟩ := hy
-    have := (f ⟨ y.val, hy1⟩).property
-    rw [mem_Fin] at this
-    have ⟨ hmn, hmm ⟩ := this.choose_spec
-    set m' := this.choose
-    cases m'.decLt m₀ with
-    | isTrue hlt => exact Fin_mk _ m' (by omega)
-    | isFalse hlt =>
-      have : m' ≠ m₀ := by
-        contrapose! hy2
-        rwa [hy2,←hm₀f,Subtype.val_inj, hf.injective.eq_iff,←Subtype.val_inj] at hmm
-      exact Fin_mk _ (m'-1) (by omega)
+  set ι : X' → X := fun ⟨y, hy⟩ ↦ ⟨ y, by aesop ⟩
+  have hι (x:X') : (ι x:Object) = x := by rfl
+  obtain ⟨ m₀, hm₀, hm₀f ⟩ := (mem_Fin _ _).mp (f x).property
+  set g : X' → Fin (n-1) := fun x' ↦
+    if h' : f (ι x') < m₀ then
+      Fin_mk _ (f (ι x')) (by have := SetTheory.Set.Fin.toNat_lt (f (ι x')); omega)
+    else
+      Fin_mk _ (f (ι x') - 1) (by
+        have := SetTheory.Set.Fin.toNat_lt (f (ι x'))
+        have : (f (ι x'):ℕ) ≠ m₀ := by
+          have := x'.property
+          simp [X'] at this; contrapose! this; intro hx'; simp [←this, Subtype.val_inj] at hm₀f
+          exact (congrArg Subtype.val (hf.1 hm₀f)).symm
+        omega)
+  have hg_def (x':X') : if (f (ι x'):ℕ) < m₀ then (g x':ℕ) = f (ι x') else (g x':ℕ) = f (ι x') - 1 := by
+    by_cases h' : f (ι x') < m₀ <;> simp [g, h']
   have hg : Function.Bijective g := by sorry
   use g
 
@@ -123,14 +121,8 @@ theorem SetTheory.Set.card_uniq {X:Set} {n m:ℕ} (h1: X.has_card n) (h2: X.has_
   intro X m h1 h2
   have : X ≠ ∅ := pos_card_nonempty (by omega) h1
   obtain ⟨ x, hx ⟩ := nonempty_def this
-  set x':X := ⟨ x, hx ⟩
-  have : m ≥ 1 := by
-    by_contra! hm; simp at hm
-    rw [hm, has_card_zero] at h2; contradiction
-  have hc : (X \ {x}).has_card (n+1-1) := card_erase (by omega) h1 x'
-  have hc' : (X \ {x}).has_card (m-1) := card_erase this h2 x'
-  simp at hc; specialize hn hc hc'
-  omega
+  have : m ≠ 0 := by contrapose! this; simpa [has_card_zero, this] using h2
+  specialize hn (card_erase (by omega) h1 ⟨ x, hx ⟩) (card_erase (by omega) h2 ⟨ x, hx ⟩); omega
 
 example : ({0,1,2}:Set).has_card 3 := by sorry
 
@@ -149,43 +141,28 @@ theorem SetTheory.Set.bounded_on_finite {n:ℕ} (f: Fin n → nat) : ∃ M, ∀ 
 theorem SetTheory.Set.nat_infinite : infinite nat := by
   -- This proof is written to follow the structure of the original text.
   by_contra this; obtain ⟨n, hn⟩ := this
-  simp [has_card] at hn; replace hn := Setoid.symm hn
-  simp [HasEquiv.Equiv, Setoid.r, EqualCard] at hn
+  simp [has_card] at hn; symm at hn; simp [HasEquiv.Equiv, Setoid.r, EqualCard] at hn
   obtain ⟨ f, hf ⟩ := hn
   obtain ⟨ M, hM ⟩ := bounded_on_finite f
-  replace hf := hf.surjective (M+1:ℕ)
-  have : ∀ i, f i ≠ (M+1:ℕ) := by
-    intro i; specialize hM i; contrapose! hM
-    apply_fun nat_equiv.symm at hM
-    simp_all
-  tauto
+  replace hf := hf.surjective (M+1:ℕ); contrapose! hf
+  intro i; specialize hM i; contrapose! hM
+  apply_fun nat_equiv.symm at hM
+  simp_all
 
+open Classical in
 /-- It is convenient for Lean purposes to give infinite sets the ``junk`` cardinality of zero. -/
-noncomputable abbrev SetTheory.Set.card (X:Set) : ℕ := by
-  classical
-  exact if h:X.finite then h.choose else 0
+noncomputable abbrev SetTheory.Set.card (X:Set) : ℕ := if h:X.finite then h.choose else 0
 
 theorem SetTheory.Set.has_card_card {X:Set} (hX: X.finite) : X.has_card (SetTheory.Set.card X) := by
   simp [card, hX, hX.choose_spec]
 
 theorem SetTheory.Set.has_card_to_card (X:Set) (n: ℕ): X.has_card n → X.card = n := by
-  intro h
-  rw [card]
-  have hf : X.finite := by rw [finite]; use n
-  simp only [hf, ↓reduceDIte]
-  generalize_proofs a
-  have ha := a.choose_spec
-  exact card_uniq ha h
+  intro h; have hf : X.finite := by use n
+  simp [card, hf]; exact card_uniq hf.choose_spec h
 
-theorem SetTheory.Set.card_to_has_card (X:Set) (n: ℕ) (hn: n ≠ 0): X.card = n → X.has_card n := by
-  intro h
-  rw [← h]
-  exact has_card_card (by
-    by_contra! h0
-    simp only [card, h0, ↓reduceDIte] at h
-    have := h.symm
-    contradiction
-  )
+theorem SetTheory.Set.card_to_has_card (X:Set) {n: ℕ} (hn: n ≠ 0): X.card = n → X.has_card n := by
+  rintro rfl; apply has_card_card
+  contrapose! hn; simp only [card, hn, ↓reduceDIte]
 
 /-- Proposition 3.6.14 (a) / Exercise 3.6.4 -/
 theorem SetTheory.Set.card_insert {X:Set} (hX: X.finite) {x:Object} (hx: x ∉ X) :

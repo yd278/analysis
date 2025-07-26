@@ -48,6 +48,6 @@ example {w : SqrtFrequency} (hw : w = 2 • sqrt_hertz) : hertz.in (w**2) = 4 :=
   norm_num
 
 /-- An example of a non-negative scalar type -/
-abbrev NNTemperature := { t:Temperature // t ≥ 0 }
+abbrev NNTemperature := { T:Temperature // T ≥ 0 }
 
 end SI
