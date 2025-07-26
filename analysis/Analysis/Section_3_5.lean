@@ -283,6 +283,29 @@ theorem SetTheory.Set.mem_Fin' {n:ℕ} (x:Fin n) : ∃ m, ∃ h : m < n, x = Fin
   use m, hm
   simp [Fin_mk, ←Subtype.val_inj, this]
 
+@[coe]
+noncomputable abbrev SetTheory.Set.Fin.toNat {n:ℕ} (i: Fin n) : ℕ := (mem_Fin' i).choose
+
+noncomputable instance SetTheory.Set.Fin.inst_coeNat {n:ℕ} : CoeOut (Fin n) ℕ where
+  coe := SetTheory.Set.Fin.toNat
+
+theorem SetTheory.Set.Fin.toNat_spec {n:ℕ} (i: Fin n) :
+    ∃ h : (i:ℕ) < n, i = Fin_mk n (i:ℕ) h := (mem_Fin' i).choose_spec
+
+theorem SetTheory.Set.Fin.toNat_lt {n:ℕ} (i: Fin n) : (i:ℕ) < n := (toNat_spec i).choose
+
+@[simp]
+theorem SetTheory.Set.Fin.coe_toNat {n:ℕ} (i: Fin n) : ((i:ℕ):Object) = (i:Object) := by
+  obtain ⟨ h, h' ⟩ := toNat_spec i
+  set j := (i:ℕ)
+  change i = Fin_mk n j h at h'
+  rw [h']
+
+@[simp]
+theorem SetTheory.Set.Fin.toNat_mk {n:ℕ} (m:ℕ) (h: m < n) : (Fin_mk n m h : ℕ) = m := by
+  have := coe_toNat (Fin_mk n m h)
+  rwa [SetTheory.Object.natCast_inj] at this
+  
 abbrev SetTheory.Set.Fin_embed (n N:ℕ) (h: n ≤ N) (i: Fin n) : Fin N := ⟨ i.val, by
   have := i.property
   rw [mem_Fin] at this ⊢
