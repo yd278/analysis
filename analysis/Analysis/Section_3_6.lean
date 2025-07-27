@@ -103,7 +103,7 @@ theorem SetTheory.Set.card_erase {n:ℕ} (h: n ≥ 1) {X:Set} (hX: X.has_card n)
         have := SetTheory.Set.Fin.toNat_lt (f (ι x'))
         have : (f (ι x'):ℕ) ≠ m₀ := by
           have := x'.property
-          simp [X'] at this; contrapose! this; intro hx'; simp [←this, Subtype.val_inj] at hm₀f
+          simp [X'] at this; contrapose! this; intros; simp [←this, Subtype.val_inj] at hm₀f
           exact (congrArg Subtype.val (hf.1 hm₀f)).symm
         omega)
   have hg_def (x':X') : if (f (ι x'):ℕ) < m₀ then (g x':ℕ) = f (ι x') else (g x':ℕ) = f (ι x') - 1 := by
