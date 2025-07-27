@@ -349,7 +349,7 @@ theorem SetTheory.Set.preimage_eq_image_of_inv {X Y V:Set} (f:X → Y) (f_inv: Y
 Interestingly, it is not needed for U to be a subset of Y. -/
 -- theorem SetTheory.Set.image_of_preimage {X Y:Set} (f:X → Y) (U: Set) : sorry := by sorry
 
-/- Exercise 3.4.2.  State and prove an assertion connecting `preimage f (image f (preimage f U))` and `U`.
+/- Exercise 3.4.2.  State and prove an assertion connecting `preimage f (image f (preimage f U))` and `preimage f U`.
 Interestingly, it is not needed for U to be a subset of Y.-/
 -- theorem SetTheory.Set.preimage_of_image_of_preimage {X Y:Set} (f:X → Y) (U: Set) : sorry := by sorry
 
