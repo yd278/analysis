@@ -205,7 +205,7 @@ theorem Series.zeta_eq {q:ℝ} (hq: q > 1) : (mk' (m := 1) fun n ↦ 1 / (n:ℝ)
   have : Summable (fun (n : ℕ)↦ 1 / (n+1:ℝ) ^ q) := by
     convert (Real.summable_one_div_nat_add_rpow 1 q).mpr hq using 4 with n
     rw [abs_of_nonneg (by positivity)]
-  have tail (a: ℤ → ℝ) (L:ℝ) : Filter.Tendsto a Filter.atTop (nhds L) ↔ Filter.Tendsto (fun n:ℕ ↦ a n) Filter.atTop (nhds L) := by
+  have tail (a: ℤ → ℝ) (L:ℝ) : Filter.Tendsto a .atTop (nhds L) ↔ Filter.Tendsto (fun n:ℕ ↦ a n) .atTop (nhds L) := by
     convert Filter.tendsto_map'_iff (g:= fun n:ℕ ↦ (n:ℤ) )
     simp
   unfold convergesTo

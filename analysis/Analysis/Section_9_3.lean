@@ -69,17 +69,16 @@ theorem Convergesto.iff (X:Set ℝ) (f: ℝ → ℝ) (L:ℝ) (x₀:ℝ) :
   rw [Filter.eventually_inf_principal]
   simp [Filter.Eventually, mem_nhds_iff_exists_Ioo_subset]
   constructor
-  . intro ⟨ δ, hpos, hδ ⟩; use (x₀-δ), (x₀+δ), ⟨by linarith, by linarith⟩; intro x
-    simp; exact fun h1 h2 hX ↦ hδ x hX h1 h2
+  . intro ⟨ δ, hpos, hδ ⟩; use (x₀-δ), (x₀+δ), ⟨by linarith, by linarith⟩
+    intro x; simp; intro h1 h2 hX; exact hδ x hX h1 h2
   intro ⟨ l, u, ⟨ h1, h2 ⟩, h ⟩
   have h1' : 0 < x₀ - l := by linarith
   have h2' : 0 < u - x₀ := by linarith
   set δ := min (x₀ - l) (u - x₀)
   have hδ1 : δ ≤ x₀ - l := min_le_left _ _
   have hδ2 : δ ≤ u - x₀ := min_le_right _ _
-  use δ, (by positivity)
-  intro x hxX _ _
-  specialize h (show x ∈ Set.Ioo l u by simp; exact ⟨by linarith, by linarith⟩)
+  use δ, (by positivity); intro x hxX _ _
+  specialize h (show x ∈ Set.Ioo l u by simp; constructor <;> linarith)
   simpa [hxX] using h
 
 /-- Example 9.3.8 -/
@@ -89,14 +88,13 @@ example: Convergesto (Set.Icc 1 3) (fun x ↦ x^2) 4 2 := by
 /-- Proposition 9.3.9 / Exercise 9.3.1 -/
 theorem Convergesto.iff_conv {E:Set ℝ} (f: ℝ → ℝ) (L:ℝ) {x₀:ℝ} (h: AdherentPt x₀ E) :
   Convergesto E f L x₀ ↔ ∀ a:ℕ → ℝ, (∀ n:ℕ, a n ∈ E) →
-  Filter.Tendsto a Filter.atTop (nhds x₀) →
-  Filter.Tendsto (fun n ↦ f (a n)) Filter.atTop (nhds L) := by
+  Filter.Tendsto a .atTop (nhds x₀) →
+  Filter.Tendsto (fun n ↦ f (a n)) .atTop (nhds L) := by
   sorry
 
-theorem Convergesto.comp {E:Set ℝ} {f: ℝ → ℝ} {L:ℝ} {x₀:ℝ} (h: AdherentPt x₀ E) (hf: Convergesto E f L x₀) {a:ℕ → ℝ} (ha: ∀ n:ℕ, a n ∈ E) (hconv: Filter.Tendsto a Filter.atTop (nhds x₀)) :
-  Filter.Tendsto (fun n ↦ f (a n)) Filter.atTop (nhds L) := by
-  rw [iff_conv f L h] at hf
-  solve_by_elim
+theorem Convergesto.comp {E:Set ℝ} {f: ℝ → ℝ} {L:ℝ} {x₀:ℝ} (h: AdherentPt x₀ E) (hf: Convergesto E f L x₀) {a:ℕ → ℝ} (ha: ∀ n:ℕ, a n ∈ E) (hconv: Filter.Tendsto a .atTop (nhds x₀)) :
+  Filter.Tendsto (fun n ↦ f (a n)) .atTop (nhds L) := by
+  rw [iff_conv f L h] at hf; solve_by_elim
 
 -- Remark 9.3.11 may possibly be inaccurate, in that one may be able to safely delete the hypothesis `AdherentPt x₀ E` in the above theorems.  This is something that formalization might be able to clarify!  If so, the hypothesis may also be deletable in several of the theorems below.
 
@@ -113,9 +111,7 @@ theorem Convergesto.add {E:Set ℝ} {f g: ℝ → ℝ} {L M:ℝ} {x₀:ℝ} (h: 
   Convergesto E (f + g) (L + M) x₀ := by
     -- This proof is written to follow the structure of the original text.
     rw [iff_conv _ _ h] at hf hg ⊢
-    intro a ha hconv
-    specialize hf a ha hconv
-    specialize hg a ha hconv
+    intro a ha hconv; specialize hf a ha hconv; specialize hg a ha hconv
     convert Filter.Tendsto.add hf hg using 1
 
 /-- Proposition 9.3.14 (Limit laws for functions) / Exercise 9.3.2 -/
@@ -209,9 +205,9 @@ open Classical in
 /-- Example 9.3.21 -/
 noncomputable abbrev f_9_3_21 : ℝ → ℝ := fun x ↦ if x ∈ (fun q:ℚ ↦ (q:ℝ)) '' Set.univ then 1 else 0
 
-example : Filter.Tendsto (fun n ↦ f_9_3_21 (1/n:ℝ)) Filter.atTop (nhds 1) := by sorry
+example : Filter.Tendsto (fun n ↦ f_9_3_21 (1/n:ℝ)) .atTop (nhds 1) := by sorry
 
-example : Filter.Tendsto (fun n ↦ f_9_3_21 ((Real.sqrt 2)/n:ℝ)) Filter.atTop (nhds 0) := by sorry
+example : Filter.Tendsto (fun n ↦ f_9_3_21 ((Real.sqrt 2)/n:ℝ)) .atTop (nhds 0) := by sorry
 
 example : ¬ ∃ L, Convergesto Set.univ f_9_3_21 L 0 := by sorry
 

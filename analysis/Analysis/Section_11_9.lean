@@ -41,16 +41,14 @@ theorem cts_of_integ {a b:ℝ} {f:ℝ → ℝ} (hf: IntegrableOn f (Icc a b)) :
       . simp [integ_of_const, le_of_lt hxy]
       intro z hz
       specialize hM z ?_
-      . simp at hz ⊢
-        exact ⟨ by linarith, by linarith ⟩
+      . simp at hz ⊢; constructor <;> linarith
       rw [abs_le'] at hM; simp [hM]
     rw [neg_le]
     convert integ_mono (f := fun _ ↦ -M) (integ_of_const _ _).1 this.1 _
     . simp [integ_of_const, le_of_lt hxy]
     intro z hz
     specialize hM z ?_
-    . simp at hz ⊢
-      exact ⟨ by linarith, by linarith ⟩
+    . simp at hz ⊢; constructor <;> linarith
     rw [abs_le'] at hM; simp; linarith
   replace {x y:ℝ} (hx: x ∈ Set.Icc a b) (hy: y ∈ Set.Icc a b) :
     |F y - F x| ≤ M * |x-y| := by
@@ -231,15 +229,11 @@ theorem integ_eq_antideriv_sub {a b:ℝ} (h:a ≤ b) {f F: ℝ → ℝ}
                   exact ((subset_iff _ _).mp (Ioo_subset J)) he
             rw [←mem_closure_iff_clusterPt]
             apply closure_mono (s := Set.Ioo e d)
-            . intro x hx; simp at he hx ⊢
-              exact ⟨ ⟨ by linarith, by linarith ⟩, by linarith ⟩
-            simp at he
-            rw [closure_Ioo (by linarith)]
-            simp; linarith
-          . simp; rw [Set.Icc_subset_Ioo_iff (le_of_lt hJab)]
-            exact ⟨ by linarith, by linarith ⟩
+            . intro x hx; simp at he hx ⊢; refine ⟨ ⟨ ?_, ?_ ⟩, ?_ ⟩ <;> linarith
+            simp at he; rw [closure_Ioo (by linarith)]; simp; linarith
+          . simp; rw [Set.Icc_subset_Ioo_iff (le_of_lt hJab)]; constructor <;> linarith
           apply DifferentiableOn.congr (f := F)
-          . apply DifferentiableOn.mono hF.1
+          . apply hF.1.mono
             replace hJ := (Ioo_subset J).trans hJ
             simpa [subset_iff] using hJ
           intro x hx
@@ -251,7 +245,7 @@ theorem integ_eq_antideriv_sub {a b:ℝ} (h:a ≤ b) {f F: ℝ → ℝ}
         _ = F' b - F' a := by
           apply α_length_of_cts (by linarith) _ (by linarith) _ hF'_cts
           . simp [le_of_lt h]
-          intro x hx; simp [mem_iff] at hx ⊢; exact ⟨ by linarith, by linarith ⟩
+          intro x hx; simp [mem_iff] at hx ⊢; constructor <;> linarith
         _ = _ := by
           congr 1 <;> apply hFF' <;> simp [le_of_lt h]
     have hlower (P: Partition (Icc a b)) : lower_riemann_sum f P ≤ F b - F a := by
@@ -259,13 +253,12 @@ theorem integ_eq_antideriv_sub {a b:ℝ} (h:a ≤ b) {f F: ℝ → ℝ}
     replace hupper : upper_integral f (Icc a b) ≥ F b - F a := by
       rw [upper_integ_eq_inf_upper_sum hf.1]
       apply le_csInf <;> simp [Set.range_nonempty]
-      intro P; specialize hupper P; linarith
+      intro P; linarith [hupper P]
     replace hlower : lower_integral f (Icc a b) ≤ F b - F a := by
       rw [lower_integ_eq_sup_lower_sum hf.1]
       apply csSup_le <;> simp [Set.range_nonempty]
-      intro P; specialize hlower P; linarith
-    replace hf := hf.2
-    linarith
+      intro P; linarith [hlower P]
+    linarith [hf.2]
   simp [h]
   apply (integ_on_subsingleton _).2
   simp [length]

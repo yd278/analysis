@@ -119,7 +119,7 @@ lemma ratPow_lim_uniq {x α:ℝ} (hx: x > 0) {q q': ℕ → ℚ}
     rw [←Real.rpow_neg (by linarith)]
     gcongr; linarith
     simp [r]; linarith
-  exact ⟨ by linarith, by linarith ⟩
+  constructor <;> linarith
 
 theorem Real.eq_lim_of_rat (α:ℝ) : ∃ q: ℕ → ℚ, ((fun n ↦ (q n:ℝ)):Sequence).TendsTo α := by
   obtain ⟨ q, hcauchy, hLIM ⟩ := Chapter5.Real.eq_lim (Chapter5.Real.equivR.symm α); use q

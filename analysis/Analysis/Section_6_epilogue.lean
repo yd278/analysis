@@ -33,7 +33,7 @@ theorem Chapter6.Sequence.Cauchy_iff_CauchySeq (a: ℕ → ℝ) :
 
 /-- Identification with `Filter.Tendsto` -/
 theorem Chapter6.Sequence.tendsto_iff_Tendsto (a: ℕ → ℝ) (L:ℝ) :
-    (a:Sequence).TendsTo L ↔ Filter.Tendsto a Filter.atTop (nhds L) := by
+    (a:Sequence).TendsTo L ↔ Filter.Tendsto a .atTop (nhds L) := by
   rw [Metric.tendsto_atTop, tendsTo_iff]
   constructor <;> intro h ε hε
   . specialize h (ε/2) (half_pos hε)
@@ -49,7 +49,7 @@ theorem Chapter6.Sequence.tendsto_iff_Tendsto (a: ℕ → ℝ) (L:ℝ) :
   specialize hN n.toNat hn
   simp [hpos, ←Real.dist_eq, le_of_lt hN]
 
-theorem Chapter6.Sequence.tendsto_iff_Tendsto' (a: Sequence) (L:ℝ) : a.TendsTo L ↔ Filter.Tendsto a.seq Filter.atTop (nhds L) := by
+theorem Chapter6.Sequence.tendsto_iff_Tendsto' (a: Sequence) (L:ℝ) : a.TendsTo L ↔ Filter.Tendsto a.seq .atTop (nhds L) := by
   rw [Metric.tendsto_atTop, tendsTo_iff]
   constructor <;> intro h ε hε
   . specialize h (ε/2) (half_pos hε)
@@ -63,10 +63,10 @@ theorem Chapter6.Sequence.tendsto_iff_Tendsto' (a: Sequence) (L:ℝ) : a.TendsTo
   simp [←Real.dist_eq, le_of_lt hN]
 
 theorem Chapter6.Sequence.converges_iff_Tendsto (a: ℕ → ℝ) :
-    (a:Sequence).Convergent ↔ ∃ L, Filter.Tendsto a Filter.atTop (nhds L) := by
+    (a:Sequence).Convergent ↔ ∃ L, Filter.Tendsto a .atTop (nhds L) := by
   simp_rw [←tendsto_iff_Tendsto]
 
-theorem Chapter6.Sequence.converges_iff_Tendsto' (a: Sequence) : a.Convergent ↔ ∃ L, Filter.Tendsto a.seq Filter.atTop (nhds L) := by
+theorem Chapter6.Sequence.converges_iff_Tendsto' (a: Sequence) : a.Convergent ↔ ∃ L, Filter.Tendsto a.seq .atTop (nhds L) := by
   simp_rw [←tendsto_iff_Tendsto']
 
 /-- A technicality: `CauSeq.IsComplete ℝ` was established for `_root_.abs` but not for `norm`. -/
@@ -122,7 +122,7 @@ theorem Chapter6.Sequence.Antitone_iff (a:ℕ → ℝ): (a:Sequence).IsAntitone 
 
 /-- Identification with `MapClusterPt` -/
 theorem Chapter6.Sequence.limit_point_iff (a:ℕ → ℝ) (L:ℝ) :
-    (a:Sequence).LimitPoint L ↔ MapClusterPt L Filter.atTop a := by
+    (a:Sequence).LimitPoint L ↔ MapClusterPt L .atTop a := by
   simp_rw [limit_point_def, mapClusterPt_iff_frequently,
            Filter.frequently_atTop, Metric.mem_nhds_iff]
   constructor
@@ -144,13 +144,13 @@ theorem Chapter6.Sequence.limit_point_iff (a:ℕ → ℝ) (L:ℝ) :
 
 /-- Identification with `Filter.limsup` -/
 theorem Chapter6.Sequence.limsup_eq (a:ℕ → ℝ) :
-    (a:Sequence).limsup = Filter.limsup (fun n ↦ (a n:EReal)) Filter.atTop := by
+    (a:Sequence).limsup = Filter.limsup (fun n ↦ (a n:EReal)) .atTop := by
   simp_rw [Filter.limsup_eq, Filter.eventually_atTop]
   sorry
 
 /-- Identification with `Filter.liminf` -/
 theorem Chapter6.Sequence.liminf_eq (a:ℕ → ℝ) :
-    (a:Sequence).liminf = Filter.liminf (fun n ↦ (a n:EReal)) Filter.atTop := by
+    (a:Sequence).liminf = Filter.liminf (fun n ↦ (a n:EReal)) .atTop := by
   simp_rw [Filter.liminf_eq, Filter.eventually_atTop]
   sorry
 

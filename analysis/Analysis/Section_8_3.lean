@@ -67,7 +67,7 @@ theorem Uncountable.real : Uncountable ℝ := by
   set a : ℕ → ℝ := fun n ↦ (10:ℝ)^(-(n:ℝ))
   set f : Set ℕ → ℝ := fun A ↦ ∑' n:A, a n
   have hsummable (A: Set ℕ) : Summable (fun n:A ↦ a n) := by
-    apply Summable.subtype (f := fun n:ℕ ↦ a n)
+    apply Summable.subtype (f := a)
     convert summable_geometric_of_lt_one (show 0 ≤ (1/10:ℝ) by norm_num) (by norm_num) using 2 with n
     unfold a
     rw [one_div_pow, Real.rpow_neg (by norm_num), one_div]; simp
@@ -76,38 +76,34 @@ theorem Uncountable.real : Uncountable ℝ := by
     . rw [hC]
     . rw [Set.disjoint_iff_inter_eq_empty]; ext n; simp [hAB n]
     all_goals exact hsummable _
-  have h_nonneg (A:Set ℕ) : ∑' n:A, a n ≥ 0 := by
-    simp [a]; positivity
+  have h_nonneg (A:Set ℕ) : ∑' n:A, a n ≥ 0 := by simp [a]; positivity
   have h_congr {A B: Set ℕ} (hAB: A = B) : ∑' n:A, a n = ∑' n:B, a n  := by rw [hAB]
   have : Function.Injective f := by
     intro A B hAB; by_contra!
     rw [←Set.symmDiff_nonempty] at this
     replace this := Nat.min_spec this
     set n₀ := Nat.min (symmDiff A B)
-    simp [symmDiff] at this
-    obtain ⟨ h1, h2 ⟩ := this
+    simp [symmDiff] at this; obtain ⟨ h1, h2 ⟩ := this
     wlog h : n₀ ∈ A ∧ n₀ ∉ B generalizing A B
     . simp [h] at h1
       exact this hAB.symm
         (by simp [symmDiff_comm]; tauto)
         (by intro n hn; specialize h2 n (by tauto); simp [symmDiff_comm, n₀, h2])
-        (by simp [symmDiff_comm]; assumption)
+        (by simpa [symmDiff_comm])
     replace h2 {n:ℕ} (hn: n < n₀) : n ∈ A ↔ n ∈ B := by contrapose! hn; exact h2 n (by tauto)
     have : (0:ℝ) > 0 := calc
       _ = f A - f B := by linarith
       _ = ∑' n:A, a n - ∑' n:B, a n := rfl
       _ = (∑' n:{n ∈ A|n ≤ n₀}, a n + ∑' n:{n ∈ A|n > n₀}, a n) -
           (∑' n:{n ∈ B|n ≤ n₀}, a n + ∑' n:{n ∈ B|n > n₀}, a n) := by
-        congr
-        all_goals {
+        congr; all_goals {
           apply h_decomp
           . ext n; simp; rw [←not_le]; tauto
           intro n hn; simp at hn; linarith
         }
       _ = ((∑' n:{n ∈ A|n < n₀}, a n + ∑' n:{n ∈ A|n = n₀}, a n) + ∑' n:{n ∈ A|n > n₀}, a n) -
           ((∑' n:{n ∈ B|n < n₀}, a n + ∑' n:{n ∈ B|n = n₀}, a n) + ∑' n:{n ∈ B|n > n₀}, a n) := by
-        congr
-        all_goals {
+        congr; all_goals {
           apply h_decomp
           . ext n; simp [le_iff_lt_or_eq]
           intro n hn; simp at hn; linarith
@@ -124,18 +120,15 @@ theorem Uncountable.real : Uncountable ℝ := by
       _ = (∑' n:{n ∈ A|n < n₀}, a n - ∑' n:{n ∈ B|n < n₀}, a n) + a n₀ +
           ∑' n:{n ∈ A|n > n₀}, a n - ∑' n:{n ∈ B|n > n₀}, a n := by abel
       _ = 0 + a n₀ + ∑' n:{n ∈ A|n > n₀}, a n - ∑' n:{n ∈ B|n > n₀}, a n := by
-        congr; rw [sub_eq_zero]; apply tsum_congr_set_coe
-        ext n; simp; intro hn; exact h2 hn
+        congr; rw [sub_eq_zero]; apply tsum_congr_set_coe; ext; simpa using h2
       _ ≥ 0 + a n₀ + 0 - ∑' n:{n|n > n₀}, a n := by
-        gcongr
-        . positivity
+        gcongr; positivity
         calc
           _ = ∑' (n : {n ∈ B|n > n₀}), a n + ∑' (n : {n ∉ B|n > n₀}), a n := by
             apply h_decomp
             . ext n; simp; tauto
             intro n hn; simp at hn; tauto
-          _ ≥ ∑' (n : {n ∈ B|n > n₀}), a n + 0 := by
-            gcongr; solve_by_elim
+          _ ≥ ∑' (n : {n ∈ B|n > n₀}), a n + 0 := by gcongr; solve_by_elim
           _ = _ := by simp
       _ = 0 + (10:ℝ)^(-(n₀:ℝ)) + 0 - (1 / (9:ℝ)) * (10:ℝ)^(-(n₀:ℝ)) := by
         congr
@@ -144,7 +137,7 @@ theorem Uncountable.real : Uncountable ℝ := by
           constructor
           . intro j k hjk; simpa [ι] using hjk
           intro ⟨ n, hn ⟩; simp [ι] at hn ⊢; use n - n₀ - 1; omega
-        rw [←Equiv.tsum_eq (Equiv.ofBijective ι hι)]
+        rw [←(Equiv.ofBijective ι hι).tsum_eq]
         simp [ι,a]
         calc
           _ = ∑' j:ℕ, (10:ℝ)^(-1-n₀:ℝ) * (1/(10:ℝ))^j := by
@@ -166,7 +159,7 @@ theorem Uncountable.real : Uncountable ℝ := by
   replace : EqualCard (Set ℕ) (Set.range f) := by
     use (Equiv.ofInjective _ this).toFun
     exact (Equiv.ofInjective _ this).bijective
-  replace := (Uncountable.equiv this).mp power_set_nat
+  replace := (equiv this).mp power_set_nat
   contrapose this
   rw [not_uncountable_iff] at this ⊢
   exact SetCoe.countable _
@@ -217,21 +210,5 @@ abbrev CardOrder : Preorder Type := {
 /-- Exercise 8.3.5 -/
 example (X:Type) : ¬ CountablyInfinite (Set X) := by
   sorry
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 end Chapter8

@@ -149,8 +149,7 @@ theorem integ_of_max {I: BoundedInterval} {f g:ℝ → ℝ} (hf: IntegrableOn f 
       specialize hg''max x hx
       have hmaxl := le_max_left (f' x) (g' x)
       have hmaxr := le_max_right (f' x) (g' x)
-      simp [h]
-      refine ⟨ by linarith, by linarith ⟩
+      simp [h]; constructor <;> linarith
     have hf'g'_integ := integ_of_piecewise_const hf'g'_const
     have hf''g''_integ := integ_of_piecewise_const hf''g''_const
     have hf'g'h_integ := integ_of_add hf'g'_integ.1 hh_integ_eq.1

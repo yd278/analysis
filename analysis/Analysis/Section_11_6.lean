@@ -99,8 +99,8 @@ theorem integ_of_monotone {a b:ℝ} {f:ℝ → ℝ} (hf: MonotoneOn f (Icc a b))
     }
     have hup := calc
       upper_integral f I ≤ ∑ J ∈ P.intervals, (sSup (f '' (J:Set ℝ))) * |J|ₗ := upper_integ_le_upper_sum hbound P
-      _ = ∑ j ∈ Finset.range N, (sSup (f '' (Ico (a + δ*j) (a + δ*(j+1))))) * |Ico (a + δ*j) (a + δ*(j+1))|ₗ := by simp [P]; congr
-      _ ≤ ∑ j ∈ Finset.range N, f (a + δ*(j+1)) * δ := by
+      _ = ∑ j ∈ .range N, (sSup (f '' (Ico (a + δ*j) (a + δ*(j+1))))) * |Ico (a + δ*j) (a + δ*(j+1))|ₗ := by simp [P]; congr
+      _ ≤ ∑ j ∈ .range N, f (a + δ*(j+1)) * δ := by
         apply Finset.sum_le_sum
         intro j hj
         convert (mul_le_mul_right hδpos).mpr ?_
@@ -113,12 +113,12 @@ theorem integ_of_monotone {a b:ℝ} {f:ℝ → ℝ} (hf: MonotoneOn f (Icc a b))
         have hδj : 0 ≤ δ*j := by positivity
         have hδj1 : 0 ≤ δ*(j+1) := by positivity
         apply hf _ _ (le_of_lt hx2) <;> simp [I, hδj1, this]
-        exact ⟨ by linarith, by linarith ⟩
+        constructor <;> linarith
     have hdown := calc
       lower_integral f I ≥ ∑ J ∈ P.intervals, (sInf (f '' (J:Set ℝ))) * |J|ₗ :=
         lower_integ_ge_lower_sum hbound P
-      _ = ∑ j ∈ Finset.range N, (sInf (f '' (Ico (a + δ*j) (a + δ*(j+1))))) * |Ico (a + δ*j) (a + δ*(j+1))|ₗ := by simp [P]; congr
-      _ ≥ ∑ j ∈ Finset.range N, f (a + δ*j) * δ := by
+      _ = ∑ j ∈ .range N, (sInf (f '' (Ico (a + δ*j) (a + δ*(j+1))))) * |Ico (a + δ*j) (a + δ*(j+1))|ₗ := by simp [P]; congr
+      _ ≥ ∑ j ∈ .range N, f (a + δ*j) * δ := by
         apply Finset.sum_le_sum
         intro j hj
         convert (mul_le_mul_right hδpos).mpr ?_
@@ -130,10 +130,10 @@ theorem integ_of_monotone {a b:ℝ} {f:ℝ → ℝ} (hf: MonotoneOn f (Icc a b))
         have hδj : 0 ≤ δ*j := by positivity
         have hδj1 : 0 ≤ δ*(j+1) := by positivity
         apply hf _ _ hx1
-        . simp [I]; exact ⟨ by linarith, by linarith ⟩
-        simp [I, hδj]; exact ⟨ by linarith, by linarith ⟩
+        . simp [I, hδj]; linarith
+        simp [I, hδj]; constructor <;> linarith
     calc
-      _ ≤ ∑ j ∈ Finset.range N, f (a + δ*(j+1)) * δ - ∑ j ∈ Finset.range N, f (a + δ*j) * δ := by linarith
+      _ ≤ ∑ j ∈ .range N, f (a + δ*(j+1)) * δ - ∑ j ∈ .range N, f (a + δ*j) * δ := by linarith
       _ = (f b - f a) * δ := by
         rw [←Finset.sum_sub_distrib]
         have := Finset.sum_range_sub (fun n ↦ f (a + δ*n) * δ) N

@@ -56,19 +56,19 @@ theorem NNRealDecimal.surj (x:NNReal) : ∃ d:NNRealDecimal, x = d := by
   set a : ℕ → Digit := fun n ↦ (hdigit n).choose
   have ha (n:ℕ) : s (n+1) = 10 * s n + (a n : ℕ) := (hdigit n).choose_spec
   set d := mk (s 0) a; use d
-  have hsum (n:ℕ) : s n * (10:NNReal)^(-n:ℝ) = s 0 + ∑ i ∈ Finset.range n, a i * (10:NNReal)^(-i-1:ℝ) := by
+  have hsum (n:ℕ) : s n * (10:NNReal)^(-n:ℝ) = s 0 + ∑ i ∈ .range n, a i * (10:NNReal)^(-i-1:ℝ) := by
     induction' n with n hn
     . simp
     rw [ha n]; calc
       _ = s n * (10:NNReal)^(-n:ℝ) + a n * 10^(-n-1:ℝ) := by
         simp [add_mul]; congr 1 <;> ring_nf
         rw [mul_assoc, ←NNReal.rpow_add_one (by norm_num)]; congr; ring
-      _ = s 0 + (∑ i ∈ Finset.range n, a i * (10:NNReal)^(-i-1:ℝ) + a n * 10^(-n-1:ℝ)) := by
+      _ = s 0 + (∑ i ∈ .range n, a i * (10:NNReal)^(-i-1:ℝ) + a n * 10^(-n-1:ℝ)) := by
         rw [hn]; abel
       _ = _ := by congr; exact (Finset.sum_range_succ _ _).symm
   have := d.toNNReal_conv.tendsto_sum_tsum_nat
   replace := this.const_add (s 0:NNReal)
-  convert_to Filter.Tendsto (fun n ↦ s n * (10:NNReal)^(-n:ℝ)) Filter.atTop (nhds (d:NNReal)) at this
+  convert_to Filter.Tendsto (fun n ↦ s n * (10:NNReal)^(-n:ℝ)) .atTop (nhds (d:NNReal)) at this
   . ext n; rw [hsum n]
   apply tendsto_nhds_unique _ this
   apply Filter.Tendsto.squeeze (g := fun n:ℕ ↦ x - (10:NNReal)^(-n:ℝ)) (h := fun n ↦ x)
@@ -94,7 +94,7 @@ theorem NNRealDecimal.not_inj : (1:NNReal) = (mk 1 fun _ ↦ 0) ∧ (1:NNReal) =
   have := (mk 0 fun _ ↦ 9).toNNReal_conv.tendsto_sum_tsum_nat
   simp at this
   apply tendsto_nhds_unique _ this
-  convert_to Filter.Tendsto (fun n:ℕ ↦ 1 - (10:NNReal)^(-n:ℝ)) Filter.atTop (nhds 1) using 2 with n
+  convert_to Filter.Tendsto (fun n:ℕ ↦ 1 - (10:NNReal)^(-n:ℝ)) .atTop (nhds 1) using 2 with n
   . induction' n with n hn
     . simp
     rw [Finset.sum_range_succ, hn, Nat.cast_add, Nat.cast_one, neg_add']

@@ -51,7 +51,7 @@ theorem intermediate_value {a b:ℝ} (hab: a < b) {f:ℝ → ℝ} (hf: Continuou
       set x := fun n ↦ (hxe n).choose
       have hx1 (n:ℕ) : x n ∈ E := (hxe n).choose_spec.1
       have hx2 (n:ℕ) : c - 1/(n+1:ℝ) < x n := (hxe n).choose_spec.2
-      have : Filter.Tendsto x Filter.atTop (nhds c) := by
+      have : Filter.Tendsto x .atTop (nhds c) := by
         apply Filter.Tendsto.squeeze (g := fun j ↦ c - 1/(j+1:ℝ)) (h := fun j ↦ c) (f := x)
         . convert Filter.Tendsto.const_sub c tendsto_one_div_add_atTop_nhds_zero_nat
           simp
@@ -92,12 +92,12 @@ theorem intermediate_value {a b:ℝ} (hab: a < b) {f:ℝ → ℝ} (hf: Continuou
         have := hmem n hn
         simp only [Set.mem_Icc] at this
         tauto
-      have hconv : Filter.Tendsto (fun n:ℕ ↦ c + 1/(n+1:ℝ)) Filter.atTop (nhds c) := by
+      have hconv : Filter.Tendsto (fun n:ℕ ↦ c + 1/(n+1:ℝ)) .atTop (nhds c) := by
         convert Filter.Tendsto.const_add c tendsto_one_div_add_atTop_nhds_zero_nat
         simp
       replace hf := (hf.continuousWithinAt hc).tendsto
       rw [nhdsWithin.eq_1] at hf
-      have hconv' : Filter.Tendsto (fun n:ℕ ↦ c + 1/(n+1:ℝ)) Filter.atTop (Filter.principal (Set.Icc a b)) := by
+      have hconv' : Filter.Tendsto (fun n:ℕ ↦ c + 1/(n+1:ℝ)) .atTop (Filter.principal (Set.Icc a b)) := by
         simp only [Filter.tendsto_principal, Filter.eventually_atTop]; use N
       replace hconv' := Filter.tendsto_inf.mpr ⟨ hconv, hconv' ⟩
       apply ge_of_tendsto (Filter.Tendsto.comp hf hconv') _

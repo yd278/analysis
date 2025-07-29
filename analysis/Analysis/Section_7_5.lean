@@ -21,9 +21,9 @@ namespace Chapter7
 
 /-- Theorem 7.5.1(a) (Root test).  A technical condition is needed to ensure the limsup is finite. -/
 theorem Series.root_test_pos {s : Series}
-  (h : Filter.limsup (fun n ↦ ((|s.seq n|^(1/(n:ℝ)):ℝ):EReal)) Filter.atTop < 1) : s.absConverges := by
+  (h : Filter.limsup (fun n ↦ ((|s.seq n|^(1/(n:ℝ)):ℝ):EReal)) .atTop < 1) : s.absConverges := by
     -- This proof is written to follow the structure of the original text.
-    set α':EReal := Filter.limsup (fun n ↦ ((|s.seq n|^(1/(n:ℝ)):ℝ):EReal)) Filter.atTop
+    set α':EReal := Filter.limsup (fun n ↦ ((|s.seq n|^(1/(n:ℝ)):ℝ):EReal)) .atTop
     have hpos : 0 ≤ α' := by
       apply Filter.le_limsup_of_frequently_le (Filter.Frequently.of_forall _) (by isBoundedDefault)
       intros; positivity
@@ -75,7 +75,7 @@ theorem Series.root_test_pos {s : Series}
 
 /-- Theorem 7.5.1(b) (Root test) -/
 theorem Series.root_test_neg {s : Series}
-  (h : Filter.limsup (fun n ↦ ((|s.seq n|^(1/(n:ℝ)):ℝ):EReal)) Filter.atTop > 1) : s.diverges := by
+  (h : Filter.limsup (fun n ↦ ((|s.seq n|^(1/(n:ℝ)):ℝ):EReal)) .atTop > 1) : s.diverges := by
     -- This proof is written to follow the structure of the original text.
     replace h := Filter.frequently_lt_of_lt_limsup (by isBoundedDefault) h
     apply diverges_of_nodecay
@@ -87,27 +87,27 @@ theorem Series.root_test_neg {s : Series}
 
 /-- Theorem 7.5.1(c) (Root test) / Exercise 7.5.3 -/
 theorem Series.root_test_inconclusive: ∃ s:Series,
-  Filter.Tendsto (fun n ↦ |s.seq n|^(1/(n:ℝ))) Filter.atTop (nhds 1) ∧ s.diverges := by
+  Filter.Tendsto (fun n ↦ |s.seq n|^(1/(n:ℝ))) .atTop (nhds 1) ∧ s.diverges := by
     sorry
 
 /-- Theorem 7.5.1 (Root test) / Exercise 7.5.3 -/
 theorem Series.root_test_inconclusive' : ∃ s:Series,
-  Filter.Tendsto (fun n ↦ |s.seq n|^(1/(n:ℝ))) Filter.atTop (nhds 1) ∧ s.absConverges := by
+  Filter.Tendsto (fun n ↦ |s.seq n|^(1/(n:ℝ))) .atTop (nhds 1) ∧ s.absConverges := by
     sorry
 
 /-- Lemma 7.5.2 / Exercise 7.5.1 -/
 theorem Series.ratio_ineq {c:ℤ → ℝ} (m:ℤ) (hpos: ∀ n ≥ m, c n > 0) :
-  Filter.liminf (fun n ↦ ((c (n+1) / c n:ℝ): EReal)) Filter.atTop ≤
-    Filter.liminf (fun n ↦ (((c n)^(1/(n:ℝ)):ℝ):EReal)) Filter.atTop
-  ∧ Filter.liminf (fun n ↦ (((c n)^(1/(n:ℝ)):ℝ):EReal)) Filter.atTop ≤
-    Filter.limsup (fun n ↦ (((c n)^(1/(n:ℝ)):ℝ):EReal)) Filter.atTop
-  ∧ Filter.limsup (fun n ↦ (((c n)^(1/(n:ℝ)):ℝ):EReal)) Filter.atTop ≤
-    Filter.limsup (fun n ↦ ((c (n+1) / c n:ℝ):EReal)) Filter.atTop
+  Filter.liminf (fun n ↦ ((c (n+1) / c n:ℝ): EReal)) .atTop ≤
+    Filter.liminf (fun n ↦ (((c n)^(1/(n:ℝ)):ℝ):EReal)) .atTop
+  ∧ Filter.liminf (fun n ↦ (((c n)^(1/(n:ℝ)):ℝ):EReal)) .atTop ≤
+    Filter.limsup (fun n ↦ (((c n)^(1/(n:ℝ)):ℝ):EReal)) .atTop
+  ∧ Filter.limsup (fun n ↦ (((c n)^(1/(n:ℝ)):ℝ):EReal)) .atTop ≤
+    Filter.limsup (fun n ↦ ((c (n+1) / c n:ℝ):EReal)) .atTop
     := by
   -- This proof is written to follow the structure of the original text.
   refine ⟨ ?_, Filter.liminf_le_limsup (by isBoundedDefault) (by isBoundedDefault), ?_ ⟩
   . sorry
-  set L' := Filter.limsup (fun n ↦ ((c (n+1) / c n:ℝ):EReal)) Filter.atTop
+  set L' := Filter.limsup (fun n ↦ ((c (n+1) / c n:ℝ):EReal)) .atTop
   by_cases hL : L' = ⊤; simp [hL]
   have hL'pos : 0 ≤ L' := by
     apply Filter.le_limsup_of_frequently_le'
@@ -160,11 +160,11 @@ theorem Series.ratio_ineq {c:ℤ → ℝ} (m:ℤ) (hpos: ∀ n ≥ m, c n > 0) :
         convert (Real.rpow_one _)
         field_simp
   calc
-    _ ≤ Filter.limsup (fun n:ℤ ↦ ((A^(1/(n:ℝ)) * (L+ε):ℝ):EReal)) Filter.atTop := by
+    _ ≤ Filter.limsup (fun n:ℤ ↦ ((A^(1/(n:ℝ)) * (L+ε):ℝ):EReal)) .atTop := by
       apply Filter.limsup_le_limsup _ (by isBoundedDefault) (by isBoundedDefault)
       unfold Filter.EventuallyLE; rw [Filter.eventually_atTop]
       use N
-    _ ≤ (Filter.limsup (fun n:ℤ ↦ ((A^(1/(n:ℝ)):ℝ):EReal)) Filter.atTop) * (Filter.limsup (fun n:ℤ ↦ ((L+ε:ℝ):EReal)) Filter.atTop) := by
+    _ ≤ (Filter.limsup (fun n:ℤ ↦ ((A^(1/(n:ℝ)):ℝ):EReal)) .atTop) * (Filter.limsup (fun n:ℤ ↦ ((L+ε:ℝ):EReal)) .atTop) := by
       convert EReal.limsup_mul_le _ _ _ _ with n
       . rfl
       . apply Filter.Frequently.of_forall; intros; positivity
@@ -184,7 +184,7 @@ theorem Series.ratio_ineq {c:ℤ → ℝ} (m:ℤ) (hpos: ∀ n ≥ m, c n > 0) :
 
 /-- Corollary 7.5.3 (Ratio test)-/
 theorem Series.ratio_test_pos {s : Series} (hnon: ∀ n ≥ s.m, s.seq n ≠ 0)
-  (h : Filter.limsup (fun n ↦ ((|s.seq (n+1)| / |s.seq n|:ℝ):EReal)) Filter.atTop < 1) : s.absConverges := by
+  (h : Filter.limsup (fun n ↦ ((|s.seq (n+1)| / |s.seq n|:ℝ):EReal)) .atTop < 1) : s.absConverges := by
     apply Series.root_test_pos (lt_of_le_of_lt _ h)
     convert (ratio_ineq s.m _).2.2
     convert hnon using 1 with n
@@ -192,19 +192,19 @@ theorem Series.ratio_test_pos {s : Series} (hnon: ∀ n ≥ s.m, s.seq n ≠ 0)
 
 /-- Corollary 7.5.3 (Ratio test)-/
 theorem Series.ratio_test_neg {s : Series} (hnon: ∀ n ≥ s.m, s.seq n ≠ 0)
-  (h : Filter.liminf (fun n ↦ ((|s.seq (n+1)| / |s.seq n|:ℝ):EReal)) Filter.atTop > 1) : s.diverges := by
+  (h : Filter.liminf (fun n ↦ ((|s.seq (n+1)| / |s.seq n|:ℝ):EReal)) .atTop > 1) : s.diverges := by
     apply Series.root_test_neg (lt_of_lt_of_le h _)
     convert (ratio_ineq s.m _).1.trans (ratio_ineq s.m _).2.1 with n; rfl
     all_goals convert hnon using 1 with n; simp
 
 /-- Corollary 7.5.3 (Ratio test) / Exercise 7.5.3 -/
 theorem Series.ratio_test_inconclusive: ∃ s:Series, (∀ n ≥ s.m, s.seq n ≠ 0) ∧
-  Filter.Tendsto (fun n ↦ |s.seq n+1| / |s.seq n|) Filter.atTop (nhds 1) ∧ s.diverges := by
+  Filter.Tendsto (fun n ↦ |s.seq n+1| / |s.seq n|) .atTop (nhds 1) ∧ s.diverges := by
     sorry
 
 /-- Corollary 7.5.3 (Ratio test) / Exercise 7.5.3 -/
 theorem Series.ratio_test_inconclusive' : ∃ s:Series, (∀ n ≥ s.m, s.seq n ≠ 0) ∧
-  Filter.Tendsto (fun n ↦ |s.seq n+1| / |s.seq n|) Filter.atTop (nhds 1) ∧ s.absConverges := by
+  Filter.Tendsto (fun n ↦ |s.seq n+1| / |s.seq n|) .atTop (nhds 1) ∧ s.absConverges := by
     sorry
 
 /-- Proposition 7.5.4 -/
@@ -213,7 +213,7 @@ theorem Series.root_self_converges : (fun (n:ℕ) ↦ (n:ℝ)^(1 / n : ℝ) : Se
   sorry
 
 /-- Exercise 7.5.2 -/
-theorem Series.poly_mul_geom_converges {x:ℝ} (hx: |x|<1) (q:ℝ) : (fun n:ℕ ↦ (n:ℝ)^q * x^n : Series).converges ∧ Filter.Tendsto (fun n:ℕ ↦ (n:ℝ)^q * x^n) Filter.atTop (nhds 0) := by
+theorem Series.poly_mul_geom_converges {x:ℝ} (hx: |x|<1) (q:ℝ) : (fun n:ℕ ↦ (n:ℝ)^q * x^n : Series).converges ∧ Filter.Tendsto (fun n:ℕ ↦ (n:ℝ)^q * x^n) .atTop (nhds 0) := by
   sorry
 
 
