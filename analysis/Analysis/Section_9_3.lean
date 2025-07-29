@@ -65,8 +65,7 @@ theorem Convergesto.iff (X:Set ℝ) (f: ℝ → ℝ) (L:ℝ) (x₀:ℝ) :
   Convergesto X f L x₀ ↔ Filter.Tendsto f ((nhds x₀) ⊓ Filter.principal X) (nhds L) := by
   unfold Convergesto Real.CloseNear Real.CloseFn
   rw [LinearOrderedAddCommGroup.tendsto_nhds]
-  apply forall_congr'; intro ε
-  apply imp_congr_right; intro hε
+  peel with ε hε
   rw [Filter.eventually_inf_principal]
   simp [Filter.Eventually, mem_nhds_iff_exists_Ioo_subset]
   constructor

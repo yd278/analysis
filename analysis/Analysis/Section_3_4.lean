@@ -76,9 +76,8 @@ theorem SetTheory.Set.image_f_3_4_2 : image f_3_4_2 {1,2,3} = {2,4,6} := by
     · right; left; simp_all
     · right; right; simp_all
   rintro (h | h | h)
-  · use 1; simp_all
-  · use 2; simp_all
-  · use 3; simp_all
+  map_tacs [use 1; use 2; use 3]
+  all_goals simp_all
 
 /-- Example 3.4.3 is written using Mathlib's notion of image. -/
 example : (fun n:ℤ ↦ n^2) '' {-1,0,1,2} = {0,1,4} := by aesop
@@ -146,9 +145,8 @@ theorem SetTheory.Set.preimage_f_3_4_2 : preimage f_3_4_2 {2,4,6} = {1,2,3} := b
     · right; left; simp_all; omega
     · right; right; simp_all; omega
   rintro (h | h | h)
-  · use 1; simp_all
-  · use 2; simp_all
-  · use 3; simp_all
+  map_tacs [use 1; use 2; use 3]
+  all_goals simp_all
 
 theorem SetTheory.Set.image_preimage_f_3_4_2 :
     image f_3_4_2 (preimage f_3_4_2 {1,2,3}) ≠ {1,2,3} := by sorry
@@ -217,10 +215,8 @@ theorem SetTheory.Set.example_3_4_9 (F:Object) :
     · right; right; left; ext ⟨_, hx⟩; simp [mem_pair] at hx; aesop
     · right; right; right; ext ⟨_, hx⟩; simp [mem_pair] at hx; aesop
   rintro (h | h | h | h)
-  · use f_3_4_9_a; exact h.symm
-  · use f_3_4_9_b; exact h.symm
-  · use f_3_4_9_c; exact h.symm
-  · use f_3_4_9_d; exact h.symm
+  map_tacs [use f_3_4_9_a; use f_3_4_9_b; use f_3_4_9_c; use f_3_4_9_d]
+  all_goals exact h.symm
 
 /-- Exercise 3.4.6 (i). One needs to provide a suitable definition of the power set here. -/
 abbrev SetTheory.Set.powerset (X:Set) : Set :=
@@ -310,9 +306,8 @@ theorem SetTheory.Set.iUnion_example : iUnion {1,2,3} index_example = {2,3,4,5} 
   · aesop
   simp only [mem_union, Subtype.exists]
   rintro (h | h | h)
-  · use 1; aesop
-  · use 2; aesop
-  · use 3; aesop
+  map_tacs [use 1; use 2; use 3]
+  all_goals aesop
 
 /-- Connection with Mathlib indexed union
 -/

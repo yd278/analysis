@@ -428,8 +428,7 @@ theorem Filter.Eventually.int_natCast_atTop (p: ℤ → Prop) :
 theorem Filter.Tendsto.int_natCast_atTop {R:Type} (f: ℤ → R) (l: Filter R) :
 Filter.Tendsto f Filter.atTop l ↔ Filter.Tendsto (f ∘ Nat.cast) Filter.atTop l := by
   simp [Filter.tendsto_iff_eventually]
-  apply forall_congr'; intro p
-  apply imp_congr_right; intro h
+  peel with p h
   simp [←Filter.eventually_atTop]
   convert Filter.Eventually.int_natCast_atTop _
 

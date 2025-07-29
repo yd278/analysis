@@ -263,9 +263,8 @@ abbrev Function.one_to_one {X Y: Set} (f: Function X Y) : Prop := ∀ x x': X, x
 
 theorem Function.one_to_one_iff {X Y: Set} (f: Function X Y) :
     f.one_to_one ↔ ∀ x x': X, f x = f x' → x = x' := by
-  apply forall_congr'; intro x
-  apply forall_congr'; tauto
-
+  peel with x hx; tauto
+  
 /--
   Compatibility with Mathlib's `Function.Injective`.  You may wish to use the `unfold` tactic to
   understand Mathlib concepts such as `Function.Injective`.
