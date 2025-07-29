@@ -68,10 +68,7 @@ example (x₀ x : ℝ) :
 theorem UniformContinuousOn.iff (f: ℝ → ℝ) (X:Set ℝ) : UniformContinuousOn f X  ↔
   ∀ ε > (0:ℝ), ∃ δ > (0:ℝ), ∀ x₀ ∈ X, ∀ x ∈ X, δ.Close x x₀ → ε.Close (f x) (f x₀) := by
   simp_rw [Metric.uniformContinuousOn_iff_le, Real.Close]
-  apply forall_congr'; intro ε
-  apply imp_congr_right; intro hε
-  apply exists_congr; intro δ
-  apply and_congr_right; intro hδ
+  peel with ε hε δ hδ
   constructor <;> intros <;> solve_by_elim
 
 theorem ContinuousOn.ofUniformContinuousOn {X:Set ℝ} (f: ℝ → ℝ) (hf: UniformContinuousOn f X) :

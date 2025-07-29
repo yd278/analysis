@@ -45,8 +45,7 @@ theorem BddBelow.unbounded_iff' (X:Set ℝ) : ¬ BddBelow X ↔ sInf ((fun x:ℝ
 /-- Definition 9.10.13 (Limit at infinity) -/
 theorem Filter.Tendsto.AtTop.iff {X: Set ℝ} (f:ℝ → ℝ) (L:ℝ) : Filter.Tendsto f (Filter.atTop ⊓ Filter.principal X) (nhds L) ↔ ∀ ε > (0:ℝ), ∃ M, ∀ x ∈ X ∩ Set.Ici M, |f x - L| < ε := by
   rw [LinearOrderedAddCommGroup.tendsto_nhds]
-  apply forall_congr'; intro ε
-  apply imp_congr_right; intro hε
+  peel with ε hε
   simp [Filter.eventually_inf_principal, Filter.eventually_atTop]
   aesop
 

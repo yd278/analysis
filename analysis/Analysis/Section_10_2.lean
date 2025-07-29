@@ -26,28 +26,20 @@ theorem IsLocalMaxOn.iff (X:Set ℝ) (f:ℝ → ℝ) (x₀:ℝ) :
   ∃ δ > 0, IsMaxOn f (X ∩ Set.Ioo (x₀ - δ) (x₀ + δ)) x₀ := by
   simp [isMaxOn_iff, IsLocalMaxOn, IsMaxFilter, nhdsWithin.eq_1, Filter.eventually_inf_principal,
         Metric.eventually_nhds_iff, Real.dist_eq, abs_sub_lt_iff ]
-  apply exists_congr; intro ε
-  apply and_congr_right; intro hε
-  apply forall_congr'; intro x
+  peel with ε hε x
   constructor
-  . intro h hx _ _
-    exact h (by linarith) (by linarith) hx
-  intro h _ _ hx
-  exact h hx (by linarith) (by linarith)
+  . intro h hx _ _; exact h (by linarith) (by linarith) hx
+  intro h _ _ hx; exact h hx (by linarith) (by linarith)
 
 theorem IsLocalMinOn.iff (X:Set ℝ) (f:ℝ → ℝ) (x₀:ℝ) :
   IsLocalMinOn f X x₀ ↔
   ∃ δ > 0, IsMinOn f (X ∩ Set.Ioo (x₀ - δ) (x₀ + δ)) x₀ := by
   simp [isMinOn_iff, IsLocalMinOn, IsMinFilter, nhdsWithin.eq_1, Filter.eventually_inf_principal,
         Metric.eventually_nhds_iff, Real.dist_eq, abs_sub_lt_iff ]
-  apply exists_congr; intro ε
-  apply and_congr_right; intro hε
-  apply forall_congr'; intro x
+  peel with ε hε x
   constructor
-  . intro h hx _ _
-    exact h (by linarith) (by linarith) hx
-  intro h _ _ hx
-  exact h hx (by linarith) (by linarith)
+  . intro h hx _ _; exact h (by linarith) (by linarith) hx
+  intro h _ _ hx; exact h hx (by linarith) (by linarith)
 
 /-- Example 10.2.3 -/
 abbrev f_10_2_3 : ℝ → ℝ := fun x ↦ x^2 - x^4

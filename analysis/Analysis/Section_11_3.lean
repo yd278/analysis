@@ -36,18 +36,18 @@ noncomputable abbrev lower_integral (f:ℝ → ℝ) (I: BoundedInterval) : ℝ :
 
 theorem upper_integral_congr {f g:ℝ → ℝ} {I: BoundedInterval} (h: Set.EqOn f g I) :
   upper_integral f I = upper_integral g I := by
-  simp [upper_integral]; congr! 2; ext; simp; intros; apply forall_congr'; intros; aesop
+  simp [upper_integral]; congr! 2; ext; simp; intros; peel 1; aesop
 
 theorem lower_integral_congr {f g:ℝ → ℝ} {I: BoundedInterval} (h: Set.EqOn f g I) :
   lower_integral f I = lower_integral g I := by
-  simp [lower_integral]; congr! 2; ext; simp; intros; apply forall_congr'; intros; aesop
+  simp [lower_integral]; congr! 2; ext; simp; intros; peel 1; aesop
 
 lemma integral_bound_upper_of_bounded {f:ℝ → ℝ} {M:ℝ} {I: BoundedInterval} (h: ∀ x ∈ (I:Set ℝ), |f x| ≤ M) : M * |I|ₗ ∈ (fun g ↦ PiecewiseConstantOn.integ g I) '' {g | MajorizesOn g f I ∧ PiecewiseConstantOn g I} := by
   simp
   refine ⟨ fun _ ↦ M , ⟨ ⟨ ?_, ?_, ⟩, ?_ ⟩ ⟩
-  . intro x hx; specialize h x hx
-    simp [abs_le'] at h
-    simp [h.1]
+  . peel h with x hx h'
+    simp [abs_le'] at h'
+    simp [h'.1]
   . apply PiecewiseConstantOn.of_const (ConstantOn.of_const (c := M) _)
     simp
   exact PiecewiseConstantOn.integ_const M I
@@ -55,8 +55,8 @@ lemma integral_bound_upper_of_bounded {f:ℝ → ℝ} {M:ℝ} {I: BoundedInterva
 lemma integral_bound_lower_of_bounded {f:ℝ → ℝ} {M:ℝ} {I: BoundedInterval} (h: ∀ x ∈ (I:Set ℝ), |f x| ≤ M) : -M * |I|ₗ ∈ (fun g ↦ PiecewiseConstantOn.integ g I) '' {g | MinorizesOn g f I ∧ PiecewiseConstantOn g I} := by
   simp
   refine ⟨ fun _ ↦ -M , ⟨ ⟨ ?_, ?_, ⟩, ?_ ⟩ ⟩
-  . intro x hx; specialize h x hx
-    simp [abs_le'] at h
+  . peel h with x hx h'
+    simp [abs_le'] at h'
     simp; linarith
   . apply PiecewiseConstantOn.of_const (ConstantOn.of_const (c := -M) _)
     simp
@@ -135,18 +135,16 @@ lemma lt_of_gt_upper_integral {f:ℝ → ℝ} {I: BoundedInterval} (hf: BddOn f 
   ∃ g, MajorizesOn g f I ∧ PiecewiseConstantOn g I ∧ PiecewiseConstantOn.integ g I < X := by
   obtain ⟨ Y, hY, hYX ⟩ := exists_lt_of_csInf_lt (integral_bound_upper_nonempty hf) hX
   simp at hY
-  obtain ⟨ g, ⟨ hmaj, hgp ⟩, hgi ⟩ := hY
-  refine ⟨ g, hmaj, hgp, ?_ ⟩
-  rwa [hgi]
+  peel hY with h hY
+  simp [hY, hYX]; tauto
 
 lemma gt_of_lt_lower_integral {f:ℝ → ℝ} {I: BoundedInterval} (hf: BddOn f I)
   {X:ℝ} (hX: X < lower_integral f I) :
   ∃ h, MinorizesOn h f I ∧ PiecewiseConstantOn h I ∧ X < PiecewiseConstantOn.integ h I := by
   obtain ⟨ Y, hY, hYX ⟩ := exists_lt_of_lt_csSup (integral_bound_lower_nonempty hf) hX
   simp at hY
-  obtain ⟨ h, ⟨ hmin, hhp ⟩, hhi ⟩ := hY
-  refine ⟨ h, hmin, hhp, ?_ ⟩
-  rwa [hhi]
+  peel hY with h hY
+  simp [hY, hYX]; tauto
 
 /-- Definition 11.3.4 (Riemann integral)
 As we permit junk values, the simplest definition for the Riemann integral is the upper integral.-/

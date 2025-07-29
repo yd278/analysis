@@ -126,19 +126,15 @@ theorem SetTheory.Set.coe_eq {X Y:Set} (h: (X: Object) = (Y: Object)) : X = Y :=
 
 /-- Axiom 3.1 (Sets are objects)-/
 @[simp]
-theorem SetTheory.Set.coe_eq_iff (X Y:Set) : (X: Object) = (Y: Object) ↔  X = Y := by
-  constructor
-  . exact coe_eq
-  intro h; subst h; rfl
+theorem SetTheory.Set.coe_eq_iff (X Y:Set) : (X: Object) = (Y: Object) ↔  X = Y :=
+  ⟨ coe_eq, by rintro rfl; rfl ⟩
 
 /-- Axiom 3.2 (Equality of sets)-/
 abbrev SetTheory.Set.ext {X Y:Set} (h: ∀ x, x ∈ X ↔ x ∈ Y) : X = Y := extensionality _ _ h
 
 /-- Axiom 3.2 (Equality of sets)-/
-theorem SetTheory.Set.ext_iff (X Y: Set) : X = Y ↔ ∀ x, x ∈ X ↔ x ∈ Y := by
-  constructor
-  . intro h; subst h; simp
-  . exact ext
+theorem SetTheory.Set.ext_iff (X Y: Set) : X = Y ↔ ∀ x, x ∈ X ↔ x ∈ Y :=
+  ⟨ by rintro rfl; simp, ext ⟩
 
 instance SetTheory.Set.instEmpty : EmptyCollection Set where
   emptyCollection := emptyset
@@ -169,8 +165,7 @@ theorem SetTheory.Set.empty_unique : ∃! (X:Set), ∀ x, x ∉ X := by
 lemma SetTheory.Set.nonempty_def {X:Set} (h: X ≠ ∅) : ∃ x, x ∈ X := by
   -- This proof is written to follow the structure of the original text.
   by_contra! this
-  have claim (x:Object) : x ∈ X ↔ x ∈ (∅:Set) := by
-    simp [this, not_mem_empty]
+  have claim (x:Object) : x ∈ X ↔ x ∈ (∅:Set) := by simp [this, not_mem_empty]
   replace claim := ext claim
   contradiction
 
@@ -191,8 +186,7 @@ example (x: Object) : {x} = SetTheory.singleton x := rfl
   existing set theory notation.
 -/
 @[simp]
-theorem SetTheory.Set.mem_singleton (x a:Object) : x ∈ ({a}:Set) ↔ x = a := by
-  exact singleton_axiom x a
+theorem SetTheory.Set.mem_singleton (x a:Object) : x ∈ ({a}:Set) ↔ x = a := singleton_axiom x a
 
 
 instance SetTheory.Set.instUnion : Union Set where
@@ -312,10 +306,7 @@ theorem SetTheory.Set.triple_eq (a b c:Object) : {a,b,c} = ({a}:Set) ∪ {b,c} :
 /-- Example 3.1.10 -/
 theorem SetTheory.Set.pair_union_pair (a b c:Object) :
     ({a,b}:Set) ∪ {b,c} = {a,b,c} := by
-  apply ext
-  intro x
-  simp only [mem_union, mem_pair, mem_triple]
-  tauto
+  apply ext; intros; simp only [mem_union, mem_pair, mem_triple]; tauto
 
 /-- Definition 3.1.14.   -/
 instance SetTheory.Set.instSubset : HasSubset Set where
@@ -435,13 +426,10 @@ theorem SetTheory.Set.specification_axiom' {A:Set} (P: A → Prop) (x:A) :
 theorem SetTheory.Set.specification_axiom'' {A:Set} (P: A → Prop) (x:Object) :
     x ∈ A.specify P ↔ ∃ h:x ∈ A, P ⟨ x, h ⟩ := by
   constructor
-  . intro h
-    use specification_axiom h
+  . intro h; use specification_axiom h
     simp [←specification_axiom' P, h]
-  intro h
-  obtain ⟨ h, hP ⟩ := h
-  simp [←specification_axiom' P] at hP
-  assumption
+  intro ⟨ h, hP ⟩
+  simpa [←specification_axiom' P] using hP
 
 theorem SetTheory.Set.specify_subset {A:Set} (P: A → Prop) : A.specify P ⊆ A := by sorry
 
@@ -460,12 +448,9 @@ example (X Y: Set) : X ∩ Y = X.specify (fun x ↦ x.val ∈ Y) := rfl
 @[simp]
 theorem SetTheory.Set.mem_inter (x:Object) (X Y:Set) : x ∈ (X ∩ Y) ↔ (x ∈ X ∧ x ∈ Y) := by
   constructor
-  . intro h
-    have h' := specification_axiom h
-    simp [h']
+  . intro h; have h' := specification_axiom h; simp [h']
     exact (specification_axiom' _ ⟨ x, h' ⟩).mp h
-  intro ⟨ hX, hY ⟩
-  exact (specification_axiom' (fun x ↦ x.val ∈ Y) ⟨ x,hX⟩).mpr hY
+  intro ⟨ hX, hY ⟩; exact (specification_axiom' (fun x ↦ x.val ∈ Y) ⟨ x,hX⟩).mpr hY
 
 instance SetTheory.Set.instSDiff : SDiff Set where
   sdiff X Y := X.specify (fun x ↦ x.val ∉ Y)
@@ -477,12 +462,9 @@ example (X Y: Set) : X \ Y = X.specify (fun x ↦ x.val ∉ Y) := rfl
 @[simp]
 theorem SetTheory.Set.mem_sdiff (x:Object) (X Y:Set) : x ∈ (X \ Y) ↔ (x ∈ X ∧ x ∉ Y) := by
   constructor
-  . intro h
-    have h' := specification_axiom h
-    simp [h']
+  . intro h; have h' := specification_axiom h; simp [h']
     exact (specification_axiom' _ ⟨ x, h' ⟩ ).mp h
-  intro ⟨ hX, hY ⟩
-  exact (specification_axiom' (fun x ↦ x.val ∉ Y) ⟨ x, hX⟩ ).mpr hY
+  intro ⟨ hX, hY ⟩; exact (specification_axiom' (fun x ↦ x.val ∉ Y) ⟨ x, hX⟩ ).mpr hY
 
 /-- Proposition 3.1.27(d) / Exercise 3.1.6 -/
 theorem SetTheory.Set.inter_comm (A B:Set) : A ∩ B = B ∩ A := by sorry
@@ -539,10 +521,8 @@ instance SetTheory.Set.instDistribLattice : DistribLattice Set where
   inf_le_right := by sorry
   le_inf := by sorry
   le_sup_inf := by
-    intro X Y Z
-    change (X ∪ Y) ∩ (X ∪ Z) ⊆ X ∪ (Y ∩ Z)
-    rw [←union_inter_distrib_left]
-    exact subset_self _
+    intro X Y Z; change (X ∪ Y) ∩ (X ∪ Z) ⊆ X ∪ (Y ∩ Z)
+    rw [←union_inter_distrib_left]; exact subset_self _
 
 /-- Sets have a minimal element.  -/
 instance SetTheory.Set.instOrderBot : OrderBot Set where
@@ -675,30 +655,23 @@ lemma SetTheory.Set.nat_equiv_coe_of_coe'' (n:ℕ) : ((ofNat(n):Nat):ℕ) = n :=
 @[simp]
 lemma SetTheory.Set.nat_coe_eq_iff' {m: Nat} {n : ℕ} : (m:Object) = (ofNat(n):Object) ↔ (m:ℕ) = ofNat(n) := by
   constructor <;> intro h <;> rw [show m = n by aesop]
-  apply nat_equiv_coe_of_coe
-  rfl
+  apply nat_equiv_coe_of_coe; rfl
 
 
 /-- Example 3.1.16 (simplified).  -/
 example : ({3, 5}:Set) ⊆ {1, 3, 5} := by
-  simp only [subset_def, mem_pair, mem_triple]
-  tauto
+  simp only [subset_def, mem_pair, mem_triple]; tauto
 
 
 /-- Example 3.1.17 (simplified). -/
 example : ({3, 5}:Set).specify (fun x ↦ x.val ≠ 3) = ({5}:Set) := by
-  apply ext
-  intro x
+  apply ext; intros
   simp only [mem_singleton, specification_axiom'']
   constructor
-  · rintro ⟨h1, h2⟩
-    simp only [mem_pair] at h1
-    tauto
-  rintro ⟨rfl⟩
-  norm_num
+  · rintro ⟨h1, h2⟩; simp only [mem_pair] at h1; tauto
+  rintro ⟨rfl⟩; norm_num
 
 /-- Example 3.1.24 -/
-
 example : ({1, 2, 4}:Set) ∩ {2,3,4} = {2, 4} := by
   apply ext
   -- Instead of unfolding repetitive branches by hand like earlier,
@@ -723,9 +696,7 @@ example : Disjoint (∅:Set) ∅ := by sorry
 /-- Definition 3.1.26 example -/
 
 example : ({1, 2, 3, 4}:Set) \ {2,4,6} = {1, 3} := by
-  apply ext
-  simp only [mem_sdiff, instInsert]
-  aesop
+  apply ext; simp only [mem_sdiff, instInsert]; aesop
 
 /-- Example 3.1.30 -/
 example : ({3,5,9}:Set).replace (P := fun x y ↦ ∃ (n:ℕ), x.val = n ∧ y = (n+1:ℕ)) (by aesop)
@@ -733,9 +704,7 @@ example : ({3,5,9}:Set).replace (P := fun x y ↦ ∃ (n:ℕ), x.val = n ∧ y =
 
 /-- Example 3.1.31 -/
 example : ({3,5,9}:Set).replace (P := fun _ y ↦ y=1) (by aesop) = {1} := by
-  apply ext
-  simp only [replacement_axiom]
-  aesop
+  apply ext; simp only [replacement_axiom]; aesop
 
 /-- Exercise 3.1.5.  One can use the `tfae_have` and `tfae_finish` tactics here. -/
 theorem SetTheory.Set.subset_tfae (A B:Set) : [A ⊆ B, A ∪ B = B, A ∩ B = A].TFAE := by sorry
@@ -840,8 +809,7 @@ theorem SetTheory.Set.coe_inj' (X Y:Set) :
     (X : _root_.Set Object) = (Y : _root_.Set Object) ↔ X = Y := by
   constructor
   . intro h; apply ext; intro x
-    replace h := congr(x ∈ $h)
-    simpa using h
+    replace h := congr(x ∈ $h); simpa using h
   rintro rfl; rfl
 
 /-- Compatibility of the membership operation ∈ -/

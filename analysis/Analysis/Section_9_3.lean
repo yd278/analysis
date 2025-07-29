@@ -65,15 +65,12 @@ theorem Convergesto.iff (X:Set ℝ) (f: ℝ → ℝ) (L:ℝ) (x₀:ℝ) :
   Convergesto X f L x₀ ↔ Filter.Tendsto f ((nhds x₀) ⊓ Filter.principal X) (nhds L) := by
   unfold Convergesto Real.CloseNear Real.CloseFn
   rw [LinearOrderedAddCommGroup.tendsto_nhds]
-  apply forall_congr'; intro ε
-  apply imp_congr_right; intro hε
+  peel with ε hε
   rw [Filter.eventually_inf_principal]
   simp [Filter.Eventually, mem_nhds_iff_exists_Ioo_subset]
   constructor
-  . intro ⟨ δ, hpos, hδ ⟩
-    use (x₀-δ), (x₀+δ), ⟨ by linarith, by linarith⟩; intro x
-    simp
-    exact fun h1 h2 hX ↦ hδ x hX h1 h2
+  . intro ⟨ δ, hpos, hδ ⟩; use (x₀-δ), (x₀+δ), ⟨by linarith, by linarith⟩; intro x
+    simp; exact fun h1 h2 hX ↦ hδ x hX h1 h2
   intro ⟨ l, u, ⟨ h1, h2 ⟩, h ⟩
   have h1' : 0 < x₀ - l := by linarith
   have h2' : 0 < u - x₀ := by linarith
@@ -81,9 +78,9 @@ theorem Convergesto.iff (X:Set ℝ) (f: ℝ → ℝ) (L:ℝ) (x₀:ℝ) :
   have hδ1 : δ ≤ x₀ - l := min_le_left _ _
   have hδ2 : δ ≤ u - x₀ := min_le_right _ _
   use δ, (by positivity)
-  intro x hxX hx1 hx2
-  have hmem : x ∈ Set.Ioo l u := by simp; exact ⟨ by linarith, by linarith ⟩
-  specialize h hmem; simp [hxX] at h; exact h
+  intro x hxX _ _
+  specialize h (show x ∈ Set.Ioo l u by simp; exact ⟨by linarith, by linarith⟩)
+  simpa [hxX] using h
 
 /-- Example 9.3.8 -/
 example: Convergesto (Set.Icc 1 3) (fun x ↦ x^2) 4 2 := by
@@ -108,9 +105,7 @@ theorem Convergesto.uniq {E:Set ℝ} {f: ℝ → ℝ} {L L':ℝ} {x₀:ℝ} (h: 
   (hf: Convergesto E f L x₀) (hf': Convergesto E f L' x₀) : L = L' := by
   -- This proof is written to follow the structure of the original text.
   let ⟨ a, ha, hconv ⟩ := (limit_of_AdherentPt _ _).mp h
-  have hL := hf.comp h ha hconv
-  have hL' := hf'.comp h ha hconv
-  exact tendsto_nhds_unique hL hL'
+  exact tendsto_nhds_unique (hf.comp h ha hconv) (hf'.comp h ha hconv)
 
 /-- Proposition 9.3.14 (Limit laws for functions) -/
 theorem Convergesto.add {E:Set ℝ} {f g: ℝ → ℝ} {L M:ℝ} {x₀:ℝ} (h: AdherentPt x₀ E)
