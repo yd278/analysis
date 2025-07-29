@@ -33,7 +33,7 @@ theorem Chapter6.Sequence.Cauchy_iff_CauchySeq (a: ℕ → ℝ) :
 
 /-- Identification with `Filter.Tendsto` -/
 theorem Chapter6.Sequence.tendsto_iff_Tendsto (a: ℕ → ℝ) (L:ℝ) :
-    (a:Sequence).TendsTo L ↔ Filter.Tendsto a .atTop (nhds L) := by
+    (a:Sequence).TendsTo L ↔ Filter.atTop.Tendsto a (nhds L) := by
   rw [Metric.tendsto_atTop, tendsTo_iff]
   constructor <;> intro h ε hε
   . specialize h (ε/2) (half_pos hε)
@@ -49,7 +49,7 @@ theorem Chapter6.Sequence.tendsto_iff_Tendsto (a: ℕ → ℝ) (L:ℝ) :
   specialize hN n.toNat hn
   simp [hpos, ←Real.dist_eq, le_of_lt hN]
 
-theorem Chapter6.Sequence.tendsto_iff_Tendsto' (a: Sequence) (L:ℝ) : a.TendsTo L ↔ Filter.Tendsto a.seq .atTop (nhds L) := by
+theorem Chapter6.Sequence.tendsto_iff_Tendsto' (a: Sequence) (L:ℝ) : a.TendsTo L ↔ Filter.atTop.Tendsto a.seq (nhds L) := by
   rw [Metric.tendsto_atTop, tendsTo_iff]
   constructor <;> intro h ε hε
   . specialize h (ε/2) (half_pos hε)
@@ -63,10 +63,10 @@ theorem Chapter6.Sequence.tendsto_iff_Tendsto' (a: Sequence) (L:ℝ) : a.TendsTo
   simp [←Real.dist_eq, le_of_lt hN]
 
 theorem Chapter6.Sequence.converges_iff_Tendsto (a: ℕ → ℝ) :
-    (a:Sequence).Convergent ↔ ∃ L, Filter.Tendsto a .atTop (nhds L) := by
+    (a:Sequence).Convergent ↔ ∃ L, Filter.atTop.Tendsto a (nhds L) := by
   simp_rw [←tendsto_iff_Tendsto]
 
-theorem Chapter6.Sequence.converges_iff_Tendsto' (a: Sequence) : a.Convergent ↔ ∃ L, Filter.Tendsto a.seq .atTop (nhds L) := by
+theorem Chapter6.Sequence.converges_iff_Tendsto' (a: Sequence) : a.Convergent ↔ ∃ L, Filter.atTop.Tendsto a.seq (nhds L) := by
   simp_rw [←tendsto_iff_Tendsto']
 
 /-- A technicality: `CauSeq.IsComplete ℝ` was established for `_root_.abs` but not for `norm`. -/

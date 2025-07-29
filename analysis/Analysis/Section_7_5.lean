@@ -87,12 +87,12 @@ theorem Series.root_test_neg {s : Series}
 
 /-- Theorem 7.5.1(c) (Root test) / Exercise 7.5.3 -/
 theorem Series.root_test_inconclusive: ∃ s:Series,
-  Filter.Tendsto (fun n ↦ |s.seq n|^(1/(n:ℝ))) .atTop (nhds 1) ∧ s.diverges := by
+  Filter.atTop.Tendsto (fun n ↦ |s.seq n|^(1/(n:ℝ))) (nhds 1) ∧ s.diverges := by
     sorry
 
 /-- Theorem 7.5.1 (Root test) / Exercise 7.5.3 -/
 theorem Series.root_test_inconclusive' : ∃ s:Series,
-  Filter.Tendsto (fun n ↦ |s.seq n|^(1/(n:ℝ))) .atTop (nhds 1) ∧ s.absConverges := by
+  Filter.atTop.Tendsto (fun n ↦ |s.seq n|^(1/(n:ℝ))) (nhds 1) ∧ s.absConverges := by
     sorry
 
 /-- Lemma 7.5.2 / Exercise 7.5.1 -/
@@ -199,12 +199,12 @@ theorem Series.ratio_test_neg {s : Series} (hnon: ∀ n ≥ s.m, s.seq n ≠ 0)
 
 /-- Corollary 7.5.3 (Ratio test) / Exercise 7.5.3 -/
 theorem Series.ratio_test_inconclusive: ∃ s:Series, (∀ n ≥ s.m, s.seq n ≠ 0) ∧
-  Filter.Tendsto (fun n ↦ |s.seq n+1| / |s.seq n|) .atTop (nhds 1) ∧ s.diverges := by
+  Filter.atTop.Tendsto (fun n ↦ |s.seq n+1| / |s.seq n|) (nhds 1) ∧ s.diverges := by
     sorry
 
 /-- Corollary 7.5.3 (Ratio test) / Exercise 7.5.3 -/
 theorem Series.ratio_test_inconclusive' : ∃ s:Series, (∀ n ≥ s.m, s.seq n ≠ 0) ∧
-  Filter.Tendsto (fun n ↦ |s.seq n+1| / |s.seq n|) .atTop (nhds 1) ∧ s.absConverges := by
+  Filter.atTop.Tendsto (fun n ↦ |s.seq n+1| / |s.seq n|) (nhds 1) ∧ s.absConverges := by
     sorry
 
 /-- Proposition 7.5.4 -/
@@ -213,7 +213,7 @@ theorem Series.root_self_converges : (fun (n:ℕ) ↦ (n:ℝ)^(1 / n : ℝ) : Se
   sorry
 
 /-- Exercise 7.5.2 -/
-theorem Series.poly_mul_geom_converges {x:ℝ} (hx: |x|<1) (q:ℝ) : (fun n:ℕ ↦ (n:ℝ)^q * x^n : Series).converges ∧ Filter.Tendsto (fun n:ℕ ↦ (n:ℝ)^q * x^n) .atTop (nhds 0) := by
+theorem Series.poly_mul_geom_converges {x:ℝ} (hx: |x|<1) (q:ℝ) : (fun n:ℕ ↦ (n:ℝ)^q * x^n : Series).converges ∧ Filter.atTop.Tendsto (fun n:ℕ ↦ (n:ℝ)^q * x^n) (nhds 0) := by
   sorry
 
 

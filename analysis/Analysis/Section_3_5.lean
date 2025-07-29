@@ -241,7 +241,7 @@ noncomputable abbrev SetTheory.Set.iProd_equiv_prod_triple (X: ({0,1,2}:Set) →
 
 /-- Connections with Mathlib's `Set.pi` -/
 noncomputable abbrev SetTheory.Set.iProd_equiv_pi (I:Set) (X: I → Set) :
-    iProd X ≃ Set.pi Set.univ (fun i:I ↦ ((X i):_root_.Set Object)) where
+    iProd X ≃ Set.pi .univ (fun i:I ↦ ((X i):_root_.Set Object)) where
   toFun := sorry
   invFun := sorry
   left_inv := sorry
@@ -305,7 +305,7 @@ theorem SetTheory.Set.Fin.coe_toNat {n:ℕ} (i: Fin n) : ((i:ℕ):Object) = (i:O
 theorem SetTheory.Set.Fin.toNat_mk {n:ℕ} (m:ℕ) (h: m < n) : (Fin_mk n m h : ℕ) = m := by
   have := coe_toNat (Fin_mk n m h)
   rwa [SetTheory.Object.natCast_inj] at this
-  
+
 abbrev SetTheory.Set.Fin_embed (n N:ℕ) (h: n ≤ N) (i: Fin n) : Fin N := ⟨ i.val, by
   have := i.property
   rw [mem_Fin] at this ⊢

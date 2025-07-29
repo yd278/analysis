@@ -22,10 +22,10 @@ open Chapter6
 
 namespace Chapter9
 
-example : ContinuousOn (fun x:ℝ ↦ 1/x) (Set.Icc 0 2) := by
+example : ContinuousOn (fun x:ℝ ↦ 1/x) (.Icc 0 2) := by
   sorry
 
-example : ¬ BddOn (fun x:ℝ ↦ 1/x) (Set.Icc 0 2) := by
+example : ¬ BddOn (fun x:ℝ ↦ 1/x) (.Icc 0 2) := by
   sorry
 
 /-- Example 9.9.1 -/
@@ -97,7 +97,7 @@ theorem Chapter6.Sequence.equiv_iff_rat (a b: Sequence) :
 
 /-- Lemma 9.9.7 / Exercise 9.9.1 -/
 theorem Chapter6.Sequence.equiv_iff (a b: Sequence) :
-  Sequence.equiv a b ↔ Filter.Tendsto (fun n ↦ a n - b n) .atTop (nhds 0) := by
+  Sequence.equiv a b ↔ Filter.atTop.Tendsto (fun n ↦ a n - b n) (nhds 0) := by
   sorry
 
 
@@ -113,7 +113,7 @@ theorem UniformContinuousOn.iff_preserves_equiv {X:Set ℝ} (f: ℝ → ℝ) :
   sorry
 
 /-- Remark 9.9.9 -/
-theorem Chapter6.Sequence.equiv_const (x₀: ℝ) (x:ℕ → ℝ) : Filter.Tendsto x .atTop (nhds x₀) ↔
+theorem Chapter6.Sequence.equiv_const (x₀: ℝ) (x:ℕ → ℝ) : Filter.atTop.Tendsto x (nhds x₀) ↔
   Sequence.equiv (x:Sequence) (fun n:ℕ ↦ x₀:Sequence) := by
   sorry
 
@@ -128,7 +128,7 @@ example (n:ℕ) : 1/(2*(n+1):ℝ) ∈ Set.Ioo 0 2 := by sorry
 
 example : ¬ Sequence.equiv (fun n:ℕ ↦ f_9_9_10 (1/(n+1:ℝ)):Sequence) (fun n:ℕ ↦ f_9_9_10 (1/(2*(n+1):ℝ)):Sequence) := by sorry
 
-example : ¬ UniformContinuousOn f_9_9_10 (Set.Ioo 0 2) := by
+example : ¬ UniformContinuousOn f_9_9_10 (.Ioo 0 2) := by
   sorry
 
 /-- Example 9.9.11 -/
@@ -140,7 +140,7 @@ example : Sequence.equiv ((fun n:ℕ ↦ (n+1:ℝ)):Sequence) ((fun n:ℕ ↦ (n
 example : ¬ Sequence.equiv ((fun n:ℕ ↦ f_9_9_11 (n+1:ℝ)):Sequence) ((fun n:ℕ ↦ f_9_9_11 ((n+1)+1/(n+1:ℝ))):Sequence) := by
   sorry
 
-example : ¬ UniformContinuousOn f_9_9_11 Set.univ := by
+example : ¬ UniformContinuousOn f_9_9_11 .univ := by
   sorry
 
 /-- Proposition 9.9.12 / Exercise 9.9.3  -/
@@ -165,7 +165,7 @@ example : ¬ UniformContinuousOn f_9_9_10 (Set.Ioo 0 2) := by
 /-- Corollary 9.9.14 / Exercise 9.9.4 -/
 theorem UniformContinuousOn.limit_at_adherent  {X:Set ℝ} (f: ℝ → ℝ)
   (hf: UniformContinuousOn f X) {x₀:ℝ} (hx₀: AdherentPt x₀ X) :
-  ∃ L:ℝ, Filter.Tendsto f (nhds x₀ ⊓ Filter.principal X) (nhds L) := by
+  ∃ L:ℝ, (nhds x₀ ⊓ .principal X).Tendsto f (nhds L) := by
   sorry
 
 /-- Proposition 9.9.15 / Exercise 9.9.5 -/
@@ -176,8 +176,8 @@ theorem UniformContinuousOn.of_bounded {E X:Set ℝ} {f: ℝ → ℝ}
 
 /-- Theorem 9.9.16 -/
 theorem UniformContinuousOn.of_continuousOn {a b:ℝ} {f:ℝ → ℝ}
-  (hcont: ContinuousOn f (Set.Icc a b)) :
-  UniformContinuousOn f (Set.Icc a b) := by
+  (hcont: ContinuousOn f (.Icc a b)) :
+  UniformContinuousOn f (.Icc a b) := by
   -- This proof is written to follow the structure of the original text.
   by_contra h; rw [iff_preserves_equiv] at h
   simp only [ge_iff_le, Function.comp_apply, not_forall, Classical.not_imp, gt_iff_lt, not_exists,
@@ -190,7 +190,7 @@ theorem UniformContinuousOn.of_continuousOn {a b:ℝ} {f:ℝ → ℝ}
     replace : ε.EventuallyCloseSeqs (fun n ↦ f (x n):Sequence) (fun n ↦ f (y n):Sequence) := by
       sorry
     sorry
-  have : Countable E := by infer_instance
+  observe : Countable E
   set n : ℕ → ℕ := Nat.nth E
   rw [Set.infinite_coe_iff] at hE
   have hmono : StrictMono n := by apply Nat.nth_strictMono; exact hE
@@ -200,25 +200,24 @@ theorem UniformContinuousOn.of_continuousOn {a b:ℝ} {f:ℝ → ℝ}
     simpa [E, Real.Close, Real.dist_eq] using hmem
   have hxmem (j:ℕ) : x (n j) ∈ Set.Icc a b := hx (n j)
   have hymem (j:ℕ) : y (n j) ∈ Set.Icc a b := hy (n j)
-  have hclosed : IsClosed (Set.Icc a b) := Icc_closed
-  have hbounded : Bornology.IsBounded (Set.Icc a b) := Icc_bounded _ _
-  obtain ⟨ j, hj, ⟨ L, hL, hconv⟩ ⟩ := (Heine_Borel (Set.Icc a b)).mp ⟨ hclosed, hbounded ⟩ _ hxmem
+  observe hclosed : IsClosed (.Icc a b)
+  observe hbounded : Bornology.IsBounded (.Icc a b)
+  obtain ⟨ j, hj, ⟨ L, hL, hconv⟩ ⟩ := (Heine_Borel (.Icc a b)).mp ⟨ hclosed, hbounded ⟩ _ hxmem
   replace hcont := ContinuousOn.continuousWithinAt hcont hL
-  have hconv' := Filter.Tendsto.comp_of_continuous hL hcont (fun k ↦ hxmem (j k)) hconv
+  have hconv' := hconv.comp_of_continuous hL hcont (fun k ↦ hxmem (j k))
   rw [Sequence.equiv_iff] at hequiv
-  replace hequiv : Filter.Tendsto (fun k ↦ x (n (j k)) - y (n (j k))) .atTop (nhds 0) := by
-    have hj' : Filter.Tendsto j .atTop .atTop := StrictMono.tendsto_atTop hj
-    have hn' : Filter.Tendsto n .atTop .atTop := StrictMono.tendsto_atTop hmono
-    have hcoe : Filter.Tendsto (fun n:ℕ ↦ (n:ℤ)) .atTop .atTop := tendsto_natCast_atTop_atTop
+  replace hequiv : Filter.atTop.Tendsto (fun k ↦ x (n (j k)) - y (n (j k))) (nhds 0) := by
+    observe hj' : Filter.atTop.Tendsto j .atTop
+    observe hn' : Filter.atTop.Tendsto n .atTop
+    observe hcoe : Filter.atTop.Tendsto (fun n:ℕ ↦ (n:ℤ)) .atTop
     exact hequiv.comp (hcoe.comp (hn'.comp hj'))
-  have hyconv : Filter.Tendsto (fun k ↦ y (n (j k))) .atTop (nhds L) := by
-    convert Filter.Tendsto.sub hconv hequiv with k
+  have hyconv : Filter.atTop.Tendsto (fun k ↦ y (n (j k))) (nhds L) := by
+    convert hconv.sub hequiv with k
     . abel
     simp
-  replace hyconv := Filter.Tendsto.comp_of_continuous hL hcont (fun k ↦ hymem (j k)) hyconv
-  have : Filter.Tendsto (fun k ↦ f (x (n (j k))) - f (y (n (j k)))) .atTop (nhds 0) := by
-    convert Filter.Tendsto.sub hconv' hyconv
-    simp
+  replace hyconv := hyconv.comp_of_continuous hL hcont (fun k ↦ hymem (j k))
+  have : Filter.atTop.Tendsto (fun k ↦ f (x (n (j k))) - f (y (n (j k)))) (nhds 0) := by
+    convert hconv'.sub hyconv; simp
   sorry
 
 

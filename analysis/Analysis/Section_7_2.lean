@@ -65,7 +65,7 @@ theorem Series.partial_of_lt {s : Series} {N:ℤ} (h: N < s.m) : s.partial N = 0
   rw [Finset.sum_eq_zero]
   intro n hn; simp at hn; linarith
 
-abbrev Series.convergesTo (s : Series) (L:ℝ) : Prop := Filter.Tendsto (s.partial) .atTop (nhds L)
+abbrev Series.convergesTo (s : Series) (L:ℝ) : Prop := Filter.atTop.Tendsto (s.partial) (nhds L)
 
 abbrev Series.converges (s : Series) : Prop := ∃ L, s.convergesTo L
 
@@ -112,10 +112,10 @@ theorem Series.converges_iff_tail_decay (s:Series) :
 
 /-- Corollary 7.2.6 (Zero test) / Exercise 7.2.3 -/
 theorem Series.decay_of_converges {s:Series} (h: s.converges) :
-    Filter.Tendsto s.seq .atTop (nhds 0) := by
+    Filter.atTop.Tendsto s.seq (nhds 0) := by
   sorry
 
-theorem Series.diverges_of_nodecay {s:Series} (h: ¬ Filter.Tendsto s.seq .atTop (nhds 0)) :
+theorem Series.diverges_of_nodecay {s:Series} (h: ¬ Filter.atTop.Tendsto s.seq (nhds 0)) :
     s.diverges := by
   sorry
 
@@ -145,7 +145,7 @@ theorem Series.abs_le {s:Series} (h : s.absConverges) : |s.sum| ≤ s.abs.sum :=
 /-- Proposition 7.2.12 (Alternating series test) -/
 theorem Series.converges_of_alternating {m:ℤ} {a: { n // n ≥ m} → ℝ} (ha: ∀ n, a n ≥ 0)
   (ha': Antitone a) :
-    ((mk' (fun n ↦ (-1)^(n:ℤ) * a n)).converges ↔ Filter.Tendsto a .atTop (nhds 0)) := by
+    ((mk' (fun n ↦ (-1)^(n:ℤ) * a n)).converges ↔ Filter.atTop.Tendsto a (nhds 0)) := by
   -- This proof is written to follow the structure of the original text.
   constructor
   . intro h; replace h := decay_of_converges h
@@ -278,7 +278,7 @@ theorem Series.shift {s:Series} {x:ℝ} (h: s.convergesTo x) (L:ℤ) :
   sorry
 
 /-- Lemma 7.2.15 (telescoping series) / Exercise 7.2.6 -/
-theorem Series.telescope {a:ℕ → ℝ} (ha: Filter.Tendsto a .atTop (nhds 0)) :
+theorem Series.telescope {a:ℕ → ℝ} (ha: Filter.atTop.Tendsto a (nhds 0)) :
     ((fun n:ℕ ↦ a (n+1) - a n):Series).convergesTo (a 0) := by
   sorry
 

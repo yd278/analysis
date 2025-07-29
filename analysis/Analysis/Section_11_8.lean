@@ -39,39 +39,35 @@ namespace Chapter11
 open BoundedInterval Chapter9
 
 /-- Left and right limits. A junk value is assigned if the limit does not exist. -/
-noncomputable abbrev right_lim (f: ℝ → ℝ) (x₀:ℝ) : ℝ :=
-  lim (Filter.map f (nhdsWithin x₀ (Set.Ioi x₀)))
+noncomputable abbrev right_lim (f: ℝ → ℝ) (x₀:ℝ) : ℝ := lim ((nhdsWithin x₀ (.Ioi x₀)).map f)
 
-noncomputable abbrev left_lim (f: ℝ → ℝ) (x₀:ℝ) : ℝ :=
-  lim (Filter.map f (nhdsWithin x₀ (Set.Iio x₀)))
+noncomputable abbrev left_lim (f: ℝ → ℝ) (x₀:ℝ) : ℝ := lim ((nhdsWithin x₀ (.Iio x₀)).map f)
 
-theorem right_lim_def {f: ℝ → ℝ} {x₀ L:ℝ} (h: Convergesto (Set.Ioi x₀) f L x₀) :
+theorem right_lim_def {f: ℝ → ℝ} {x₀ L:ℝ} (h: Convergesto (.Ioi x₀) f L x₀) :
   right_lim f x₀ = L := by
-  apply lim_eq
-  rwa [Convergesto.iff, ←nhdsWithin.eq_1, Filter.Tendsto.eq_1] at h
+  apply lim_eq; rwa [Convergesto.iff, ←nhdsWithin.eq_1, Filter.Tendsto.eq_1] at h
 
-theorem left_lim_def {f: ℝ → ℝ} {x₀ L:ℝ} (h: Convergesto (Set.Iio x₀) f L x₀) :
+theorem left_lim_def {f: ℝ → ℝ} {x₀ L:ℝ} (h: Convergesto (.Iio x₀) f L x₀) :
   left_lim f x₀ = L := by
-  apply lim_eq
-  rwa [Convergesto.iff, ←nhdsWithin.eq_1, Filter.Tendsto.eq_1] at h
+  apply lim_eq; rwa [Convergesto.iff, ←nhdsWithin.eq_1, Filter.Tendsto.eq_1] at h
 
 noncomputable abbrev jump (f: ℝ → ℝ) (x₀:ℝ) : ℝ :=
   right_lim f x₀ - left_lim f x₀
 
 /-- Right limits exist for continuous functions -/
 theorem right_lim_of_continuous {X:Set ℝ} {f: ℝ → ℝ} {x₀:ℝ}
-  (h : ∃ ε>0, Set.Ico x₀ (x₀+ε) ⊆ X) (hf: ContinuousWithinAt f X x₀) :
+  (h : ∃ ε>0, .Ico x₀ (x₀+ε) ⊆ X) (hf: ContinuousWithinAt f X x₀) :
   right_lim f x₀ = f x₀ := by
   obtain ⟨ ε, hε, hX ⟩ := h
   apply right_lim_def
   rw [ContinuousWithinAt.eq_1] at hf
-  replace hf : Filter.Tendsto f (nhdsWithin x₀ (Set.Ioo x₀ (x₀ + ε))) (nhds (f x₀)) := by
+  replace hf : (nhdsWithin x₀ (.Ioo x₀ (x₀ + ε))).Tendsto f  (nhds (f x₀)) := by
     apply tendsto_nhdsWithin_mono_left _ hf
     exact Set.Ioo_subset_Ico_self.trans hX
   rw [Convergesto.iff, ←nhdsWithin.eq_1]
   convert hf using 1
-  have h1 : Set.Ioo x₀ (x₀ + ε) ∈ nhdsWithin x₀ (Set.Ioi x₀) := by
-    convert inter_mem_nhdsWithin (t := Set.Ioo (x₀-ε) (x₀+ε)) _ _
+  have h1 : .Ioo x₀ (x₀ + ε) ∈ nhdsWithin x₀ (.Ioi x₀) := by
+    convert inter_mem_nhdsWithin (t := .Ioo (x₀-ε) (x₀+ε)) _ _
     . ext; simp; intros; linarith
     exact Ioo_mem_nhds (by linarith) (by linarith)
   rw [←nhdsWithin_inter_of_mem h1]
@@ -80,18 +76,18 @@ theorem right_lim_of_continuous {X:Set ℝ} {f: ℝ → ℝ} {x₀:ℝ}
 
 /-- Left limits exist for continuous functions -/
 theorem left_lim_of_continuous {X:Set ℝ} {f: ℝ → ℝ} {x₀:ℝ}
-  (h : ∃ ε>0, Set.Ioc (x₀-ε) x₀ ⊆ X) (hf: ContinuousWithinAt f X x₀) :
+  (h : ∃ ε>0, .Ioc (x₀-ε) x₀ ⊆ X) (hf: ContinuousWithinAt f X x₀) :
   left_lim f x₀ = f x₀ := by
   obtain ⟨ ε, hε, hX ⟩ := h
   apply left_lim_def
   rw [ContinuousWithinAt.eq_1] at hf
-  replace hf : Filter.Tendsto f (nhdsWithin x₀ (Set.Ioo (x₀ - ε) x₀)) (nhds (f x₀)) := by
+  replace hf : (nhdsWithin x₀ (.Ioo (x₀ - ε) x₀)).Tendsto f (nhds (f x₀)) := by
     apply tendsto_nhdsWithin_mono_left _ hf
     exact Set.Ioo_subset_Ioc_self.trans hX
   rw [Convergesto.iff, ←nhdsWithin.eq_1]
   convert hf using 1
-  have h1 : Set.Ioo (x₀-ε) x₀ ∈ nhdsWithin x₀ (Set.Iio x₀) := by
-    convert inter_mem_nhdsWithin (t := Set.Ioo (x₀-ε) (x₀+ε)) _ _
+  have h1 : .Ioo (x₀-ε) x₀ ∈ nhdsWithin x₀ (.Iio x₀) := by
+    convert inter_mem_nhdsWithin (t := .Ioo (x₀-ε) (x₀+ε)) _ _
     . ext; simp; constructor
       . intro ⟨ h1, h2 ⟩; simp [h1, h2]; linarith
       aesop
@@ -106,11 +102,11 @@ theorem jump_of_continuous {X:Set ℝ} {f: ℝ → ℝ} {x₀:ℝ}
   rw [mem_nhds_iff_exists_Ioo_subset] at h
   obtain ⟨ l, u, hx₀, hX ⟩ := h
   simp at hx₀
-  have hl : ∃ ε>0, Set.Ioc (x₀-ε) x₀ ⊆ X := by
+  have hl : ∃ ε>0, .Ioc (x₀-ε) x₀ ⊆ X := by
     refine ⟨ x₀-l, by linarith, ?_ ⟩
     apply Set.Subset.trans _ hX
     intro x hx; simp at hx ⊢; exact ⟨ hx.1, by linarith ⟩
-  have hu : ∃ ε>0, Set.Ico x₀ (x₀+ε) ⊆ X := by
+  have hu : ∃ ε>0, .Ico x₀ (x₀+ε) ⊆ X := by
     refine ⟨ u-x₀, by linarith, ?_ ⟩
     apply Set.Subset.trans _ hX
     intro x hx; simp at hx ⊢; exact ⟨ by linarith, hx.2 ⟩
@@ -118,7 +114,7 @@ theorem jump_of_continuous {X:Set ℝ} {f: ℝ → ℝ} {x₀:ℝ}
 
 /-- Right limits exist for monotone functions -/
 theorem right_lim_of_monotone {f: ℝ → ℝ} (x₀:ℝ) (hf: Monotone f) :
-  Convergesto (Set.Ioi x₀) f (sInf (f '' Set.Ioi x₀)) x₀ := by
+  Convergesto (.Ioi x₀) f (sInf (f '' .Ioi x₀)) x₀ := by
   rw [Convergesto.iff, ←nhdsWithin.eq_1]
   apply MonotoneOn.tendsto_nhdsGT
   . exact Monotone.monotoneOn hf _
@@ -128,13 +124,13 @@ theorem right_lim_of_monotone {f: ℝ → ℝ} (x₀:ℝ) (hf: Monotone f) :
   apply hf; linarith
 
 theorem right_lim_of_monotone' {f: ℝ → ℝ} (x₀:ℝ) (hf: Monotone f) :
-  right_lim f x₀ = sInf (f '' Set.Ioi x₀) := by
+  right_lim f x₀ = sInf (f '' .Ioi x₀) := by
   apply right_lim_def
   apply right_lim_of_monotone x₀ hf
 
 /-- Left limits exist for monotone functions -/
 theorem left_lim_of_monotone {f: ℝ → ℝ} (x₀:ℝ) (hf: Monotone f) :
-  Convergesto (Set.Iio x₀) f (sSup (f '' Set.Iio x₀)) x₀ := by
+  Convergesto (.Iio x₀) f (sSup (f '' .Iio x₀)) x₀ := by
   rw [Convergesto.iff, ←nhdsWithin.eq_1]
   apply MonotoneOn.tendsto_nhdsLT
   . exact Monotone.monotoneOn hf _
@@ -144,7 +140,7 @@ theorem left_lim_of_monotone {f: ℝ → ℝ} (x₀:ℝ) (hf: Monotone f) :
   apply hf; linarith
 
 theorem left_lim_of_monotone' {f: ℝ → ℝ} (x₀:ℝ) (hf: Monotone f) :
-  left_lim f x₀ = sSup (f '' Set.Iio x₀) := by
+  left_lim f x₀ = sSup (f '' .Iio x₀) := by
   apply left_lim_def
   apply left_lim_of_monotone x₀ hf
 
@@ -573,7 +569,7 @@ theorem RS_integ_of_uniform_cts {I: BoundedInterval} {f:ℝ → ℝ} (hf: Unifor
   sorry
 
 /-- Exercise 11.8.5 -/
-theorem RS_integ_with_sign (f:ℝ → ℝ) (hf: ContinuousOn f (Set.Icc (-1) 1)) : RS_IntegrableOn f (Icc (-1) 1) Real.sign ∧ RS_integ f (Icc (-1) 1) (fun x ↦ -Real.sign x) = 2 * f 0 := by
+theorem RS_integ_with_sign (f:ℝ → ℝ) (hf: ContinuousOn f (.Icc (-1) 1)) : RS_IntegrableOn f (Icc (-1) 1) Real.sign ∧ RS_integ f (Icc (-1) 1) (fun x ↦ -Real.sign x) = 2 * f 0 := by
   sorry
 
 /-- Analogue of Lemma 11.3.7 -/
