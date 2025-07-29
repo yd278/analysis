@@ -22,43 +22,32 @@ lemma PSet.ofNat_mem_ofNat_of_lt (m n : ℕ) : n < m → ofNat n ∈ ofNat m := 
   | step _ ih => rw [ofNat]; exact mem_insert_of_mem _ ih
 
 lemma PSet.mem_ofNat_iff (n m : ℕ) : ofNat n ∈ ofNat m ↔ n < m := by
-  constructor
-  · contrapose!
-    rw [le_iff_lt_or_eq]
-    rintro (h|rfl)
-    · exact mem_asymm (ofNat_mem_ofNat_of_lt _ _ h)
-    · exact mem_irrefl _
-  · exact ofNat_mem_ofNat_of_lt m n
+  refine ⟨ ?_, ofNat_mem_ofNat_of_lt m n ⟩
+  contrapose!
+  rw [le_iff_lt_or_eq]; rintro (h|rfl)
+  · exact mem_asymm (ofNat_mem_ofNat_of_lt _ _ h)
+  exact mem_irrefl _
 
 /-- Another preliminary lemma: Natural numbers in `PSet` can only be equivalent
 if they are equal. -/
 lemma PSet.eq_of_ofNat_equiv_ofNat (n m : ℕ): (ofNat.{u} n).Equiv (ofNat.{u} m) → n = m := by
   wlog hmn : m ≤ n generalizing n m
-  · intro heq
-    rw [this m n (Nat.le_of_not_ge hmn) heq.symm]
-  intro h
-  rw [Equiv.eq, Set.ext_iff] at h
-  have : n ≤ m := by
-    specialize h (ofNat m)
-    simpa [mem_irrefl _, mem_ofNat_iff] using h
+  · intro heq; rw [this m n (Nat.le_of_not_ge hmn) heq.symm]
+  intro h; rw [Equiv.eq, Set.ext_iff] at h
+  have : n ≤ m := by specialize h (ofNat m); simpa [mem_irrefl _, mem_ofNat_iff] using h
   exact Nat.le_antisymm this hmn
 
+open PSet in
 /-- Using the above lemmas, we can create a bijection between `ZFSet.omega` and
 the natural numbers. -/
-noncomputable def ZFSet.nat_equiv : ℕ ≃ omega.{u} := Equiv.ofBijective (fun n => ⟨mk (PSet.ofNat.{u} n),mk_mem_iff.mpr (PSet.Mem.mk _ (ULift.up n))⟩) (by
+noncomputable def ZFSet.nat_equiv : ℕ ≃ omega.{u} := Equiv.ofBijective (fun n => ⟨mk (ofNat.{u} n),mk_mem_iff.mpr (Mem.mk _ (ULift.up n))⟩) (by
   constructor
-  · intro n m
-    simp only [Subtype.mk.injEq, eq]
-    exact PSet.eq_of_ofNat_equiv_ofNat n m
-  · rintro ⟨x,hx⟩
-    rw [← mk_out x, omega, mk_mem_iff, PSet.omega] at hx
-    obtain ⟨n,hn⟩ := hx
-    simp only [PSet.mk_type] at n
-    use n.down
+  · intro _ _; simp only [Subtype.mk.injEq, eq]; apply eq_of_ofNat_equiv_ofNat
+  · rintro ⟨x,hx⟩; rw [← mk_out x, omega, mk_mem_iff, PSet.omega] at hx; obtain ⟨n,hn⟩ := hx
+    simp only [mk_type] at n; use n.down
     simp only [Subtype.mk.injEq]
-    simp only [PSet.mk_func] at hn
-    rw [← mk_out x]
-    exact eq.mpr (id (PSet.Equiv.symm hn))
+    simp only [mk_func] at hn
+    rw [←mk_out x, eq]; exact id hn.symm
   )
 
 open Classical in
@@ -85,15 +74,12 @@ noncomputable instance ZFSet.inst_SetTheory : Chapter3.SetTheory.{u + 1,u + 1} w
   replacement_axiom A P hp s := by
     simp only [Fin.isValue, mem_image, mem_sep, Subtype.exists]
     constructor
-    · rintro ⟨z,⟨hzA,hz⟩, hz'⟩
-      use z, hzA
-      rw [dif_pos (⟨hzA, hz hzA⟩)] at hz'
-      rw [← hz']
+    · intro ⟨z, ⟨hzA,hz⟩, hz'⟩; use z, hzA
+      rw [dif_pos (⟨hzA, hz hzA⟩)] at hz'; rw [←hz']
       apply Exists.choose_spec
-    · intro ⟨z,hzA,hz'⟩
-      use z, ⟨hzA,fun _ => ⟨s,hz'⟩⟩
-      apply hp ⟨z,hzA⟩
-      rw [dif_pos ⟨hzA,⟨s,hz'⟩⟩]
+    · intro ⟨z ,hzA, hz'⟩; use z, ⟨hzA,fun _ => ⟨s,hz'⟩⟩
+      apply hp ⟨z, hzA⟩
+      rw [dif_pos ⟨hzA, ⟨s, hz'⟩⟩]
       use Exists.choose_spec _
   nat := omega
   nat_equiv := ZFSet.nat_equiv
@@ -101,38 +87,30 @@ noncomputable instance ZFSet.inst_SetTheory : Chapter3.SetTheory.{u + 1,u + 1} w
     simp only [Function.Embedding.coeFn_mk, not_exists, not_and, forall_eq', forall_exists_index]
     intro x hx
     obtain ⟨y,hy⟩ := regularity A (by rintro rfl; exact notMem_empty _ hx)
-    use y, hy.left
-    intro z hzA hzy
-    have : z ∈ A ∩ y := mem_inter.mpr ⟨hzA,hzy⟩
-    simp [hy.right] at this
+    use y, hy.left; intro z hzA hzy
+    have : z ∈ A ∩ y := mem_inter.mpr ⟨hzA, hzy⟩; simp [hy.right] at this
   pow X Y := funs Y X
   function_to_object X Y := {
     toFun f := (@map (fun s => if h : s ∈ X then f ⟨s,h⟩ else ∅) (Classical.allZFSetDefinable _) X)
     inj' := by
-      intro x _ h
-      ext ⟨s,hs⟩
+      intro x _ h; ext ⟨s, hs⟩
       simp only at h; simp_rw [ZFSet.ext_iff, mem_map] at h
       specialize h (s.pair (x ⟨s,hs⟩).val)
-      simp only [pair_inj, existsAndEq, hs, ↓reduceDIte, and_self, SetLike.coe_eq_coe,
-        true_and, true_iff] at h
-      rw [← h] }
+      simp [hs] at h; rw [h]}
   powerset_axiom X Y F := by
     simp only [Fin.isValue, Function.Embedding.coeFn_mk]
     rw [mem_funs, IsFunc]
     constructor
     · intro ⟨hsub,huniq⟩
       use (fun x => ⟨(huniq x x.property).exists.choose,(pair_mem_prod.mp (hsub (huniq x x.property).exists.choose_spec)).right⟩)
-      ext
-      simp only [Fin.isValue, mem_map]
+      ext; simp only [Fin.isValue, mem_map]
       constructor
       · rintro ⟨y,hy,rfl⟩
         rw [dif_pos hy]
         exact (huniq y hy).exists.choose_spec
       · intro hf
-        specialize hsub hf
-        rw [mem_prod] at hsub
-        obtain ⟨y,hy,x,hx,rfl⟩ := hsub
-        use y,hy
+        specialize hsub hf; rw [mem_prod] at hsub
+        obtain ⟨y,hy,x,hx,rfl⟩ := hsub; use y,hy
         rw [dif_pos hy,(huniq y hy).unique (huniq y hy).exists.choose_spec hf]
     · rintro ⟨f,rfl⟩
       simp only [Fin.isValue, mem_map, pair_inj, existsAndEq, true_and]

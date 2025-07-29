@@ -171,8 +171,7 @@ noncomputable instance Real.instRatPow : Pow Real ℚ where
   pow x q := x.ratPow q
 
 theorem Rat.eq_quot (q:ℚ) : ∃ a:ℤ, ∃ b:ℕ, b > 0 ∧ q = a / b := by
-  use q.num, q.den
-  have := q.den_nz
+  use q.num, q.den; have := q.den_nz
   refine ⟨ by omega, (Rat.num_div_den q).symm ⟩
 
 /-- Lemma 5.6.8 -/

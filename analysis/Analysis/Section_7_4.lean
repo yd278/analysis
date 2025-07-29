@@ -69,31 +69,21 @@ theorem Series.converges_of_permute_nonneg {a:ℕ → ℝ} (ha: (a:Series).nonne
       simp; use m
     obtain ⟨ N, hN ⟩ := hN
     calc
-      _ = ∑ m ∈ Y, af m := by
-        simp [T, Series.partial, af]
-        exact sum_eq_sum af hM
+      _ = ∑ m ∈ Y, af m := by simp [T, Series.partial, af]; exact sum_eq_sum af hM
       _ = ∑ n ∈ f '' Y, a n := by
-        symm
-        convert Finset.sum_image _
+        symm; convert Finset.sum_image _
         . simp
         . infer_instance
-        intro x hx y hy hxy
-        exact hf.injective hxy
+        intro x hx y hy hxy; exact hf.injective hxy
       _ ≤ ∑ n ∈ Finset.Iic N, a n := by
         apply Finset.sum_le_sum_of_subset_of_nonneg
         · intro n hn
           simp at hn ⊢
-          obtain ⟨ a, ha, rfl ⟩ := hn
-          exact hN _ ha
-        intro i _ _
-        specialize ha i
+          obtain ⟨ a, ha, rfl ⟩ := hn; exact hN _ ha
+        intro i _ _; specialize ha i
         simpa using ha
-      _ = S N := by
-        simp [S, Series.partial]
-        exact (sum_eq_sum (N:=N) a (by positivity)).symm
-      _ ≤ L := by
-        apply le_ciSup _ (N:ℤ)
-        simp [BddAbove, Set.Nonempty, upperBounds, hSBound]
+      _ = S N := by simp [S, Series.partial]; exact (sum_eq_sum (N:=N) a (by positivity)).symm
+      _ ≤ L := by apply le_ciSup _ (N:ℤ); simp [BddAbove, Set.Nonempty, upperBounds, hSBound]
   have hTbound : ∃ Q, ∀ M, T M ≤ Q := by use L
   simp [hTbound]
   have hL'L : L' ≤ L := ciSup_le hTL
@@ -113,42 +103,27 @@ theorem Series.converges_of_permute_nonneg {a:ℕ → ℝ} (ha: (a:Series).nonne
       simp [Finset.mem_preimage, hm, hn]
     obtain ⟨ M, hM ⟩ := hM
     have sum_eq_sum (b:ℕ → ℝ) {N:ℤ} (hN: N ≥ 0) : ∑ n ∈ Finset.Icc 0 N, (if 0 ≤ n then b n.toNat else 0) = ∑ n ∈ Finset.Iic N.toNat, b n := by
-      convert Finset.sum_image (g := fun n:ℕ ↦ (n:ℤ)) _
-      . ext x; simp [X]
-        constructor
-        . intro ⟨ hpos, hx ⟩
-          use x.toNat; omega
-        intro ⟨ a, ⟨ ha, hb ⟩ ⟩
-        simp [←hb]; omega
-      simp
+      convert Finset.sum_image (g := fun n:ℕ ↦ (n:ℤ)) (by simp)
+      ext x; simp [X]
+      constructor
+      . intro ⟨ hpos, hx ⟩; use x.toNat; omega
+      intro ⟨ a, ⟨ ha, hb ⟩ ⟩; simp [←hb]; omega
     calc
-      _ = ∑ n ∈ X, a n := by
-        simp [S, Series.partial]
-        exact sum_eq_sum a hN
+      _ = ∑ n ∈ X, a n := by simp [S, Series.partial]; exact sum_eq_sum a hN
       _ = ∑ n ∈ Finset.image f ((Finset.Iic M).filter (fun m ↦ f m ∈  X)), a n := by
         congr; ext n; simp
         constructor
-        . intro h
-          obtain ⟨ m, hm, hm' ⟩ := hM n h
+        . intro h; obtain ⟨ m, hm, hm' ⟩ := hM n h
           use m; simp [hm', hm, h]
-        intro ⟨ m, ⟨ hm, hfmX⟩ , hfm ⟩
-        simp [←hfm, hfmX]
+        intro ⟨ m, ⟨ hm, hfmX⟩ , hfm ⟩; simp [←hfm, hfmX]
       _ ≤ ∑ m ∈ Finset.Iic M, af m := by
         rw [Finset.sum_image _]
         . apply Finset.sum_le_sum_of_subset_of_nonneg
           . intro m; simp; tauto
-          intro i _ _
-          specialize haf i
-          simpa using haf
-        intro x _ y _ hxy
-        exact hf.injective hxy
-      _ = T M := by
-        simp [T, Series.partial, af]
-        symm
-        exact sum_eq_sum af (by positivity)
-      _ ≤ L' := by
-        apply le_ciSup _ (M:ℤ)
-        simp [BddAbove, Set.Nonempty, upperBounds, hTbound]
+          intro i _ _; specialize haf i; simpa using haf
+        intro x _ y _ hxy; exact hf.injective hxy
+      _ = T M := by simp [T, Series.partial, af]; symm; exact sum_eq_sum af (by positivity)
+      _ ≤ L' := by apply le_ciSup _ (M:ℤ); simp [BddAbove, Set.Nonempty, upperBounds, hTbound]
   have hLL' : L ≤ L' := ciSup_le hSL'
   linarith
 
@@ -173,41 +148,32 @@ theorem Series.absConverges_of_permute {a:ℕ → ℝ} (ha : (a:Series).absConve
   unfold absConverges at ha
   have habs : (fun n ↦ |a (f n)| : Series).converges ∧ L = (fun n ↦ |a (f n)| : Series).sum := by
     convert converges_of_permute_nonneg (a := fun n ↦ |a n|) _ _ hf using 3
-    . simp; ext n
-      by_cases h: n ≥ 0 <;> simp [h]
-    . intro n
-      by_cases h: n ≥ 0 <;> simp [h]
-    convert ha with n
-    by_cases h: n ≥ 0 <;> simp [h]
+    . simp; ext n; by_cases h: n ≥ 0 <;> simp [h]
+    . intro n; by_cases h: n ≥ 0 <;> simp [h]
+    convert ha with n; by_cases h: n ≥ 0 <;> simp [h]
   set L' := (a:Series).sum
   set af : ℕ → ℝ := fun n ↦ a (f n)
   suffices : (af:Series).convergesTo L'
   . simp [sum_of_converges this, absConverges]
-    convert habs.1 with n
-    by_cases h: n ≥ 0 <;> simp [h, af]
+    convert habs.1 with n; by_cases h: n ≥ 0 <;> simp [h, af]
   simp [convergesTo, LinearOrderedAddCommGroup.tendsto_nhds]
   intro ε hε
   rw [converges_iff_tail_decay] at ha
   specialize ha (ε/2) (half_pos hε)
-  obtain ⟨ N₁, hN₁, ha ⟩ := ha
-  simp at hN₁
+  obtain ⟨ N₁, hN₁, ha ⟩ := ha; simp at hN₁
   have : ∃ N ≥ N₁, |(a:Series).partial N - L'| < ε/2 := by
     replace hconv := convergesTo_sum hconv
     simp [convergesTo, LinearOrderedAddCommGroup.tendsto_nhds] at hconv
-    specialize hconv (ε/2) (half_pos hε)
-    obtain ⟨ N, hN ⟩ := hconv
+    obtain ⟨ N, hN ⟩ := hconv (ε/2) (half_pos hε)
     use max N N₁, le_max_right _ _
-    specialize hN (max N N₁) (le_max_left _ _)
-    convert hN
+    convert hN (max N N₁) (le_max_left _ _)
   obtain ⟨ N, hN, hN2 ⟩ := this
   have hNpos : N ≥ 0 := by linarith
   have finv : ℕ → ℕ := Function.invFun f
   have : ∃ M, ∀ n ≤ N.toNat, finv n ≤ M := by
     use ((Finset.Iic (N.toNat)).image finv).sup id
     intro n hn
-    apply Finset.le_sup (f := id)
-    simp [Finset.mem_image]
-    use n
+    apply Finset.le_sup (f := id); simp [Finset.mem_image]; use n
   obtain ⟨ M, hM ⟩ := this; use M; intro M' hM'
   have hM'_pos : M' ≥ 0 := by linarith
   have why : Finset.image f (Finset.Iic M'.toNat) ⊇ Finset.Iic N.toNat := by
@@ -215,48 +181,34 @@ theorem Series.absConverges_of_permute {a:ℕ → ℝ} (ha : (a:Series).absConve
   set X : Finset ℕ := Finset.image f (Finset.Iic M'.toNat) \ Finset.Iic N.toNat
   have claim : ∑ m ∈ Finset.Iic M'.toNat, a (f m) = ∑ n ∈ Finset.Iic N.toNat, a n + ∑ n ∈ X, a n := calc
     _ = ∑ n ∈ Finset.image f (Finset.Iic M'.toNat), a n := by
-      symm
-      apply Finset.sum_image
-      solve_by_elim [hf.1]
+      symm; apply Finset.sum_image; solve_by_elim [hf.1]
     _ = _ := by
       convert Finset.sum_union _ using 2
       . simp [X, why]
       . infer_instance
       rw [Finset.disjoint_right]
-      intro n hn
-      simp only [X, Finset.mem_sdiff] at hn
-      tauto
+      intro n hn; simp only [X, Finset.mem_sdiff] at hn; tauto
   obtain ⟨ q', hq ⟩ := X.bddAbove
   set q := max q' N.toNat
   have why2 : X ⊆ Finset.Icc (N.toNat+1) q := by sorry
   have claim2 : |∑ n ∈ X, a n| ≤ ε/2 := calc
     _ ≤ ∑ n ∈ X, |a n| := Finset.abs_sum_le_sum_abs a X
     _ ≤ ∑ n ∈ Finset.Icc (N.toNat+1) q, |a n| := by
-      apply Finset.sum_le_sum_of_subset_of_nonneg why2
-      simp
+      exact Finset.sum_le_sum_of_subset_of_nonneg why2 (by simp)
     _ ≤ ε/2 := by
       convert ha (N.toNat+1) (by omega) q (by omega)
-      simp [hNpos]
-      rw [abs_of_nonneg (by positivity)]
-      symm
-      convert Finset.sum_image (g := fun (n:ℕ) ↦ (n:ℤ)) _ using 2
-      . ext x; simp
-        constructor
-        . intro ⟨ hpos, hx ⟩
-          use x.toNat; omega
-        intro ⟨ a, ⟨ ha, hb ⟩ ⟩
-        simp [←hb]; omega
-      simp
+      simp [hNpos]; rw [abs_of_nonneg (by positivity)]; symm
+      convert Finset.sum_image (g := fun (n:ℕ) ↦ (n:ℤ)) (by simp) using 2
+      ext x; simp
+      constructor
+      . intro ⟨ hpos, hx ⟩; use x.toNat; omega
+      intro ⟨ a, ⟨ ha, hb ⟩ ⟩; simp [←hb]; omega
   calc
     _ ≤ |(af:Series).partial M' - (a:Series).partial N| + |(a:Series).partial N - L'| := abs_sub_le _ _ _
-    _ < |(af:Series).partial M' - (a:Series).partial N| + ε/2 := by
-      gcongr
+    _ < |(af:Series).partial M' - (a:Series).partial N| + ε/2 := by gcongr
     _ ≤ ε/2 + ε/2 := by
-      gcongr
-      convert claim2
-      simp [Series.partial, sum_eq_sum _ hM'_pos, sum_eq_sum _ hNpos]
-      rw [claim]
-      abel
+      gcongr; convert claim2
+      simp [Series.partial, sum_eq_sum _ hM'_pos, sum_eq_sum _ hNpos]; rw [claim]; abel
     _ = ε := by ring
 
 

@@ -59,8 +59,8 @@ theorem Sequence.convergent_of_subseq_of_bounded {a:ℕ→ ℝ} (ha: (a:Sequence
   obtain ⟨ ⟨ L_plus, hL_plus ⟩, ⟨ L_minus, hL_minus ⟩ ⟩ := finite_limsup_liminf_of_bounded ha
   have := limit_point_of_limsup hL_plus
   rw [limit_point_iff_subseq] at this
-  obtain ⟨ b, hsubseq, htends ⟩ := this
-  refine ⟨ b, hsubseq, ⟨ L_plus, htends ⟩ ⟩
+  peel 2 this with b hsubseq this
+  exact ⟨ L_plus, this ⟩
 
 /- Exercise 6.6.2 -/
 

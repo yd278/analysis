@@ -30,9 +30,9 @@ lemma ratPow_continuous {x α:ℝ} (hx: x > 0) {q: ℕ → ℚ}
  ((fun n ↦ x^(q n:ℝ)):Sequence).Convergent := by
   -- This proof is rearranged slightly from the original text.
   obtain ⟨ M, hM, hbound ⟩ := Sequence.bounded_of_convergent ⟨ α, hq ⟩
-  rcases lt_trichotomy x 1 with h | h | h
+  rcases lt_trichotomy x 1 with h | rfl | h
   . sorry
-  . simp [h]; exact ⟨ 1, Sequence.lim_of_const 1 ⟩
+  . simp; exact ⟨ 1, Sequence.lim_of_const 1 ⟩
   have h': 1 ≤ x := by linarith
   rw [←Sequence.Cauchy_iff_convergent]
   intro ε hε
@@ -51,8 +51,7 @@ lemma ratPow_continuous {x α:ℝ} (hx: x > 0) {q: ℕ → ℚ}
   lift m to ℕ using (by linarith)
   simp at hn hm hq ⊢
   rcases le_or_gt (q m) (q n) with hqq | hqq
-  . replace : x^(q m:ℝ) ≤ x^(q n:ℝ) := by
-      rw [Real.rpow_le_rpow_left_iff h]; norm_cast
+  . replace : x^(q m:ℝ) ≤ x^(q n:ℝ) := by rw [Real.rpow_le_rpow_left_iff h]; norm_cast
     rw [abs_of_nonneg (by linarith)]
     calc
       _ = x^(q m:ℝ) * (x^(q n - q m:ℝ) - 1) := by
@@ -112,12 +111,10 @@ lemma ratPow_lim_uniq {x α:ℝ} (hx: x > 0) {q q': ℕ → ℚ}
   simp [hn, Real.dist_eq, abs_le', K, -Nat.cast_max] at h3 h4 ⊢
   specialize hr n (by simp [hn])
   simp [Real.Close, hn, abs_le'] at hr
-  rcases lt_trichotomy x 1 with h | h | h
+  rcases lt_trichotomy x 1 with h | rfl | h
   . sorry
-  . simp [h]; linarith
-  have h5 : x ^ (r n.toNat:ℝ) ≤ x^(K + 1:ℝ)⁻¹ := by
-    gcongr; linarith
-    simp_all [r]
+  . simp; linarith
+  have h5 : x ^ (r n.toNat:ℝ) ≤ x^(K + 1:ℝ)⁻¹ := by gcongr; linarith; simp_all [r]
   have h6 : (x^(K + 1:ℝ)⁻¹)⁻¹ ≤ x ^ (r n.toNat:ℝ) := by
     rw [←Real.rpow_neg (by linarith)]
     gcongr; linarith
@@ -154,7 +151,7 @@ lemma Real.rpow_of_rat_eq_ratPow {x:ℝ} (hx: x > 0) {q: ℚ} :
 theorem Real.ratPow_nonneg {x:ℝ} (hx: x > 0) (q:ℝ) : rpow x q ≥ 0 := by
   sorry
 
-/-- Proposition 6.7.3(b) / Exercise 6.7.1 -/
+/-- Proposition 6.7.3(b) -/
 theorem Real.ratPow_add {x:ℝ} (hx: x > 0) (q r:ℝ) : rpow x (q+r) = rpow x q * rpow x r := by
   obtain ⟨ q', hq' ⟩ := eq_lim_of_rat q
   obtain ⟨ r', hr' ⟩ := eq_lim_of_rat r
@@ -164,7 +161,6 @@ theorem Real.ratPow_add {x:ℝ} (hx: x > 0) (q r:ℝ) : rpow x (q+r) = rpow x q 
   . rcongr _ n; simp
   have h1 := ratPow_continuous hx hq'
   have h2 := ratPow_continuous hx hr'
-  have h3 := ratPow_continuous hx hq'r'
   rw [rpow_eq_lim_ratPow hx hq', rpow_eq_lim_ratPow hx hr',
       rpow_eq_lim_ratPow hx hq'r', ←(Sequence.lim_mul h1 h2).2,
       Sequence.mul_coe]

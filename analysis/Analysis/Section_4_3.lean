@@ -37,12 +37,10 @@ abbrev abs (x:ℚ) : ℚ := if x > 0 then x else (if x < 0 then -x else 0)
 theorem abs_of_pos {x: ℚ} (hx: 0 < x) : abs x = x := by simp [hx]
 
 /-- Definition 4.3.1 (Absolute value) -/
-theorem abs_of_neg {x: ℚ} (hx: x < 0) : abs x = -x := by
-  simp [abs, hx]
-  intros; linarith
+theorem abs_of_neg {x: ℚ} (hx: x < 0) : abs x = -x := by simp [abs, hx]; intros; linarith
 
 /-- Definition 4.3.1 (Absolute value) -/
-theorem abs_of_zero : abs 0 = 0 := by rfl
+theorem abs_of_zero : abs 0 = 0 := rfl
 
 /--
   (Not from textbook) This definition of absolute value agrees with the Mathlib one.
@@ -211,8 +209,7 @@ theorem zpow_neg (x:ℚ) (n:ℕ) : x^(-(n:ℤ)) = 1/(x^n) := by
 
 example (x:ℚ): x^(-3:ℤ) = 1/(x^3) := zpow_neg x 3
 
-example (x:ℚ): x^(-3:ℤ) = 1/(x*x*x) := by
-  convert zpow_neg x 3; ring
+example (x:ℚ): x^(-3:ℤ) = 1/(x*x*x) := by convert zpow_neg x 3; ring
 
 theorem pow_eq_zpow (x:ℚ) (n:ℕ): x^(n:ℤ) = x^n :=  zpow_natCast x n
 

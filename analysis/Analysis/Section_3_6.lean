@@ -93,7 +93,7 @@ theorem SetTheory.Set.card_erase {n:ℕ} (h: n ≥ 1) {X:Set} (hX: X.has_card n)
   rw [has_card_iff] at hX; obtain ⟨ f, hf ⟩ := hX
   set X' : Set := X \ {x.val}
   set ι : X' → X := fun ⟨y, hy⟩ ↦ ⟨ y, by aesop ⟩
-  have hι (x:X') : (ι x:Object) = x := by rfl
+  have hι (x:X') : (ι x:Object) = x := rfl
   obtain ⟨ m₀, hm₀, hm₀f ⟩ := (mem_Fin _ _).mp (f x).property
   set g : X' → Fin (n-1) := fun x' ↦
     if h' : f (ι x') < m₀ then
@@ -145,8 +145,8 @@ theorem SetTheory.Set.nat_infinite : infinite nat := by
   obtain ⟨ f, hf ⟩ := hn
   obtain ⟨ M, hM ⟩ := bounded_on_finite f
   replace hf := hf.surjective (M+1:ℕ); contrapose! hf
-  intro i; specialize hM i; contrapose! hM
-  apply_fun nat_equiv.symm at hM
+  peel hM with i hi; contrapose! hi
+  apply_fun nat_equiv.symm at hi
   simp_all
 
 open Classical in

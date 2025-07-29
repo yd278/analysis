@@ -58,24 +58,21 @@ theorem Series.partial_succ (s : Series) {N:ℤ} (h: N ≥ s.m-1) : s.partial (N
   rw [add_comm (s.partial N) _]
   have : N+1 ∉ Finset.Icc s.m N := by simp
   convert Finset.sum_insert this
-  refine (Finset.insert_Icc_right_eq_Icc_add_one ?_).symm
-  linarith
+  exact (Finset.insert_Icc_right_eq_Icc_add_one (by linarith)).symm
 
 theorem Series.partial_of_lt {s : Series} {N:ℤ} (h: N < s.m) : s.partial N = 0 := by
   unfold Series.partial
   rw [Finset.sum_eq_zero]
   intro n hn; simp at hn; linarith
 
-abbrev Series.convergesTo (s : Series) (L:ℝ) : Prop :=
-  Filter.Tendsto (s.partial) Filter.atTop (nhds L)
+abbrev Series.convergesTo (s : Series) (L:ℝ) : Prop := Filter.Tendsto (s.partial) Filter.atTop (nhds L)
 
 abbrev Series.converges (s : Series) : Prop := ∃ L, s.convergesTo L
 
 abbrev Series.diverges (s : Series) : Prop := ¬s.converges
 
 open Classical in
-noncomputable abbrev Series.sum (s : Series) : ℝ :=
-  if h : s.converges then h.choose else 0
+noncomputable abbrev Series.sum (s : Series) : ℝ := if h : s.converges then h.choose else 0
 
 theorem Series.converges_of_convergesTo {s : Series} {L:ℝ} (h: s.convergesTo L) :
     s.converges := by use L
@@ -89,8 +86,7 @@ theorem Series.convergesTo_uniq {s : Series} {L L':ℝ} (h: s.convergesTo L) (h'
     L = L' := tendsto_nhds_unique h h'
 
 theorem Series.convergesTo_sum {s : Series} (h: s.converges) : s.convergesTo s.sum := by
-  simp [sum, h]
-  exact (h.choose_spec)
+  simp [sum, h]; exact h.choose_spec
 
 /-- Example 7.2.4 -/
 noncomputable abbrev Series.example_7_2_4 := mk' (m := 1) (fun n ↦ (2:ℝ)^(-n:ℤ))
@@ -171,9 +167,7 @@ theorem Series.converges_of_alternating {m:ℤ} {a: { n // n ≥ m} → ℝ} (ha
         simp_rw [←claim0 hN, hN2]
         exact claim0 (show N+1 ≥ m by linarith)
       _ = S N + (-1)^(N+1) * a ⟨ N+1, by linarith ⟩ + (-1) * (-1)^(N+1) * a ⟨ N+2, by linarith ⟩ := by
-        congr
-        rw [←zpow_one_add₀ (by norm_num)]
-        congr 1; abel
+        congr; rw [←zpow_one_add₀ (by norm_num)]; congr 1; abel
       _ = _ := by ring
   have claim2 {N:ℤ} (hN: N ≥ m) (h': Odd N) : S (N+2) ≥ S N := by
     rw [claim1 hN]
@@ -195,8 +189,7 @@ theorem Series.converges_of_alternating {m:ℤ} {a: { n // n ≥ m} → ℝ} (ha
     rw [Metric.cauchySeq_iff']
     intro ε hε
     obtain ⟨ N, hN ⟩ := why5 (half_pos hε); use N
-    intro n hn
-    specialize hN n hn N (le_refl _)
+    intro n hn; specialize hN n hn N (le_refl _)
     rw [Real.dist_eq]; linarith
   exact cauchySeq_tendsto_of_complete this
 

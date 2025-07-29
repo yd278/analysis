@@ -32,8 +32,7 @@ theorem Rat.exists_between_rat {x y:ℚ} (h: x < y) : ∃ z:ℚ, x < z ∧ z < y
   use (x+y)/2
   have h' : x/2 < y/2 := by
     rw [show x/2 = x*(1/2) by ring, show y/2 = y*(1/2) by ring]
-    apply mul_lt_mul_of_pos_right h
-    positivity
+    apply mul_lt_mul_of_pos_right h; positivity
   constructor
   . replace h' := add_lt_add_right h' (x/2)
     convert h' using 1 <;> ring
@@ -98,8 +97,7 @@ theorem Rat.not_exist_sqrt_two : ¬ ∃ x:ℚ, x^2 = 2 := by
   classical
   set f : ℕ → ℕ := fun p ↦ if hPp: P p then (hiter p hPp).choose else 0
   have hf (p:ℕ) (hPp: P p) : (f p < p) ∧ P (f p) := by
-    simp [f, hPp]
-    exact (hiter p hPp).choose_spec
+    simp [f, hPp]; exact (hiter p hPp).choose_spec
   obtain ⟨ p, hP ⟩ := hP
   set a : ℕ → ℕ := Nat.rec p (fun n p ↦ f p)
   have ha (n:ℕ) : P (a n) := by
@@ -125,11 +123,10 @@ theorem Rat.exist_approx_sqrt_two {ε:ℚ} (hε:ε>0) : ∃ x ≥ (0:ℚ), x^2 <
   obtain ⟨ n, hn ⟩ := Nat.exists_gt (2/ε)
   rw [gt_iff_lt, div_lt_iff₀' (by positivity), mul_comm,
       ←sq_lt_sq₀ (by norm_num) (by positivity)] at hn
-  specialize this n; linarith
+  linarith [this n]
 
 /-- Example 4.4.6 -/
 example :
   let ε:ℚ := 1/1000
   let x:ℚ := 1414/1000
-  x^2 < 2 ∧ 2 < (x+ε)^2 := by
-  norm_num
+  x^2 < 2 ∧ 2 < (x+ε)^2 := by norm_num
