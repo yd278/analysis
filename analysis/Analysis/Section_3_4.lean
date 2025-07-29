@@ -25,17 +25,12 @@ variable [SetTheory] (X : Type) (S : _root_.Set X) (f : X → X)
 
 /-- Definition 3.4.1.  Interestingly, the definition does not require S to be a subset of X. -/
 abbrev SetTheory.Set.image {X Y:Set} (f:X → Y) (S: Set) : Set :=
-  X.replace (P := fun x y ↦ y = f x ∧ x.val ∈ S) (by
-    intro x y y' ⟨ hy, hy' ⟩
-    simp_all
-  )
+  X.replace (P := fun x y ↦ y = f x ∧ x.val ∈ S) (by simp_all)
 
 /-- Definition 3.4.1 -/
 theorem SetTheory.Set.mem_image {X Y:Set} (f:X → Y) (S: Set) (y:Object) :
     y ∈ image f S ↔ ∃ x:X, x.val ∈ S ∧ f x = y := by
-  rw [SetTheory.Set.replacement_axiom]
-  apply exists_congr; intro x
-  tauto
+  rw [SetTheory.Set.replacement_axiom]; peel 1; tauto
 
 /-- Alternate definition of image using axiom of specification -/
 theorem SetTheory.Set.image_eq_specify {X Y:Set} (f:X → Y) (S: Set) :
@@ -47,34 +42,26 @@ theorem SetTheory.Set.image_eq_specify {X Y:Set} (f:X → Y) (S: Set) :
 -/
 theorem SetTheory.Set.image_eq_image {X Y:Set} (f:X → Y) (S: Set):
     (image f S: _root_.Set Object) = Subtype.val '' (f '' {x | x.val ∈ S}) := by
-  ext
-  simp only [_root_.Set.mem_setOf, _root_.Set.mem_image, Set.mem_image]
+  ext; simp only [_root_.Set.mem_setOf, _root_.Set.mem_image, Set.mem_image]
   constructor
-  · rintro ⟨x, hx, rfl⟩
-    use f x, ⟨x, hx, rfl⟩
-  rintro ⟨_, ⟨x, hx, rfl⟩, rfl⟩
-  use x, hx
+  · rintro ⟨x, hx, rfl⟩; use f x, ⟨x, hx, rfl⟩
+  rintro ⟨_, ⟨x, hx, rfl⟩, rfl⟩; use x, hx
 
 theorem SetTheory.Set.image_in_codomain {X Y:Set} (f:X → Y) (S: Set) :
     image f S ⊆ Y := by
-  intro _ h
-  rw [mem_image] at h
-  obtain ⟨ x', hx', hf ⟩ := h
-  rw [← hf]
-  exact (f x').property
+  intro _ h; rw [mem_image] at h; obtain ⟨ x', hx', hf ⟩ := h
+  rw [← hf]; exact (f x').property
 
 /-- Example 3.4.2 -/
 abbrev f_3_4_2 : nat → nat := fun n ↦ (2*n:ℕ)
 
 theorem SetTheory.Set.image_f_3_4_2 : image f_3_4_2 {1,2,3} = {2,4,6} := by
   rw [ext_iff]
-  intros
-  simp only [mem_image, mem_triple, f_3_4_2]
+  intros; simp only [mem_image, mem_triple, f_3_4_2]
   constructor
   · rintro ⟨_, (h | h | h), rfl⟩
-    · left; simp_all
-    · right; left; simp_all
-    · right; right; simp_all
+    map_tacs [left; (right;left); (right;right)]
+    all_goals simp_all
   rintro (h | h | h)
   map_tacs [use 1; use 2; use 3]
   all_goals simp_all
@@ -122,17 +109,12 @@ theorem SetTheory.Set.preimage_eq {X Y:Set} (f:X → Y) (U: Set) :
   simp only [_root_.Set.mem_setOf, _root_.Set.mem_image]
   simp only [Set.mem_preimage', _root_.Set.mem_preimage]
   constructor
-  · rintro ⟨x', rfl, hy⟩
-    use x', hy
-  rintro ⟨x', hy, rfl⟩
-  simp only [_root_.Set.mem_setOf] at hy
-  use x'
+  · rintro ⟨x', rfl, hy⟩; use x', hy
+  rintro ⟨x', hy, rfl⟩; simp only [_root_.Set.mem_setOf] at hy; use x'
 
 theorem SetTheory.Set.preimage_in_domain {X Y:Set} (f:X → Y) (U: Set) :
     (preimage f U) ⊆ X := by
-  intro x h
-  rw [preimage] at h
-  exact specification_axiom h
+  intro x h; rw [preimage] at h; exact specification_axiom h
 
 /-- Example 3.4.6 -/
 theorem SetTheory.Set.preimage_f_3_4_2 : preimage f_3_4_2 {2,4,6} = {1,2,3} := by
@@ -154,14 +136,12 @@ theorem SetTheory.Set.image_preimage_f_3_4_2 :
 /-- Example 3.4.7 (using the Mathlib notion of preimage) -/
 example : (fun n:ℤ ↦ n^2) ⁻¹' {0,1,4} = {-2,-1,0,1,2} := by
   ext x
-  constructor
-  · rintro (h | h | h)
-    · aesop
-    · aesop
-    have : 2 ^ 2 = (4:ℤ) := by norm_num
-    rw [←h, sq_eq_sq_iff_eq_or_eq_neg] at this
-    aesop
-  intros; aesop
+  refine ⟨ ?_, by aesop ⟩
+  rintro (h | h | h)
+  · aesop
+  · aesop
+  have : 2 ^ 2 = (4:ℤ) := by norm_num
+  rw [←h, sq_eq_sq_iff_eq_or_eq_neg] at this; aesop
 
 example : (fun n:ℤ ↦ n^2) ⁻¹' ((fun n:ℤ ↦ n^2) '' {-1,0,1,2}) ≠ {-1,0,1,2} := by sorry
 
@@ -210,10 +190,8 @@ theorem SetTheory.Set.example_3_4_9 (F:Object) :
     have := (f ⟨7, by simp⟩).property
     by_cases (f ⟨4, by simp⟩).val = (0: Object) <;>
     by_cases (f ⟨7, by simp⟩).val = (0: Object)
-    · left; ext ⟨_, hx⟩; simp [mem_pair] at hx; aesop
-    · right; left; ext ⟨_, hx⟩; simp [mem_pair] at hx; aesop
-    · right; right; left; ext ⟨_, hx⟩; simp [mem_pair] at hx; aesop
-    · right; right; right; ext ⟨_, hx⟩; simp [mem_pair] at hx; aesop
+    map_tacs [left; (right;left); (right;right;left); (right;right;right)]
+    all_goals ext ⟨_, hx⟩; simp [mem_pair] at hx; aesop
   rintro (h | h | h | h)
   map_tacs [use f_3_4_9_a; use f_3_4_9_b; use f_3_4_9_c; use f_3_4_9_d]
   all_goals exact h.symm
@@ -230,8 +208,7 @@ theorem SetTheory.Set.mem_powerset {X:Set} (x:Object) :
 /-- Lemma 3.4.10 -/
 theorem SetTheory.Set.exists_powerset (X:Set) :
    ∃ (Z: Set), ∀ x, x ∈ Z ↔ ∃ Y:Set, x = Y ∧ Y ⊆ X := by
-  use powerset X
-  apply mem_powerset
+  use powerset X; apply mem_powerset
 
 /- As noted in errata, Exercise 3.4.6 (ii) is replaced by Exercise 3.5.11. -/
 
@@ -247,19 +224,17 @@ theorem SetTheory.Set.powerset_of_triple (a b c x:Object) :
     ∨ x = ({b,c}:Set)
     ∨ x = ({a,b,c}:Set) := by
   simp only [mem_powerset, subset_def, mem_triple]
-  constructor
-  · rintro ⟨Y, rfl, hY⟩
-    by_cases ha : a ∈ Y <;> by_cases hb : b ∈ Y <;> by_cases hc : c ∈ Y
-    on_goal 8 => left
-    on_goal 4 => right; left
-    on_goal 6 => right; right; left
-    on_goal 7 => right; right; right; left
-    on_goal 2 => right; right; right; right; left
-    on_goal 3 => right; right; right; right; right; left
-    on_goal 5 => right; right; right; right; right; right; left
-    on_goal 1 => right; right; right; right; right; right; right
-    all_goals congr; apply Set.ext; simp; grind
-  aesop
+  refine ⟨ ?_, by aesop ⟩
+  rintro ⟨Y, rfl, hY⟩; by_cases ha : a ∈ Y <;> by_cases hb : b ∈ Y <;> by_cases hc : c ∈ Y
+  on_goal 8 => left
+  on_goal 4 => right; left
+  on_goal 6 => right; right; left
+  on_goal 7 => right; right; right; left
+  on_goal 2 => right; right; right; right; left
+  on_goal 3 => right; right; right; right; right; left
+  on_goal 5 => right; right; right; right; right; right; left
+  on_goal 1 => right; right; right; right; right; right; right
+  all_goals congr; apply Set.ext; simp; grind
 
 /-- Axiom 3.12 (Union) -/
 theorem SetTheory.Set.union_axiom (A: Set) (x:Object) :
@@ -284,26 +259,19 @@ theorem SetTheory.Set.mem_iUnion {I:Set} (A: I → Set) (x:Object) :
     x ∈ iUnion I A ↔ ∃ α:I, x ∈ A α := by
   rw [union_axiom]
   constructor
-  . intro ⟨ _, _, hS ⟩
-    rw [replacement_axiom] at hS
-    obtain ⟨ α, hα ⟩ := hS
-    simp_all
-    use α.val, α.property
-  intro ⟨ α, hx ⟩
-  refine ⟨ A α, hx, ?_ ⟩
-  rw [replacement_axiom]
-  use α
+  . intro ⟨ _, _, hS ⟩; rw [replacement_axiom] at hS; obtain ⟨ α, hα ⟩ := hS
+    simp_all; use α.val, α.property
+  intro ⟨ α, hx ⟩; refine ⟨ A α, hx, ?_ ⟩
+  rw [replacement_axiom]; use α
 
 open Classical in
 noncomputable abbrev SetTheory.Set.index_example : ({1,2,3}:Set) → Set :=
   fun i ↦ if i.val = 1 then {2,3} else if i.val = 2 then {3,4} else {4,5}
 
 theorem SetTheory.Set.iUnion_example : iUnion {1,2,3} index_example = {2,3,4,5} := by
-  apply Set.ext;
-  intro x
+  apply Set.ext; intro x
   simp only [mem_iUnion, index_example, Insert.insert]
-  constructor
-  · aesop
+  refine ⟨ by aesop, ?_ ⟩
   simp only [mem_union, Subtype.exists]
   rintro (h | h | h)
   map_tacs [use 1; use 2; use 3]
@@ -313,8 +281,7 @@ theorem SetTheory.Set.iUnion_example : iUnion {1,2,3} index_example = {2,3,4,5} 
 -/
 theorem SetTheory.Set.iUnion_eq (I: Set) (A: I → Set) :
     (iUnion I A : _root_.Set Object) = ⋃ α, (A α: _root_.Set Object) := by
-  ext x
-  simp only [mem_iUnion, _root_.Set.mem_setOf_eq, _root_.Set.mem_iUnion]
+  ext; simp only [mem_iUnion, _root_.Set.mem_setOf_eq, _root_.Set.mem_iUnion]
 
 theorem SetTheory.Set.iUnion_of_empty (A: (∅:Set) → Set) : iUnion (∅:Set) A = ∅ := by sorry
 
@@ -389,8 +356,7 @@ theorem SetTheory.Set.preimage_image_of_inj {X Y:Set} (f:X → Y) :
 /-- Helper lemma for Exercise 3.4.7. -/
 @[simp]
 lemma SetTheory.Set.mem_powerset' {S S' : Set} : (S': Object) ∈ S.powerset ↔ S' ⊆ S := by
-  rw [mem_powerset]
-  simp
+  simp [mem_powerset]
 
 /-- Exercise 3.4.7 -/
 theorem SetTheory.Set.partial_functions {X Y:Set} :

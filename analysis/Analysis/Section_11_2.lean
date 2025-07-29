@@ -86,8 +86,7 @@ theorem PiecewiseConstantWith.congr {f g:ℝ → ℝ} {I: BoundedInterval} {P: P
   (h: ∀ x ∈ (I:Set ℝ), f x = g x) :
   PiecewiseConstantWith f P ↔ PiecewiseConstantWith g P := by
   simp [PiecewiseConstantWith]
-  apply forall_congr'; intro J
-  apply imp_congr_right; intro hJ
+  peel with J hJ
   apply ConstantOn.congr; intro x hx
   have := P.contains _ hJ; rw [subset_iff] at this
   solve_by_elim
@@ -230,8 +229,7 @@ theorem PiecewiseConstantOn.integ_def {f:ℝ → ℝ} {I: BoundedInterval} {P: P
 theorem PiecewiseConstantOn.integ_congr {f g:ℝ → ℝ} {I: BoundedInterval}
   (h: ∀ x ∈ (I:Set ℝ), f x = g x) : PiecewiseConstantOn.integ f I = PiecewiseConstantOn.integ g I := by
   by_cases hf : PiecewiseConstantOn f I
-  all_goals have hg := hf; rw [PiecewiseConstantOn.congr h] at hg
-  all_goals simp [integ, hf, hg]
+  <;> have hg := hf <;> rw [PiecewiseConstantOn.congr h] at hg <;> simp [integ, hf, hg]
   rw [PiecewiseConstantWith.integ_congr h, ←integ_def ?_, ←integ_def ?_]
   . exact hg.choose_spec
   rw [←PiecewiseConstantWith.congr h]

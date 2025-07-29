@@ -113,8 +113,7 @@ theorem SetTheory.Set.P_3_3_3c_existsUnique (x: (Nat \ {(0:Object)}: Set)) :
     ∃! y: Nat, P_3_3_3c x y := by
   -- Some technical unpacking here due to the subtle distinctions between the `Object` type,
   -- sets converted to subtypes of `Object`, and subsets of those sets.
-  obtain ⟨ x, hx ⟩ := x; simp at hx
-  obtain ⟨ hx1, hx2 ⟩ := hx
+  obtain ⟨ x, hx ⟩ := x; simp at hx; obtain ⟨ hx1, hx2 ⟩ := hx
   set n := ((⟨ x, hx1 ⟩:Nat):ℕ)
   have : x = (n:Nat) := by simp [n]
   simp [P_3_3_3c, this, SetTheory.Object.ofnat_eq'] at hx2 ⊢
@@ -176,8 +175,7 @@ example : ∃ f: NNReal → NNReal, ∀ x y, y = f x ↔ y^2 = x := by
 abbrev SetTheory.Set.P_3_3_5 : Nat → Nat → Prop := fun _x y ↦ y = 7
 
 theorem SetTheory.Set.P_3_3_5_existsUnique (x: Nat) : ∃! y: Nat, P_3_3_5 x y := by
-  apply ExistsUnique.intro 7
-  all_goals simp [P_3_3_5]
+  apply ExistsUnique.intro 7 <;> simp [P_3_3_5]
 
 abbrev SetTheory.Set.f_3_3_5 : Function Nat Nat := Function.mk P_3_3_5 P_3_3_5_existsUnique
 
@@ -264,7 +262,7 @@ abbrev Function.one_to_one {X Y: Set} (f: Function X Y) : Prop := ∀ x x': X, x
 theorem Function.one_to_one_iff {X Y: Set} (f: Function X Y) :
     f.one_to_one ↔ ∀ x x': X, f x = f x' → x = x' := by
   peel with x hx; tauto
-  
+
 /--
   Compatibility with Mathlib's `Function.Injective`.  You may wish to use the `unfold` tactic to
   understand Mathlib concepts such as `Function.Injective`.
@@ -292,14 +290,12 @@ example : ¬ Function.Injective (fun (n:ℤ) ↦ n^2) := by
   contradiction
 
 example : Function.Injective (fun (n:ℕ) ↦ n^2) := by
-  intro _ _ _
-  rwa [← pow_left_inj₀ (by norm_num) (by norm_num) (show 2 ≠ 0 by norm_num)]
+  intro _ _ _; rwa [← pow_left_inj₀ (by norm_num) (by norm_num) (show 2 ≠ 0 by norm_num)]
 
 /-- Remark 3.3.19 -/
 theorem SetTheory.Set.two_to_one {X Y: Set} {f: Function X Y} (h: ¬ f.one_to_one) :
     ∃ x x': X, x ≠ x' ∧ f x = f x' := by
-  rw [Function.one_to_one] at h
-  aesop
+  rw [Function.one_to_one] at h; aesop
 
 /-- Definition 3.3.20 (Onto functions) -/
 abbrev Function.onto {X Y: Set} (f: Function X Y) : Prop := ∀ y: Y, ∃ x: X, f x = y
@@ -376,14 +372,11 @@ theorem Function.bijective_incorrect_def :
   · intros
     apply existsUnique_of_exists_of_unique
     · use 0; rw [Function.eval]
-    intro _ _ h1 h2
-    rw [Function.eval] at *
-    aesop
+    intros; rw [Function.eval] at *; aesop
   rw [Function.bijective]
   suffices h : ¬ f.one_to_one by tauto
   rw [Function.one_to_one_iff]
-  push_neg; use 0, 1
-  simp [f]
+  push_neg; use 0, 1; simp [f]
 
 /--
   We cannot use the notation `f⁻¹` for the inverse because in Mathlib's `Inv` class, the inverse

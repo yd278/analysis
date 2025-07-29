@@ -392,24 +392,18 @@ theorem AbsConvergent'.iff_Summable {X:Type} (f:X → ℝ) : AbsConvergent' f �
     set s := Set.range fun A ↦ ∑ x ∈ A, |f x|
     have hnon : s.Nonempty := by simp [s]; use 0, ∅; simp
     have : (sSup s)-ε < sSup s := by linarith
-    rw [lt_csSup_iff h hnon] at this
-    simp [s] at this; obtain ⟨ S, hS ⟩ := this
+    simp [lt_csSup_iff h hnon,s] at this; obtain ⟨ S, hS ⟩ := this
     use S; intro T hT
     rw [abs_of_nonneg (by positivity)]
     have : ∑ x ∈ T, |f x| + ∑ x ∈ S, |f x| ≤ sSup s := by
       apply ConditionallyCompleteLattice.le_csSup _ _ h _
-      simp [s]
-      use T ∪ S; exact Finset.sum_union hT
+      simp [s]; use T ∪ S; exact Finset.sum_union hT
     linarith
-  intro h
-  specialize h 1 (by norm_num)
-  obtain ⟨ S, hS ⟩ := h
+  intro h; specialize h 1 (by norm_num); obtain ⟨ S, hS ⟩ := h
   rw [bddAbove_def]
-  use ∑ x ∈ S, |f x| + 1
-  simp; intro T
+  use ∑ x ∈ S, |f x| + 1; simp; intro T
   calc
-    _ = ∑ x ∈ (T ∩ S), |f x| + ∑ x ∈ (T \ S), |f x| :=
-      (Finset.sum_inter_add_sum_diff _ _ _).symm
+    _ = ∑ x ∈ (T ∩ S), |f x| + ∑ x ∈ (T \ S), |f x| := (Finset.sum_inter_add_sum_diff _ _ _).symm
     _ ≤ _ := by
       gcongr
       . exact Finset.inter_subset_right
@@ -418,8 +412,7 @@ theorem AbsConvergent'.iff_Summable {X:Type} (f:X → ℝ) : AbsConvergent' f �
 /-- Maybe suitable for porting to Mathlib?-/
 theorem Filter.Eventually.int_natCast_atTop (p: ℤ → Prop) :
   (∀ᶠ n in Filter.atTop, p n) ↔ ∀ᶠ n:ℕ in Filter.atTop, p ↑n := by
-  constructor
-  . exact Filter.Eventually.natCast_atTop
+  refine ⟨ Filter.Eventually.natCast_atTop, ?_ ⟩
   simp [Filter.eventually_atTop]
   intro N hN; use N; intro n hn
   lift n to ℕ using (by apply LE.le.trans (by positivity) hn)
@@ -442,7 +435,7 @@ theorem Sum'.eq_tsum {X:Type} (f:X → ℝ) (h: AbsConvergent' f) :
     obtain ⟨ g, hg ⟩ := hE.symm
     have : ((f ∘ Subtype.val) ∘ g:Series).absConverges := by
       apply AbsConvergent.comp hg
-      simp [←AbsConvergent'.of_countable hE]
+      simp [←AbsConvergent'.of_countable hE,]
       exact h.subtype E
     replace this := Sum.eq hg this
     convert Series.convergesTo_uniq this _
@@ -451,19 +444,16 @@ theorem Sum'.eq_tsum {X:Type} (f:X → ℝ) (h: AbsConvergent' f) :
         rw [←tsum_univ f]
         have hcompl : E = Set.univ \ {x | f x = 0 } := by aesop
         convert (tsum_setElem_eq_tsum_setElem_diff _ {x | f x = 0} (by aesop))
-      _ = _ := by
-        convert (Equiv.tsum_eq (Equiv.ofBijective _ hg) _).symm
+      _ = _ := (Equiv.tsum_eq (Equiv.ofBijective _ hg) _).symm
     rw [this]
     unfold Series.convergesTo
     rw [Filter.Tendsto.int_natCast_atTop]
     convert (Summable.tendsto_sum_tsum_nat ?_).comp (Filter.tendsto_add_atTop_nat 1) with n
     . ext N; simp [Series.partial, Nat.range_succ_eq_Icc_zero]
     rw [AbsConvergent'.iff_Summable] at h
-    convert h.comp_injective (i := Subtype.val ∘ g) _
-    exact Subtype.val_injective.comp hg.1
+    exact h.comp_injective (i := Subtype.val ∘ g) (Subtype.val_injective.comp hg.1)
   rw [of_finsupp (A := E.toFinite.toFinset) (by simp [E])]
-  apply (tsum_eq_sum _).symm
-  simp [E]
+  exact (tsum_eq_sum (by simp [E])).symm
 
 /-- Proposition 8.2.6 (a) (Absolutely convergent series laws) / Exercise 8.2.3 -/
 theorem Sum'.add {X:Type} {f g:X → ℝ} (hf: AbsConvergent' f) (hg: AbsConvergent' g) :
