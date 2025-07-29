@@ -176,7 +176,7 @@ theorem BoundedInterval.dist_le_length {I:BoundedInterval} {x y:ℝ} (hx: x ∈ 
   replace hx := subset_Icc I _ hx
   replace hy := subset_Icc I _ hy
   simp [mem_iff, abs_le'] at hx hy ⊢
-  left; exact ⟨ by linarith, by linarith ⟩
+  left; constructor <;> linarith
 
 abbrev BoundedInterval.joins (K I J: BoundedInterval) : Prop := (I:Set ℝ) ∩ (J:Set ℝ) = ∅
   ∧ (K:Set ℝ) = (I:Set ℝ) ∪ (J:Set ℝ) ∧ |K|ₗ = |I|ₗ + |J|ₗ

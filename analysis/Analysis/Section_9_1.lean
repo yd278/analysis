@@ -120,21 +120,16 @@ theorem closure_of_Ioo {a b:ℝ} (h:a < b) : closure (Set.Ioo a b) = Set.Icc a b
     rcases le_or_gt a x with h' | h'
     . specialize h h'
       use x-b, by linarith
-      intro y ⟨ h1, h2 ⟩
-      apply lt_of_lt_of_le _ (le_abs_self _)
-      linarith
+      intro y ⟨ h1, h2 ⟩; observe : x-y ≤ |x-y|; linarith
     use a-x, by linarith
-    intro y ⟨ h1, h2 ⟩
-    apply lt_of_lt_of_le _ (neg_le_abs _)
-    linarith
+    intro y ⟨ h1, h2 ⟩; observe : -(x-y) ≤ |x-y|; linarith
   intro ⟨ h1, h2 ⟩
   by_cases ha : x = a
   . sorry
   by_cases hb : x = b
   . sorry
   intro ε hε
-  use x, ⟨ by contrapose! ha; linarith, by contrapose! hb; linarith ⟩
-  simp [le_of_lt hε]
+  use x, ⟨ by contrapose! ha; linarith, by contrapose! hb; linarith ⟩; simp; order
 
 theorem closure_of_Ioc {a b:ℝ} (h:a < b) : closure (Set.Ioc a b) = Set.Icc a b := by
   sorry
@@ -176,22 +171,18 @@ theorem closure_of_Q :
 
 /-- Lemma 9.1.14 / Exercise 9.1.5 -/
 theorem limit_of_AdherentPt (X: Set ℝ) (x:ℝ) :
-  AdherentPt x X ↔ ∃ a : ℕ → ℝ, (∀ n, a n ∈ X) ∧ Filter.Tendsto a Filter.atTop (nhds x) := by
+  AdherentPt x X ↔ ∃ a : ℕ → ℝ, (∀ n, a n ∈ X) ∧ Filter.Tendsto a .atTop (nhds x) := by
     sorry
 
 theorem AdherentPt.of_mem {X: Set ℝ} {x: ℝ} (h: x ∈ X) : AdherentPt x X := by
-  rw [limit_of_AdherentPt]
-  use fun _ ↦ x
-  simp [h]
+  rw [limit_of_AdherentPt]; use fun _ ↦ x; simp [h]
 
 /-- Definition 9.1.15.  Here we use the Mathlib definition. -/
 theorem isClosed_def (X:Set ℝ): IsClosed X ↔ closure X = X :=
   closure_eq_iff_isClosed.symm
 
 theorem isClosed_def' (X:Set ℝ): IsClosed X ↔ ∀ x, AdherentPt x X → x ∈ X := by
-  simp [isClosed_def, subset_antisymm_iff, subset_closure]
-  simp [closure_def]
-  rfl
+  simp [isClosed_def, subset_antisymm_iff, subset_closure]; simp [closure_def]; rfl
 
 /-- Examples 9.1.16 -/
 theorem Icc_closed {a b:ℝ} : IsClosed (Set.Icc a b) := by sorry
@@ -231,17 +222,11 @@ theorem Q_not_closed : ¬ IsClosed ((fun n:ℚ ↦ (n:ℝ)) '' Set.univ) := by s
 
 /-- Corollary 9.1.17 -/
 theorem isClosed_iff_limits_mem (X: Set ℝ) :
-  IsClosed X ↔ ∀ (a:ℕ → ℝ) (L:ℝ), (∀ n, a n ∈ X) → Filter.Tendsto a Filter.atTop (nhds L) → L ∈ X := by
+  IsClosed X ↔ ∀ (a:ℕ → ℝ) (L:ℝ), (∀ n, a n ∈ X) → Filter.Tendsto a .atTop (nhds L) → L ∈ X := by
   rw [isClosed_def']
   constructor
-  . intro h _ L _ _
-    apply h L
-    rw [limit_of_AdherentPt]
-    solve_by_elim
-  intro _ _ hx
-  rw [limit_of_AdherentPt] at hx
-  obtain ⟨ _, _, _ ⟩ := hx
-  solve_by_elim
+  . intro h _ L _ _; apply h L; rw [limit_of_AdherentPt]; solve_by_elim
+  intro _ _ hx; rw [limit_of_AdherentPt] at hx; obtain ⟨ _, _, _ ⟩ := hx; solve_by_elim
 
 /-- Definition 9.1.18 (Limit points) -/
 abbrev LimitPt (x:ℝ) (X: Set ℝ) := AdherentPt x (X \ {x})
@@ -262,7 +247,7 @@ example : IsolatedPt 3 ((Set.Ioo 1 2) ∪ {3}) := by sorry
 
 /-- Remark 9.1.20 -/
 theorem LimitPt.iff_limit (x:ℝ) (X: Set ℝ) :
-  LimitPt x X ↔ ∃ a : ℕ → ℝ, (∀ n, a n ∈ X \ {x}) ∧ Filter.Tendsto a Filter.atTop (nhds x) := by
+  LimitPt x X ↔ ∃ a : ℕ → ℝ, (∀ n, a n ∈ X \ {x}) ∧ Filter.Tendsto a .atTop (nhds x) := by
   simp [limit_of_AdherentPt]
 
 
@@ -281,24 +266,20 @@ theorem mem_Icc_isLimit {a b x:ℝ} (h: a < b) (hx: x ∈ Set.Icc a b) : LimitPt
   -- This proof is written to follow the structure of the original text, with some slight simplifications.
   simp at hx
   rw [LimitPt.iff_limit]
-  rcases le_iff_lt_or_eq.1 hx.2 with hxb | hxb
+  obtain hxb | hxb := le_iff_lt_or_eq.1 hx.2
   . use (fun n:ℕ ↦ (x + 1/(n+(b-x)⁻¹)))
     constructor
     . intro n; simp
       have : b - x > 0 := by linarith
       have : (b - x)⁻¹ > 0 := by positivity
       have : n + (b - x)⁻¹ > 0 := by linarith
-      refine ⟨ ⟨ ?_, ?_⟩, by linarith ⟩
-      . have : (n+(b - x)⁻¹)⁻¹ > 0 := by positivity
-        linarith
+      have : (n+(b - x)⁻¹)⁻¹ > 0 := by positivity
       have : (b-x)⁻¹ ≤ n + (b - x)⁻¹ := by linarith
       have : (n + (b - x)⁻¹)⁻¹ ≤ b-x := by rwa [inv_le_comm₀ (by positivity) (by positivity)]
-      linarith
-    convert Filter.Tendsto.const_add x (c := 0) _
-    . simp
+      refine ⟨ ⟨ ?_, ?_⟩, ?_ ⟩ <;> linarith
+    convert Filter.Tendsto.const_add x (c := 0) _; simp
     convert Filter.Tendsto.comp (f := fun (k:ℕ) ↦ (k:ℝ)) (g := fun k ↦ 1/(k+(b-x)⁻¹)) _ tendsto_natCast_atTop_atTop
-    convert tendsto_mul_add_inv_atTop_nhds_zero 1 (b - x)⁻¹ (by norm_num) using 2 with n
-    simp
+    convert tendsto_mul_add_inv_atTop_nhds_zero 1 (b - x)⁻¹ (by norm_num) using 2 with n; simp
   sorry
 
 
@@ -333,21 +314,11 @@ theorem mem_R_isLimit {x:ℝ} : LimitPt x (Set.univ) := by
 theorem isBounded_def (X: Set ℝ) : Bornology.IsBounded X ↔ ∃ M > 0, X ⊆ Set.Icc (-M) M := by
   simp [isBounded_iff_forall_norm_le]
   constructor
-  . intro ⟨ C, hC ⟩
-    use (max C 1)
-    constructor
-    . apply lt_of_lt_of_le _ (le_max_right _ _)
-      norm_num
-    intro x hx; specialize hC x hx
-    rw [abs_le'] at hC
-    simp [hC.1, hC.2]
-    have := le_max_left C 1
-    linarith
-  intro ⟨ M, hM, hXM ⟩; use M; intro x hx
-  replace hXM := hXM hx
-  simp [abs_le'] at hXM ⊢
-  simp [hXM]
-  linarith [hXM.1]
+  . intro ⟨ C, hC ⟩; use (max C 1)
+    refine ⟨ lt_of_lt_of_le (by norm_num) (le_max_right _ _), ?_ ⟩
+    peel hC with x hx hC; rw [abs_le'] at hC; simp [hC.1, hC.2]; linarith [le_max_left C 1]
+  intro ⟨ M, hM, hXM ⟩; use M; intro x hx; specialize hXM hx
+  simp [abs_le'] at hXM ⊢; simp [hXM]; linarith [hXM.1]
 
 /-- Example 9.1.23 -/
 theorem Icc_bounded (a b:ℝ) : Bornology.IsBounded (Set.Icc a b) := by sorry
@@ -371,7 +342,7 @@ theorem R_unbounded (a: ℝ) : ¬ Bornology.IsBounded (Set.univ: Set ℝ) := by 
 theorem Heine_Borel (X: Set ℝ) :
   IsClosed X ∧ Bornology.IsBounded X ↔ ∀ a : ℕ → ℝ, (∀ n, a n ∈ X) →
   (∃ n : ℕ → ℕ, StrictMono n
-    ∧ ∃ L ∈ X, Filter.Tendsto (fun j ↦ a (n j)) Filter.atTop (nhds L)) := by
+    ∧ ∃ L ∈ X, Filter.Tendsto (fun j ↦ a (n j)) .atTop (nhds L)) := by
   sorry
 
 /-- Exercise 9.1.4 -/

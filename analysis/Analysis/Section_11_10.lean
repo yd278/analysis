@@ -112,20 +112,18 @@ theorem RS_integ_eq_integ_of_mul_deriv
     rw [←mem_closure_iff_clusterPt]
     simp at hx
     rcases le_iff_lt_or_eq.mp hx.1 with h | h
-    . apply (closure_mono (s := Set.Ico a x)) _
+    . apply (closure_mono (s := .Ico a x)) _
       . simp [closure_Ico (show a ≠ x by linarith), hx.1]
-      intro y hy; simp at hy ⊢
-      simp [hy]; exact ⟨ by linarith, by linarith ⟩
-    apply (closure_mono (s := Set.Ioc x b)) _
+      intro y hy; simp at hy ⊢; simp [hy]; constructor <;> linarith
+    apply (closure_mono (s := .Ioc x b)) _
     . simp [closure_Ioc (show x ≠ b by linarith), hx.2]
-    intro y hy; simp at hy ⊢
-    simp [hy]; exact ⟨ by linarith, by linarith ⟩
+    intro y hy; simp at hy ⊢; simp [hy]; constructor <;> linarith
   have h0 := hf.2
   have h1 : RS_integ f (Icc a b) α ≤ lower_integral (f * α') (Icc a b) := by
     apply le_of_forall_sub_le
     intro ε hε
     obtain ⟨ h, hhminor, hhconst, hh ⟩ := gt_of_lt_lower_RS_integral hf.1 hα (show RS_integ f (Icc a b) α - ε < lower_RS_integral f (Icc a b) α by linarith)
-    have := PiecewiseConstantOn.RS_integ_eq_integ_of_mul_deriv hα_diff hαcont hα' hhconst
+    have := hhconst.RS_integ_eq_integ_of_mul_deriv hα_diff hαcont hα'
     rw [←this.2] at hh
     replace : lower_integral (h * α') (Icc a b) = integ (h * α') (Icc a b) := this.1.2
     have why : lower_integral (h * α') (Icc a b) ≤ lower_integral (f * α') (Icc a b) := by
@@ -135,7 +133,7 @@ theorem RS_integ_eq_integ_of_mul_deriv
     apply le_of_forall_pos_le_add
     intro ε hε
     obtain ⟨ h, hhmajor, hhconst, hh ⟩ := lt_of_gt_upper_RS_integral hf.1 hα (show upper_RS_integral f (Icc a b) α + ε > RS_integ f (Icc a b) α by linarith)
-    have := PiecewiseConstantOn.RS_integ_eq_integ_of_mul_deriv hα_diff hαcont hα' hhconst
+    have := hhconst.RS_integ_eq_integ_of_mul_deriv hα_diff hαcont hα'
     rw [←this.2] at hh
     have why : upper_integral (f * α') (Icc a b) ≤ upper_integral (h * α') (Icc a b) := by
       sorry
@@ -156,7 +154,7 @@ theorem PiecewiseConstantOn.RS_integ_of_comp {a b:ℝ} (hab: a < b) {φ f:ℝ �
     intro J hJ
     simp [P, Partition.remove_empty, Partition.instMembership] at hJ
     exact hf J hJ.1
-  rw [PiecewiseConstantOn.integ_def hf]
+  rw [integ_def hf]
   unfold PiecewiseConstantWith.integ
   set φ_inv : P.intervals → Set ℝ := fun J ↦ { x:ℝ | x ∈ Set.Icc a b ∧ φ x ∈ (J:Set ℝ) }
   have hφ_inv_bounded (J: P.intervals) : Bornology.IsBounded (φ_inv J) := by
@@ -178,7 +176,7 @@ theorem PiecewiseConstantOn.RS_integ_of_comp {a b:ℝ} (hab: a < b) {φ f:ℝ �
     sorry
   have hfφ_piecewise' : PiecewiseConstantOn (f ∘ φ) (Icc a b) := ⟨ Q, hfφ_piecewise ⟩
   refine ⟨ hfφ_piecewise' , ?_ ⟩
-  rw [PiecewiseConstantOn.RS_integ_def hfφ_piecewise _]
+  rw [RS_integ_def hfφ_piecewise _]
   unfold PiecewiseConstantWith.RS_integ
   rw [Finset.sum_image _, ←Finset.sum_coe_sort (s := P.intervals)]
   . apply Finset.sum_congr rfl

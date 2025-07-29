@@ -43,19 +43,19 @@ theorem BddBelow.unbounded_iff' (X:Set ℝ) : ¬ BddBelow X ↔ sInf ((fun x:ℝ
   aesop
 
 /-- Definition 9.10.13 (Limit at infinity) -/
-theorem Filter.Tendsto.AtTop.iff {X: Set ℝ} (f:ℝ → ℝ) (L:ℝ) : Filter.Tendsto f (Filter.atTop ⊓ Filter.principal X) (nhds L) ↔ ∀ ε > (0:ℝ), ∃ M, ∀ x ∈ X ∩ Set.Ici M, |f x - L| < ε := by
+theorem Filter.Tendsto.AtTop.iff {X: Set ℝ} (f:ℝ → ℝ) (L:ℝ) : Filter.Tendsto f (.atTop ⊓ Filter.principal X) (nhds L) ↔ ∀ ε > (0:ℝ), ∃ M, ∀ x ∈ X ∩ Set.Ici M, |f x - L| < ε := by
   rw [LinearOrderedAddCommGroup.tendsto_nhds]
   peel with ε hε
   simp [Filter.eventually_inf_principal, Filter.eventually_atTop]
   aesop
 
 /-- Exercise 9.10.4 -/
-example : Filter.Tendsto (fun x:ℝ ↦ 1/x) (Filter.atTop ⊓ Filter.principal (Set.Ioi 0)) (nhds 0) := by
+example : Filter.Tendsto (fun x:ℝ ↦ 1/x) (.atTop ⊓ Filter.principal (Set.Ioi 0)) (nhds 0) := by
   sorry
 
 open Classical in
 /-- Exercise 9.10.1 -/
-example (a:ℕ → ℝ) (L:ℝ) : Filter.Tendsto (fun x:ℝ ↦ (if h:(∃ n:ℕ, x = n) then a h.choose else 0)) (Filter.atTop ⊓ Filter.principal ((fun n:ℕ ↦ (n:ℝ)) '' Set.univ)) (nhds L) ↔ Filter.Tendsto a Filter.atTop (nhds L) := by
+example (a:ℕ → ℝ) (L:ℝ) : Filter.Tendsto (fun x:ℝ ↦ (if h:(∃ n:ℕ, x = n) then a h.choose else 0)) (.atTop ⊓ Filter.principal ((fun n:ℕ ↦ (n:ℝ)) '' Set.univ)) (nhds L) ↔ Filter.Tendsto a .atTop (nhds L) := by
   sorry
 
 end Chapter9

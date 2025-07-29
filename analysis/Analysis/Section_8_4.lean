@@ -52,15 +52,15 @@ def CartesianProduct.equiv {I U: Type} (X : I → Set U) :
 def Function.equiv {I X:Type} : (∀ _:I, X) ≃ (I → X) := {
   toFun f := f
   invFun f := f
-  left_inv f := by rfl
-  right_inv f := by rfl
+  left_inv f := rfl
+  right_inv f := rfl
 }
 
 def product_zero_equiv {X: Fin 0 → Type} : (∀ i:Fin 0, X i) ≃ PUnit := {
   toFun f := PUnit.unit
   invFun x i := nomatch i
   left_inv f := by aesop
-  right_inv f := by rfl
+  right_inv f := rfl
 }
 
 def product_one_equiv {X: Fin 1 → Type} : (∀ i:Fin 1, X i) ≃ X 0 := {
@@ -91,15 +91,14 @@ def product_three_equiv {X: Fin 3 → Type} : (∀ i:Fin 3, X i) ≃ (X 0 × X 1
 
 /-- Axiom 8.1 (Choice) -/
 theorem axiom_of_choice {I: Type} {X: I → Type} (h : ∀ i, Nonempty (X i)) :
-  Nonempty (∀ i, X i) := by
-  use fun i ↦ (h i).some
+  Nonempty (∀ i, X i) := by use fun i ↦ (h i).some
 
 theorem axiom_of_countable_choice {I: Type} {X: I → Type} [Countable I] (h : ∀ i, Nonempty (X i)) :
   Nonempty (∀ i, X i) := axiom_of_choice h
 
 /-- Lemma 8.4.5 -/
 theorem exist_tendsTo_sup {E: Set ℝ} (hnon: E.Nonempty) (hbound: BddAbove E) :
-  ∃ a : ℕ → ℝ, (∀ n, a n ∈ E) ∧ Filter.Tendsto a Filter.atTop (nhds (sSup E)) := by
+  ∃ a : ℕ → ℝ, (∀ n, a n ∈ E) ∧ Filter.Tendsto a .atTop (nhds (sSup E)) := by
   -- This proof is written to follow the structure of the original text.
   set X : ℕ → Set ℝ := fun n ↦ { x ∈ E | sSup E - 1 / (n+1:ℝ) ≤ x ∧ x ≤ sSup E }
   have hX : ∀ n, Nonempty (X n) := by
@@ -113,15 +112,14 @@ theorem exist_tendsTo_sup {E: Set ℝ} (hnon: E.Nonempty) (hbound: BddAbove E) :
   constructor
   . intro n; have := (a n).property; unfold X at this; simp_all
   apply Filter.Tendsto.squeeze (g := fun n:ℕ ↦ sSup E - 1/(n+1:ℝ)) (h := fun n:ℕ ↦ sSup E)
-  . convert Filter.Tendsto.sub (a := sSup E) (b := 0) tendsto_const_nhds _
-    . simp
+  . convert Filter.Tendsto.sub (a := sSup E) (b := 0) tendsto_const_nhds _; simp
     exact tendsto_one_div_add_atTop_nhds_zero_nat
   . exact tendsto_const_nhds
   all_goals intro n; have := (a n).property; unfold X at this; simp_all
 
 /-- Remark 8.4.6.  This special case of Lemma 8.4.5 avoids (countable) choice. -/
 theorem exist_tendsTo_sup_of_closed {E: Set ℝ} (hnon: E.Nonempty) (hbound: BddAbove E) (hclosed: IsClosed E) :
-  ∃ a : ℕ → ℝ, (∀ n, a n ∈ E) ∧ Filter.Tendsto a Filter.atTop (nhds (sSup E)) := by
+  ∃ a : ℕ → ℝ, (∀ n, a n ∈ E) ∧ Filter.Tendsto a .atTop (nhds (sSup E)) := by
   set X : ℕ → Set ℝ := fun n ↦ { x ∈ E | sSup E - 1 / (n+1:ℝ) ≤ x ∧ x ≤ sSup E }
   have hX : ∀ n, Nonempty (X n) := by
     intro n
@@ -139,8 +137,7 @@ theorem exist_tendsTo_sup_of_closed {E: Set ℝ} (hnon: E.Nonempty) (hbound: Bdd
   constructor
   . simp [X] at ha; aesop
   apply Filter.Tendsto.squeeze (g := fun n:ℕ ↦ sSup E - 1/(n+1:ℝ)) (h := fun n:ℕ ↦ sSup E)
-  . convert Filter.Tendsto.sub (a := sSup E) (b := 0) tendsto_const_nhds _
-    . simp
+  . convert Filter.Tendsto.sub (a := sSup E) (b := 0) tendsto_const_nhds _;  simp
     exact tendsto_one_div_add_atTop_nhds_zero_nat
   . exact tendsto_const_nhds
   all_goals intro n; specialize ha n; simp [X] at ha; simp_all
@@ -154,8 +151,7 @@ theorem exists_function {X Y : Type} {P : X → Y → Prop} (h: ∀ x, ∃ y, P 
 from `exists_function`, avoiding previous results that relied more explicitly
 on the axiom of choice. -/
 theorem axiom_of_choice_from_exists_function {I: Type} {X: I → Type} (h : ∀ i, Nonempty (X i)) :
-  Nonempty (∀ i, X i) := by
-  use fun i ↦ (h i).some
+  Nonempty (∀ i, X i) := by use fun i ↦ (h i).some
 
 /-- Exercise 8.4.2 -/
 theorem exists_set_singleton_intersect {I U:Type} {X: I → Set U} (h: Set.PairwiseDisjoint Set.univ X)
@@ -168,12 +164,12 @@ from `exists_set_singleton_intersect`, avoiding previous results that relied mor
 on the axiom of choice. -/
 theorem axiom_of_choice_from_exists_set_singleton_intersect {I: Type} {X: I → Type} (h : ∀ i, Nonempty (X i)) :
   Nonempty (∀ i, X i) := by
-  use fun i ↦ (h i).some
+  sorry
 
 /-- Exercise 8.4.3 -/
 theorem Function.Injective.inv_surjective {A B:Type} {g: B → A} (hg: Function.Surjective g) :
   ∃ f : A → B, Function.Injective f ∧ Function.RightInverse f g := by
-    sorry
+  sorry
 
 /-- Exercise 8.4.3.  The spirit of the question here is to establish this result directly
 from `Function.Injective.inv_surjective`, avoiding previous results that relied more explicitly

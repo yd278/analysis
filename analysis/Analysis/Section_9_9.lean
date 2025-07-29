@@ -97,7 +97,7 @@ theorem Chapter6.Sequence.equiv_iff_rat (a b: Sequence) :
 
 /-- Lemma 9.9.7 / Exercise 9.9.1 -/
 theorem Chapter6.Sequence.equiv_iff (a b: Sequence) :
-  Sequence.equiv a b ↔ Filter.Tendsto (fun n ↦ a n - b n) Filter.atTop (nhds 0) := by
+  Sequence.equiv a b ↔ Filter.Tendsto (fun n ↦ a n - b n) .atTop (nhds 0) := by
   sorry
 
 
@@ -113,7 +113,7 @@ theorem UniformContinuousOn.iff_preserves_equiv {X:Set ℝ} (f: ℝ → ℝ) :
   sorry
 
 /-- Remark 9.9.9 -/
-theorem Chapter6.Sequence.equiv_const (x₀: ℝ) (x:ℕ → ℝ) : Filter.Tendsto x Filter.atTop (nhds x₀) ↔
+theorem Chapter6.Sequence.equiv_const (x₀: ℝ) (x:ℕ → ℝ) : Filter.Tendsto x .atTop (nhds x₀) ↔
   Sequence.equiv (x:Sequence) (fun n:ℕ ↦ x₀:Sequence) := by
   sorry
 
@@ -206,17 +206,17 @@ theorem UniformContinuousOn.of_continuousOn {a b:ℝ} {f:ℝ → ℝ}
   replace hcont := ContinuousOn.continuousWithinAt hcont hL
   have hconv' := Filter.Tendsto.comp_of_continuous hL hcont (fun k ↦ hxmem (j k)) hconv
   rw [Sequence.equiv_iff] at hequiv
-  replace hequiv : Filter.Tendsto (fun k ↦ x (n (j k)) - y (n (j k))) Filter.atTop (nhds 0) := by
-    have hj' : Filter.Tendsto j Filter.atTop Filter.atTop := StrictMono.tendsto_atTop hj
-    have hn' : Filter.Tendsto n Filter.atTop Filter.atTop := StrictMono.tendsto_atTop hmono
-    have hcoe : Filter.Tendsto (fun n:ℕ ↦ (n:ℤ)) Filter.atTop Filter.atTop := tendsto_natCast_atTop_atTop
+  replace hequiv : Filter.Tendsto (fun k ↦ x (n (j k)) - y (n (j k))) .atTop (nhds 0) := by
+    have hj' : Filter.Tendsto j .atTop .atTop := StrictMono.tendsto_atTop hj
+    have hn' : Filter.Tendsto n .atTop .atTop := StrictMono.tendsto_atTop hmono
+    have hcoe : Filter.Tendsto (fun n:ℕ ↦ (n:ℤ)) .atTop .atTop := tendsto_natCast_atTop_atTop
     exact hequiv.comp (hcoe.comp (hn'.comp hj'))
-  have hyconv : Filter.Tendsto (fun k ↦ y (n (j k))) Filter.atTop (nhds L) := by
+  have hyconv : Filter.Tendsto (fun k ↦ y (n (j k))) .atTop (nhds L) := by
     convert Filter.Tendsto.sub hconv hequiv with k
     . abel
     simp
   replace hyconv := Filter.Tendsto.comp_of_continuous hL hcont (fun k ↦ hymem (j k)) hyconv
-  have : Filter.Tendsto (fun k ↦ f (x (n (j k))) - f (y (n (j k)))) Filter.atTop (nhds 0) := by
+  have : Filter.Tendsto (fun k ↦ f (x (n (j k))) - f (y (n (j k)))) .atTop (nhds 0) := by
     convert Filter.Tendsto.sub hconv' hyconv
     simp
   sorry

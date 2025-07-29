@@ -179,7 +179,7 @@ theorem integ_of_bdd_cts {I: BoundedInterval} {f:ℝ → ℝ} (hbound: BddOn f I
     have hf' : IntegrableOn f I' := by
       apply integ_of_cts (ContinuousOn.mono hf _)
       apply subset_trans _ ((subset_iff _ _).mp (Ioo_subset I))
-      intro x; simp; intros; exact ⟨ by linarith, by linarith ⟩
+      intro x; simp; intros; constructor <;> linarith
     obtain ⟨ h, hhmin, hhconst, hhint ⟩ := lt_of_gt_upper_integral hf'.1 (show upper_integral f I' < integ f I' + ε by linarith [hf'.2])
     classical
     set h' : ℝ → ℝ := fun x ↦ if x ∈ I' then h x else M

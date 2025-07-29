@@ -107,7 +107,7 @@ theorem IsMaxOn.of_continuous_on_compact {a b:ℝ} (h:a < b) {f:ℝ → ℝ} (hf
   obtain ⟨ n, hn, ⟨ xmax, hmax, hconv⟩ ⟩ := (Heine_Borel (Set.Icc a b)).mp ⟨ hclosed, hbounded⟩ x hx
   use xmax, hmax
   have hn_lower (j:ℕ) : n j ≥ j := why_7_6_3 hn j
-  have hconv' : Filter.Tendsto (fun j ↦ f (x (n j))) Filter.atTop (nhds (f xmax)) :=
+  have hconv' : Filter.Tendsto (fun j ↦ f (x (n j))) .atTop (nhds (f xmax)) :=
     Filter.Tendsto.comp_of_continuous hmax (hf.continuousWithinAt hmax) (fun j ↦ hx (n j)) hconv
   have hlower (j:ℕ) : m - 1/(j+1:ℝ) < f (x (n j)) := by
     apply lt_of_le_of_lt _ (hfx (n j))
@@ -116,7 +116,7 @@ theorem IsMaxOn.of_continuous_on_compact {a b:ℝ} (h:a < b) {f:ℝ → ℝ} (hf
   have hupper (j:ℕ) : f (x (n j)) ≤ m := by
     apply claim1
     simp only [Set.mem_image, E]; use x (n j), hx (n j)
-  have hconvm : Filter.Tendsto (fun j ↦ f (x (n j))) Filter.atTop (nhds m) := by
+  have hconvm : Filter.Tendsto (fun j ↦ f (x (n j))) .atTop (nhds m) := by
     apply Filter.Tendsto.squeeze (g := fun j ↦ m - 1/(j+1:ℝ)) (h := fun j ↦ m) (f := fun j ↦ f (x (n j)))
     . convert Filter.Tendsto.const_sub m (c:=0) _
       . simp
