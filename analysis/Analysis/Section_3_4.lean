@@ -397,6 +397,14 @@ lemma SetTheory.Set.mem_powerset' {S S' : Set} : (S': Object) ∈ S.powerset ↔
   rw [mem_powerset]
   simp
 
+/-- Another helper lemma for Exercise 3.4.7. -/
+@[simp]
+lemma SetTheory.Set.mem_union_powerset_replace_iff {S : Set} {P : S.powerset → Object → Prop} {hP : _} {x : Object} :
+    x ∈ union (S.powerset.replace (P := P) hP) ↔
+    ∃ (S' : S.powerset) (U : Set), P S' U ∧ x ∈ U := by
+  simp only [union_axiom, replacement_axiom]
+  tauto
+
 /-- Exercise 3.4.7 -/
 theorem SetTheory.Set.partial_functions {X Y:Set} :
     ∃ Z:Set, ∀ F:Object, F ∈ Z ↔ ∃ X' Y':Set, X' ⊆ X ∧ Y' ⊆ Y ∧ ∃ f: X' → Y', F = f := by
