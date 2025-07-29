@@ -168,7 +168,7 @@ lemma Nat.uniq_succ_eq (a:Nat) (ha: a.IsPos) : ∃! b, b++ = a := by
   sorry
 
 /-- Definition 2.2.11 (Ordering of the natural numbers).
-    This defines the `≤` operation on the natural numbers. -/
+    This defines the `≤` notation on the natural numbers. -/
 instance Nat.instLE : LE Nat where
   le n m := ∃ a:Nat, m = n + a
 
@@ -329,10 +329,9 @@ def Nat.decLe : (a b : Nat) → Decidable (a ≤ b)
 
 instance Nat.decidableRel : DecidableRel (· ≤ · : Nat → Nat → Prop) := Nat.decLe
 
-
 /-- (Not from textbook) Nat has the structure of a linear ordering. This allows for tactics
 such as `order` and `calc` to be applicable to the Chapter 2 natural numbers. -/
-instance Nat.linearOrder : LinearOrder Nat where
+instance Nat.instLinearOrder : LinearOrder Nat where
   le_refl := ge_refl
   le_trans a b c hab hbc := ge_trans hbc hab
   lt_iff_le_not_le := by
