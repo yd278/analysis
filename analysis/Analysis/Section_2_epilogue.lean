@@ -32,7 +32,7 @@ lemma Chapter2.Nat.zero_toNat : (0 : Chapter2.Nat).toNat = 0 := rfl
 
 lemma Chapter2.Nat.succ_toNat (n : Chapter2.Nat) : (n++).toNat = n.toNat + 1 := rfl
 
-/-- The conversion is a bijection. Here we use the existing capability (from Section 2.1 to map
+/-- The conversion is a bijection. Here we use the existing capability (from Section 2.1) to map
 the Mathlib natural numbers to the Chapter 2 natural numbers. -/
 abbrev Chapter2.Nat.equivNat : Chapter2.Nat ≃ ℕ where
   toFun := toNat
