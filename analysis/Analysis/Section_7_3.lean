@@ -35,36 +35,32 @@ theorem Series.converges_of_nonneg_iff {s: Series} (h: s.nonneg) : s.converges �
       rw [Chapter6.Sequence.converges_iff_Tendsto']
       convert hconv
     obtain ⟨ M, hpos, hM ⟩ := this
-    use M; intro N; specialize hM N
+    use M; peel hM with N hM
     exact (le_abs_self _).trans hM
   intro hbound
   rcases tendsto_of_monotone (partial_of_nonneg h) with hinfin | hfin
   . obtain ⟨ M, hM ⟩ := hbound
     obtain ⟨ N, hN ⟩ := Filter.Eventually.exists (Filter.Tendsto.eventually_gt_atTop hinfin M)
-    specialize hM N
-    linarith
+    linarith [hM N]
   exact hfin
 
 theorem Series.sum_of_nonneg_lt {s: Series} (h: s.nonneg) {M:ℝ} (hM: ∀ N, s.partial N ≤ M) : s.sum ≤ M := by
   have : ∃ M, ∀ N, s.partial N ≤ M  := by use M
-  rw [←converges_of_nonneg_iff h] at this
-  simp [sum, this]
+  rw [←converges_of_nonneg_iff h] at this; simp [sum, this]
   have hconv := this.choose_spec
   set L := this.choose
-  simp [convergesTo] at hconv
-  exact le_of_tendsto' hconv hM
+  simp [convergesTo] at hconv; exact le_of_tendsto' hconv hM
 
 theorem Series.partial_le_sum_of_nonneg {s: Series} (hnon: s.nonneg) (hconv: s.converges) (N : ℤ) :
   s.partial N ≤ s.sum := by
   apply Monotone.ge_of_tendsto (partial_of_nonneg hnon)
-  simp [sum, hconv]
-  convert hconv.choose_spec
+  simp [sum, hconv]; exact hconv.choose_spec
 
 /-- Some useful nonnegativity lemmas for later applications. -/
 theorem Series.partial_nonneg {s: Series} (hnon: s.nonneg) (N : ℤ) : 0 ≤ s.partial N := by
   simp [Series.partial]
   apply Finset.sum_nonneg
-  intro n _; exact hnon _
+  intros; exact hnon _
 
 theorem Series.sum_of_nonneg {s:Series} (hnon: s.nonneg) : 0 ≤ s.sum := by
   by_cases h: s.converges <;> simp [Series.sum, h]
@@ -97,8 +93,7 @@ theorem Series.cauchy_criterion {s:Series} (hm: s.m = 1) (hs:s.nonneg) (hmono: �
     intro n hn m hm
     obtain ⟨ k, rfl ⟩ := Int.le.dest hm
     clear hm
-    induction' k with k hk
-    . simp
+    induction' k with k hk; simp
     convert (hmono (n+k) (by linarith)).trans hk using 2
     simp; abel
   have htm : t.m = 0 := by simp [t]
@@ -113,7 +108,7 @@ theorem Series.cauchy_criterion {s:Series} (hm: s.m = 1) (hs:s.nonneg) (hmono: �
     have h2K' : 1 ≤ 2^(K+1) := Nat.one_le_two_pow
     obtain ⟨ hK1, hK2 ⟩ := hK
     have claim1 : T (K + 1) = T K + 2^(K+1) * s.seq (2^(K+1)) := by
-      convert t.partial_succ ?_
+      convert t.partial_succ _
       linarith
     have claim2a : S (2^(K+1)) ≥ S (2^K) + 2^K * s.seq (2^(K+1)) := calc
       _ = S (2^K) + ∑ n ∈ Finset.Ioc (2^K) (2^(K+1)), s.seq n := by
@@ -162,16 +157,14 @@ theorem Series.cauchy_criterion {s:Series} (hm: s.m = 1) (hs:s.nonneg) (hmono: �
     gcongr; solve_by_elim
   intro ⟨ M, hM ⟩; use M; intro K'
   rcases lt_or_ge K' 1 with hK' | hK'
-  . simp [S, Series.partial, hm, hK']
-    convert hM (-1)
+  . simp [S, Series.partial, hm, hK']; convert hM (-1)
   set K := (K'-1).toNat
   have hK : K' = K + 1 := by rw [Int.toNat_of_nonneg (by linarith)]; abel
   calc
     _ ≤ S (2 ^ (K+1) - 1) := by
       apply partial_of_nonneg hs
       rw [hK]
-      generalize K = n; induction' n with n hn
-      . simp
+      generalize K = n; induction' n with n hn; simp
       simp [pow_succ] at hn ⊢
       linarith
     _ ≤ T K := (Lemma_7_3_6 K).1

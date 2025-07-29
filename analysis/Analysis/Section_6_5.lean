@@ -47,9 +47,7 @@ theorem Sequence.lim_of_power_decay {k:ℕ} :
     ((fun (n:ℕ) ↦ 1/((n:ℝ)+1)^(1/(k+1:ℝ))):Sequence).TendsTo 0 := by
   -- This proof is written to follow the structure of the original text.
   set a := ((fun (n:ℕ) ↦ 1/((n:ℝ)+1)^(1/(k+1:ℝ))):Sequence)
-  have ha : a.BddBelow := by
-    use 0; intro n hn
-    simp [a]; positivity
+  have ha : a.BddBelow := by use 0; intro n hn; simp [a]; positivity
   have ha' : a.IsAntitone := by
     intro n hn; simp [a] at hn ⊢
     have hn' : 0 ≤ n+1 := by linarith

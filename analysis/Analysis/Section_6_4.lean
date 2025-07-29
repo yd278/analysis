@@ -142,9 +142,7 @@ theorem Sequence.gt_limsup_bounds {a:Sequence} {x:EReal} (h: x > a.limsup) :
   unfold Sequence.limsup at h
   simp [sInf_lt_iff] at h
   obtain ⟨aN, ⟨ N, ⟨ hN, haN ⟩ ⟩, ha ⟩ := h; use N
-  simp [hN]
-  simp [haN, Sequence.upperseq] at ha
-  intro n hn
+  simp [hN]; simp [haN, Sequence.upperseq] at ha; intro n hn
   have hn' : n ≥ (a.from N).m := by simp [hN, hn]
   convert lt_of_le_of_lt ((a.from N).le_sup hn') ha using 1
   simp [hn, hN.trans hn]
@@ -257,15 +255,12 @@ theorem Sequence.finite_limsup_liminf_of_bounded {a:Sequence} (hbound: a.IsBound
   obtain ⟨ M, hMpos, hbound ⟩ := hbound
   unfold Sequence.BoundedBy at hbound
   have hlimsup_bound : a.limsup ≤ M := by
-    apply a.limsup_le_sup.trans
-    apply sup_le_upper
+    apply a.limsup_le_sup.trans (sup_le_upper _)
     intro n hN; simp
     exact (le_abs_self _).trans (hbound n)
   have hliminf_bound : -M ≤ a.liminf := by
-    apply LE.le.trans _ a.inf_le_liminf
-    apply inf_ge_lower
-    intro n hN; simp [←EReal.coe_neg]
-    rw [neg_le]
+    apply LE.le.trans (inf_ge_lower _) a.inf_le_liminf
+    intro n hN; simp [←EReal.coe_neg]; rw [neg_le]
     exact (neg_le_abs _).trans (hbound n)
   constructor
   . use a.limsup.toReal
@@ -288,8 +283,7 @@ theorem Sequence.Cauchy_iff_convergent (a:Sequence) :
   obtain ⟨ ⟨ L_plus, hL_plus ⟩, ⟨ L_minus, hL_minus ⟩ ⟩ :=
     finite_limsup_liminf_of_bounded (bounded_of_cauchy h)
   use L_minus
-  rw [tendsTo_iff_eq_limsup_liminf]
-  simp [hL_minus, hL_plus]
+  simp [tendsTo_iff_eq_limsup_liminf, hL_minus, hL_plus]
   have hlow : 0 ≤ L_plus - L_minus := by
     have := a.liminf_le_limsup
     simp [hL_minus, hL_plus] at this
@@ -298,10 +292,8 @@ theorem Sequence.Cauchy_iff_convergent (a:Sequence) :
     specialize h ε hε
     obtain ⟨ N, hN, hsteady ⟩ := h
     unfold Real.Steady Real.Close at hsteady
-    have hN0 : N ≥ (a.from N).m := by
-      simp [Sequence.from, hN]
-    have hN1 : (a.from N).seq N = a.seq N := by
-      simp [Sequence.from, hN]
+    have hN0 : N ≥ (a.from N).m := by simp [Sequence.from, hN]
+    have hN1 : (a.from N).seq N = a.seq N := by simp [Sequence.from, hN]
     have h1 : (a N - ε:ℝ) ≤ (a.from N).inf := by
       apply inf_ge_lower
       intro n hn; specialize hsteady n hn N hN0

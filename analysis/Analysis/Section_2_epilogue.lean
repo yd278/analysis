@@ -38,23 +38,18 @@ abbrev Chapter2.Nat.equivNat : Chapter2.Nat ≃ ℕ where
   toFun := toNat
   invFun n := (n:Chapter2.Nat)
   left_inv n := by
-    induction' n with n hn
-    . rfl
+    induction' n with n hn; rfl
     simp [succ_toNat, hn]
-    symm
-    exact succ_eq_add_one _
+    rw [succ_eq_add_one]
   right_inv n := by
-    induction' n with n hn
-    . rfl
-    simp [←succ_eq_add_one]
-    exact hn
+    induction' n with n hn; rfl
+    simp [←succ_eq_add_one, hn]
 
 /-- The conversion preserves addition. -/
 abbrev Chapter2.Nat.map_add : ∀ (n m : Nat), (n + m).toNat = n.toNat + m.toNat := by
   intro n m
   induction' n with n hn
-  · rw [show zero = 0 from rfl]
-    rw [zero_add, _root_.Nat.zero_add]
+  · rw [show zero = 0 from rfl, zero_add, _root_.Nat.zero_add]
   sorry
 
 /-- The conversion preserves multiplication. -/

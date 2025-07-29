@@ -56,21 +56,14 @@ example : ¬ BoundedAwayNeg (fun n ↦ (-1)^n) := by
 example : BoundedAwayZero (fun n ↦ (-1)^n) := ⟨ 1, by norm_num, by intros; simp ⟩
 
 theorem BoundedAwayZero.boundedAwayPos {a:ℕ → ℚ} (ha: BoundedAwayPos a) : BoundedAwayZero a := by
-  obtain ⟨ c, h1, h2 ⟩ := ha; use c, h1
-  intro n; specialize h2 n
-  rwa [abs_of_nonneg (by linarith)]
+  peel 3 ha with c h1 n h2; rwa [abs_of_nonneg (by linarith)]
 
 
 theorem BoundedAwayZero.boundedAwayNeg {a:ℕ → ℚ} (ha: BoundedAwayNeg a) : BoundedAwayZero a := by
-  obtain ⟨ c, h1, h2 ⟩ := ha
-  refine ⟨ c, h1, ?_ ⟩
-  intro n; specialize h2 n
-  rw [abs_of_neg (by linarith)]
-  linarith
+  peel 3 ha with c h1 n h2; rw [abs_of_neg (by linarith)]; linarith
 
 theorem not_boundedAwayPos_boundedAwayNeg {a:ℕ → ℚ} : ¬ (BoundedAwayPos a ∧ BoundedAwayNeg a) := by
-  intro ⟨ ⟨ _, _, h2⟩ , ⟨ _, _, h4 ⟩ ⟩
-  linarith [h2 0, h4 0]
+  intro ⟨ ⟨ _, _, h2⟩ , ⟨ _, _, h4 ⟩ ⟩; linarith [h2 0, h4 0]
 
 abbrev Real.isPos (x:Real) : Prop :=
   ∃ a:ℕ → ℚ, BoundedAwayPos a ∧ (a:Sequence).IsCauchy ∧ x = LIM a
@@ -91,15 +84,15 @@ theorem Real.trichotomous (x:Real) : x = 0 ∨ x.isPos ∨ x.isNeg := by sorry
 theorem Real.not_zero_pos (x:Real) : ¬ (x = 0 ∧ x.isPos) := by sorry
 
 theorem Real.nonzero_of_pos {x:Real} (hx: x.isPos) : x ≠ 0 := by
-    have := not_zero_pos x
-    simpa [hx] using this
+  have := not_zero_pos x
+  simpa [hx] using this
 
 /-- Proposition 5.4.4 (basic properties of positive reals) / Exercise 5.4.1 -/
 theorem Real.not_zero_neg (x:Real) : ¬ (x = 0 ∧ x.isNeg) := by sorry
 
 theorem Real.nonzero_of_neg {x:Real} (hx: x.isNeg) : x ≠ 0 := by
-    have := not_zero_neg x
-    simpa [hx] using this
+  have := not_zero_neg x
+  simpa [hx] using this
 
 /-- Proposition 5.4.4 (basic properties of positive reals) / Exercise 5.4.1 -/
 theorem Real.not_pos_neg (x:Real) : ¬ (x.isPos ∧ x.isNeg) := by sorry
@@ -131,16 +124,14 @@ theorem Real.abs_of_pos (x:Real) (hx: x.isPos) : Real.abs x = x := by
 /-- Definition 5.4.5 (absolute value) -/
 @[simp]
 theorem Real.abs_of_neg (x:Real) (hx: x.isNeg) : Real.abs x = -x := by
-  have : ¬ x.isPos := by have := Real.not_pos_neg x; simpa [hx, and_true] using this
+  have : ¬ x.isPos := by have := Real.not_pos_neg x; simpa [hx] using this
   simp [Real.abs, hx, this]
 
 /-- Definition 5.4.5 (absolute value) -/
 @[simp]
 theorem Real.abs_of_zero : Real.abs 0 = 0 := by
-  have hpos: ¬ (0:Real).isPos := by
-    have := Real.not_zero_pos 0; simpa only [true_and] using this
-  have hneg: ¬ (0:Real).isNeg := by
-    have := Real.not_zero_neg 0; simpa only [true_and] using this
+  have hpos: ¬ (0:Real).isPos := by have := Real.not_zero_pos 0; simpa using this
+  have hneg: ¬ (0:Real).isNeg := by have := Real.not_zero_neg 0; simpa using this
   simp [Real.abs, hpos, hneg]
 
 /-- Definition 5.4.6 (Ordering of the reals) -/
@@ -187,9 +178,7 @@ theorem Real.add_lt_add_right {x y:Real} (z:Real) (hxy: x < y) : x + z < y + z :
 
 /-- Proposition 5.4.7(e) (positive multiplication preserves order) / Exercise 5.4.2 -/
 theorem Real.mul_lt_mul_right {x y z:Real} (hxy: x < y) (hz: z.isPos) : x * z < y * z := by
-  rw [antisymm] at hxy ⊢
-  convert pos_mul hxy hz using 1
-  ring
+  rw [antisymm] at hxy ⊢; convert pos_mul hxy hz using 1; ring
 
 /-- Proposition 5.4.7(e) (positive multiplication preserves order) / Exercise 5.4.2 -/
 theorem Real.mul_le_mul_left {x y z:Real} (hxy: x ≤ y) (hz: z.isPos) : z * x ≤ z * y := by sorry
@@ -212,12 +201,12 @@ noncomputable instance Real.instLinearOrder : LinearOrder Real where
 
 /-- Proposition 5.4.8 -/
 theorem Real.inv_of_pos {x:Real} (hx: x.isPos) : x⁻¹.isPos := by
-  have hnon: x ≠ 0 := nonzero_of_pos hx
-  have hident := inv_mul_self hnon
+  observe hnon: x ≠ 0
+  observe hident : x⁻¹ * x = 1
   have hinv_non: x⁻¹ ≠ 0 := by contrapose! hident; simp [hident]
   have hnonneg : ¬ x⁻¹.isNeg := by
     intro h
-    have := mul_pos_neg hx h
+    observe : (x * x⁻¹).isNeg
     have id : -(1:Real) = (-1:ℚ) := by simp
     simp only [hident, neg_iff_pos_of_neg, id, pos_of_coe, self_mul_inv hnon] at this
     linarith
@@ -227,9 +216,9 @@ theorem Real.inv_of_pos {x:Real} (hx: x.isPos) : x⁻¹.isPos := by
 theorem Real.div_of_pos {x y:Real} (hx: x.isPos) (hy: y.isPos) : (x/y).isPos := by sorry
 
 theorem Real.inv_of_gt {x y:Real} (hx: x.isPos) (hy: y.isPos) (hxy: x > y) : x⁻¹ < y⁻¹ := by
-  have hxnon: x ≠ 0 := nonzero_of_pos hx
-  have hynon: y ≠ 0 := nonzero_of_pos hy
-  have hxinv : x⁻¹.isPos := inv_of_pos hx
+  observe hxnon: x ≠ 0
+  observe hynon: y ≠ 0
+  observe hxinv : x⁻¹.isPos
   by_contra! this
   have : (1:Real) > 1 := calc
     1 = x * x⁻¹ := (self_mul_inv hxnon).symm
@@ -265,8 +254,8 @@ theorem Real.LIM_of_nonneg {a: ℕ → ℚ} (ha: ∀ n, a n ≥ 0) (hcauchy: (a:
   have claim2 : ¬ (c/2).EventuallyClose (a:Sequence) (b:Sequence) := by
     contrapose! claim1
     rw [Rat.eventuallyClose_iff] at claim1
-    obtain ⟨ N, claim1 ⟩ := claim1; specialize claim1 N (le_refl _)
-    use N; rwa [Section_4_3.close_iff]
+    peel claim1 with N claim1; specialize claim1 N (le_refl _)
+    rwa [Section_4_3.close_iff]
   have claim3 : ¬ Sequence.Equiv a b := by
     contrapose! claim2
     rw [Sequence.equiv_def] at claim2
@@ -280,8 +269,7 @@ theorem Real.LIM_mono {a b:ℕ → ℚ} (ha: (a:Sequence).IsCauchy) (hb: (b:Sequ
     LIM a ≤ LIM b := by
   -- This proof is written to follow the structure of the original text.
   have := LIM_of_nonneg (a := b - a) (by intro n; simp [hmono n]) (Sequence.IsCauchy.sub hb ha)
-  rw [←Real.LIM_sub hb ha] at this
-  linarith
+  rw [←Real.LIM_sub hb ha] at this; linarith
 
 /-- Remark 5.4.11 --/
 theorem Real.LIM_mono_fail :
@@ -309,8 +297,7 @@ theorem Real.exists_rat_le_and_nat_ge {x:Real} (hx: x.isPos) :
   calc
     x ≤ r := by
       rw [Real.ratCast_def r]
-      convert LIM_mono hcauchy _ _
-      . exact Sequence.IsCauchy.const r
+      convert LIM_mono hcauchy (Sequence.IsCauchy.const r) _
       intro n; specialize this n; simp at this
       exact (le_abs_self _).trans this
     _ < ((N:ℚ):Real) := by simp [←Real.lt_of_coe,hN]
@@ -326,11 +313,9 @@ theorem Real.le_mul {ε:Real} (hε: ε.isPos) (x:Real) : ∃ M:ℕ, M > 0 ∧ M 
     replace hN : x/ε < M := hN.trans (by simp [M])
     simp
     convert mul_lt_mul_right hN hε
-    rw [isPos_iff] at hε
-    field_simp
+    rw [isPos_iff] at hε; field_simp
   use 1
-  rw [isPos_iff] at hε; rw [isNeg_iff] at hx
-  simp [hx]; linarith
+  rw [isPos_iff] at hε; rw [isNeg_iff] at hx; simp [hx]; linarith
 
 /-- Proposition 5.4.14 / Exercise 5.4.5 -/
 theorem Real.rat_between {x y:Real} (hxy: x < y) : ∃ q:ℚ, x < (q:Real) ∧ (q:Real) < y := by sorry

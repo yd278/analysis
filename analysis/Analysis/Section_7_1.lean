@@ -42,10 +42,7 @@ namespace Finset
 
 /-- Definition 7.1.1 -/
 theorem sum_of_empty {n m:ℤ} (h: n < m) (a: ℤ → ℝ) : ∑ i ∈ Icc m n, a i = 0 := by
-  rw [sum_eq_zero]
-  intro x hx
-  rw [mem_Icc] at hx
-  linarith
+  rw [sum_eq_zero]; intro x hx; rw [mem_Icc] at hx; linarith
 
 /--
   Definition 7.1.1. This is similar to Mathlib's `Finset.sum_Icc_succ_top` except that the
@@ -55,7 +52,7 @@ theorem sum_of_nonempty {n m:ℤ} (h: n ≥ m-1) (a: ℤ → ℝ) :
     ∑ i ∈ Icc m (n+1), a i = ∑ i ∈ Icc m n, a i + a (n+1) := by
   rw [add_comm _ (a (n+1))]
   convert sum_insert _
-  . ext i; simp; omega
+  . ext; simp; omega
   . infer_instance
   simp
 
@@ -108,8 +105,7 @@ theorem finite_series_of_rearrange {n:ℕ} {X':Type*} (X: Finset X') (hcard: X.c
     ∑ i ∈ Icc (1:ℤ) n, (if hi:i ∈ Icc (1:ℤ) n then f (g ⟨ i, hi ⟩) else 0)
     = ∑ i ∈ Icc (1:ℤ) n, (if hi: i ∈ Icc (1:ℤ) n then f (h ⟨ i, hi ⟩) else 0) := by
   -- This proof is written to broadly follow the structure of the original text.
-  revert X n
-  intro n
+  revert X n; intro n
   induction' n with n hn
   . simp [sum_of_empty (show 0 < 1 by norm_num) (fun _ ↦ 0)]
   -- A technical step: we extend g, h to the entire integers using a slightly artificial map π
@@ -148,9 +144,7 @@ theorem finite_series_of_rearrange {n:ℕ} {X':Type*} (X: Finset X') (hcard: X.c
         simp [this]
       have : ¬ i < j := by linarith
       simp [this]
-    _ = _ := by
-      congr
-      convert concat_finite_series _ _ _ <;> linarith
+    _ = _ := by congr; convert concat_finite_series _ _ _ <;> linarith
   rw [this]
   congr 1
   have g_ne_x {i:ℤ} (hi : i ∈ Icc (1:ℤ) n) : g (π i) ≠ x := by
@@ -193,7 +187,7 @@ theorem exist_bijection {n:ℕ} {Y:Type*} (X: Finset Y) (hcard: X.card = n) :
     ∃ g: Icc (1:ℤ) n → X, Function.Bijective g := by
   have : (Icc (1:ℤ) n).card = X.card := by simp [hcard]
   replace this := Finset.equivOfCardEq this
-  use this; exact Equiv.bijective this
+  exact ⟨ this, Equiv.bijective this ⟩
 
 /-- Definition 7.1.6 -/
 theorem finite_series_eq {n:ℕ} {Y:Type*} (X: Finset Y) (f: Y → ℝ) (g: Icc (1:ℤ) n → X)

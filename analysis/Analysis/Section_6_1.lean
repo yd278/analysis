@@ -80,8 +80,7 @@ abbrev Sequence.from (a:Sequence) (m₁:ℤ) : Sequence := mk' (max a.m m₁) (a
 
 lemma Sequence.from_eval (a:Sequence) {m₁ n:ℤ} (hn: n ≥ m₁) :
   (a.from m₁) n = a n := by
-  simp [Sequence.from, seq, hn]
-  intros; symm; solve_by_elim [a.vanish]
+  simp [Sequence.from, seq, hn]; intros; symm; solve_by_elim [a.vanish]
 
 end Chapter6
 
@@ -104,17 +103,15 @@ lemma Real.eventuallySteady_def (ε: ℝ) (a: Chapter6.Sequence) :
 /-- For fixed s, the function ε ↦ ε.Steady s is monotone -/
 theorem Real.Steady.mono {a: Chapter6.Sequence} {ε₁ ε₂: ℝ} (hε: ε₁ ≤ ε₂) (hsteady: ε₁.Steady a) :
     ε₂.Steady a := by
-  intro n hn m hm
-  specialize hsteady n hn m hm
+  peel 4 hsteady with n hn m hm hsteady
   linarith
 
 /-- For fixed s, the function ε ↦ ε.EventuallySteady s is monotone -/
 theorem Real.EventuallySteady.mono {a: Chapter6.Sequence} {ε₁ ε₂: ℝ} (hε: ε₁ ≤ ε₂)
   (hsteady: ε₁.EventuallySteady a) :
     ε₂.EventuallySteady a := by
-  obtain ⟨ N, hN, hsteady' ⟩ := hsteady
-  use N, hN
-  exact Real.Steady.mono hε hsteady'
+  peel 2 hsteady with N hN hsteady
+  exact Real.Steady.mono hε hsteady
 
 
 namespace Chapter6
@@ -129,16 +126,15 @@ lemma Sequence.isCauchy_def (a:Sequence) :
 /-- This is almost the same as Chapter5.Sequence.IsCauchy.coe -/
 lemma Sequence.IsCauchy.coe (a:ℕ → ℝ) :
     (a:Sequence).IsCauchy ↔ ∀ ε > 0, ∃ N, ∀ j ≥ N, ∀ k ≥ N, dist (a j) (a k) ≤ ε := by
-  constructor <;> intro h ε hε
-  · obtain ⟨ N, hN, h' ⟩ := h ε hε
+  peel with ε hε
+  constructor
+  · rintro ⟨ N, hN, h' ⟩
     lift N to ℕ using hN; use N
     intro j hj k hk
     simp [Real.steady_def] at h'
     specialize h' j (by omega) k (by omega)
     simp_all
-  obtain ⟨ N, h' ⟩ := h ε hε; use max N 0
-  constructor
-  · simp
+  rintro ⟨ N, h' ⟩; refine ⟨ max N 0, by simp, ?_ ⟩
   intro n hn m hm; simp at hn hm
   have npos : 0 ≤ n := by omega
   have mpos : 0 ≤ m := by omega
@@ -151,20 +147,15 @@ lemma Sequence.IsCauchy.coe (a:ℕ → ℝ) :
 lemma Sequence.IsCauchy.mk {n₀:ℤ} (a: {n // n ≥ n₀} → ℝ) :
     (mk' n₀ a).IsCauchy
     ↔ ∀ ε > 0, ∃ N ≥ n₀, ∀ j ≥ N, ∀ k ≥ N, dist (mk' n₀ a j) (mk' n₀ a k) ≤ ε := by
-  constructor <;> intro h ε hε
-  · obtain ⟨ N, hN, h' ⟩ := h ε hε; use N
+  peel with ε hε
+  constructor
+  · rintro ⟨ N, hN, h' ⟩; refine ⟨ N, hN, ?_ ⟩
     dsimp at hN
-    constructor
-    · exact hN
     intro j hj k hk
     simp only [Real.Steady, show max n₀ N = N by omega] at h'
     specialize h' j (by omega) k (by omega)
     simp_all [show n₀ ≤ j by omega, hj, show n₀ ≤ k by omega]
-  obtain ⟨ N, hN, h' ⟩ := h ε hε; use max n₀ N
-  constructor
-  · simp
-  intro n hn m hm
-  simp_all
+  rintro ⟨ N, hN, h' ⟩; exact ⟨ max n₀ N, by simp, by intro n hn m hm; simp_all ⟩
 
 @[coe]
 abbrev Sequence.ofChapter5Sequence (a: Chapter5.Sequence) : Sequence :=
@@ -191,8 +182,7 @@ theorem Sequence.isCauchy_of_rat (a: Chapter5.Sequence) : a.IsCauchy ↔ (a:Sequ
   -- This proof is written to follow the structure of the original text.
   constructor
   swap
-  . intro h
-    rw [isCauchy_def] at h
+  . intro h; rw [isCauchy_def] at h
     rw [Chapter5.Sequence.isCauchy_def]
     intro ε hε
     specialize h (ε:ℝ) (by positivity)
@@ -226,28 +216,18 @@ theorem Real.eventuallyClose_def (ε: ℝ) (a: Chapter6.Sequence) (L:ℝ) :
 theorem Real.CloseSeq.coe (ε : ℝ) (a : ℕ → ℝ) (L : ℝ):
   (ε.CloseSeq a L) ↔ ∀ n, dist (a n) L ≤ ε := by
   constructor
-  . intro h n
-    specialize h n
-    simp_all
-  . intro h n hn
-    lift n to ℕ using (by omega)
-    specialize h n
-    simp_all
+  . intro h n; specialize h n; simp_all
+  . intro h n hn; lift n to ℕ using (by omega); specialize h n; simp_all
 
 theorem Real.CloseSeq.mono {a: Chapter6.Sequence} {ε₁ ε₂ L: ℝ} (hε: ε₁ ≤ ε₂)
   (hclose: ε₁.CloseSeq a L) :
     ε₂.CloseSeq a L := by
-  intro n hn
-  specialize hclose n hn
-  rw [Real.Close, Real.dist_eq] at *
-  linarith
+  peel 2 hclose with n hn hclose; rw [Real.Close, Real.dist_eq] at *; linarith
 
 theorem Real.EventuallyClose.mono {a: Chapter6.Sequence} {ε₁ ε₂ L: ℝ} (hε: ε₁ ≤ ε₂)
   (hclose: ε₁.EventuallyClose a L) :
     ε₂.EventuallyClose a L := by
-  obtain ⟨ N, hN, hclose' ⟩ := hclose
-  use N, hN
-  exact CloseSeq.mono hε hclose'
+  peel 2 hclose with N hN hclose; exact CloseSeq.mono hε hclose
 
 namespace Chapter6
 
@@ -280,10 +260,7 @@ example : (0.1:ℝ).CloseSeq seq_6_1_6 1 := by
 
 /-- Examples 6.1.6 -/
 example : ¬ (0.01:ℝ).CloseSeq seq_6_1_6 1 := by
-  intro h
-  specialize h 0 (by positivity)
-  simp [seq_6_1_6, Real.dist_eq] at h
-  norm_num at h
+  intro h; specialize h 0 (by positivity); simp [seq_6_1_6, Real.dist_eq] at h; norm_num at h
 
 /-- Examples 6.1.6 -/
 example : (0.01:ℝ).EventuallyClose seq_6_1_6 1 := by sorry
@@ -310,9 +287,7 @@ theorem Sequence.tendsTo_unique (a:Sequence) {L L':ℝ} (h:L ≠ L') :
   have : |L-L'| ≤ 2 * |L-L'|/3 := calc
     _ = dist L L' := by rw [Real.dist_eq]
     _ ≤ dist L (a.seq n) + dist (a.seq n) L' := dist_triangle _ _ _
-    _ ≤ ε + ε := by
-      rw [←Real.dist_eq] at hN hM; rw [dist_comm] at hN
-      gcongr
+    _ ≤ ε + ε := by rw [←Real.dist_eq] at hN hM; rw [dist_comm] at hN; gcongr
     _ = 2 * |L-L'|/3 := by simp [ε]; ring
   linarith
 
@@ -336,8 +311,7 @@ noncomputable abbrev lim (a:Sequence) : ℝ := if h: a.Convergent then h.choose 
 
 /-- Definition 6.1.8 -/
 theorem Sequence.lim_def {a:Sequence} (h: a.Convergent) : a.TendsTo (lim a) := by
-  unfold lim; simp [h]
-  exact h.choose_spec
+  simp [lim, h]; exact h.choose_spec
 
 /-- Definition 6.1.8-/
 theorem Sequence.lim_eq {a:Sequence} {L:ℝ} :
@@ -348,8 +322,7 @@ a.TendsTo L ↔ a.Convergent ∧ lim a = L := by
     replace eq := a.tendsTo_unique (eq this)
     replace this := lim_def this
     tauto
-  intro ⟨ h, h' ⟩; convert lim_def h
-  rw [h']
+  intro ⟨ h, h' ⟩; convert lim_def h; rw [h']
 
 
 /-- Proposition 6.1.11 -/
@@ -358,8 +331,7 @@ theorem Sequence.lim_harmonic :
   -- This proof is written to follow the structure of the original text.
   rw [←lim_eq, tendsTo_iff]
   intro ε hε
-  obtain ⟨ N, hN ⟩ := exists_int_gt (1 / ε); use N
-  intro n hn
+  obtain ⟨ N, hN ⟩ := exists_int_gt (1 / ε); use N; intro n hn
   have hNpos : (N:ℝ) > 0 := by apply LT.lt.trans _ hN; positivity
   simp at hNpos
   have hnpos : n ≥ 0 := by linarith
@@ -375,8 +347,7 @@ theorem Sequence.lim_harmonic :
         _ ≤ _ := le_abs_self _
     _ ≤ ε := by
       rw [inv_le_comm₀ (by positivity) (by positivity)]
-      apply le_of_lt
-      rwa [←inv_eq_one_div _] at hN
+      rw [←inv_eq_one_div _] at hN; order
 
 /-- Proposition 6.1.12 / Exercise 6.1.5 -/
 theorem Sequence.IsCauchy.convergent {a:Sequence} (h:a.Convergent) : a.IsCauchy := by
