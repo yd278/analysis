@@ -48,7 +48,7 @@ theorem EqualCard.trans {X Y Z : Type} (hXY : EqualCard X Y) (hYZ : EqualCard Y 
 
 instance EqualCard.instSetoid : Setoid Type := ⟨ EqualCard, ⟨ refl, symm, trans ⟩ ⟩
 
-theorem EqualCard.univ (X : Type) : EqualCard (Set.univ : Set X) X :=
+theorem EqualCard.univ (X : Type) : EqualCard (.univ : Set X) X :=
   ⟨ Subtype.val, Subtype.val_injective, by intro _; aesop ⟩
 
 abbrev CountablyInfinite (X : Type) : Prop := EqualCard X ℕ
@@ -90,7 +90,7 @@ theorem AtMostCountable.iff (X : Type) : AtMostCountable X ↔ Countable X := by
   observe h3 : Finite X → Countable X
   unfold AtMostCountable; tauto
 
-theorem CountablyInfinite.iff_image_inj {A:Type} (X: Set A) : CountablyInfinite X ↔ ∃ f : ℕ ↪ A, X = f '' Set.univ := by
+theorem CountablyInfinite.iff_image_inj {A:Type} (X: Set A) : CountablyInfinite X ↔ ∃ f : ℕ ↪ A, X = f '' .univ := by
   constructor
   . rintro ⟨ g, hg ⟩
     obtain ⟨ f, hleft, hright ⟩ := Function.bijective_iff_has_inverse.mp hg
@@ -114,9 +114,9 @@ theorem CountablyInfinite.iff_image_inj {A:Type} (X: Set A) : CountablyInfinite 
 /-- Examples 8.1.3 -/
 example : CountablyInfinite ℕ := by sorry
 
-example : CountablyInfinite (Set.univ \ {0}: Set ℕ) := by sorry
+example : CountablyInfinite (.univ \ {0}: Set ℕ) := by sorry
 
-example : CountablyInfinite ((fun n:ℕ ↦ 2*n) '' Set.univ) := by sorry
+example : CountablyInfinite ((fun n:ℕ ↦ 2*n) '' .univ) := by sorry
 
 
 /-- Proposition 8.1.4 (Well ordering principle / Exercise 8.1.2 -/
@@ -146,7 +146,7 @@ theorem Nat.min_eq {X : Set ℕ} (hX : X.Nonempty) {a:ℕ} (ha : a ∈ X ∧ ∀
 @[simp]
 theorem Nat.min_empty : min ∅ = 0 := by simp [Nat.min]
 
-example : Nat.min ((fun n ↦ 2*n) '' (Set.Ici 1)) = 2 := by sorry
+example : Nat.min ((fun n ↦ 2*n) '' (.Ici 1)) = 2 := by sorry
 
 theorem Nat.min_eq_sInf {X : Set ℕ} (hX : X.Nonempty) : min X = sInf X := by
   sorry
@@ -231,11 +231,11 @@ theorem AtMostCountable.subset' {A: Type} {X Y: Set A} (hX: AtMostCountable X) (
   rintro ⟨ y, hy ⟩; use ⟨ ⟨ y, hY hy ⟩, by aesop ⟩
 
 /-- Proposition 8.1.8 / Exercise 8.1.4 -/
-theorem AtMostCountable.image_nat (Y: Type) (f: ℕ → Y) : AtMostCountable (f '' Set.univ) := by
+theorem AtMostCountable.image_nat (Y: Type) (f: ℕ → Y) : AtMostCountable (f '' .univ) := by
   sorry
 
 /-- Corollary 8.1.9 / Exercise 8.1.5 -/
-theorem AtMostCountable.image {X:Type} (hX: CountablyInfinite X) {Y: Type} (f: X → Y) : AtMostCountable (f '' Set.univ) := by
+theorem AtMostCountable.image {X:Type} (hX: CountablyInfinite X) {Y: Type} (f: X → Y) : AtMostCountable (f '' .univ) := by
   sorry
 
 /-- Proposition 8.1.10 / Exercise 8.1.7 -/
@@ -336,7 +336,7 @@ theorem Rat.countablyInfinite : CountablyInfinite ℚ := by
   tauto
 
 /-- Exercise 8.1.1 -/
-example (X: Type) : Infinite X ↔ ∃ Y : Set X, Y ≠ Set.univ ∧ EqualCard Y X := by
+example (X: Type) : Infinite X ↔ ∃ Y : Set X, Y ≠ .univ ∧ EqualCard Y X := by
   sorry
 
 /-- Exercise 8.1.6 -/

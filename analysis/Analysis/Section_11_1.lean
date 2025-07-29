@@ -29,10 +29,10 @@ open BoundedInterval
 /-- There is a technical issue in that this coercion is not injective: the empty set is represented by multiple bounded intervals.  This causes some of the statements in this section to be a little uglier than necessary.-/
 @[coe]
 def BoundedInterval.toSet (I: BoundedInterval) : Set ℝ := match I with
-  | Ioo a b => Set.Ioo a b
-  | Icc a b => Set.Icc a b
-  | Ioc a b => Set.Ioc a b
-  | Ico a b => Set.Ico a b
+  | Ioo a b => .Ioo a b
+  | Icc a b => .Icc a b
+  | Ioc a b => .Ioc a b
+  | Ico a b => .Ico a b
 
 instance BoundedInterval.inst_coeSet : Coe BoundedInterval (Set ℝ) where
   coe := toSet
@@ -49,16 +49,16 @@ open Classical in
 noncomputable instance BoundedInterval.decidableEq : DecidableEq BoundedInterval := instDecidableEqOfLawfulBEq
 
 @[simp]
-theorem BoundedInterval.set_Ioo (a b:ℝ) : (Ioo a b : Set ℝ) = Set.Ioo a b := by rfl
+theorem BoundedInterval.set_Ioo (a b:ℝ) : (Ioo a b : Set ℝ) = .Ioo a b := by rfl
 
 @[simp]
-theorem BoundedInterval.set_Icc (a b:ℝ) : (Icc a b : Set ℝ) = Set.Icc a b := by rfl
+theorem BoundedInterval.set_Icc (a b:ℝ) : (Icc a b : Set ℝ) = .Icc a b := by rfl
 
 @[simp]
-theorem BoundedInterval.set_Ioc (a b:ℝ) : (Ioc a b : Set ℝ) = Set.Ioc a b := by rfl
+theorem BoundedInterval.set_Ioc (a b:ℝ) : (Ioc a b : Set ℝ) = .Ioc a b := by rfl
 
 @[simp]
-theorem BoundedInterval.set_Ico (a b:ℝ) : (Ico a b : Set ℝ) = Set.Ico a b := by rfl
+theorem BoundedInterval.set_Ico (a b:ℝ) : (Ico a b : Set ℝ) = .Ico a b := by rfl
 
 -- Definition 11.1.1
 #check Set.ordConnected_def

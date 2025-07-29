@@ -29,11 +29,11 @@ theorem ContinuousWithinAt.iff (X:Set ℝ) (f: ℝ → ℝ)  (x₀:ℝ) :
 #check continuousWithinAt_univ
 
 /-- Example 9.4.2 --/
-example (c x₀:ℝ) : ContinuousWithinAt (fun x ↦ c) Set.univ x₀ := by sorry
+example (c x₀:ℝ) : ContinuousWithinAt (fun x ↦ c) .univ x₀ := by sorry
 
 example (c x₀:ℝ) : ContinuousAt (fun x ↦ c) x₀ := by sorry
 
-example (c:ℝ) : ContinuousOn (fun x:ℝ ↦ c) Set.univ := by sorry
+example (c:ℝ) : ContinuousOn (fun x:ℝ ↦ c) .univ := by sorry
 
 example (c:ℝ) : Continuous (fun x:ℝ ↦ c) := by sorry
 
@@ -55,22 +55,22 @@ example {x₀:ℝ} (h: x₀ ≠ 0) : ContinuousAt f_9_4_6 x₀ := by sorry
 
 example : ¬ ContinuousAt f_9_4_6 0 := by sorry
 
-example : ContinuousWithinAt f_9_4_6 (Set.Ici 0) 0 := by sorry
+example : ContinuousWithinAt f_9_4_6 (.Ici 0) 0 := by sorry
 
 /-- Proposition 9.4.7 / Exercise 9.4.1.  It is possible that the hypothesis `x₀ ∈ X` is unnecessary. -/
 theorem ContinuousWithinAt.tfae (X:Set ℝ) (f: ℝ → ℝ) {x₀:ℝ} (h : x₀ ∈ X) :
   [
     ContinuousWithinAt f X x₀,
-    ∀ a:ℕ → ℝ, (∀ n, a n ∈ X) → Filter.Tendsto a .atTop (nhds x₀) → Filter.Tendsto (fun n ↦  f (a n)) .atTop (nhds (f x₀)),
+    ∀ a:ℕ → ℝ, (∀ n, a n ∈ X) → Filter.atTop.Tendsto a (nhds x₀) → Filter.atTop.Tendsto (fun n ↦ f (a n)) (nhds (f x₀)),
     ∀ ε > 0, ∃ δ > 0, ∀ x ∈ X, |x-x₀| < δ → |f x - f x₀| < ε
   ].TFAE := by
   sorry
 
 /-- Remark 9.4.8 --/
-theorem Filter.Tendsto.comp_of_continuous {X:Set ℝ} {f: ℝ → ℝ} {x₀:ℝ} (h : x₀ ∈ X)
+theorem _root_.Filter.Tendsto.comp_of_continuous {X:Set ℝ} {f: ℝ → ℝ} {x₀:ℝ} (h : x₀ ∈ X)
   (h_cont: ContinuousWithinAt f X x₀) {a: ℕ → ℝ} (ha: ∀ n, a n ∈ X)
-  (hconv: Filter.Tendsto a .atTop (nhds x₀)):
-  Filter.Tendsto (fun n ↦ f (a n)) .atTop (nhds (f x₀)) := by
+  (hconv: Filter.atTop.Tendsto a (nhds x₀)):
+  Filter.atTop.Tendsto (fun n ↦ f (a n)) (nhds (f x₀)) := by
   have := (ContinuousWithinAt.tfae X f h).out 0 1
   rw [this] at h_cont; solve_by_elim
 
@@ -113,7 +113,7 @@ theorem Continuous.exp {a:ℝ} (ha: a>0) : Continuous (fun x:ℝ ↦ a ^ x) := b
   sorry
 
 /-- Proposition 9.4.11 / Exercise 9.4.4 -/
-theorem Continuous.exp' (p:ℝ) : ContinuousOn (fun x:ℝ ↦ x ^ p) (Set.Ioi 0) := by
+theorem Continuous.exp' (p:ℝ) : ContinuousOn (fun x:ℝ ↦ x ^ p) (.Ioi 0) := by
   sorry
 
 /-- Proposition 9.4.12 -/

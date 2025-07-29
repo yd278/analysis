@@ -323,8 +323,8 @@ theorem binomial_theorem (x y:ℝ) (n:ℕ) :
 
 /-- Exercise 7.1.5 -/
 theorem lim_of_finite_series {X:Type*} [Fintype X] (a: X → ℕ → ℝ) (L : X → ℝ)
-  (h: ∀ x, Filter.Tendsto (a x) .atTop (nhds (L x))) :
-    Filter.Tendsto (fun n ↦ ∑ x, a x n) .atTop (nhds (∑ x, L x)) := by
+  (h: ∀ x, Filter.atTop.Tendsto (a x) (nhds (L x))) :
+    Filter.atTop.Tendsto (fun n ↦ ∑ x, a x n) (nhds (∑ x, L x)) := by
   sorry
 
 

@@ -51,8 +51,7 @@ theorem Sum.of_finite {X:Type} [hX:Finite X] (f:X → ℝ) : Sum f = ∑ x ∈ @
   simp [Sum, this, hX]
 
 theorem AbsConvergent.comp {X: Type} {f:X → ℝ} {g:ℕ → X} (h: Function.Bijective g) (hf: AbsConvergent f) : (f ∘ g:Series).absConverges := by
-  obtain ⟨ hbij, hconv ⟩ := hf.choose_spec
-  set g' := hf.choose
+  choose g' hbij hconv using hf
   obtain ⟨ g'_inv, hleft, hright ⟩ := Function.bijective_iff_has_inverse.mp hbij
   have hG : Function.Bijective (g'_inv ∘ g) := .comp ⟨hright.injective, hleft.surjective⟩ h
   convert (Series.absConverges_of_permute hconv hG).1 using 4 with n
@@ -211,10 +210,10 @@ theorem sum_comm {f:ℕ × ℕ → ℝ} (hf:AbsConvergent f) :
 
 /-- Lemma 8.2.3 / Exercise 8.2.1 -/
 theorem AbsConvergent.iff {X:Type} (hX:CountablyInfinite X) (f : X → ℝ) :
-  AbsConvergent f ↔ BddAbove ( (fun A ↦ ∑ x ∈ A, |f x|) '' Set.univ ) := by
+  AbsConvergent f ↔ BddAbove ( (fun A ↦ ∑ x ∈ A, |f x|) '' .univ ) := by
     sorry
 
-abbrev AbsConvergent' {X:Type} (f: X → ℝ) : Prop := BddAbove ( (fun A ↦ ∑ x ∈ A, |f x|) '' Set.univ )
+abbrev AbsConvergent' {X:Type} (f: X → ℝ) : Prop := BddAbove ( (fun A ↦ ∑ x ∈ A, |f x|) '' .univ )
 
 theorem AbsConvergent'.of_finite {X:Type} [Finite X] (f:X → ℝ) : AbsConvergent' f := by
   have _ := Fintype.ofFinite X
@@ -296,7 +295,7 @@ theorem Sum'.of_countable_supp {X:Type} {f:X → ℝ} {A: Set X} (hA: CountablyI
     --   show the partial sums of E' are a subsequence of the partial sums of A
     set hinf : Infinite E' := hE'.toInfinite
     obtain ⟨ a, ha_bij, ha_mono ⟩ := (Nat.monotone_enum_of_infinite E').exists
-    have : Filter.Tendsto (Nat.cast ∘ Subtype.val ∘ a: ℕ → ℤ) .atTop .atTop := by
+    have : Filter.atTop.Tendsto (Nat.cast ∘ Subtype.val ∘ a: ℕ → ℤ) .atTop := by
       apply tendsto_natCast_atTop_atTop.comp
       apply StrictMono.tendsto_atTop
       intro n m hnm; simp [ha_mono hnm]
@@ -389,7 +388,7 @@ theorem Filter.Eventually.int_natCast_atTop (p: ℤ → Prop) :
   simp at hn; solve_by_elim
 
 theorem Filter.Tendsto.int_natCast_atTop {R:Type} (f: ℤ → R) (l: Filter R) :
-Filter.Tendsto f .atTop l ↔ Filter.Tendsto (f ∘ Nat.cast) .atTop l := by
+Filter.atTop.Tendsto f l ↔ Filter.atTop.Tendsto (f ∘ Nat.cast) l := by
   simp [Filter.tendsto_iff_eventually]
   peel with p h
   simp [←Filter.eventually_atTop]
@@ -412,7 +411,7 @@ theorem Sum'.eq_tsum {X:Type} (f:X → ℝ) (h: AbsConvergent' f) :
     replace : ∑' x, f x = ∑' n, f (g n) := calc
       _ = ∑' x:E, f x := by
         rw [←tsum_univ f]
-        have hcompl : E = Set.univ \ {x | f x = 0 } := by aesop
+        have hcompl : E = .univ \ {x | f x = 0 } := by aesop
         convert (tsum_setElem_eq_tsum_setElem_diff _ {x | f x = 0} (by aesop))
       _ = _ := (Equiv.tsum_eq (Equiv.ofBijective _ hg) _).symm
     rw [this]
@@ -478,7 +477,7 @@ theorem Series.permute_convergesTo_of_divergent {a: ℕ → ℝ} (ha: (a:Series)
   set A_minus := {n | a n < 0 }
   have hdisj : Disjoint A_plus A_minus := by
     rw [Set.disjoint_iff_inter_eq_empty]; ext n; simp [A_plus, A_minus]
-  have hunion : A_plus ∪ A_minus = Set.univ := by
+  have hunion : A_plus ∪ A_minus = .univ := by
     ext n; simp [A_plus, A_minus]; exact le_or_lt _ _
   have hA_plus_inf : Infinite A_plus := sorry
   have hA_minus_inf : Infinite A_minus := sorry
@@ -501,7 +500,7 @@ theorem Series.permute_convergesTo_of_divergent {a: ℕ → ℝ} (ha: (a:Series)
   have h_case_I : Infinite { j | ∑ i:Fin j, n' i > L } := by sorry
   have h_case_II : Infinite { j | ∑ i:Fin j, n' i ≤ L } := by sorry
   have hn'_surj : Function.Surjective n' := by sorry
-  have hconv : Filter.Tendsto (a ∘ n') .atTop (nhds 0) := by sorry
+  have hconv : Filter.atTop.Tendsto (a ∘ n') (nhds 0) := by sorry
   have hsum : (a ∘ n':Series).convergesTo L := by sorry
   use n'
   refine ⟨ ⟨ hn'_inj, hn'_surj ⟩, ?_ ⟩; convert hsum
@@ -509,12 +508,12 @@ theorem Series.permute_convergesTo_of_divergent {a: ℕ → ℝ} (ha: (a:Series)
 /-- Exercise 8.2.6 -/
 theorem Series.permute_diverges_of_divergent {a: ℕ → ℝ} (ha: (a:Series).converges)
   (ha': ¬ (a:Series).absConverges)  :
-  ∃ f : ℕ → ℕ,  Function.Bijective f ∧ Filter.Tendsto (fun N ↦ ((a ∘ f:Series).partial N : EReal)) .atTop (nhds ⊤) := by
+  ∃ f : ℕ → ℕ,  Function.Bijective f ∧ Filter.atTop.Tendsto (fun N ↦ ((a ∘ f:Series).partial N : EReal)) (nhds ⊤) := by
   sorry
 
 theorem Series.permute_diverges_of_divergent' {a: ℕ → ℝ} (ha: (a:Series).converges)
   (ha': ¬ (a:Series).absConverges)  :
-  ∃ f : ℕ → ℕ,  Function.Bijective f ∧ Filter.Tendsto (fun N ↦ ((a ∘ f:Series).partial N : EReal)) .atTop (nhds ⊥) := by
+  ∃ f : ℕ → ℕ,  Function.Bijective f ∧ Filter.atTop.Tendsto (fun N ↦ ((a ∘ f:Series).partial N : EReal)) (nhds ⊥) := by
   sorry
 
 end Chapter8

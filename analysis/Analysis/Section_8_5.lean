@@ -163,11 +163,11 @@ theorem IsStrictUpperBound.iff' {X:Type} [PartialOrder X] (A:Set X) (x:X) :
   IsStrictUpperBound A x ↔ x ∈ upperBounds A \ A := by
   simp [IsStrictUpperBound, IsUpperBound.iff]
 
-example : IsUpperBound (Set.Icc 1 2: Set ℝ) 2 := by sorry
+example : IsUpperBound (.Icc 1 2: Set ℝ) 2 := by sorry
 
-example : ¬ IsStrictUpperBound (Set.Icc 1 2: Set ℝ) 2 := by sorry
+example : ¬ IsStrictUpperBound (.Icc 1 2: Set ℝ) 2 := by sorry
 
-example : IsStrictUpperBound (Set.Icc 1 2: Set ℝ) 3 := by sorry
+example : IsStrictUpperBound (.Icc 1 2: Set ℝ) 3 := by sorry
 
 /-- A convenient way to simplify the notion of having `x₀` as a minimal element.-/
 theorem IsMin.iff_lowerbound {X:Type} [PartialOrder X] {Y: Set X} (hY: IsTotal Y) (x₀ : X) : (∃ hx₀ : x₀ ∈ Y, IsMin (⟨ x₀, hx₀ ⟩:Y)) ↔ x₀ ∈ Y ∧ ∀ x ∈ Y, x₀ ≤ x := by
@@ -354,10 +354,10 @@ def Ex_8_5_5_b : Decidable (∀ (X Y:Type) (h: LinearOrder Y) (f:X → Y), ∃ h
 -- Final part of Exercise 8.5.5; if the answer to the previous part is "no", modify the hypotheses to make it true.
 
 /-- Exercise 8.5.6 -/
-abbrev OrderIdeals (X: Type) [PartialOrder X] : Set (Set X) := Set.Iic '' (Set.univ : Set X)
+abbrev OrderIdeals (X: Type) [PartialOrder X] : Set (Set X) := .Iic '' (.univ : Set X)
 
 def OrderIdeals.iso {X: Type} [PartialOrder X] : X ≃o OrderIdeals X := {
-  toFun := fun x ↦ ⟨ Set.Iic x, by simp ⟩
+  toFun := fun x ↦ ⟨ .Iic x, by simp ⟩
   invFun := by sorry
   left_inv := by sorry
   right_inv := by sorry

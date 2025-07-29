@@ -51,7 +51,7 @@ theorem Uncountable.power_set_nat : Uncountable (Set ℕ) := by
     contrapose! this; exact this.symm
   have : ¬ Finite (Set ℕ) := by
     by_contra!
-    have : Finite ((fun x:ℕ ↦ ({x}:Set ℕ)) '' (Set.univ)) := Finite.Set.subset (s := Set.univ) (by aesop)
+    have : Finite ((fun x:ℕ ↦ ({x}:Set ℕ)) '' (.univ)) := Finite.Set.subset (s := .univ) (by aesop)
     replace : Finite ℕ := by
       apply Finite.of_finite_univ
       rw [←Set.finite_coe_iff]
