@@ -95,8 +95,7 @@ theorem SetTheory.Set.mem_preimage' {X Y:Set} (f:X → Y) (U: Set) (x:Object) :
   . intro h
     by_cases hx: x ∈ X
     . use ⟨ x, hx ⟩
-      have := mem_preimage f U ⟨ x, hx ⟩
-      simp_all
+      have := mem_preimage f U ⟨ x, hx ⟩; simp_all
     . rw [preimage] at h
       simp_all [X.specification_axiom h]
   . intro ⟨ x', hx', hfx' ⟩
