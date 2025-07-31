@@ -182,90 +182,74 @@ abbrev BoundedInterval.joins (K I J: BoundedInterval) : Prop := (I:Set ℝ) ∩ 
   ∧ (K:Set ℝ) = (I:Set ℝ) ∪ (J:Set ℝ) ∧ |K|ₗ = |I|ₗ + |J|ₗ
 
 theorem BoundedInterval.join_Icc_Ioc {a b c:ℝ} (hab: a ≤ b) (hbc: b ≤ c) : (Icc a c).joins (Icc a b) (Ioc b c) := by
-  refine ⟨ ?_, ?_, ?_ ⟩
+  and_intros
   . rw [Set.eq_empty_iff_forall_notMem]; intros; simp; intros; linarith
   . ext x; simp; constructor
-    . intro ⟨ h1, h2 ⟩; simp [h1, h2]; exact le_or_lt x b
-    rintro (h1 | h2)
-    . exact ⟨ h1.1, by linarith ⟩
-    exact ⟨ by linarith, h2.2 ⟩
+    . intro ⟨ _, _ ⟩; simp_all [le_or_lt x b]
+    rintro (_ | _) <;> and_intros <;> linarith
   simp [length, BoundedInterval.a, BoundedInterval.b,
         show a ≤ b by linarith, show b ≤ c by linarith, show a ≤ c by linarith]
 
 theorem BoundedInterval.join_Icc_Ioo {a b c:ℝ} (hab: a ≤ b) (hbc: b < c) : (Ico a c).joins (Icc a b) (Ioo b c) := by
-  refine ⟨ ?_, ?_, ?_ ⟩
+  and_intros
   . rw [Set.eq_empty_iff_forall_notMem]; intros; simp; intros; linarith
   . ext x; simp; constructor
-    . intro ⟨ h1, h2 ⟩; simp [h1, h2]; exact le_or_lt x b
-    rintro (h1 | h2)
-    . exact ⟨ h1.1, by linarith ⟩
-    exact ⟨ by linarith, h2.2 ⟩
+    . intro ⟨ _, _ ⟩; simp_all [le_or_lt x b]
+    rintro (_ | _) <;> and_intros <;> linarith
   simp [length, BoundedInterval.a, BoundedInterval.b,
         show a ≤ b by linarith, show b ≤ c by linarith, show a ≤ c by linarith]
 
 theorem BoundedInterval.join_Ioc_Ioc {a b c:ℝ} (hab: a ≤ b) (hbc: b ≤ c) : (Ioc a c).joins (Ioc a b) (Ioc b c) := by
-  refine ⟨ ?_, ?_, ?_ ⟩
+  and_intros
   . rw [Set.eq_empty_iff_forall_notMem]; intros; simp; intros; linarith
   . ext x; simp; constructor
-    . intro ⟨ h1, h2 ⟩; simp [h1, h2]; exact le_or_lt x b
-    rintro (h1 | h2)
-    . exact ⟨ h1.1, by linarith ⟩
-    exact ⟨ by linarith, h2.2 ⟩
+    . intro ⟨ _, _ ⟩; simp_all [le_or_lt x b]
+    rintro (_ | _) <;> and_intros <;> linarith
   simp [length, BoundedInterval.a, BoundedInterval.b,
         show a ≤ b by linarith, show b ≤ c by linarith, show a ≤ c by linarith]
 
 theorem BoundedInterval.join_Ioc_Ioo {a b c:ℝ} (hab: a ≤ b) (hbc: b < c) : (Ioo a c).joins (Ioc a b) (Ioo b c) := by
-  refine ⟨ ?_, ?_, ?_ ⟩
+  and_intros
   . rw [Set.eq_empty_iff_forall_notMem]; intros; simp; intros; linarith
   . ext x; simp; constructor
-    . intro ⟨ h1, h2 ⟩; simp [h1, h2]; exact le_or_lt x b
-    rintro (h1 | h2)
-    . exact ⟨ h1.1, by linarith ⟩
-    exact ⟨ by linarith, h2.2 ⟩
+    . intro ⟨ _, _ ⟩; simp_all [le_or_lt x b]
+    rintro (_ | _) <;> and_intros <;> linarith
   simp [length, BoundedInterval.a, BoundedInterval.b,
         show a ≤ b by linarith, show b ≤ c by linarith, show a ≤ c by linarith]
 
 theorem BoundedInterval.join_Ico_Icc {a b c:ℝ} (hab: a ≤ b) (hbc: b ≤ c) : (Icc a c).joins (Ico a b) (Icc b c) := by
-  refine ⟨ ?_, ?_, ?_ ⟩
+  and_intros
   . rw [Set.eq_empty_iff_forall_notMem]; intros; simp; intros; linarith
   . ext x; simp; constructor
-    . intro ⟨ h1, h2 ⟩; simp [h1, h2]; exact lt_or_le x b
-    rintro (h1 | h2)
-    . exact ⟨ h1.1, by linarith ⟩
-    exact ⟨ by linarith, h2.2 ⟩
+    . intro ⟨ _, _ ⟩; simp_all [lt_or_le x b]
+    rintro (_ | _) <;> and_intros <;> linarith
   simp [length, BoundedInterval.a, BoundedInterval.b,
         show a ≤ b by linarith, show b ≤ c by linarith, show a ≤ c by linarith]
 
 theorem BoundedInterval.join_Ico_Ico {a b c:ℝ} (hab: a ≤ b) (hbc: b ≤ c) : (Ico a c).joins (Ico a b) (Ico b c) := by
-  refine ⟨ ?_, ?_, ?_ ⟩
+  and_intros
   . rw [Set.eq_empty_iff_forall_notMem]; intros; simp; intros; linarith
   . ext x; simp; constructor
-    . intro ⟨ h1, h2 ⟩; simp [h1, h2]; exact lt_or_le x b
-    rintro (h1 | h2)
-    . exact ⟨ h1.1, by linarith ⟩
-    exact ⟨ by linarith, h2.2 ⟩
+    . intro ⟨ _, _ ⟩; simp_all [lt_or_le x b]
+    rintro (_ | _) <;> and_intros <;> linarith
   simp [length, BoundedInterval.a, BoundedInterval.b,
         show a ≤ b by linarith, show b ≤ c by linarith, show a ≤ c by linarith]
 
 theorem BoundedInterval.join_Ioo_Icc {a b c:ℝ} (hab: a < b) (hbc: b ≤ c) : (Ioc a c).joins (Ioo a b) (Icc b c) := by
-  refine ⟨ ?_, ?_, ?_ ⟩
+  and_intros
   . rw [Set.eq_empty_iff_forall_notMem]; intros; simp; intros; linarith
   . ext x; simp; constructor
-    . intro ⟨ h1, h2 ⟩; simp [h1, h2]; exact lt_or_le x b
-    rintro (h1 | h2)
-    . exact ⟨ h1.1, by linarith ⟩
-    exact ⟨ by linarith, h2.2 ⟩
+    . intro ⟨ _, _ ⟩; simp_all [lt_or_le x b]
+    rintro (_ | _) <;> and_intros <;> linarith
   simp [length, BoundedInterval.a, BoundedInterval.b,
         show a ≤ b by linarith, show b ≤ c by linarith, show a ≤ c by linarith]
 
 theorem BoundedInterval.join_Ioo_Ico {a b c:ℝ} (hab: a < b) (hbc: b ≤ c) : (Ioo a c).joins (Ioo a b) (Ico b c) := by
-  refine ⟨ ?_, ?_, ?_ ⟩
+  and_intros
   . rw [Set.eq_empty_iff_forall_notMem]; intros; simp; intros; linarith
   . ext x; simp; constructor
-    . intro ⟨ h1, h2 ⟩; simp [h1, h2]; exact lt_or_le x b
-    rintro (h1 | h2)
-    . exact ⟨ h1.1, by linarith ⟩
-    exact ⟨ by linarith, h2.2 ⟩
+    . intro ⟨ _, _ ⟩; simp_all [lt_or_le x b]
+    rintro (_ | _) <;> and_intros <;> linarith
   simp [length, BoundedInterval.a, BoundedInterval.b,
         show a ≤ b by linarith, show b ≤ c by linarith, show a ≤ c by linarith]
 

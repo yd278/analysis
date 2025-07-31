@@ -37,6 +37,7 @@ structure OrderedPair where
 #check OrderedPair.ext
 
 /-- Definition 3.5.1 (Ordered pair) -/
+@[simp]
 theorem OrderedPair.eq (x y x' y' : Object) :
     (⟨ x, y ⟩ : OrderedPair) = (⟨ x', y' ⟩ : OrderedPair) ↔ x = x' ∧ y = y' := by aesop
 
@@ -53,20 +54,15 @@ instance OrderedPair.inst_coeObject : Coe OrderedPair Object where
   the full Cartesian product
 -/
 abbrev SetTheory.Set.slice (x:Object) (Y:Set) : Set :=
-  Y.replace (P := fun y z ↦ z = (⟨x, y⟩:OrderedPair)) (by
-    intro y z z' ⟨ hz, hz'⟩
-    simp_all
-  )
+  Y.replace (P := fun y z ↦ z = (⟨x, y⟩:OrderedPair)) (by intros; simp_all)
 
+@[simp]
 theorem SetTheory.Set.mem_slice (x z:Object) (Y:Set) :
     z ∈ (SetTheory.Set.slice x Y) ↔ ∃ y:Y, z = (⟨x, y⟩:OrderedPair) := replacement_axiom _ _
 
 /-- Definition 3.5.2 (Cartesian product) -/
 abbrev SetTheory.Set.cartesian (X Y:Set) : Set :=
-  union (X.replace (P := fun x z ↦ z = slice x Y) (by
-    intro x z z' ⟨ hz, hz' ⟩
-    simp_all
-  ))
+  union (X.replace (P := fun x z ↦ z = slice x Y) (by intros; simp_all))
 
 /-- This instance enables the ×ˢ notation for Cartesian product. -/
 instance SetTheory.Set.inst_SProd : SProd Set Set Set where
@@ -74,73 +70,47 @@ instance SetTheory.Set.inst_SProd : SProd Set Set Set where
 
 example (X Y:Set) : X ×ˢ Y = SetTheory.Set.cartesian X Y := rfl
 
+@[simp]
 theorem SetTheory.Set.mem_cartesian (z:Object) (X Y:Set) :
     z ∈ X ×ˢ Y ↔ ∃ x:X, ∃ y:Y, z = (⟨x, y⟩:OrderedPair) := by
-  simp only [SProd.sprod, union_axiom]
-  constructor
-  . intro h
-    obtain ⟨ S, hz, hS ⟩ := h
-    rw [replacement_axiom] at hS
-    obtain ⟨ x, hx ⟩ := hS
-    simp at hx
-    rw [hx, mem_slice] at hz
-    obtain ⟨ y, rfl ⟩ := hz
-    use x, y
-  intro h
-  obtain ⟨ x, y, rfl ⟩ := h
-  use slice x Y
-  constructor
-  . rw [mem_slice]
-    use y
-  rw [replacement_axiom]
-  use x
+  simp only [SProd.sprod, union_axiom]; constructor
+  . intro ⟨ S, hz, hS ⟩; rw [replacement_axiom] at hS; obtain ⟨ x, hx ⟩ := hS
+    use x; simp_all
+  rintro ⟨ x, y, rfl ⟩; use slice x Y; refine ⟨ by simp, ?_ ⟩
+  rw [replacement_axiom]; use x
 
 abbrev SetTheory.Set.curry {X Y Z:Set} (f: X ×ˢ Y → Z) : X → Y → Z :=
-  fun x y ↦ f ⟨ (⟨ x, y ⟩:OrderedPair), by rw [mem_cartesian]; use x, y ⟩
+  fun x y ↦ f ⟨ (⟨ x, y ⟩:OrderedPair), by simp ⟩
 
 noncomputable abbrev SetTheory.Set.fst {X Y:Set} (z:X ×ˢ Y) : X :=
-  (show ∃ x:X, ∃ y:Y, z.val = (⟨ x, y ⟩:OrderedPair)
-  by exact (mem_cartesian _ _ _).mp z.property).choose
+  ((mem_cartesian _ _ _).mp z.property).choose
 
 noncomputable abbrev SetTheory.Set.snd {X Y:Set} (z:X ×ˢ Y) : Y :=
-  (show ∃ y:Y, ∃ x:X, z.val = (⟨ x, y ⟩:OrderedPair)
-  by rw [exists_comm]; exact (mem_cartesian _ _ _).mp z.property).choose
+  (exists_comm.mp ((mem_cartesian _ _ _).mp z.property)).choose
 
 theorem SetTheory.Set.pair_eq_fst_snd {X Y:Set} (z:X ×ˢ Y) :
     z.val = (⟨ fst z, snd z ⟩:OrderedPair) := by
-  obtain ⟨ y, hy ⟩ := ((mem_cartesian _ _ _).mp z.property).choose_spec
-  obtain ⟨ x, hx ⟩ := (exists_comm.mp ((mem_cartesian _ _ _).mp z.property)).choose_spec
-  change z.val = (⟨ fst z, y ⟩:OrderedPair) at hy
-  change z.val = (⟨ x, snd z ⟩:OrderedPair) at hx
-  simp only [hx, EmbeddingLike.apply_eq_iff_eq, OrderedPair.eq] at hy ⊢
-  simp [hy.1]
+  have := (mem_cartesian _ _ _).mp z.property
+  obtain ⟨ y, hy: z.val = (⟨ fst z, y ⟩:OrderedPair)⟩ := this.choose_spec
+  obtain ⟨ x, hx: z.val = (⟨ x, snd z ⟩:OrderedPair)⟩ := (exists_comm.mp this).choose_spec
+  simp_all [EmbeddingLike.apply_eq_iff_eq]
 
 def SetTheory.Set.mk_cartesian {X Y:Set} (x:X) (y:Y) : X ×ˢ Y :=
-  ⟨(⟨ x, y ⟩:OrderedPair), by rw [mem_cartesian]; use x, y⟩
+  ⟨(⟨ x, y ⟩:OrderedPair), by simp⟩
 
 @[simp]
 theorem SetTheory.Set.fst_of_mk_cartesian {X Y:Set} (x:X) (y:Y) :
     fst (mk_cartesian x y) = x := by
-  let z := mk_cartesian x y
-  obtain ⟨ y', hy ⟩ := ((mem_cartesian _ _ _).mp z.property).choose_spec
-  change z.val = (⟨ fst z, y' ⟩:OrderedPair) at hy
-  unfold z at hy
-  rw [mk_cartesian] at hy ⊢
-  rw [EmbeddingLike.apply_eq_iff_eq, OrderedPair.eq] at hy
-  rw [Subtype.val_inj] at hy
-  rw [← hy.1]
+  let z := mk_cartesian x y; have := (mem_cartesian _ _ _).mp z.property
+  obtain ⟨ y', hy: z.val = (⟨ fst z, y' ⟩:OrderedPair) ⟩ := this.choose_spec
+  simp [z, mk_cartesian, Subtype.val_inj] at hy ⊢; rw [←hy.1]
 
 @[simp]
 theorem SetTheory.Set.snd_of_mk_cartesian {X Y:Set} (x:X) (y:Y) :
     snd (mk_cartesian x y) = y := by
-  let z := mk_cartesian x y
-  obtain ⟨ x', hx ⟩ := (exists_comm.mp ((mem_cartesian _ _ _).mp z.property)).choose_spec
-  change z.val = (⟨ x', snd z ⟩:OrderedPair) at hx
-  unfold z at hx
-  rw [mk_cartesian] at hx ⊢
-  rw [EmbeddingLike.apply_eq_iff_eq, OrderedPair.eq] at hx
-  repeat rw [Subtype.val_inj] at hx
-  rw [← hx.2]
+  let z := mk_cartesian x y; have := (mem_cartesian _ _ _).mp z.property
+  obtain ⟨ x', hx: z.val = (⟨ x', snd z ⟩:OrderedPair) ⟩ := (exists_comm.mp this).choose_spec
+  simp [z, mk_cartesian, Subtype.val_inj] at hx ⊢; rw [←hx.2]
 
 noncomputable abbrev SetTheory.Set.uncurry {X Y Z:Set} (f: X → Y → Z) : X ×ˢ Y → Z :=
   fun z ↦ f (fst z) (snd z)
@@ -181,14 +151,10 @@ abbrev SetTheory.Set.iProd {I: Set} (X: I → Set) : Set :=
 /-- Definition 3.5.7 -/
 theorem SetTheory.Set.mem_iProd {I: Set} {X: I → Set} (t:Object) :
     t ∈ iProd X ↔ ∃ a: ∀ i, X i, t = tuple a := by
-  simp only [iProd, specification_axiom'']
-  constructor
-  . intro ⟨ ht, a, h ⟩
-    use a
+  simp only [iProd, specification_axiom'']; constructor
+  . intro ⟨ ht, a, h ⟩; use a
   intro ⟨ a, ha ⟩
-  have h : t ∈ (I.iUnion X)^I := by
-    rw [powerset_axiom, ha]
-    use fun i ↦ ⟨ a i, by rw [mem_iUnion]; use i; exact (a i).property ⟩
+  have h : t ∈ (I.iUnion X)^I := by simp [ha]
   use h, a
 
 theorem SetTheory.Set.tuple_mem_iProd {I: Set} {X: I → Set} (a: ∀ i, X i) :
@@ -260,27 +226,19 @@ into the field of higher order category theory, which we will not pursue here.
 abbrev SetTheory.Set.Fin (n:ℕ) : Set := nat.specify (fun m ↦ (m:ℕ) < n)
 
 theorem SetTheory.Set.mem_Fin (n:ℕ) (x:Object) : x ∈ Fin n ↔ ∃ m, m < n ∧ x = m := by
-  rw [specification_axiom'']
-  constructor
-  . intro ⟨ h1, h2 ⟩
-    use ((⟨ x, h1 ⟩:nat):ℕ)
-    simp [h2]
+  rw [specification_axiom'']; constructor
+  . intro ⟨ h1, h2 ⟩; use ↑(⟨ x, h1 ⟩:nat); simp [h2]
     calc
       x = (⟨ x, h1 ⟩:nat) := rfl
-      _ = _ :=  by congr; simp
+      _ = _ := by congr; simp
   intro ⟨ m, hm, h ⟩
   use (by rw [h, ←SetTheory.Object.ofnat_eq]; exact (m:nat).property)
-  convert hm
-  simp [h, Equiv.symm_apply_eq]
-  rfl
+  convert hm; simp [h, Equiv.symm_apply_eq]; rfl
 
 abbrev SetTheory.Set.Fin_mk (n m:ℕ) (h: m < n): Fin n := ⟨ m, by rw [mem_Fin]; use m ⟩
 
 theorem SetTheory.Set.mem_Fin' {n:ℕ} (x:Fin n) : ∃ m, ∃ h : m < n, x = Fin_mk n m h := by
-  have := x.property
-  rw [mem_Fin] at this
-  obtain ⟨ m, hm, this ⟩ := this
-  use m, hm
+  obtain ⟨ m, hm, this ⟩ := (mem_Fin _ _).mp x.property; use m, hm
   simp [Fin_mk, ←Subtype.val_inj, this]
 
 @[coe]
@@ -290,16 +248,13 @@ noncomputable instance SetTheory.Set.Fin.inst_coeNat {n:ℕ} : CoeOut (Fin n) �
   coe := SetTheory.Set.Fin.toNat
 
 theorem SetTheory.Set.Fin.toNat_spec {n:ℕ} (i: Fin n) :
-    ∃ h : (i:ℕ) < n, i = Fin_mk n (i:ℕ) h := (mem_Fin' i).choose_spec
+    ∃ h : i < n, i = Fin_mk n i h := (mem_Fin' i).choose_spec
 
-theorem SetTheory.Set.Fin.toNat_lt {n:ℕ} (i: Fin n) : (i:ℕ) < n := (toNat_spec i).choose
+theorem SetTheory.Set.Fin.toNat_lt {n:ℕ} (i: Fin n) : i < n := (toNat_spec i).choose
 
 @[simp]
 theorem SetTheory.Set.Fin.coe_toNat {n:ℕ} (i: Fin n) : ((i:ℕ):Object) = (i:Object) := by
-  obtain ⟨ h, h' ⟩ := toNat_spec i
-  set j := (i:ℕ)
-  change i = Fin_mk n j h at h'
-  rw [h']
+  set j := (i:ℕ); obtain ⟨ h, h':i = Fin_mk n j h ⟩ := toNat_spec i; rw [h']
 
 @[simp]
 theorem SetTheory.Set.Fin.toNat_mk {n:ℕ} (m:ℕ) (h: m < n) : (Fin_mk n m h : ℕ) = m := by
@@ -307,10 +262,8 @@ theorem SetTheory.Set.Fin.toNat_mk {n:ℕ} (m:ℕ) (h: m < n) : (Fin_mk n m h : 
   rwa [SetTheory.Object.natCast_inj] at this
 
 abbrev SetTheory.Set.Fin_embed (n N:ℕ) (h: n ≤ N) (i: Fin n) : Fin N := ⟨ i.val, by
-  have := i.property
-  rw [mem_Fin] at this ⊢
-  obtain ⟨ m, hm, im ⟩ := this
-  use m, by linarith
+  have := i.property; rw [mem_Fin] at this ⊢
+  obtain ⟨ m, hm, im ⟩ := this; use m, by linarith
 ⟩
 
 /--
@@ -329,43 +282,30 @@ theorem SetTheory.Set.finite_choice {n:ℕ} {X: Fin n → Set} (h: ∀ i, X i �
   -- (although it is more convenient to induct from 0 rather than 1)
   induction' n with n hn
   . have : Fin 0 = ∅ := by
-      rw [eq_empty_iff_forall_notMem]
-      intros
-      by_contra! h
-      simp [specification_axiom''] at h
+      rw [eq_empty_iff_forall_notMem]; intros; by_contra! h; simp at h
     have empty (i:Fin 0) : X i := False.elim (by rw [this] at i; exact not_mem_empty i i.property)
-    apply nonempty_of_inhabited (x := tuple empty)
-    rw [mem_iProd]
-    use empty
+    apply nonempty_of_inhabited (x := tuple empty); rw [mem_iProd]; use empty
   set X' : Fin n → Set := fun i ↦ X (Fin_embed n (n+1) (by linarith) i)
   have hX' (i: Fin n) : X' i ≠ ∅ := h _
   obtain ⟨ x'_obj, hx' ⟩ := nonempty_def (hn hX')
-  rw [mem_iProd] at hx'
-  obtain ⟨ x', rfl ⟩ := hx'
+  rw [mem_iProd] at hx'; obtain ⟨ x', rfl ⟩ := hx'
   set last : Fin (n+1) := Fin_mk (n+1) n (by linarith)
   obtain ⟨ a, ha ⟩ := nonempty_def (h last)
   set x : ∀ i, X i := by
     intro i
-    have := mem_Fin' i
     classical
     -- it is unfortunate here that classical logic is required to perform this gluing; this is
     -- because `nat` is technically not an inductive type.  There should be some workaround
     -- involving the equivalence between `nat` and `ℕ` (which is an inductive type).
     cases decEq i last with
-      | isTrue heq =>
-        rw [heq]
-        exact ⟨ a, ha ⟩
+      | isTrue heq => rw [heq]; exact ⟨ a, ha ⟩
       | isFalse heq =>
         have : ∃ m, ∃ h: m < n, X i = X' (Fin_mk n m h) := by
-          obtain ⟨ m, h, this ⟩ := this
-          have h' : m ≠ n := by
-            contrapose! heq
-            simp [this, last, heq]
+          obtain ⟨ m, h, this ⟩ := mem_Fin' i
+          have h' : m ≠ n := by contrapose! heq; simp [this, last, heq]
           replace h' : m < n := by contrapose! h'; linarith
-          use m, h'
-          simp [X']; congr
-        rw [this.choose_spec.choose_spec]
-        exact x' _
+          use m, h'; simp [X']; congr
+        rw [this.choose_spec.choose_spec]; exact x' _
   exact nonempty_of_inhabited (tuple_mem_iProd x)
 
 /-- Exercise 3.5.1, second part (requires axiom of regularity) -/
