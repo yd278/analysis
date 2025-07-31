@@ -25,7 +25,7 @@ variable [SetTheory] (X : Type) (S : _root_.Set X) (f : X → X)
 
 /-- Definition 3.4.1.  Interestingly, the definition does not require S to be a subset of X. -/
 abbrev SetTheory.Set.image {X Y:Set} (f:X → Y) (S: Set) : Set :=
-  X.replace (P := fun x y ↦ y = f x ∧ x.val ∈ S) (by simp_all)
+  X.replace (P := fun x y ↦ f x = y ∧ x.val ∈ S) (by simp_all)
 
 /-- Definition 3.4.1 -/
 theorem SetTheory.Set.mem_image {X Y:Set} (f:X → Y) (S: Set) (y:Object) :

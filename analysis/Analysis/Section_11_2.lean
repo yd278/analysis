@@ -118,7 +118,7 @@ example : PiecewiseConstantOn f_11_2_4 (Icc 1 6) := by
   sorry
 
 /-- Example 11.2.6 -/
-theorem PiecewiseConstantOn.of_const {f:ℝ → ℝ} {I: BoundedInterval} (h: ConstantOn f (I:Set ℝ)) :
+theorem ConstantOn.piecewiseConstantOn {f:ℝ → ℝ} {I: BoundedInterval} (h: ConstantOn f (I:Set ℝ)) :
   PiecewiseConstantOn f I := by sorry
 
 /-- Lemma 11.2.7 / Exercise 11.2.1 -/
@@ -166,7 +166,7 @@ noncomputable abbrev PiecewiseConstantWith.integ (f:ℝ → ℝ) {I: BoundedInte
   ℝ := ∑ J ∈ P.intervals, constant_value_on f (J:Set ℝ) * |J|ₗ
 
 theorem PiecewiseConstantWith.integ_congr {f g:ℝ → ℝ} {I: BoundedInterval} {P: Partition I}
-  (h: ∀ x ∈ (I:Set ℝ), f x = g x) : PiecewiseConstantWith.integ f P = PiecewiseConstantWith.integ g P := by
+  (h: ∀ x ∈ (I:Set ℝ), f x = g x) : integ f P = integ g P := by
   simp only [integ, Subtype.forall]
   apply Finset.sum_congr rfl; intro J hJ; congr 1; apply constant_value_on_congr; intros
   have := P.contains _ hJ; rw [subset_iff] at this
@@ -222,7 +222,7 @@ theorem PiecewiseConstantOn.integ_def {f:ℝ → ℝ} {I: BoundedInterval} {P: P
   simp [integ, h']; exact PiecewiseConstantWith.integ_eq h'.choose_spec h
 
 theorem PiecewiseConstantOn.integ_congr {f g:ℝ → ℝ} {I: BoundedInterval}
-  (h: ∀ x ∈ (I:Set ℝ), f x = g x) : PiecewiseConstantOn.integ f I = PiecewiseConstantOn.integ g I := by
+  (h: ∀ x ∈ (I:Set ℝ), f x = g x) : integ f I = integ g I := by
   by_cases hf : PiecewiseConstantOn f I
   <;> have hg := hf <;> rw [congr h] at hg <;> simp [integ, hf, hg]
   rw [PiecewiseConstantWith.integ_congr h, ←integ_def hg.choose_spec, ←integ_def ?_]
