@@ -46,13 +46,13 @@ lemma integral_bound_upper_of_bounded {f:ℝ → ℝ} {M:ℝ} {I: BoundedInterva
   simp
   refine ⟨ fun _ ↦ M , ⟨ ⟨ ?_, ?_, ⟩, PiecewiseConstantOn.integ_const M I ⟩ ⟩
   . peel h with _ _ h'; simp [abs_le'] at h'; simp [h'.1]
-  exact PiecewiseConstantOn.of_const (ConstantOn.of_const (c := M) (by simp))
+  exact (ConstantOn.of_const (c := M) (by simp)).piecewiseConstantOn
 
 lemma integral_bound_lower_of_bounded {f:ℝ → ℝ} {M:ℝ} {I: BoundedInterval} (h: ∀ x ∈ (I:Set ℝ), |f x| ≤ M) : -M * |I|ₗ ∈ (fun g ↦ PiecewiseConstantOn.integ g I) '' {g | MinorizesOn g f I ∧ PiecewiseConstantOn g I} := by
   simp
   refine ⟨ fun _ ↦ -M , ⟨ ⟨ ?_, ?_, ⟩, by convert PiecewiseConstantOn.integ_const (-M) I using 1; simp ⟩ ⟩
   . peel h with _ _ h'; simp [abs_le'] at h'; simp; linarith
-  exact PiecewiseConstantOn.of_const (ConstantOn.of_const (c := -M) (by simp))
+  exact (ConstantOn.of_const (c := -M) (by simp)).piecewiseConstantOn
 
 lemma integral_bound_upper_nonempty {f:ℝ → ℝ} {I: BoundedInterval} (h: BddOn f I) : ((fun g ↦ PiecewiseConstantOn.integ g I) '' {g | MajorizesOn g f I ∧ PiecewiseConstantOn g I}).Nonempty := by
   obtain ⟨ _, h ⟩ := h; exact Set.nonempty_of_mem (integral_bound_upper_of_bounded h)
@@ -142,7 +142,7 @@ theorem integ_on_subsingleton {f:ℝ → ℝ} {I: BoundedInterval} (hI: |I|ₗ =
   IntegrableOn f I ∧ integ f I = 0 := by
   have _ := length_of_subsingleton.mpr hI
   have hconst : ConstantOn f I := ConstantOn.of_subsingleton
-  convert integ_of_piecewise_const (PiecewiseConstantOn.of_const hconst)
+  convert integ_of_piecewise_const hconst.piecewiseConstantOn
   simp [PiecewiseConstantOn.integ_const' hconst, hI]
 
 /-- Definition 11.3.9 (Riemann sums).  The restriction to positive length J is not needed thanks to various junk value conventions. -/

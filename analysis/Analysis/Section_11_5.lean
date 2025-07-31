@@ -170,10 +170,10 @@ theorem integ_of_bdd_cts {I: BoundedInterval} {f:ℝ → ℝ} (hbound: BddOn f I
     have h'const : PiecewiseConstantOn h' I := by
       rw [of_join hjoin2 _]; and_intros
       . rw [of_join hjoin1 _]; and_intros
-        . exact of_const (ConstantOn.of_const h'const_left)
+        . exact (ConstantOn.of_const h'const_left).piecewiseConstantOn
         apply hhconst.congr'
         intro x hx; simp [h', hx, mem_iff]
-      exact of_const (ConstantOn.of_const h'const_right)
+      exact (ConstantOn.of_const h'const_right).piecewiseConstantOn
     have h'maj : MajorizesOn h' f I := by
       intro x hx; by_cases hxI': x ∈ I' <;> simp [h', hxI']
       . solve_by_elim
@@ -204,10 +204,10 @@ theorem integ_of_bdd_cts {I: BoundedInterval} {f:ℝ → ℝ} (hbound: BddOn f I
       and_intros
       . rw [of_join hjoin1 _]
         and_intros
-        . exact of_const (ConstantOn.of_const g'const_left)
+        . exact (ConstantOn.of_const g'const_left).piecewiseConstantOn
         apply hgconst.congr'
         intro x hx; simp [g', hx, mem_iff]
-      exact of_const (ConstantOn.of_const g'const_right)
+      exact (ConstantOn.of_const g'const_right).piecewiseConstantOn
     have g'maj : MinorizesOn g' f I := by
       intro x hx; by_cases hxI': x ∈ I' <;> simp [g', hxI']
       . solve_by_elim
