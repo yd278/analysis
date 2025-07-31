@@ -100,13 +100,13 @@ lemma upper_integral_le {f:ℝ → ℝ} {I: BoundedInterval} {M:ℝ} (h: ∀ x �
 
 lemma upper_integral_le_integ {f g:ℝ → ℝ} {I: BoundedInterval} (hf: BddOn f I)
   (hfg: MajorizesOn g f I) (hg: PiecewiseConstantOn g I) :
-  upper_integral f I ≤ PiecewiseConstantOn.integ g I := by
+  upper_integral f I ≤ hg.integ' := by
   apply ConditionallyCompleteLattice.csInf_le _ _ (integral_bound_below hf) _
   use g; simpa [hg]
 
 lemma integ_le_lower_integral {f h:ℝ → ℝ} {I: BoundedInterval} (hf: BddOn f I)
   (hfh: MinorizesOn h f I) (hg: PiecewiseConstantOn h I) :
-  PiecewiseConstantOn.integ h I ≤ lower_integral f I := by
+  hg.integ' ≤ lower_integral f I := by
   apply ConditionallyCompleteLattice.le_csSup _ _ (integral_bound_above hf) _
   use h; simpa [hg]
 
@@ -134,7 +134,7 @@ noncomputable abbrev IntegrableOn (f:ℝ → ℝ) (I: BoundedInterval) : Prop :=
 
 /-- Lemma 11.3.7 / Exercise 11.3.3 -/
 theorem integ_of_piecewise_const {f:ℝ → ℝ} {I: BoundedInterval} (hf: PiecewiseConstantOn f I) :
-  IntegrableOn f I ∧ integ f I = PiecewiseConstantOn.integ f I := by
+  IntegrableOn f I ∧ integ f I = hf.integ' := by
   sorry
 
 /-- Remark 11.3.8 -/

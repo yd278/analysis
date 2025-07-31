@@ -33,19 +33,19 @@ theorem cts_of_integ {a b:ℝ} {f:ℝ → ℝ} (hf: IntegrableOn f (Icc a b)) :
   obtain ⟨ M, hM ⟩ := hf.1
   have {x y:ℝ} (hxy: x < y) (hx: x ∈ Set.Icc a b) (hy: y ∈ Set.Icc a b) : |F y - F x| ≤ M * (y - x) := by
     simp at hx hy
-    have := (integ_of_join (join_Icc_Ioc hy.1 hy.2) hf).1
-    replace := (integ_of_join (join_Icc_Ioc hx.1 (le_of_lt hxy)) this).2
+    have := (hf.join (join_Icc_Ioc hy.1 hy.2)).1
+    replace := (this.join (join_Icc_Ioc hx.1 (le_of_lt hxy))).2
     simp [F, this.2, abs_le']
     constructor
-    . convert integ_mono (g := fun _ ↦ M) this.1 (integ_of_const _ _).1 _
-      . simp [integ_of_const, le_of_lt hxy]
+    . convert this.1.mono (g := fun _ ↦ M) (IntegrableOn.const _ _).1 _
+      . simp [IntegrableOn.const, le_of_lt hxy]
       intro z hz
       specialize hM z ?_
       . simp at hz ⊢; constructor <;> linarith
       rw [abs_le'] at hM; simp [hM]
     rw [neg_le]
-    convert integ_mono (f := fun _ ↦ -M) (integ_of_const _ _).1 this.1 _
-    . simp [integ_of_const, le_of_lt hxy]
+    convert (IntegrableOn.const _ _).1.mono (f := fun _ ↦ -M) this.1 _
+    . simp [IntegrableOn.const, le_of_lt hxy]
     intro z hz
     specialize hM z ?_
     . simp at hz ⊢; constructor <;> linarith
@@ -64,7 +64,7 @@ theorem cts_of_integ {a b:ℝ} {f:ℝ → ℝ} (hf: IntegrableOn f (Icc a b)) :
     calc
       _ = |F y - F x| := by rw [abs_sub_comm]
       _ ≤ M * |x-y| := this hx hy
-      _ ≤ (max M 1) * |x-y| := by gcongr; exact le_max_left _ _
+      _ ≤ (max M 1) * |x-y| := by gcongr; apply le_max_left
       _ < (max M 1) * (ε / (max M 1)) := by gcongr
       _ = _ := by field_simp
   exact ContinuousOn.ofUniformContinuousOn F this
@@ -74,50 +74,32 @@ theorem deriv_of_integ {a b:ℝ} (hab: a < b) {f:ℝ → ℝ} (hf: IntegrableOn 
   HasDerivWithinAt (fun x => integ f (Icc a x)) (f x₀) (.Icc a b) x₀ := by
   -- This proof is written to follow the structure of the original text.
   rw [HasDerivWithinAt.iff_approx_linear]
-  intro ε hε
   simp [(ContinuousWithinAt.tfae _ f hx₀).out 0 2] at hcts
-  specialize hcts ε hε
-  obtain ⟨ δ, hδ, hconv ⟩ := hcts; use δ, hδ; intro y hy hyδ
-  rcases lt_trichotomy x₀ y with hx₀y | hx₀y | hx₀y
-  . have := (integ_of_join (join_Icc_Ioc hy.1 hy.2) hf).1
-    replace := (integ_of_join (join_Icc_Ioc hx₀.1 (le_of_lt hx₀y)) this).2
+  peel hcts with ε hε δ hδ hconv; intro y hy hyδ
+  rcases lt_trichotomy x₀ y with hx₀y | rfl | hx₀y
+  . have := ((hf.join (join_Icc_Ioc hy.1 hy.2)).1.join (join_Icc_Ioc hx₀.1 (le_of_lt hx₀y))).2
     simp [this.2, abs_le', abs_of_pos (show 0 < y - x₀ by linarith)]
-    have h1 := integ_mono (g := fun _ ↦ f x₀ + ε) this.1 (integ_of_const _ _).1 ?_
-    have h2 := integ_mono (f := fun _ ↦ f x₀ - ε) (integ_of_const _ _).1 this.1 ?_
-    simp [integ_of_const, le_of_lt hx₀y, BoundedInterval.a, BoundedInterval.b] at h1 h2
-    constructor
-    . convert h1 using 1; ring
-    . simp [←sub_nonneg] at h2 ⊢
-      convert h2 using 1; ring
-    . intro z hz
-      simp at hz hy hx₀
-      simp_rw [abs_lt] at hyδ hconv
-      specialize hconv z (by linarith) (by linarith) ⟨ by linarith, by linarith ⟩
-      simp; linarith
-    intro z hz
-    simp at hz hy hx₀
-    simp_rw [abs_lt] at hyδ hconv
-    specialize hconv z (by linarith) (by linarith) ⟨ by linarith, by linarith ⟩
-    simp; linarith
-  . simp [hx₀y]
+    have h1 := this.1.mono (g := fun _ ↦ f x₀ + ε) (IntegrableOn.const _ _).1 ?_
+    have h2 := (IntegrableOn.const _ _).1.mono (f := fun _ ↦ f x₀ - ε) this.1 ?_
+    . simp [IntegrableOn.const, le_of_lt hx₀y] at h1 h2
+      and_intros
+      . convert h1 using 1; ring
+      . simp [←sub_nonneg] at *; convert h2 using 1; ring
+    all_goals intro z hz; simp [abs_lt] at *; specialize hconv z ?_ ?_ ?_ ?_ <;> linarith
+  . simp
   sorry
 
 /-- Example 11.9.2 -/
-theorem IntegrableOn.of_f_9_8_5 : IntegrableOn f_9_8_5 (Icc 0 1) := by
-  apply integ_of_monotone
-  apply StrictMonoOn.monotoneOn
-  exact StrictMonoOn.mono StrictMonoOn.of_f_9_8_5 (by simp)
+theorem IntegrableOn.of_f_9_8_5 : IntegrableOn f_9_8_5 (Icc 0 1) :=
+  integ_of_monotone (StrictMonoOn.of_f_9_8_5.mono (by simp)).monotoneOn
 
 noncomputable abbrev F_11_9_2 := fun x ↦ integ f_9_8_5 (Icc 0 x)
 
-theorem ContinuousOn.of_F_11_9_2 : ContinuousOn F_11_9_2 (.Icc 0 1) := by
-  apply cts_of_integ
-  exact IntegrableOn.of_f_9_8_5
+theorem ContinuousOn.of_F_11_9_2 : ContinuousOn F_11_9_2 (.Icc 0 1) := cts_of_integ IntegrableOn.of_f_9_8_5
 
 theorem DifferentiableOn.of_F_11_9_2 {x:ℝ} (hx: ¬ ∃ r:ℚ, x = r) (hx': x ∈ Set.Icc 0 1) :
   DifferentiableWithinAt ℝ F_11_9_2 (.Icc 0 1) x := by
-  have := deriv_of_integ (show 0 < 1 by norm_num) IntegrableOn.of_f_9_8_5 hx'
-     (ContinuousAt.continuousWithinAt (ContinuousAt.of_f_9_8_5 hx))
+  have := deriv_of_integ (show 0 < 1 by norm_num) .of_f_9_8_5 hx' (ContinuousAt.of_f_9_8_5 hx).continuousWithinAt
   rw [hasDerivWithinAt_iff_hasFDerivWithinAt] at this
   use (ContinuousLinearMap.smulRight (1:ℝ →L[ℝ] ℝ) (f_9_8_5 x))
 
@@ -130,53 +112,42 @@ abbrev AntiderivOn (F f: ℝ → ℝ) (I: BoundedInterval) :=
   DifferentiableOn ℝ F I ∧ ∀ x ∈ I, HasDerivWithinAt F (f x) I x
 
 theorem AntiderivOn.mono {F f: ℝ → ℝ} {I J: BoundedInterval}
-  (h: AntiderivOn F f I) (hIJ: J ⊆ I) : AntiderivOn F f J := by
-  refine ⟨ DifferentiableOn.mono h.1 hIJ, ?_ ⟩
-  intro x hx
-  rw [subset_iff] at hIJ
-  exact HasDerivWithinAt.mono (h.2 x (hIJ hx)) hIJ
+  (h: AntiderivOn F f I) (hIJ: J ⊆ I) : AntiderivOn F f J :=
+  ⟨ h.1.mono hIJ, by intro x hx; rw [subset_iff] at hIJ; exact (h.2 x (hIJ hx)).mono hIJ ⟩
 
 /-- Theorem 11.9.4 (Second Fundamental Theorem of Calculus) -/
 theorem integ_eq_antideriv_sub {a b:ℝ} (h:a ≤ b) {f F: ℝ → ℝ}
   (hf: IntegrableOn f (Icc a b)) (hF: AntiderivOn F f (Icc a b)) :
   integ f (Icc a b) = F b - F a := by
-
   -- This proof is written to follow the structure of the original text.
   rcases lt_or_eq_of_le h with h | h
   . have hF_cts : ContinuousOn F (.Icc a b) := by
-      intro x hx
-      exact ContinuousWithinAt.of_differentiableWithinAt (hF.1 x hx)
+      intro x hx; exact ContinuousWithinAt.of_differentiableWithinAt (hF.1 x hx)
     -- for technical reasons we need to extend F by constant outside of Icc a b
     let F' : ℝ → ℝ := fun x ↦ F (max (min x b) a)
 
-    have hFF' {x:ℝ} (hx: x ∈ Set.Icc a b) : F' x = F x := by
-      simp at hx
-      simp [F', hx.2, hx.1]
+    have hFF' {x:ℝ} (hx: x ∈ Set.Icc a b) : F' x = F x := by simp_all [F']
 
     have hF'_cts : ContinuousOn F' (Ioo (a-1) (b+1)) := by
-      apply Continuous.continuousOn
-      convert ContinuousOn.comp_continuous hF_cts (f := fun x ↦ max (min x b) a) ?_ ?_ using 1
-      . fun_prop
-      intro x; simp [le_of_lt h]
+      convert (hF_cts.comp_continuous (f := fun x ↦ max (min x b) a) (by fun_prop) ?_).continuousOn using 1
+      intros; simp [le_of_lt h]
 
     have hupper (P: Partition (Icc a b)) : upper_riemann_sum f P ≥ F b - F a := by
-      have := Partition.sum_of_α_length P F'
+      have := P.sum_of_α_length F'
       calc
         _ ≥ ∑ J ∈ P.intervals, F'[J]ₗ := by
           apply Finset.sum_le_sum
           intro J hJ; by_cases hJ_empty : (J:Set ℝ) = ∅
           . simp [α_length_of_empty _ hJ_empty, length_of_empty hJ_empty]
           rcases le_or_gt J.b J.a with hJab | hJab
-          . push_neg at hJ_empty
-            obtain ⟨ x, hx ⟩ := hJ_empty
+          . push_neg at hJ_empty; obtain ⟨ x, hx ⟩ := hJ_empty
             cases J with
-            | Ioo c d => simp at hx; linarith
-            | Ioc c d => simp at hx; linarith
-            | Ico c d => simp at hx; linarith
+            | Ioo _ _ => simp at hx; linarith
+            | Ioc _ _ => simp at hx; linarith
+            | Ico _ _ => simp at hx; linarith
             | Icc c d =>
               simp at hx
-              have : c = d := by linarith
-              simp [this]
+              simp [show c = d by linarith]
               have hnhds: (Ioo (a-1) (b+1):Set ℝ) ∈ nhds d := by
                 replace hJ := P.contains _ hJ
                 simp [subset_iff] at hJ
@@ -186,82 +157,62 @@ theorem integ_eq_antideriv_sub {a b:ℝ} (h:a ≤ b) {f F: ℝ → ℝ}
           set c := J.a
           set d := J.b
           replace hJ := P.contains _ hJ
-          have hJ' : Icc a b ⊆ Ioo (a-1/2) (b+1/2) := by
-            apply Set.Icc_subset_Ioo <;> linarith
+          have hJ' : Icc a b ⊆ Ioo (a-1/2) (b+1/2) := by apply Set.Icc_subset_Ioo <;> linarith
           replace hJ' := ((Ioo_subset J).trans hJ).trans hJ'
           simp [subset_iff] at hJ'
           rw [Set.Ioo_subset_Ioo_iff hJab] at hJ'
-          have hJ'' : Icc a b ⊆ Ioo (a-1) (b+1) := by
-            apply Set.Icc_subset_Ioo <;> linarith
+          have hJ'' : Icc a b ⊆ Ioo (a-1) (b+1) := by apply Set.Icc_subset_Ioo <;> linarith
           replace hJ'' := hJ.trans hJ''
           rw [α_length_of_cts (by linarith) (le_of_lt hJab) (by linarith) hJ'' hF'_cts]
-          have := HasDerivWithinAt.mean_value hJab (ContinuousOn.mono hF'_cts ?_) ?_
+          have := HasDerivWithinAt.mean_value hJab (hF'_cts.mono ?_) ?_
           . obtain ⟨ e, he, hmean ⟩ := this
             have : HasDerivWithinAt F' (f e) (.Ioo c d) e := by
               replace hJ := (Ioo_subset J).trans hJ
               simp [subset_iff] at hJ
-              apply HasDerivWithinAt.congr (f := F)
-              . exact HasDerivWithinAt.mono (hF.2 e (hJ he)) hJ
-              . intros; solve_by_elim
-              solve_by_elim
+              apply ((hF.2 e (hJ he)).mono hJ).congr (f := F)
+              all_goals intros; solve_by_elim
             replace := derivative_unique ?_ this hmean
             . calc
                 _ = F' d - F' c := rfl
                 _ = (d - c) * f e := by
-                  rw [this]
-                  have : d-c > 0 := by linarith
+                  rw [this]; have : d-c > 0 := by linarith
                   field_simp
-                _ = f e * |J|ₗ := by
-                  simp [mul_comm, length]
-                  left; rw [max_eq_left (by linarith)]
+                _ = f e * |J|ₗ := by simp [mul_comm, length]; left; rw [max_eq_left (by linarith)]
                 _ ≤ _ := by
-                  gcongr
-                  apply le_csSup
+                  gcongr; apply le_csSup
                   . rw [bddAbove_def]
-                    obtain ⟨ M, hM ⟩ := hf.1
-                    use M
-                    simp only [abs_le', and_imp, Set.mem_image, forall_exists_index,
-                      forall_apply_eq_imp_iff₂, F'] at hM ⊢
-                    intro x hx
-                    rw [subset_iff] at hJ
-                    specialize hM x (hJ hx); tauto
-                  simp; use e; simp
-                  exact ((subset_iff _ _).mp (Ioo_subset J)) he
+                    obtain ⟨ M, hM ⟩ := hf.1; use M
+                    simp [abs_le', F', -Set.mem_Icc] at hM ⊢
+                    intro x hx; rw [subset_iff] at hJ; specialize hM x (hJ hx); tauto
+                  simp; use e; simp; exact ((subset_iff _ _).mp (Ioo_subset J)) he
             rw [←mem_closure_iff_clusterPt]
             apply closure_mono (s := .Ioo e d)
-            . intro x hx; simp at he hx ⊢; refine ⟨ ⟨ ?_, ?_ ⟩, ?_ ⟩ <;> linarith
+            . intro _ _; simp at *; refine ⟨ ⟨ ?_, ?_ ⟩, ?_ ⟩ <;> linarith
             simp at he; rw [closure_Ioo (by linarith)]; simp; linarith
           . simp; rw [Set.Icc_subset_Ioo_iff (le_of_lt hJab)]; constructor <;> linarith
-          apply DifferentiableOn.congr (f := F)
-          . apply hF.1.mono
-            replace hJ := (Ioo_subset J).trans hJ
-            simpa [subset_iff] using hJ
-          intro x hx
-          have : x ∈ Set.Icc a b := by
-            replace hJ := (Ioo_subset J).trans hJ _ hx
-            simpa using hJ
-          simp only [ite_eq_left_iff, F']; tauto
-        _ = F'[Icc a b]ₗ := Partition.sum_of_α_length P F'
+          replace hJ := (Ioo_subset J).trans hJ
+          apply (hF.1.mono _).congr
+          . intro x hx
+            have : x ∈ Set.Icc a b := by specialize hJ _ hx; simpa using hJ
+            simp only [ite_eq_left_iff, F']; tauto
+          simpa [subset_iff] using hJ
+        _ = F'[Icc a b]ₗ := P.sum_of_α_length F'
         _ = F' b - F' a := by
           apply α_length_of_cts (by linarith) _ (by linarith) _ hF'_cts
           . simp [le_of_lt h]
-          intro x hx; simp [mem_iff] at hx ⊢; constructor <;> linarith
-        _ = _ := by
-          congr 1 <;> apply hFF' <;> simp [le_of_lt h]
+          intro _ _; simp [mem_iff] at *; and_intros <;> linarith
+        _ = _ := by congr 1 <;> apply hFF' <;> simp [le_of_lt h]
     have hlower (P: Partition (Icc a b)) : lower_riemann_sum f P ≤ F b - F a := by
       sorry
     replace hupper : upper_integral f (Icc a b) ≥ F b - F a := by
-      rw [upper_integ_eq_inf_upper_sum hf.1]
-      apply le_csInf <;> simp [Set.range_nonempty]
+      rw [upper_integ_eq_inf_upper_sum hf.1]; apply le_csInf <;> simp [Set.range_nonempty]
       intro P; linarith [hupper P]
     replace hlower : lower_integral f (Icc a b) ≤ F b - F a := by
-      rw [lower_integ_eq_sup_lower_sum hf.1]
-      apply csSup_le <;> simp [Set.range_nonempty]
+      rw [lower_integ_eq_sup_lower_sum hf.1]; apply csSup_le <;> simp [Set.range_nonempty]
       intro P; linarith [hlower P]
     linarith [hf.2]
-  simp [h]
-  apply (integ_on_subsingleton _).2
-  simp [length]
+  simp [h]; exact (integ_on_subsingleton (by simp [length])).2
+
 
 open Real
 
