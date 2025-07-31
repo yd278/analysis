@@ -137,8 +137,7 @@ theorem integ_of_monotone {a b:ℝ} {f:ℝ → ℝ} (hf: MonotoneOn f (Icc a b))
 theorem integ_of_antitone {a b:ℝ} {f:ℝ → ℝ} (hf: AntitoneOn f (Icc a b)) :
   IntegrableOn f (Icc a b) := by
   rw [←neg_neg f]
-  apply (integ_of_neg _).1
-  apply integ_of_monotone
+  apply (integ_of_monotone _).neg.1
   convert hf.neg using 1
 
 /-- Corollary 11.6.3 / Exercise 11.6.1 -/

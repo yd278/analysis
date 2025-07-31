@@ -62,6 +62,8 @@ theorem ConstantOn.const_eq {f:ℝ → ℝ} {X: Set ℝ} (hX: X.Nonempty) {c:ℝ
 theorem ConstantOn.congr {f g: ℝ → ℝ} {X: Set ℝ} (h: ∀ x ∈ X, f x = g x) : ConstantOn f X ↔ ConstantOn g X := by
   simp [ConstantOn]; rw [iff_iff_eq]; congr; ext ⟨ _, hx ⟩; simp [h _ hx]
 
+theorem ConstantOn.congr' {f g: ℝ → ℝ} {X: Set ℝ} (hf: ConstantOn f X) (h: ∀ x ∈ X, f x = g x) : ConstantOn g X := (congr h).mp hf
+
 theorem ConstantOn.of_subsingleton {f: ℝ → ℝ} {X: Set ℝ} [Subsingleton X] :
   ConstantOn f X := Constant.of_subsingleton
 
@@ -91,6 +93,8 @@ theorem PiecewiseConstantOn.def (f:ℝ → ℝ) (I: BoundedInterval):
 theorem PiecewiseConstantOn.congr {f g: ℝ → ℝ} {I: BoundedInterval} (h: ∀ x ∈ (I:Set ℝ), f x = g x) :
   PiecewiseConstantOn f I ↔ PiecewiseConstantOn g I := by
   simp_rw [PiecewiseConstantOn, PiecewiseConstantWith.congr h]
+
+theorem PiecewiseConstantOn.congr' {f g: ℝ → ℝ} {I: BoundedInterval} (hf: PiecewiseConstantOn f I) (h: ∀ x ∈ (I:Set ℝ), f x = g x) : PiecewiseConstantOn g I := (congr h).mp hf
 
 /-- Example 11.2.4 / Example 11.2.6 -/
 noncomputable abbrev f_11_2_4 : ℝ → ℝ := fun x ↦
@@ -209,6 +213,8 @@ open Classical in
 /-- Definition 11.2.14 (Piecewise constant integral II)  -/
 noncomputable abbrev PiecewiseConstantOn.integ (f:ℝ → ℝ) (I: BoundedInterval) :
   ℝ := if h: PiecewiseConstantOn f I then PiecewiseConstantWith.integ f h.choose else 0
+
+noncomputable abbrev PiecewiseConstantOn.integ' {f:ℝ → ℝ} {I: BoundedInterval} (_:PiecewiseConstantOn f I) := integ f I
 
 theorem PiecewiseConstantOn.integ_def {f:ℝ → ℝ} {I: BoundedInterval} {P: Partition I}
   (h: PiecewiseConstantWith f P) : integ f I = PiecewiseConstantWith.integ f P := by

@@ -61,18 +61,15 @@ theorem right_lim_of_continuous {X:Set ℝ} {f: ℝ → ℝ} {x₀:ℝ}
   obtain ⟨ ε, hε, hX ⟩ := h
   apply right_lim_def
   rw [ContinuousWithinAt.eq_1] at hf
-  replace hf : (nhdsWithin x₀ (.Ioo x₀ (x₀ + ε))).Tendsto f  (nhds (f x₀)) := by
-    apply tendsto_nhdsWithin_mono_left _ hf
-    exact Set.Ioo_subset_Ico_self.trans hX
+  replace hf : (nhdsWithin x₀ (.Ioo x₀ (x₀ + ε))).Tendsto f  (nhds (f x₀)) :=
+    tendsto_nhdsWithin_mono_left (Set.Ioo_subset_Ico_self.trans hX) hf
   rw [Convergesto.iff, ←nhdsWithin.eq_1]
   convert hf using 1
   have h1 : .Ioo x₀ (x₀ + ε) ∈ nhdsWithin x₀ (.Ioi x₀) := by
     convert inter_mem_nhdsWithin (t := .Ioo (x₀-ε) (x₀+ε)) _ _
     . ext; simp; intros; linarith
-    exact Ioo_mem_nhds (by linarith) (by linarith)
-  rw [←nhdsWithin_inter_of_mem h1]
-  congr 1
-  simp [Set.Ioo_subset_Ioi_self]
+    apply Ioo_mem_nhds <;> linarith
+  rw [←nhdsWithin_inter_of_mem h1]; congr 1; simp [Set.Ioo_subset_Ioi_self]
 
 /-- Left limits exist for continuous functions -/
 theorem left_lim_of_continuous {X:Set ℝ} {f: ℝ → ℝ} {x₀:ℝ}
@@ -81,9 +78,8 @@ theorem left_lim_of_continuous {X:Set ℝ} {f: ℝ → ℝ} {x₀:ℝ}
   obtain ⟨ ε, hε, hX ⟩ := h
   apply left_lim_def
   rw [ContinuousWithinAt.eq_1] at hf
-  replace hf : (nhdsWithin x₀ (.Ioo (x₀ - ε) x₀)).Tendsto f (nhds (f x₀)) := by
-    apply tendsto_nhdsWithin_mono_left _ hf
-    exact Set.Ioo_subset_Ioc_self.trans hX
+  replace hf : (nhdsWithin x₀ (.Ioo (x₀ - ε) x₀)).Tendsto f (nhds (f x₀)) :=
+    tendsto_nhdsWithin_mono_left (Set.Ioo_subset_Ioc_self.trans hX) hf
   rw [Convergesto.iff, ←nhdsWithin.eq_1]
   convert hf using 1
   have h1 : .Ioo (x₀-ε) x₀ ∈ nhdsWithin x₀ (.Iio x₀) := by
@@ -91,7 +87,7 @@ theorem left_lim_of_continuous {X:Set ℝ} {f: ℝ → ℝ} {x₀:ℝ}
     . ext; simp; constructor
       . intro ⟨ h1, h2 ⟩; simp [h1, h2]; linarith
       aesop
-    exact Ioo_mem_nhds (by linarith) (by linarith)
+    apply Ioo_mem_nhds <;> linarith
   rw [←nhdsWithin_inter_of_mem h1]
   congr 1; simp [Set.Ioo_subset_Iio_self]
 
@@ -103,12 +99,10 @@ theorem jump_of_continuous {X:Set ℝ} {f: ℝ → ℝ} {x₀:ℝ}
   obtain ⟨ l, u, hx₀, hX ⟩ := h
   simp at hx₀
   have hl : ∃ ε>0, .Ioc (x₀-ε) x₀ ⊆ X := by
-    refine ⟨ x₀-l, by linarith, ?_ ⟩
-    apply Set.Subset.trans _ hX
+    refine ⟨ x₀-l, by linarith, Set.Subset.trans ?_ hX ⟩
     intro x hx; simp at hx ⊢; exact ⟨ hx.1, by linarith ⟩
   have hu : ∃ ε>0, .Ico x₀ (x₀+ε) ⊆ X := by
-    refine ⟨ u-x₀, by linarith, ?_ ⟩
-    apply Set.Subset.trans _ hX
+    refine ⟨ u-x₀, by linarith, Set.Subset.trans ?_ hX ⟩
     intro x hx; simp at hx ⊢; exact ⟨ by linarith, hx.2 ⟩
   simp [jump, left_lim_of_continuous hl hf, right_lim_of_continuous hu hf]
 
@@ -117,41 +111,31 @@ theorem right_lim_of_monotone {f: ℝ → ℝ} (x₀:ℝ) (hf: Monotone f) :
   Convergesto (.Ioi x₀) f (sInf (f '' .Ioi x₀)) x₀ := by
   rw [Convergesto.iff, ←nhdsWithin.eq_1]
   apply MonotoneOn.tendsto_nhdsGT
-  . exact Monotone.monotoneOn hf _
+  . apply hf.monotoneOn
   rw [bddBelow_def]
-  use f x₀
-  intro y hy; simp at hy; obtain ⟨ x, hx, rfl ⟩ := hy
-  apply hf; linarith
+  use f x₀; intro y hy; simp at hy; obtain ⟨ x, hx, rfl ⟩ := hy; apply hf; linarith
 
 theorem right_lim_of_monotone' {f: ℝ → ℝ} (x₀:ℝ) (hf: Monotone f) :
-  right_lim f x₀ = sInf (f '' .Ioi x₀) := by
-  apply right_lim_def
-  apply right_lim_of_monotone x₀ hf
+  right_lim f x₀ = sInf (f '' .Ioi x₀) := right_lim_def (right_lim_of_monotone x₀ hf)
 
 /-- Left limits exist for monotone functions -/
 theorem left_lim_of_monotone {f: ℝ → ℝ} (x₀:ℝ) (hf: Monotone f) :
   Convergesto (.Iio x₀) f (sSup (f '' .Iio x₀)) x₀ := by
   rw [Convergesto.iff, ←nhdsWithin.eq_1]
   apply MonotoneOn.tendsto_nhdsLT
-  . exact Monotone.monotoneOn hf _
+  . apply hf.monotoneOn
   rw [bddAbove_def]
-  use f x₀
-  intro y hy; simp at hy; obtain ⟨ x, hx, rfl ⟩ := hy
-  apply hf; linarith
+  use f x₀; intro y hy; simp at hy; obtain ⟨ x, hx, rfl ⟩ := hy; apply hf; linarith
 
 theorem left_lim_of_monotone' {f: ℝ → ℝ} (x₀:ℝ) (hf: Monotone f) :
-  left_lim f x₀ = sSup (f '' .Iio x₀) := by
-  apply left_lim_def
-  apply left_lim_of_monotone x₀ hf
+  left_lim f x₀ = sSup (f '' .Iio x₀) := left_lim_def (left_lim_of_monotone x₀ hf)
 
 theorem jump_of_monotone {f: ℝ → ℝ} (x₀:ℝ) (hf: Monotone f) :
   0 ≤ jump f x₀  := by
   simp [jump, left_lim_of_monotone' x₀ hf, right_lim_of_monotone' x₀ hf]
-  apply csSup_le
-  . simp
+  apply csSup_le (by simp)
   intro a ha
-  apply le_csInf
-  . simp
+  apply le_csInf (by simp)
   intro b hb; simp at ha hb
   obtain ⟨ x, hx, rfl ⟩ := ha
   obtain ⟨ y, hy, rfl ⟩ := hb
@@ -163,18 +147,14 @@ theorem right_lim_le_left_lim_of_monotone {f:ℝ → ℝ} {a b:ℝ} (hab: a < b)
   rw [left_lim_of_monotone' b hf, right_lim_of_monotone' a hf]
   calc
     _ ≤ f ((a+b)/2) := by
-      apply ConditionallyCompleteLattice.csInf_le _ _ _ _
+      apply ConditionallyCompleteLattice.csInf_le
       . rw [bddBelow_def]
-        use f a
-        intro y hy; simp at hy; obtain ⟨ x, hx, rfl ⟩ := hy
-        apply hf; linarith
+        use f a; intro y hy; simp at hy; obtain ⟨ x, hx, rfl ⟩ := hy; apply hf; linarith
       simp; use (a+b)/2; simp; linarith
     _ ≤ _ := by
-      apply ConditionallyCompleteLattice.le_csSup _ _ _ _
+      apply ConditionallyCompleteLattice.le_csSup
       . rw [bddAbove_def]
-        use f b
-        intro y hy; simp at hy; obtain ⟨ x, hx, rfl ⟩ := hy
-        apply hf; linarith
+        use f b; intro y hy; simp at hy; obtain ⟨ x, hx, rfl ⟩ := hy; apply hf; linarith
       simp; use (a+b)/2; simp; linarith
 
 /-- Definition 11.8.1 -/
@@ -188,64 +168,43 @@ notation3:max α"["I"]ₗ" => α_length α I
 
 theorem α_length_of_empty (α: ℝ → ℝ) {I: BoundedInterval} (hI: (I:Set ℝ) = ∅) : α[I]ₗ = 0 :=
   match I with
-  | Icc a b => by
-      simp [Set.Icc_eq_empty_iff] at hI ⊢
-      intros; linarith
-  | Ico a b => by
-      simp [Set.Ico_eq_empty_iff] at hI ⊢
-      intros; have : a = b := by linarith
-      simp [this]
-  | Ioc a b => by
-      simp [Set.Ioc_eq_empty_iff] at hI ⊢
-      intros; have : a = b := by linarith
-      simp [this]
-  | Ioo a b => by
-      simp [Set.Ioo_eq_empty_iff] at hI ⊢
-      intros; linarith
+  | Icc _ _ => by simp [Set.Icc_eq_empty_iff] at *; intros; linarith
+  | Ico a b => by simp [Set.Ico_eq_empty_iff] at *; intros; simp [show a=b by linarith]
+  | Ioc a b => by simp [Set.Ioc_eq_empty_iff] at *; intros; simp [show a=b by linarith]
+  | Ioo _ _ => by simp [Set.Ioo_eq_empty_iff] at *; intros; linarith
 
 @[simp]
-theorem α_length_of_pt {α: ℝ → ℝ} (a:ℝ) : α[Icc a a]ₗ = jump α a := by
-  simp [α_length, jump]
+theorem α_length_of_pt {α: ℝ → ℝ} (a:ℝ) : α[Icc a a]ₗ = jump α a := by simp [α_length, jump]
 
 theorem α_length_of_cts {α:ℝ → ℝ} {I: BoundedInterval} {a b: ℝ}
   (haa: a < I.a) (hab: I.a ≤ I.b) (hbb: I.b < b)
   (hI : I ⊆ Ioo a b) (hα: ContinuousOn α (Ioo a b)) :
   α[I]ₗ = α I.b - α I.a := by
   have ha_left : left_lim α I.a = α I.a := by
-    apply left_lim_of_continuous _ (ContinuousOn.continuousWithinAt hα _)
+    apply left_lim_of_continuous _ (hα.continuousWithinAt _)
     . refine ⟨ I.a - a, by linarith, ?_ ⟩
-      intro x; simp; intro h1 h2
-      exact ⟨ h1, by linarith ⟩
+      intro _; simp; intro h1 _; exact ⟨ h1, by linarith ⟩
     simp [haa]; linarith
   have ha_right : right_lim α I.a = α I.a := by
-    apply right_lim_of_continuous _ (ContinuousOn.continuousWithinAt hα _)
+    apply right_lim_of_continuous _ (hα.continuousWithinAt _)
     . refine ⟨ b - I.a, by linarith, ?_ ⟩
-      intro x; simp; intro h1 h2
-      exact ⟨ by linarith, h2 ⟩
+      intro _; simp; intro _ h2; exact ⟨ by linarith, h2 ⟩
     simp [haa]; linarith
   have hb_left : left_lim α I.b = α I.b := by
-    apply left_lim_of_continuous _ (ContinuousOn.continuousWithinAt hα _)
+    apply left_lim_of_continuous _ (hα.continuousWithinAt _)
     . refine ⟨ I.b - a, by linarith, ?_ ⟩
-      intro x; simp; intro h1 h2
-      exact ⟨ h1, by linarith ⟩
+      intro _; simp; intro h1 _; exact ⟨ h1, by linarith ⟩
     simp [hbb]; linarith
   have hb_right : right_lim α I.b = α I.b := by
-    apply right_lim_of_continuous _ (ContinuousOn.continuousWithinAt hα _)
+    apply right_lim_of_continuous _ (hα.continuousWithinAt _)
     . refine ⟨ b - I.b, by linarith, ?_ ⟩
-      intro x; simp; intro h1 h2
-      exact ⟨ by linarith, h2 ⟩
+      intro _; simp; intro h1 h2; exact ⟨ by linarith, h2 ⟩
     simp [hbb]; linarith
   cases I with
-  | Icc a' b' =>
-    simp [α_length, hb_right, ha_left, hab]
-  | Ico a' b' =>
-    simp [α_length, hb_left, ha_left, hab]
-  | Ioc a' b' =>
-    simp [α_length, hb_right, ha_right, hab]
-  | Ioo a' b' =>
-    simp [α_length, hb_left, ha_right]
-    intro h; replace h : a' = b' := by linarith
-    simp [h]
+  | Icc _ _ => simp [α_length, hb_right, ha_left, hab]
+  | Ico _ _ => simp [α_length, hb_left, ha_left, hab]
+  | Ioc _ _ => simp [α_length, hb_right, ha_right, hab]
+  | Ioo a' b' => simp [α_length, hb_left, ha_right]; intro h; simp [show a' = b' by linarith]
 
 /-- Example 11.8.2-/
 example : (fun x ↦ x^2)[Icc 2 3]ₗ = 5 := by
@@ -268,43 +227,35 @@ abbrev BoundedInterval.joins' (K I J: BoundedInterval) : Prop :=
 
 theorem BoundedInterval.join_Icc_Ioc' {a b c:ℝ} (hab: a ≤ b) (hbc: b ≤ c) : (Icc a c).joins' (Icc a b) (Ioc b c) := by
   refine ⟨ join_Icc_Ioc hab hbc, ?_ ⟩
-  simp [α_length, BoundedInterval.a, BoundedInterval.b,
-        show a ≤ b by linarith, show b ≤ c by linarith, show a ≤ c by linarith]
+  simp [α_length, show a ≤ b by linarith, show b ≤ c by linarith, show a ≤ c by linarith]
 
 theorem BoundedInterval.join_Icc_Ioo' {a b c:ℝ} (hab: a ≤ b) (hbc: b < c) : (Ico a c).joins' (Icc a b) (Ioo b c) := by
   refine ⟨ join_Icc_Ioo hab hbc, ?_ ⟩
-  simp [α_length, BoundedInterval.a, BoundedInterval.b,
-        show a ≤ b by linarith, show b < c by linarith, show a ≤ c by linarith]
+  simp [α_length, show a ≤ b by linarith, show b < c by linarith, show a ≤ c by linarith]
 
 theorem BoundedInterval.join_Ioc_Ioc' {a b c:ℝ} (hab: a ≤ b) (hbc: b ≤ c) : (Ioc a c).joins' (Ioc a b) (Ioc b c) := by
   refine ⟨ join_Ioc_Ioc hab hbc, ?_ ⟩
-  simp [α_length, BoundedInterval.a, BoundedInterval.b,
-        show a ≤ b by linarith, show b ≤ c by linarith, show a ≤ c by linarith]
+  simp [α_length, show a ≤ b by linarith, show b ≤ c by linarith, show a ≤ c by linarith]
 
 theorem BoundedInterval.join_Ioc_Ioo' {a b c:ℝ} (hab: a ≤ b) (hbc: b < c) : (Ioo a c).joins' (Ioc a b) (Ioo b c) := by
   refine ⟨ join_Ioc_Ioo hab hbc, ?_ ⟩
-  simp [α_length, BoundedInterval.a, BoundedInterval.b,
-        show a ≤ b by linarith, show b < c by linarith, show a < c by linarith]
+  simp [α_length, show a ≤ b by linarith, show b < c by linarith, show a < c by linarith]
 
 theorem BoundedInterval.join_Ico_Icc' {a b c:ℝ} (hab: a ≤ b) (hbc: b ≤ c) : (Icc a c).joins' (Ico a b) (Icc b c) := by
   refine ⟨ join_Ico_Icc hab hbc, ?_ ⟩
-  simp [α_length, BoundedInterval.a, BoundedInterval.b,
-        show a ≤ b by linarith, show b ≤ c by linarith, show a ≤ c by linarith]
+  simp [α_length, show a ≤ b by linarith, show b ≤ c by linarith, show a ≤ c by linarith]
 
 theorem BoundedInterval.join_Ico_Ico' {a b c:ℝ} (hab: a ≤ b) (hbc: b ≤ c) : (Ico a c).joins' (Ico a b) (Ico b c) := by
   refine ⟨ join_Ico_Ico hab hbc, ?_ ⟩
-  simp [α_length, BoundedInterval.a, BoundedInterval.b,
-        show a ≤ b by linarith, show b ≤ c by linarith, show a ≤ c by linarith]
+  simp [α_length, show a ≤ b by linarith, show b ≤ c by linarith, show a ≤ c by linarith]
 
 theorem BoundedInterval.join_Ioo_Icc' {a b c:ℝ} (hab: a < b) (hbc: b ≤ c) : (Ioc a c).joins' (Ioo a b) (Icc b c) := by
   refine ⟨ join_Ioo_Icc hab hbc, ?_ ⟩
-  simp [α_length, BoundedInterval.a, BoundedInterval.b,
-        show a < b by linarith, show b ≤ c by linarith, show a ≤ c by linarith]
+  simp [α_length, show a < b by linarith, show b ≤ c by linarith, show a ≤ c by linarith]
 
 theorem BoundedInterval.join_Ioo_Ico' {a b c:ℝ} (hab: a < b) (hbc: b ≤ c) : (Ioo a c).joins' (Ioo a b) (Ico b c) := by
   refine ⟨ join_Ioo_Ico hab hbc, ?_ ⟩
-  simp [α_length, BoundedInterval.a, BoundedInterval.b,
-        show a < b by linarith, show b ≤ c by linarith, show a < c by linarith]
+  simp [α_length, show a < b by linarith, show b ≤ c by linarith, show a < c by linarith]
 
 /-- Theorem 11.8.4 / Exercise 11.8.1 -/
 theorem Partition.sum_of_α_length  {I: BoundedInterval} (P: Partition I) (α: ℝ → ℝ) :
@@ -426,23 +377,17 @@ lemma RS_integral_bound_upper_of_bounded {f:ℝ → ℝ} {M:ℝ} {I: BoundedInte
   : M * α[I]ₗ ∈ (fun g ↦ PiecewiseConstantOn.RS_integ g I α) '' {g | MajorizesOn g f I ∧ PiecewiseConstantOn g I} := by
   simp
   refine ⟨ fun _ ↦ M, ⟨ ⟨ ?_, ?_, ⟩, PiecewiseConstantOn.RS_integ_const M I hα ⟩ ⟩
-  . intro x hx; specialize h x hx
-    simp [abs_le'] at h
-    simp [h.1]
-  apply PiecewiseConstantOn.of_const (ConstantOn.of_const (c := M) _)
-  simp
+  . peel h with x hx h; simp_all [abs_le']
+  apply PiecewiseConstantOn.of_const (ConstantOn.of_const (c := M) (by simp))
 
 
 lemma RS_integral_bound_lower_of_bounded {f:ℝ → ℝ} {M:ℝ} {I: BoundedInterval} (h: ∀ x ∈ (I:Set ℝ), |f x| ≤ M) {α:ℝ → ℝ} (hα:Monotone α)
   : -M * α[I]ₗ ∈ (fun g ↦ PiecewiseConstantOn.RS_integ g I α) '' {g | MinorizesOn g f I ∧ PiecewiseConstantOn g I} := by
   simp
   refine ⟨ fun _ ↦ -M, ⟨ ⟨ ?_, ?_, ⟩, ?_ ⟩ ⟩
-  . intro x hx; specialize h x hx
-    simp [abs_le'] at h
-    simp; linarith
-  . apply PiecewiseConstantOn.of_const (ConstantOn.of_const (c := -M) _)
-    simp
-  convert PiecewiseConstantOn.RS_integ_const (-M) I hα using 1
+  . peel h with x hx h'; simp [abs_le'] at *; linarith
+  . apply PiecewiseConstantOn.of_const (ConstantOn.of_const (c := -M) (by simp))
+  convert PiecewiseConstantOn.RS_integ_const _ _ hα using 1
   simp
 
 lemma RS_integral_bound_upper_nonempty {f:ℝ → ℝ} {I: BoundedInterval} (h: BddOn f I)
@@ -465,9 +410,8 @@ lemma RS_integral_bound_lower_le_upper {f:ℝ → ℝ} {I: BoundedInterval} {a b
     obtain ⟨ g, ⟨ ⟨ hmaj, hgp⟩, hgi ⟩ ⟩ := ha
     obtain ⟨ h, ⟨ ⟨ hmin, hhp⟩, hhi ⟩ ⟩ := hb
     rw [←hgi, ←hhi]
-    apply PiecewiseConstantOn.RS_integ_mono hα _ hhp hgp
-    intro x hx
-    exact (ge_iff_le.mp (hmin x hx)).trans (hmaj x hx)
+    apply hhp.RS_integ_mono hα _ hgp
+    intro x hx; exact (ge_iff_le.mp (hmin _ hx)).trans (hmaj _ hx)
 
 lemma RS_integral_bound_below {f:ℝ → ℝ} {I: BoundedInterval} (h: BddOn f I)
   {α:ℝ → ℝ} (hα: Monotone α) :
@@ -494,17 +438,16 @@ lemma lower_RS_integral_le_upper {f:ℝ → ℝ} {I: BoundedInterval} (h: BddOn 
   lower_RS_integral f I α ≤ upper_RS_integral f I α := by
   apply ConditionallyCompleteLattice.csSup_le _ _ (RS_integral_bound_lower_nonempty h hα) _
   rw [mem_upperBounds]
-  intro b hb
+  intros
   apply ConditionallyCompleteLattice.le_csInf _ _ (RS_integral_bound_upper_nonempty h hα) _
   rw [mem_lowerBounds]
-  intro a ha
-  exact RS_integral_bound_lower_le_upper hα ha hb
+  intros; solve_by_elim [RS_integral_bound_lower_le_upper]
 
 lemma RS_upper_integral_le {f:ℝ → ℝ} {I: BoundedInterval} {M:ℝ} (h: ∀ x ∈ (I:Set ℝ), |f x| ≤ M)
   {α:ℝ → ℝ} (hα: Monotone α) :
   upper_RS_integral f I α ≤ M * α[I]ₗ := by
   exact ConditionallyCompleteLattice.csInf_le _ _
-    (RS_integral_bound_below (BddOn.of_bounded h) hα) (RS_integral_bound_upper_of_bounded h hα)
+    (RS_integral_bound_below (.of_bounded h) hα) (RS_integral_bound_upper_of_bounded h hα)
 
 lemma upper_RS_integral_le_integ {f g:ℝ → ℝ} {I: BoundedInterval} (hf: BddOn f I)
   (hfg: MajorizesOn g f I) (hg: PiecewiseConstantOn g I)
@@ -524,19 +467,13 @@ lemma lt_of_gt_upper_RS_integral {f:ℝ → ℝ} {I: BoundedInterval} (hf: BddOn
   {α: ℝ → ℝ} (hα: Monotone α) {X:ℝ} (hX: upper_RS_integral f I α < X ) :
   ∃ g, MajorizesOn g f I ∧ PiecewiseConstantOn g I ∧ PiecewiseConstantOn.RS_integ g I α < X := by
   obtain ⟨ Y, hY, hYX ⟩ := exists_lt_of_csInf_lt (RS_integral_bound_upper_nonempty hf hα) hX
-  simp at hY
-  obtain ⟨ g, ⟨ hmaj, hgp ⟩, hgi ⟩ := hY
-  refine ⟨ g, hmaj, hgp, ?_ ⟩
-  rwa [hgi]
+  simp at hY; obtain ⟨ g, ⟨ hmaj, hgp ⟩, hgi ⟩ := hY; exact ⟨ g, hmaj, hgp, by rwa [hgi] ⟩
 
 lemma gt_of_lt_lower_RS_integral {f:ℝ → ℝ} {I: BoundedInterval} (hf: BddOn f I)
   {α:ℝ → ℝ} (hα: Monotone α) {X:ℝ} (hX: X < lower_RS_integral f I α) :
   ∃ h, MinorizesOn h f I ∧ PiecewiseConstantOn h I ∧ X < PiecewiseConstantOn.RS_integ h I α := by
   obtain ⟨ Y, hY, hYX ⟩ := exists_lt_of_lt_csSup (RS_integral_bound_lower_nonempty hf hα) hX
-  simp at hY
-  obtain ⟨ h, ⟨ hmin, hhp ⟩, hhi ⟩ := hY
-  refine ⟨ h, hmin, hhp, ?_ ⟩
-  rwa [hhi]
+  simp at hY; obtain ⟨ h, ⟨ hmin, hhp ⟩, hhi ⟩ := hY; exact ⟨ h, hmin, hhp, by rwa [hhi] ⟩
 
 /-- Analogue of Definition 11.3.4 -/
 noncomputable abbrev RS_integ (f:ℝ → ℝ) (I: BoundedInterval) (α:ℝ → ℝ) : ℝ :=
