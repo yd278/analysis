@@ -79,15 +79,9 @@ example : ¬ AdherentPt 2 (.Ioo 0 1) := by sorry
 
 /-- Definition 9.1.10 (Closure).  Here we identify this definition with the Mathilb version. -/
 theorem closure_def (X:Set ℝ) : closure X = { x | AdherentPt x X } := by
-  ext x
-  simp [Real.mem_closure_iff, AdherentPt, Real.adherent']
+  ext; simp [Real.mem_closure_iff, AdherentPt, Real.adherent']
   constructor <;> intro h ε hε
-  . obtain ⟨ y, hy, hxy ⟩ := h ε hε
-    refine ⟨ y, hy, ?_ ⟩
-    rw [abs_sub_comm]; linarith
-  obtain ⟨ y, hy, hxy ⟩ := h (ε/2) (half_pos hε)
-  refine ⟨ y, hy, ?_ ⟩
-  rw [abs_sub_comm]; linarith
+  all_goals obtain ⟨ y, hy, hxy ⟩ := h (ε/2) (half_pos hε); exact ⟨ y, hy, by rw [abs_sub_comm]; linarith ⟩
 
 theorem closure_def' (X:Set ℝ) (x :ℝ) : x ∈ closure X ↔ AdherentPt x X := by
   simp [closure_def]
@@ -254,7 +248,7 @@ theorem LimitPt.iff_limit (x:ℝ) (X: Set ℝ) :
 open Filter in
 /-- This lemma is in more recent versions of Mathlib and can be deleted once Mathlib is updated. -/
 theorem tendsto_mul_add_inv_atTop_nhds_zero (a c : ℝ) (ha : a ≠ 0) :
-    Tendsto (fun x => (a * x + c)⁻¹) atTop (nhds 0) := by
+    atTop.Tendsto (fun x => (a * x + c)⁻¹) (nhds 0) := by
   obtain ha' | ha' := lt_or_gt_of_ne ha
   · exact tendsto_inv_atBot_zero.comp
       (tendsto_atBot_add_const_right _ c (tendsto_id.const_mul_atTop_of_neg ha'))
@@ -317,8 +311,7 @@ theorem isBounded_def (X: Set ℝ) : Bornology.IsBounded X ↔ ∃ M > 0, X ⊆ 
   . intro ⟨ C, hC ⟩; use (max C 1)
     refine ⟨ lt_of_lt_of_le (by norm_num) (le_max_right _ _), ?_ ⟩
     peel hC with x hx hC; rw [abs_le'] at hC; simp [hC.1, hC.2]; linarith [le_max_left C 1]
-  intro ⟨ M, hM, hXM ⟩; use M; intro x hx; specialize hXM hx
-  simp [abs_le'] at hXM ⊢; simp [hXM]; linarith [hXM.1]
+  intro ⟨ M, hM, hXM ⟩; use M; intro x hx; specialize hXM hx; simp_all [abs_le']; linarith [hXM.1]
 
 /-- Example 9.1.23 -/
 theorem Icc_bounded (a b:ℝ) : Bornology.IsBounded (.Icc a b) := by sorry

@@ -165,64 +165,36 @@ theorem SetTheory.Set.card_to_has_card (X:Set) {n: ℕ} (hn: n ≠ 0): X.card = 
   contrapose! hn; simp only [card, hn, ↓reduceDIte]
 
 theorem SetTheory.Set.card_fin_eq (n:ℕ): (Fin n).has_card n := by
-  rw [has_card_iff]
-  use id
-  exact Function.bijective_id
+  rw [has_card_iff]; exact ⟨ id, Function.bijective_id ⟩
 
-theorem SetTheory.Set.Fin_card {n:ℕ}: (Fin n).card = n := by
-  exact has_card_to_card _ _ (card_fin_eq n)
+theorem SetTheory.Set.Fin_card {n:ℕ}: (Fin n).card = n := has_card_to_card _ _ (card_fin_eq n)
 
-theorem SetTheory.Set.Fin_finite {n:ℕ}: (Fin n).finite := by
-  exact ⟨n, card_fin_eq n⟩
+theorem SetTheory.Set.Fin_finite {n:ℕ}: (Fin n).finite := ⟨n, card_fin_eq n⟩
 
 theorem SetTheory.Set.EquivCard_to_has_card_eq {X Y:Set} (n: ℕ) (h: X ≈ Y): X.has_card n ↔ Y.has_card n := by
-  obtain ⟨f, hf⟩ := h
-  let e := Equiv.ofBijective f hf
+  obtain ⟨f, hf⟩ := h; let e := Equiv.ofBijective f hf
   constructor
-  . intro hX
-    rw [has_card_iff] at hX
-    obtain ⟨g, hg⟩ := hX
-    let e' := Equiv.ofBijective g hg
-    rw [has_card_iff]
-    let ec := e.symm.trans e'
-    use ec
-    exact ec.bijective
-  . intro hY
-    rw [has_card_iff] at hY
-    obtain ⟨g, hg⟩ := hY
-    let e' := Equiv.ofBijective g hg
-    rw [has_card_iff]
-    let ec := e.trans e'
-    use ec
-    exact ec.bijective
+  . intro hX; rw [has_card_iff] at hX ⊢; obtain ⟨g, hg⟩ := hX
+    use e.symm.trans (Equiv.ofBijective _ hg); apply Equiv.bijective
+  . intro hY; rw [has_card_iff] at hY ⊢; obtain ⟨g, hg⟩ := hY
+    use e.trans (Equiv.ofBijective _ hg); apply Equiv.bijective
 
 theorem SetTheory.Set.EquivCard_to_card_eq {X Y:Set} (h: X ≈ Y): X.card = Y.card := by
-  by_cases hX: X.finite
-  . by_cases hY: Y.finite
-    . rw [finite] at hX hY
-      obtain ⟨nX, hXn⟩ := hX
-      obtain ⟨nY, hYn⟩ := hY
-      have hcX := has_card_to_card _ _ hXn
-      have hcY := has_card_to_card _ _ hYn
-      rw [hcX, hcY]
-      rw [EquivCard_to_has_card_eq nX h] at hXn
-      exact card_uniq hXn hYn
-    . rw [finite] at hX hY
-      obtain ⟨nX, hXn⟩ := hX
-      push_neg at hY
-      have := EquivCard_to_has_card_eq nX h
-      rw [this] at hXn
-      specialize hY nX
-      contradiction
-  . by_cases hY: Y.finite
-    . rw [finite] at hX hY
-      obtain ⟨nY, hYn⟩ := hY
-      push_neg at hX
-      have := EquivCard_to_has_card_eq nY h
-      rw [← this] at hYn
-      specialize hX nY
-      contradiction
-    . simp [card, hX, hY]
+  by_cases hX: X.finite <;> by_cases hY: Y.finite <;> try rw [finite] at hX hY
+  . obtain ⟨nX, hXn⟩ := hX
+    obtain ⟨nY, hYn⟩ := hY
+    rw [has_card_to_card _ _ hXn, has_card_to_card _ _ hYn]
+    rw [EquivCard_to_has_card_eq nX h] at hXn
+    exact card_uniq hXn hYn
+  . obtain ⟨nX, hXn⟩ := hX; push_neg at hY
+    rw [EquivCard_to_has_card_eq nX h] at hXn
+    specialize hY nX
+    contradiction
+  . obtain ⟨nY, hYn⟩ := hY; push_neg at hX
+    rw [←EquivCard_to_has_card_eq nY h] at hYn
+    specialize hX nY
+    contradiction
+  simp [card, hX, hY]
 
 /-- Proposition 3.6.14 (a) / Exercise 3.6.4 -/
 theorem SetTheory.Set.card_insert {X:Set} (hX: X.finite) {x:Object} (hx: x ∉ X) :

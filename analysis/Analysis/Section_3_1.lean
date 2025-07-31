@@ -224,9 +224,11 @@ theorem SetTheory.Set.singleton_uniq (a:Object) : ∃! (X:Set), ∀ x, x ∈ X �
 theorem SetTheory.Set.pair_uniq (a b:Object) : ∃! (X:Set), ∀ x, x ∈ X ↔ x = a ∨ x = b := by sorry
 
 /-- Remark 3.1.8 -/
+@[simp]
 theorem SetTheory.Set.pair_comm (a b:Object) : ({a,b}:Set) = {b,a} := by sorry
 
 /-- Remark 3.1.8 -/
+@[simp]
 theorem SetTheory.Set.pair_self (a:Object) : ({a,a}:Set) = {a} := by
   sorry
 
@@ -289,14 +291,17 @@ theorem SetTheory.Set.union_assoc (A B C:Set) : (A ∪ B) ∪ C = A ∪ (B ∪ C
   sorry
 
 /-- Proposition 3.1.27(c) -/
+@[simp]
 theorem SetTheory.Set.union_self (A:Set) : A ∪ A = A := by
   sorry
 
 /-- Proposition 3.1.27(a) -/
+@[simp]
 theorem SetTheory.Set.union_empty (A:Set) : A ∪ ∅ = A := by
   sorry
 
 /-- Proposition 3.1.27(a) -/
+@[simp]
 theorem SetTheory.Set.empty_union (A:Set) : ∅ ∪ A = A := by
   sorry
 
@@ -338,9 +343,11 @@ theorem SetTheory.Set.ssubset_def (X Y:Set) : X ⊂ Y ↔ (X ⊆ Y ∧ X ≠ Y) 
 theorem SetTheory.Set.subset_congr_left {A A' B:Set} (hAA':A = A') (hAB: A ⊆ B) : A' ⊆ B := by sorry
 
 /-- Examples 3.1.16 -/
+@[simp]
 theorem SetTheory.Set.subset_self (A:Set) : A ⊆ A := by sorry
 
 /-- Examples 3.1.16 -/
+@[simp]
 theorem SetTheory.Set.empty_subset (A:Set) : ∅ ⊆ A := by sorry
 
 /-- Proposition 3.1.17 (Partial ordering by set inclusion) -/
@@ -407,6 +414,7 @@ lemma SetTheory.Set.coe_inj (A:Set) (x y:A) : x.val = y.val ↔ x = y := Subtype
 -/
 def SetTheory.Set.subtype_mk (A:Set) {x:Object} (hx:x ∈ A) : A := ⟨ x, hx ⟩
 
+@[simp]
 lemma SetTheory.Set.subtype_mk_coe {A:Set} {x:Object} (hx:x ∈ A) : A.subtype_mk hx = x := by rfl
 
 
@@ -423,6 +431,7 @@ theorem SetTheory.Set.specification_axiom' {A:Set} (P: A → Prop) (x:A) :
   (SetTheory.specification_axiom A P).2 x
 
 /-- Axiom 3.6 (axiom of specification) -/
+@[simp]
 theorem SetTheory.Set.specification_axiom'' {A:Set} (P: A → Prop) (x:Object) :
     x ∈ A.specify P ↔ ∃ h:x ∈ A, P ⟨ x, h ⟩ := by
   constructor
@@ -476,6 +485,7 @@ theorem SetTheory.Set.subset_union {A X: Set} (hAX: A ⊆ X) : A ∪ X = X := by
 theorem SetTheory.Set.union_subset {A X: Set} (hAX: A ⊆ X) : X ∪ A = X := by sorry
 
 /-- Proposition 3.1.27(c) -/
+@[simp]
 theorem SetTheory.Set.inter_self (A:Set) : A ∩ A = A := by
   sorry
 
@@ -543,6 +553,7 @@ abbrev SetTheory.Set.replace (A:Set) {P: A → Object → Prop}
   (hP : ∀ x y y', P x y ∧ P x y' → y = y') : Set := SetTheory.replace A P hP
 
 /-- Axiom 3.7 (Axiom of replacement) -/
+@[simp]
 theorem SetTheory.Set.replacement_axiom {A:Set} {P: A → Object → Prop}
   (hP: ∀ x y y', P x y ∧ P x y' → y = y') (y:Object) :
     y ∈ A.replace hP ↔ ∃ x, P x y := SetTheory.replacement_axiom A P hP y
@@ -718,6 +729,7 @@ theorem SetTheory.Set.inter_subset_right (A B:Set) : A ∩ B ⊆ B := by
   sorry
 
 /-- Exercise 3.1.7 -/
+@[simp]
 theorem SetTheory.Set.subset_inter_iff (A B C:Set) : C ⊆ A ∩ B ↔ C ⊆ A ∧ C ⊆ B := by
   sorry
 
@@ -730,13 +742,16 @@ theorem SetTheory.Set.subset_union_right (A B:Set) : B ⊆ A ∪ B := by
   sorry
 
 /-- Exercise 3.1.7 -/
+@[simp]
 theorem SetTheory.Set.union_subset_iff (A B C:Set) : A ∪ B ⊆ C ↔ A ⊆ C ∧ B ⊆ C := by
   sorry
 
 /-- Exercise 3.1.8 -/
+@[simp]
 theorem SetTheory.Set.inter_union_cancel (A B:Set) : A ∩ (A ∪ B) = A := by sorry
 
 /-- Exercise 3.1.8 -/
+@[simp]
 theorem SetTheory.Set.union_inter_cancel (A B:Set) : A ∪ (A ∩ B) = A := by sorry
 
 /-- Exercise 3.1.9 -/
