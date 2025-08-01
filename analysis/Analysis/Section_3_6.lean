@@ -246,6 +246,9 @@ theorem SetTheory.Set.pow_pow_EqualCard_pow_prod (A B C:Set) :
 
 example (a b c:ℕ): (a^b)^c = a^(b*c) := by sorry
 
+theorem SetTheory.Set.pow_prod_pow_EqualCard_pow_union (A B C:Set) (hd: Disjoint B C) :
+    EqualCard ((A ^ B) ×ˢ (A ^ C)) (A ^ (B ∪ C)) := by sorry
+
 example (a b c:ℕ): (a^b) * a^c = a^(b+c) := by sorry
 
 /-- Exercise 3.6.7 -/
@@ -263,6 +266,26 @@ theorem SetTheory.Set.card_union_add_card_inter {A B:Set} (hA: A.finite) (hB: B.
 /-- Exercise 3.6.10 -/
 theorem SetTheory.Set.pigeonhole_principle {n:ℕ} {A: Fin n → Set}
   (hA: ∀ i, (A i).finite) (hAcard: (iUnion _ A).card > n) : ∃ i, (A i).card ≥ 2 := by sorry
+
+/-- Exercise 3.6.11 -/
+theorem SetTheory.Set.two_to_two_iff {X Y:Set} (f: X → Y): Function.Injective f ↔
+    ∀ S ⊆ X, S.card = 2 → (image f S).card = 2 := by sorry
+
+/-- Exercise 3.6.12 -/
+def SetTheory.Set.Permutations (n: ℕ): Set := (Fin n ^ Fin n).specify (fun F ↦
+    let f := Classical.choose ((powerset_axiom F).mp F.prop)
+    Function.Bijective f)
+
+/-- Exercise 3.6.12 (i) -/
+theorem SetTheory.Set.Permutations_finite (n: ℕ): (Permutations n).finite := by sorry
+
+/-- Exercise 3.6.12 (i) -/
+theorem SetTheory.Set.Permutations_ih (n: ℕ):
+    (Permutations (n + 1)).card = (n + 1) * (Permutations n).card := by sorry
+
+/-- Exercise 3.6.12 (ii) -/
+theorem SetTheory.Set.Permutations_card (n: ℕ):
+    (Permutations n).card = Nat.factorial n := by sorry
 
 /-- Connections with Mathlib's `Nat.card` -/
 theorem SetTheory.Set.card_eq_nat_card {X:Set} : X.card = Nat.card X := by sorry
