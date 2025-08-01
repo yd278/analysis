@@ -21,7 +21,7 @@ namespace Chapter3
 
 export SetTheory (Set Object nat)
 
-variable [SetTheory] (X : Type) (S : _root_.Set X) (f : X → X)
+variable [SetTheory]
 
 /-- Definition 3.4.1.  Interestingly, the definition does not require S to be a subset of X. -/
 abbrev SetTheory.Set.image {X Y:Set} (f:X → Y) (S: Set) : Set :=
