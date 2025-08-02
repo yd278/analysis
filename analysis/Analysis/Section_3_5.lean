@@ -48,7 +48,7 @@ lemma SetTheory.Set.pair_eq_singleton_iff {a b c: Object} : {a, b} = ({c}: Set) 
     a = c ∧ b = c := by
   sorry
 
-/-- Exercise 3.5.1 -/
+/-- Exercise 3.5.1, first part -/
 def OrderedPair.toObject : OrderedPair ↪ Object where
   toFun p := ({ (({p.fst}:Set):Object), (({p.fst, p.snd}:Set):Object) }:Set)
   inj' := by sorry
