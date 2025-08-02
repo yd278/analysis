@@ -119,6 +119,11 @@ theorem SetTheory.Set.snd_of_mk_cartesian {X Y:Set} (x:X) (y:Y) :
   obtain ⟨ x', hx: z.val = (⟨ x', snd z ⟩:OrderedPair) ⟩ := (exists_comm.mp this).choose_spec
   simp [z, mk_cartesian, Subtype.val_inj] at hx ⊢; rw [←hx.2]
 
+@[simp]
+theorem SetTheory.Set.mk_cartesian_eq {X Y: Set} (z: X ×ˢ Y) :
+    (mk_cartesian (fst z) (snd z)) = z := by
+  rw [mk_cartesian, Subtype.mk.injEq, pair_eq_fst_snd]
+
 noncomputable abbrev SetTheory.Set.uncurry {X Y Z:Set} (f: X → Y → Z) : X ×ˢ Y → Z :=
   fun z ↦ f (fst z) (snd z)
 
