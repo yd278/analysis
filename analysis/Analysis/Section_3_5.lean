@@ -143,10 +143,14 @@ noncomputable abbrev SetTheory.Set.prod_associator (X Y Z:Set) : (X ×ˢ Y) ×ˢ
   left_inv := sorry
   right_inv := sorry
 
-/-- Connections with the Mathlib set product -/
+/--
+  Connections with the Mathlib set product, which consists of Lean pairs like `(x, y)`
+  equipped with a proof that `x` is in the left set, and `y` is in the right set.
+  Lean pairs like `(x, y)` are similar to our `OrderedPair`, but more general.
+-/
 noncomputable abbrev SetTheory.Set.prod_equiv_prod (X Y:Set) :
     ((X ×ˢ Y):_root_.Set Object) ≃ (X:_root_.Set Object) ×ˢ (Y:_root_.Set Object) where
-  toFun := sorry
+  toFun := fun z ↦ ⟨(fst z, snd z), by simp⟩
   invFun := sorry
   left_inv := sorry
   right_inv := sorry
