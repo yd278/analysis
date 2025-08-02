@@ -36,20 +36,20 @@ theorem SetTheory.Set.Example_3_6_2 : EqualCard {0,1,2} {3,4,5} := by sorry
 /-- Example 3.6.3 -/
 theorem SetTheory.Set.Example_3_6_3 : EqualCard nat (nat.specify (fun x ↦ Even (x:ℕ))) := by sorry
 
+@[refl]
 theorem SetTheory.Set.EqualCard.refl (X:Set) : EqualCard X X := by
   sorry
 
+@[symm]
 theorem SetTheory.Set.EqualCard.symm {X Y:Set} (h: EqualCard X Y) : EqualCard Y X := by
   sorry
 
+@[trans]
 theorem SetTheory.Set.EqualCard.trans {X Y Z:Set} (h1: EqualCard X Y) (h2: EqualCard Y Z) : EqualCard X Z := by
   sorry
 
 /-- Proposition 3.6.4 / Exercise 3.6.1 -/
-instance SetTheory.Set.EqualCard.inst_setoid : Setoid SetTheory.Set := {
-  r := EqualCard,
-  iseqv := {refl, symm, trans}
-}
+instance SetTheory.Set.EqualCard.inst_setoid : Setoid SetTheory.Set := ⟨ EqualCard, {refl, symm, trans} ⟩
 
 /-- Definition 3.6.5 -/
 abbrev SetTheory.Set.has_card (X:Set) (n:ℕ) : Prop := X ≈ Fin n
@@ -103,8 +103,8 @@ theorem SetTheory.Set.card_erase {n:ℕ} (h: n ≥ 1) {X:Set} (hX: X.has_card n)
         have := SetTheory.Set.Fin.toNat_lt (f (ι x'))
         have : (f (ι x'):ℕ) ≠ m₀ := by
           have := x'.property
-          simp [X'] at this; contrapose! this; intros; simp [←this, Subtype.val_inj] at hm₀f
-          exact (congrArg Subtype.val (hf.1 hm₀f)).symm
+          simp [X'] at this; contrapose! this; intros; simp [←this, Subtype.val_inj, hf.1.eq_iff, ι] at hm₀f
+          simp [hm₀f]
         omega)
   have hg_def (x':X') : if (f (ι x'):ℕ) < m₀ then (g x':ℕ) = f (ι x') else (g x':ℕ) = f (ι x') - 1 := by
     by_cases h' : f (ι x') < m₀ <;> simp [g, h']
@@ -115,14 +115,13 @@ theorem SetTheory.Set.card_erase {n:ℕ} (h: n ≥ 1) {X:Set} (hX: X.has_card n)
 theorem SetTheory.Set.card_uniq {X:Set} {n m:ℕ} (h1: X.has_card n) (h2: X.has_card m) : n = m := by
   -- This proof is written to follow the structure of the original text.
   revert X m; induction' n with n hn
-  . intro _ _ h1 h2
-    rw [has_card_zero] at h1; contrapose! h1
+  . intro _ _ h1 h2; rw [has_card_zero] at h1; contrapose! h1
     exact pos_card_nonempty (by omega) h2
   intro X m h1 h2
   have : X ≠ ∅ := pos_card_nonempty (by omega) h1
   obtain ⟨ x, hx ⟩ := nonempty_def this
   have : m ≠ 0 := by contrapose! this; simpa [has_card_zero, this] using h2
-  specialize hn (card_erase (by omega) h1 ⟨ x, hx ⟩) (card_erase (by omega) h2 ⟨ x, hx ⟩); omega
+  specialize hn (card_erase ?_ h1 ⟨ _, hx ⟩) (card_erase ?_ h2 ⟨ _, hx ⟩) <;> omega
 
 example : ({0,1,2}:Set).has_card 3 := by sorry
 
@@ -142,12 +141,10 @@ theorem SetTheory.Set.nat_infinite : infinite nat := by
   -- This proof is written to follow the structure of the original text.
   by_contra this; obtain ⟨n, hn⟩ := this
   simp [has_card] at hn; symm at hn; simp [HasEquiv.Equiv, Setoid.r, EqualCard] at hn
-  obtain ⟨ f, hf ⟩ := hn
-  obtain ⟨ M, hM ⟩ := bounded_on_finite f
+  obtain ⟨ f, hf ⟩ := hn; obtain ⟨ M, hM ⟩ := bounded_on_finite f
   replace hf := hf.surjective (M+1:ℕ); contrapose! hf
   peel hM with i hi; contrapose! hi
-  apply_fun nat_equiv.symm at hi
-  simp_all
+  apply_fun nat_equiv.symm at hi; simp_all
 
 open Classical in
 /-- It is convenient for Lean purposes to give infinite sets the ``junk`` cardinality of zero. -/
@@ -157,15 +154,14 @@ theorem SetTheory.Set.has_card_card {X:Set} (hX: X.finite) : X.has_card (SetTheo
   simp [card, hX, hX.choose_spec]
 
 theorem SetTheory.Set.has_card_to_card (X:Set) (n: ℕ): X.has_card n → X.card = n := by
-  intro h; have hf : X.finite := by use n
-  simp [card, hf]; exact card_uniq hf.choose_spec h
+  intro h; have hf : X.finite := ⟨ n, h ⟩
+  simp [card, hf, card_uniq hf.choose_spec h]
 
 theorem SetTheory.Set.card_to_has_card (X:Set) {n: ℕ} (hn: n ≠ 0): X.card = n → X.has_card n := by
   rintro rfl; apply has_card_card
-  contrapose! hn; simp only [card, hn, ↓reduceDIte]
+  contrapose! hn; simp [card, hn]
 
-theorem SetTheory.Set.card_fin_eq (n:ℕ): (Fin n).has_card n := by
-  rw [has_card_iff]; exact ⟨ id, Function.bijective_id ⟩
+theorem SetTheory.Set.card_fin_eq (n:ℕ): (Fin n).has_card n := (has_card_iff _ _).mp ⟨ id, Function.bijective_id ⟩
 
 theorem SetTheory.Set.Fin_card {n:ℕ}: (Fin n).card = n := has_card_to_card _ _ (card_fin_eq n)
 
@@ -175,25 +171,17 @@ theorem SetTheory.Set.EquivCard_to_has_card_eq {X Y:Set} (n: ℕ) (h: X ≈ Y): 
   obtain ⟨f, hf⟩ := h; let e := Equiv.ofBijective f hf
   constructor
   . intro hX; rw [has_card_iff] at hX ⊢; obtain ⟨g, hg⟩ := hX
-    use e.symm.trans (Equiv.ofBijective _ hg); apply Equiv.bijective
+    use e.symm.trans (.ofBijective _ hg); apply Equiv.bijective
   . intro hY; rw [has_card_iff] at hY ⊢; obtain ⟨g, hg⟩ := hY
-    use e.trans (Equiv.ofBijective _ hg); apply Equiv.bijective
+    use e.trans (.ofBijective _ hg); apply Equiv.bijective
 
 theorem SetTheory.Set.EquivCard_to_card_eq {X Y:Set} (h: X ≈ Y): X.card = Y.card := by
   by_cases hX: X.finite <;> by_cases hY: Y.finite <;> try rw [finite] at hX hY
-  . obtain ⟨nX, hXn⟩ := hX
-    obtain ⟨nY, hYn⟩ := hY
-    rw [has_card_to_card _ _ hXn, has_card_to_card _ _ hYn]
-    rw [EquivCard_to_has_card_eq nX h] at hXn
-    exact card_uniq hXn hYn
-  . obtain ⟨nX, hXn⟩ := hX; push_neg at hY
-    rw [EquivCard_to_has_card_eq nX h] at hXn
-    specialize hY nX
-    contradiction
-  . obtain ⟨nY, hYn⟩ := hY; push_neg at hX
-    rw [←EquivCard_to_has_card_eq nY h] at hYn
-    specialize hX nY
-    contradiction
+  . obtain ⟨nX, hXn⟩ := hX; obtain ⟨nY, hYn⟩ := hY
+    simp [has_card_to_card _ _ hXn, has_card_to_card _ _ hYn, EquivCard_to_has_card_eq _ h] at *
+    solve_by_elim [card_uniq]
+  . obtain ⟨nX, hXn⟩ := hX; rw [EquivCard_to_has_card_eq _ h] at hXn; tauto
+  . obtain ⟨nY, hYn⟩ := hY; rw [←EquivCard_to_has_card_eq _ h] at hYn; tauto
   simp [card, hX, hY]
 
 /-- Proposition 3.6.14 (a) / Exercise 3.6.4 -/
@@ -273,8 +261,7 @@ theorem SetTheory.Set.two_to_two_iff {X Y:Set} (f: X → Y): Function.Injective 
 
 /-- Exercise 3.6.12 -/
 def SetTheory.Set.Permutations (n: ℕ): Set := (Fin n ^ Fin n).specify (fun F ↦
-    let f := Classical.choose ((powerset_axiom F).mp F.prop)
-    Function.Bijective f)
+    Function.Bijective ((powerset_axiom F).mp F.prop).choose)
 
 /-- Exercise 3.6.12 (i) -/
 theorem SetTheory.Set.Permutations_finite (n: ℕ): (Permutations n).finite := by sorry
@@ -285,7 +272,7 @@ theorem SetTheory.Set.Permutations_ih (n: ℕ):
 
 /-- Exercise 3.6.12 (ii) -/
 theorem SetTheory.Set.Permutations_card (n: ℕ):
-    (Permutations n).card = Nat.factorial n := by sorry
+    (Permutations n).card = n.factorial := by sorry
 
 /-- Connections with Mathlib's `Nat.card` -/
 theorem SetTheory.Set.card_eq_nat_card {X:Set} : X.card = Nat.card X := by sorry
