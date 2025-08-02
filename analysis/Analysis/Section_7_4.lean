@@ -65,13 +65,12 @@ theorem Series.converges_of_permute_nonneg {a:ℕ → ℝ} (ha: (a:Series).nonne
       _ = ∑ n ∈ f '' Y, a n := by symm; convert Finset.sum_image (by solve_by_elim [hf.injective]); simp
       _ ≤ ∑ n ∈ .Iic N, a n := by
         apply Finset.sum_le_sum_of_subset_of_nonneg
-        · intro n hn; simp at hn ⊢; obtain ⟨ _, _, rfl ⟩ := hn; solve_by_elim
-        intro i _ _; specialize ha i; simpa using ha
+        · intro _ _; aesop
+        intro i _ _; specialize ha i; aesop
       _ = S N := by simp [S, Series.partial]; exact (sum_eq_sum (N:=N) a (by positivity)).symm
       _ ≤ L := by apply le_ciSup _ (N:ℤ); simp [BddAbove, Set.Nonempty, upperBounds, hSBound]
   have hTbound : ∃ Q, ∀ M, T M ≤ Q := by use L
   simp [hTbound]
-  have hL'L : L' ≤ L := ciSup_le hTL
   have hSL' (N:ℤ) : S N ≤ L' := by
     by_cases hN : N ≥ 0
     swap
@@ -91,24 +90,22 @@ theorem Series.converges_of_permute_nonneg {a:ℕ → ℝ} (ha: (a:Series).nonne
       : ∑ n ∈ .Icc 0 N, (if 0 ≤ n then b n.toNat else 0) = ∑ n ∈ .Iic N.toNat, b n := by
       convert Finset.sum_image (g := Int.ofNat) (by simp)
       ext x; simp [X]; constructor
-      . intro ⟨ hpos, hx ⟩; use x.toNat; omega
-      intro ⟨ _, ⟨ _, hb ⟩ ⟩; simp [←hb]; omega
+      . intro ⟨ _, _ ⟩; use x.toNat; omega
+      rintro ⟨ _, ⟨ _, rfl ⟩ ⟩; omega
     calc
       _ = ∑ n ∈ X, a n := by simp [S, Series.partial, sum_eq_sum, hN, X]
       _ = ∑ n ∈ ((Finset.Iic M).filter (f · ∈ X)).image f, a n := by
         congr; ext; simp; constructor
-        . intro h; obtain ⟨ m, hm, hm' ⟩ := hM _ h
-          use m; simp [hm', hm, h]
+        . intro h; obtain ⟨ m, rfl, hm' ⟩ := hM _ h; use m
         rintro ⟨ _, ⟨ _, _⟩, rfl ⟩; simp_all
       _ ≤ ∑ m ∈ .Iic M, af m := by
         rw [Finset.sum_image (by solve_by_elim [hf.injective])]
         apply Finset.sum_le_sum_of_subset_of_nonneg
-        . intro _; simp; tauto
-        intro i _ _; specialize haf i; simpa using haf
+        . aesop
+        intro i _ _; specialize haf i; aesop
       _ = T M := by simp [T, Series.partial, af]; symm; exact sum_eq_sum af (by positivity)
       _ ≤ L' := by apply le_ciSup _ (M:ℤ); simp [BddAbove, Set.Nonempty, upperBounds, hTbound]
-  observe hLL' : L ≤ L'
-  linarith
+  linarith [ciSup_le hSL', ciSup_le hTL]
 
 /-- Example 7.4.2 -/
 theorem Series.zeta_2_converges : (fun n:ℕ ↦ 1/(n+1:ℝ)^2 : Series).converges := by sorry
@@ -150,11 +147,11 @@ theorem Series.absConverges_of_permute {a:ℕ → ℝ} (ha : (a:Series).absConve
     use max N N₁, (by omega); convert hN _ (le_max_left _ _)
   obtain ⟨ N, hN, hN2 ⟩ := this
   have hNpos : N ≥ 0 := by linarith
-  have finv : ℕ → ℕ := Function.invFun f
+  let finv : ℕ → ℕ := Function.invFun f
   have : ∃ M, ∀ n ≤ N.toNat, finv n ≤ M := by
     use ((Finset.Iic (N.toNat)).image finv).sup id
     intro n hn
-    apply Finset.le_sup (f := id); simp [Finset.mem_image]; use n
+    apply Finset.le_sup (f := id); simp [Finset.mem_image]; use n, hn; rfl
   obtain ⟨ M, hM ⟩ := this; use M; intro M' hM'
   have hM'_pos : M' ≥ 0 := by linarith
   have why : (Finset.Iic M'.toNat).image f ⊇ .Iic N.toNat := by
