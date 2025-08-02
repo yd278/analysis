@@ -120,7 +120,7 @@ theorem SetTheory.Set.snd_of_mk_cartesian {X Y:Set} (x:X) (y:Y) :
   simp [z, mk_cartesian, Subtype.val_inj] at hx ⊢; rw [←hx.2]
 
 @[simp]
-theorem SetTheory.Set.mk_cartesian_eq {X Y: Set} (z: X ×ˢ Y) :
+theorem SetTheory.Set.mk_cartesian_fst_snd_eq {X Y: Set} (z: X ×ˢ Y) :
     (mk_cartesian (fst z) (snd z)) = z := by
   rw [mk_cartesian, Subtype.mk.injEq, pair_eq_fst_snd]
 
