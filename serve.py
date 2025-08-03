@@ -23,7 +23,7 @@ if __name__ == '__main__':
     PORT = 8000
     handler = CustomHTTPRequestHandler
     with HTTPServer(("", PORT), handler) as httpd:
-        print(f"Serving at http://localhost:{PORT}/analysis")
+        print(f"Serving at http://localhost:{PORT}/analysis/")
         print(f"/analysis: {BOOK_SITE}")
         print(f"/analysis/docs: {DOCS_SITE}")
         httpd.serve_forever()
