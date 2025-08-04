@@ -56,7 +56,7 @@ theorem SetTheory.Set.image_in_codomain {X Y:Set} (f:X → Y) (S: Set) :
 abbrev f_3_4_2 : nat → nat := fun n ↦ (2*n:ℕ)
 
 theorem SetTheory.Set.image_f_3_4_2 : image f_3_4_2 {1,2,3} = {2,4,6} := by
-  rw [ext_iff]; intros; simp only [mem_image, mem_triple, f_3_4_2]
+  ext; simp only [mem_image, mem_triple, f_3_4_2]
   constructor
   · rintro ⟨x, (h | h | h), rfl⟩
     map_tacs [left; (right;left); (right;right)]
@@ -110,8 +110,7 @@ theorem SetTheory.Set.preimage_in_domain {X Y:Set} (f:X → Y) (U: Set) :
 
 /-- Example 3.4.6 -/
 theorem SetTheory.Set.preimage_f_3_4_2 : preimage f_3_4_2 {2,4,6} = {1,2,3} := by
-  rw [ext_iff]
-  intro x
+  ext x
   simp only [mem_preimage', mem_triple, f_3_4_2]
   constructor
   · rintro ⟨x, rfl, (h | h | h)⟩ <;> simp_all <;> omega
