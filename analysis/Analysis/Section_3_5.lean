@@ -142,9 +142,7 @@ example : ({1, 2}: Set) ×ˢ ({3, 4, 5}: Set) = ({
   ((mk_cartesian (2: Nat) (3: Nat)): Object),
   ((mk_cartesian (2: Nat) (4: Nat)): Object),
   ((mk_cartesian (2: Nat) (5: Nat)): Object)
-}: Set) := by
-  apply ext;
-  aesop
+}: Set) := by apply ext; aesop
 
 /-- Example 3.5.5 / Exercise 3.6.5. There is a bijection between `X ×ˢ Y` and `Y ×ˢ X`. -/
 noncomputable abbrev SetTheory.Set.prod_commutator (X Y:Set) : X ×ˢ Y ≃ Y ×ˢ X where
