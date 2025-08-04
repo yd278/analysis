@@ -122,6 +122,18 @@ theorem SetTheory.Set.mk_cartesian_fst_snd_eq {X Y: Set} (z: X ×ˢ Y) :
     (mk_cartesian (fst z) (snd z)) = z := by
   rw [mk_cartesian, Subtype.mk.injEq, pair_eq_fst_snd]
 
+/--
+  Connections with the Mathlib set product, which consists of Lean pairs like `(x, y)`
+  equipped with a proof that `x` is in the left set, and `y` is in the right set.
+  Lean pairs like `(x, y)` are similar to our `OrderedPair`, but more general.
+-/
+noncomputable abbrev SetTheory.Set.prod_equiv_prod (X Y:Set) :
+    ((X ×ˢ Y):_root_.Set Object) ≃ (X:_root_.Set Object) ×ˢ (Y:_root_.Set Object) where
+  toFun := fun z ↦ ⟨(fst z, snd z), by simp⟩
+  invFun := fun z ↦ mk_cartesian ⟨z.val.1, z.prop.1⟩ ⟨z.val.2, z.prop.2⟩
+  left_inv := by intro; simp
+  right_inv := by intro; simp
+
 /-- Example 3.5.5 -/
 example : ({1, 2}: Set) ×ˢ ({3, 4, 5}: Set) = ({
   ((mk_cartesian (1: Nat) (3: Nat)): Object),
@@ -176,18 +188,6 @@ theorem SetTheory.Set.tuple_inj {I:Set} {X: I → Set} (a b: ∀ i, X i) :
 noncomputable abbrev SetTheory.Set.prod_associator (X Y Z:Set) : (X ×ˢ Y) ×ˢ Z ≃ X ×ˢ (Y ×ˢ Z) where
   toFun := fun p ↦ mk_cartesian (fst (fst p)) (mk_cartesian (snd (fst p)) (snd p))
   invFun := fun p ↦ mk_cartesian (mk_cartesian (fst p) (fst (snd p))) (snd (snd p))
-  left_inv := by intro; simp
-  right_inv := by intro; simp
-
-/--
-  Connections with the Mathlib set product, which consists of Lean pairs like `(x, y)`
-  equipped with a proof that `x` is in the left set, and `y` is in the right set.
-  Lean pairs like `(x, y)` are similar to our `OrderedPair`, but more general.
--/
-noncomputable abbrev SetTheory.Set.prod_equiv_prod (X Y:Set) :
-    ((X ×ˢ Y):_root_.Set Object) ≃ (X:_root_.Set Object) ×ˢ (Y:_root_.Set Object) where
-  toFun := fun z ↦ ⟨(fst z, snd z), by simp⟩
-  invFun := fun z ↦ mk_cartesian ⟨z.val.1, z.prop.1⟩ ⟨z.val.2, z.prop.2⟩
   left_inv := by intro; simp
   right_inv := by intro; simp
 
