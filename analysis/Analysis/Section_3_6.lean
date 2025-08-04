@@ -224,7 +224,7 @@ theorem SetTheory.Set.card_pow {X Y:Set} (hX: X.finite) (hY: Y.finite) :
 theorem SetTheory.Set.card_eq_zero {X:Set} (hX: X.finite) :
     X.card = 0 ↔ X = ∅ := by sorry
 
-/-- Exercise 3.6.5 -/
+/-- Exercise 3.6.5. You might find `SetTheory.Set.prod_commutator` useful. -/
 theorem SetTheory.Set.prod_EqualCard_prod (A B:Set) :
     EqualCard (A ×ˢ B) (B ×ˢ A) := by sorry
 

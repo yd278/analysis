@@ -203,6 +203,10 @@ theorem SetTheory.Set.mem_union (x:Object) (X Y:Set) : x ∈ (X ∪ Y) ↔ (x �
 instance SetTheory.Set.instInsert : Insert Object Set where
   insert x X := {x} ∪ X
 
+@[simp]
+theorem SetTheory.Set.mem_insert (a b: Object) (X: Set) : a ∈ insert b X ↔ a = b ∨ a ∈ X := by
+  simp [instInsert]
+
 /-- Axiom 3.3(b) (pair).  Note: in some applications one may have to cast {a,b}
     to Set. -/
 theorem SetTheory.Set.pair_eq (a b:Object) : ({a,b}:Set) = {a} ∪ {b} := by rfl
@@ -706,7 +710,7 @@ example : Disjoint (∅:Set) ∅ := by sorry
 /-- Definition 3.1.26 example -/
 
 example : ({1, 2, 3, 4}:Set) \ {2,4,6} = {1, 3} := by
-  apply ext; simp only [mem_sdiff, instInsert]; aesop
+  apply ext; aesop
 
 /-- Example 3.1.30 -/
 example : ({3,5,9}:Set).replace (P := fun x y ↦ ∃ (n:ℕ), x.val = n ∧ y = (n+1:ℕ)) (by aesop)

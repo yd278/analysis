@@ -67,7 +67,7 @@ abbrev SetTheory.Set.slice (x:Object) (Y:Set) : Set :=
 theorem SetTheory.Set.mem_slice (x z:Object) (Y:Set) :
     z ∈ (SetTheory.Set.slice x Y) ↔ ∃ y:Y, z = (⟨x, y⟩:OrderedPair) := replacement_axiom _ _
 
-/-- Definition 3.5.2 (Cartesian product) -/
+/-- Definition 3.5.4 (Cartesian product) -/
 abbrev SetTheory.Set.cartesian (X Y:Set) : Set :=
   union (X.replace (P := fun x z ↦ z = slice x Y) (by intros; simp_all))
 
@@ -86,9 +86,6 @@ theorem SetTheory.Set.mem_cartesian (z:Object) (X Y:Set) :
   rintro ⟨ x, y, rfl ⟩; use slice x Y; refine ⟨ by simp, ?_ ⟩
   rw [replacement_axiom]; use x
 
-abbrev SetTheory.Set.curry {X Y Z:Set} (f: X ×ˢ Y → Z) : X → Y → Z :=
-  fun x y ↦ f ⟨ (⟨ x, y ⟩:OrderedPair), by simp ⟩
-
 noncomputable abbrev SetTheory.Set.fst {X Y:Set} (z:X ×ˢ Y) : X :=
   ((mem_cartesian _ _ _).mp z.property).choose
 
@@ -102,6 +99,7 @@ theorem SetTheory.Set.pair_eq_fst_snd {X Y:Set} (z:X ×ˢ Y) :
   obtain ⟨ x, hx: z.val = (⟨ x, snd z ⟩:OrderedPair)⟩ := (exists_comm.mp this).choose_spec
   simp_all [EmbeddingLike.apply_eq_iff_eq]
 
+/-- This equips an `OrderedPair` with proofs that `x ∈ X` and `y ∈ Y`. -/
 def SetTheory.Set.mk_cartesian {X Y:Set} (x:X) (y:Y) : X ×ˢ Y :=
   ⟨(⟨ x, y ⟩:OrderedPair), by simp⟩
 
@@ -124,25 +122,6 @@ theorem SetTheory.Set.mk_cartesian_fst_snd_eq {X Y: Set} (z: X ×ˢ Y) :
     (mk_cartesian (fst z) (snd z)) = z := by
   rw [mk_cartesian, Subtype.mk.injEq, pair_eq_fst_snd]
 
-noncomputable abbrev SetTheory.Set.uncurry {X Y Z:Set} (f: X → Y → Z) : X ×ˢ Y → Z :=
-  fun z ↦ f (fst z) (snd z)
-
-theorem SetTheory.Set.curry_uncurry {X Y Z:Set} (f: X → Y → Z) : curry (uncurry f) = f := by sorry
-
-theorem SetTheory.Set.uncurry_curry {X Y Z:Set} (f: X ×ˢ Y → Z) : uncurry (curry f) = f := by sorry
-
-noncomputable abbrev SetTheory.Set.prod_commutator (X Y:Set) : X ×ˢ Y ≃ Y ×ˢ X where
-  toFun := sorry
-  invFun := sorry
-  left_inv := sorry
-  right_inv := sorry
-
-noncomputable abbrev SetTheory.Set.prod_associator (X Y Z:Set) : (X ×ˢ Y) ×ˢ Z ≃ X ×ˢ (Y ×ˢ Z) where
-  toFun := sorry
-  invFun := sorry
-  left_inv := sorry
-  right_inv := sorry
-
 /--
   Connections with the Mathlib set product, which consists of Lean pairs like `(x, y)`
   equipped with a proof that `x` is in the left set, and `y` is in the right set.
@@ -151,20 +130,43 @@ noncomputable abbrev SetTheory.Set.prod_associator (X Y Z:Set) : (X ×ˢ Y) ×ˢ
 noncomputable abbrev SetTheory.Set.prod_equiv_prod (X Y:Set) :
     ((X ×ˢ Y):_root_.Set Object) ≃ (X:_root_.Set Object) ×ˢ (Y:_root_.Set Object) where
   toFun := fun z ↦ ⟨(fst z, snd z), by simp⟩
+  invFun := fun z ↦ mk_cartesian ⟨z.val.1, z.prop.1⟩ ⟨z.val.2, z.prop.2⟩
+  left_inv := by intro; simp
+  right_inv := by intro; simp
+
+/-- Example 3.5.5 -/
+example : ({1, 2}: Set) ×ˢ ({3, 4, 5}: Set) = ({
+  ((mk_cartesian (1: Nat) (3: Nat)): Object),
+  ((mk_cartesian (1: Nat) (4: Nat)): Object),
+  ((mk_cartesian (1: Nat) (5: Nat)): Object),
+  ((mk_cartesian (2: Nat) (3: Nat)): Object),
+  ((mk_cartesian (2: Nat) (4: Nat)): Object),
+  ((mk_cartesian (2: Nat) (5: Nat)): Object)
+}: Set) := by apply ext; aesop
+
+/-- Example 3.5.5 / Exercise 3.6.5. There is a bijection between `X ×ˢ Y` and `Y ×ˢ X`. -/
+noncomputable abbrev SetTheory.Set.prod_commutator (X Y:Set) : X ×ˢ Y ≃ Y ×ˢ X where
+  toFun := sorry
   invFun := sorry
   left_inv := sorry
   right_inv := sorry
 
+/-- Example 3.5.5. A function of two variables can be thought of as a function of a pair. -/
+noncomputable abbrev SetTheory.Set.curry_equiv {X Y Z:Set} : (X → Y → Z) ≃ (X ×ˢ Y → Z) where
+  toFun := fun f z ↦ f (fst z) (snd z)
+  invFun := fun f x y ↦ f ⟨ (⟨ x, y ⟩:OrderedPair), by simp ⟩
+  left_inv := by intro; simp
+  right_inv := by intro; simp [←pair_eq_fst_snd]
 
-/-- Definition 3.5.7 -/
+/-- Definition 3.5.6 -/
 abbrev SetTheory.Set.tuple {I:Set} {X: I → Set} (a: ∀ i, X i) : Object :=
   ((fun i ↦ ⟨ a i, by rw [mem_iUnion]; use i; exact (a i).property ⟩):I → iUnion I X)
 
-/-- Definition 3.5.7 -/
+/-- Definition 3.5.6 -/
 abbrev SetTheory.Set.iProd {I: Set} (X: I → Set) : Set :=
   ((iUnion I X)^I).specify (fun t ↦ ∃ a : ∀ i, X i, t = tuple a)
 
-/-- Definition 3.5.7 -/
+/-- Definition 3.5.6 -/
 theorem SetTheory.Set.mem_iProd {I: Set} {X: I → Set} (t:Object) :
     t ∈ iProd X ↔ ∃ a: ∀ i, X i, t = tuple a := by
   simp only [iProd, specification_axiom'']; constructor
@@ -180,8 +182,15 @@ theorem SetTheory.Set.tuple_mem_iProd {I: Set} {X: I → Set} (a: ∀ i, X i) :
 theorem SetTheory.Set.tuple_inj {I:Set} {X: I → Set} (a b: ∀ i, X i) :
     tuple a = tuple b ↔ a = b := by sorry
 
+/-- Example 3.5.8. There is a bijection between `(X ×ˢ Y) ×ˢ Z` and `X ×ˢ (Y ×ˢ Z)`. -/
+noncomputable abbrev SetTheory.Set.prod_associator (X Y Z:Set) : (X ×ˢ Y) ×ˢ Z ≃ X ×ˢ (Y ×ˢ Z) where
+  toFun := fun p ↦ mk_cartesian (fst (fst p)) (mk_cartesian (snd (fst p)) (snd p))
+  invFun := fun p ↦ mk_cartesian (mk_cartesian (fst p) (fst (snd p))) (snd (snd p))
+  left_inv := by intro; simp
+  right_inv := by intro; simp
+
 /--
-  Example 3.5.11. I suspect most of the equivalences will require classical reasoning and only be
+  Example 3.5.10. I suspect most of the equivalences will require classical reasoning and only be
   defined non-computably, but would be happy to learn of counterexamples.
 -/
 noncomputable abbrev SetTheory.Set.singleton_iProd_equiv (i:Object) (X:Set) :
@@ -191,14 +200,14 @@ noncomputable abbrev SetTheory.Set.singleton_iProd_equiv (i:Object) (X:Set) :
   left_inv := sorry
   right_inv := sorry
 
-/-- Example 3.5.11 -/
+/-- Example 3.5.10 -/
 noncomputable abbrev SetTheory.Set.empty_iProd_equiv (X: (∅:Set) → Set) : iProd X ≃ Unit where
   toFun := sorry
   invFun := sorry
   left_inv := sorry
   right_inv := sorry
 
-/-- Example 3.5.11 -/
+/-- Example 3.5.10 -/
 noncomputable abbrev SetTheory.Set.iProd_of_const_equiv (I:Set) (X: Set) :
     iProd (fun i:I ↦ X) ≃ (I → X) where
   toFun := sorry
@@ -206,6 +215,7 @@ noncomputable abbrev SetTheory.Set.iProd_of_const_equiv (I:Set) (X: Set) :
   left_inv := sorry
   right_inv := sorry
 
+/-- Example 3.5.10 -/
 noncomputable abbrev SetTheory.Set.iProd_equiv_prod (X: ({0,1}:Set) → Set) :
     iProd X ≃ (X ⟨ 0, by simp ⟩) ×ˢ (X ⟨ 1, by simp ⟩) where
   toFun := sorry
@@ -213,7 +223,7 @@ noncomputable abbrev SetTheory.Set.iProd_equiv_prod (X: ({0,1}:Set) → Set) :
   left_inv := sorry
   right_inv := sorry
 
-/-- Example 3.5.9 -/
+/-- Example 3.5.10 -/
 noncomputable abbrev SetTheory.Set.iProd_equiv_prod_triple (X: ({0,1,2}:Set) → Set) :
     iProd X ≃ (X ⟨ 0, by simp ⟩) ×ˢ (X ⟨ 1, by simp ⟩) ×ˢ (X ⟨ 2, by simp ⟩) where
   toFun := sorry
@@ -292,7 +302,7 @@ noncomputable abbrev SetTheory.Set.Fin_equiv_Fin (n:ℕ) : Fin n ≃ _root_.Fin 
   left_inv := sorry
   right_inv := sorry
 
-/-- Lemma 3.5.12 (finite choice) -/
+/-- Lemma 3.5.11 (finite choice) -/
 theorem SetTheory.Set.finite_choice {n:ℕ} {X: Fin n → Set} (h: ∀ i, X i ≠ ∅) : iProd X ≠ ∅ := by
   -- This proof broadly follows the one in the text
   -- (although it is more convenient to induct from 0 rather than 1)
@@ -395,13 +405,11 @@ def SetTheory.Set.union_of_prod :
   -- the first line of this construction should be `apply isTrue` or `apply isFalse`.
   sorry
 
-
 /- Exercise 3.5.5 -/
 def SetTheory.Set.diff_of_prod :
   Decidable (∀ (A B C D:Set), (A ×ˢ B) \ (C ×ˢ D) = (A \ C) ×ˢ (B \ D)) := by
   -- the first line of this construction should be `apply isTrue` or `apply isFalse`.
   sorry
-
 
 /--
   Exercise 3.5.6.
