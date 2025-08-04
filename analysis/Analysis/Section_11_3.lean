@@ -29,10 +29,10 @@ theorem MinorizesOn.iff (g f:ℝ → ℝ) (I: BoundedInterval) : MinorizesOn g f
 
 /-- Definition 11.3.2 (Uppper and lower Riemann integrals )-/
 noncomputable abbrev upper_integral (f:ℝ → ℝ) (I: BoundedInterval) : ℝ :=
-  sInf ((fun g ↦ PiecewiseConstantOn.integ g I) '' {g | MajorizesOn g f I ∧ PiecewiseConstantOn g I})
+  sInf ((PiecewiseConstantOn.integ · I) '' {g | MajorizesOn g f I ∧ PiecewiseConstantOn g I})
 
 noncomputable abbrev lower_integral (f:ℝ → ℝ) (I: BoundedInterval) : ℝ :=
-  sSup ((fun g ↦ PiecewiseConstantOn.integ g I) '' {g | MinorizesOn g f I ∧ PiecewiseConstantOn g I})
+  sSup ((PiecewiseConstantOn.integ · I) '' {g | MinorizesOn g f I ∧ PiecewiseConstantOn g I})
 
 theorem upper_integral_congr {f g:ℝ → ℝ} {I: BoundedInterval} (h: Set.EqOn f g I) :
   upper_integral f I = upper_integral g I := by
@@ -42,47 +42,47 @@ theorem lower_integral_congr {f g:ℝ → ℝ} {I: BoundedInterval} (h: Set.EqOn
   lower_integral f I = lower_integral g I := by
   simp [lower_integral]; congr! 2; ext; simp; intros; peel 1; aesop
 
-lemma integral_bound_upper_of_bounded {f:ℝ → ℝ} {M:ℝ} {I: BoundedInterval} (h: ∀ x ∈ (I:Set ℝ), |f x| ≤ M) : M * |I|ₗ ∈ (fun g ↦ PiecewiseConstantOn.integ g I) '' {g | MajorizesOn g f I ∧ PiecewiseConstantOn g I} := by
+lemma integral_bound_upper_of_bounded {f:ℝ → ℝ} {M:ℝ} {I: BoundedInterval} (h: ∀ x ∈ (I:Set ℝ), |f x| ≤ M) : M * |I|ₗ ∈ (PiecewiseConstantOn.integ · I) '' {g | MajorizesOn g f I ∧ PiecewiseConstantOn g I} := by
   simp
-  refine ⟨ fun _ ↦ M , ⟨ ⟨ ?_, ?_, ⟩, PiecewiseConstantOn.integ_const M I ⟩ ⟩
-  . peel h with _ _ h'; simp [abs_le'] at h'; simp [h'.1]
+  refine ⟨ fun _ ↦ M , ⟨ ⟨ ?_, ?_, ⟩, PiecewiseConstantOn.integ_const _ _ ⟩ ⟩
+  . peel h with _ _ _; simp_all [abs_le']
   exact (ConstantOn.of_const (c := M) (by simp)).piecewiseConstantOn
 
-lemma integral_bound_lower_of_bounded {f:ℝ → ℝ} {M:ℝ} {I: BoundedInterval} (h: ∀ x ∈ (I:Set ℝ), |f x| ≤ M) : -M * |I|ₗ ∈ (fun g ↦ PiecewiseConstantOn.integ g I) '' {g | MinorizesOn g f I ∧ PiecewiseConstantOn g I} := by
+lemma integral_bound_lower_of_bounded {f:ℝ → ℝ} {M:ℝ} {I: BoundedInterval} (h: ∀ x ∈ (I:Set ℝ), |f x| ≤ M) : -M * |I|ₗ ∈ (PiecewiseConstantOn.integ · I) '' {g | MinorizesOn g f I ∧ PiecewiseConstantOn g I} := by
   simp
-  refine ⟨ fun _ ↦ -M , ⟨ ⟨ ?_, ?_, ⟩, by convert PiecewiseConstantOn.integ_const (-M) I using 1; simp ⟩ ⟩
-  . peel h with _ _ h'; simp [abs_le'] at h'; simp; linarith
+  refine ⟨ fun _ ↦ -M , ⟨ ⟨ ?_, ?_, ⟩, by convert PiecewiseConstantOn.integ_const _ _ using 1; simp ⟩ ⟩
+  . peel h with _ _ _; simp [abs_le'] at *; linarith
   exact (ConstantOn.of_const (c := -M) (by simp)).piecewiseConstantOn
 
-lemma integral_bound_upper_nonempty {f:ℝ → ℝ} {I: BoundedInterval} (h: BddOn f I) : ((fun g ↦ PiecewiseConstantOn.integ g I) '' {g | MajorizesOn g f I ∧ PiecewiseConstantOn g I}).Nonempty := by
-  obtain ⟨ _, h ⟩ := h; exact Set.nonempty_of_mem (integral_bound_upper_of_bounded h)
+lemma integral_bound_upper_nonempty {f:ℝ → ℝ} {I: BoundedInterval} (h: BddOn f I) : ((PiecewiseConstantOn.integ · I) '' {g | MajorizesOn g f I ∧ PiecewiseConstantOn g I}).Nonempty :=
+  ⟨ _, integral_bound_upper_of_bounded h.choose_spec ⟩
 
-lemma integral_bound_lower_nonempty {f:ℝ → ℝ} {I: BoundedInterval} (h: BddOn f I) : ((fun g ↦ PiecewiseConstantOn.integ g I) '' {g | MinorizesOn g f I ∧ PiecewiseConstantOn g I}).Nonempty := by
-  obtain ⟨ _, h ⟩ := h; exact Set.nonempty_of_mem (integral_bound_lower_of_bounded h)
+lemma integral_bound_lower_nonempty {f:ℝ → ℝ} {I: BoundedInterval} (h: BddOn f I) : ((PiecewiseConstantOn.integ · I) '' {g | MinorizesOn g f I ∧ PiecewiseConstantOn g I}).Nonempty :=
+  ⟨ _, integral_bound_lower_of_bounded h.choose_spec ⟩
 
 lemma integral_bound_lower_le_upper {f:ℝ → ℝ} {I: BoundedInterval} {a b:ℝ}
-  (ha: a ∈ (fun g ↦ PiecewiseConstantOn.integ g I) '' {g | MajorizesOn g f I ∧ PiecewiseConstantOn g I})
-  (hb: b ∈ (fun g ↦ PiecewiseConstantOn.integ g I) '' {g | MinorizesOn g f I ∧ PiecewiseConstantOn g I})
+  (ha: a ∈ (PiecewiseConstantOn.integ · I) '' {g | MajorizesOn g f I ∧ PiecewiseConstantOn g I})
+  (hb: b ∈ (PiecewiseConstantOn.integ · I) '' {g | MinorizesOn g f I ∧ PiecewiseConstantOn g I})
   : b ≤ a:= by
     obtain ⟨ g, ⟨ ⟨ hmaj, hgp⟩, hgi ⟩ ⟩ := ha
     obtain ⟨ h, ⟨ ⟨ hmin, hhp⟩, hhi ⟩ ⟩ := hb
-    rw [←hgi, ←hhi]; apply PiecewiseConstantOn.integ_mono _ hhp hgp
-    intro x hx; exact (ge_iff_le.mp (hmin x hx)).trans (hmaj x hx)
+    rw [←hgi, ←hhi]; apply hhp.integ_mono _ hgp
+    intro x hx; linarith [hmin _ hx, hmaj _ hx]
 
 lemma integral_bound_below {f:ℝ → ℝ} {I: BoundedInterval} (h: BddOn f I) :
-  BddBelow ((fun g ↦ PiecewiseConstantOn.integ g I) '' {g | MajorizesOn g f I ∧ PiecewiseConstantOn g I}) := by
+  BddBelow ((PiecewiseConstantOn.integ · I) '' {g | MajorizesOn g f I ∧ PiecewiseConstantOn g I}) := by
     rw [bddBelow_def]; use (integral_bound_lower_nonempty h).some
     intro a ha; exact integral_bound_lower_le_upper ha (integral_bound_lower_nonempty h).some_mem
 
 lemma integral_bound_above {f:ℝ → ℝ} {I: BoundedInterval} (h: BddOn f I) :
-  BddAbove ((fun g ↦ PiecewiseConstantOn.integ g I) '' {g | MinorizesOn g f I ∧ PiecewiseConstantOn g I}) := by
+  BddAbove ((PiecewiseConstantOn.integ · I) '' {g | MinorizesOn g f I ∧ PiecewiseConstantOn g I}) := by
     rw [bddAbove_def]; use (integral_bound_upper_nonempty h).some
     intro b hb; exact integral_bound_lower_le_upper (integral_bound_upper_nonempty h).some_mem hb
 
 /-- Lemma 11.3.3.  The proof has been reorganized somewhat from the textbook. -/
 lemma le_lower_integral {f:ℝ → ℝ} {I: BoundedInterval} {M:ℝ} (h: ∀ x ∈ (I:Set ℝ), |f x| ≤ M) :
-  -M * |I|ₗ ≤ lower_integral f I := by
-  exact ConditionallyCompleteLattice.le_csSup _ _
+  -M * |I|ₗ ≤ lower_integral f I :=
+  ConditionallyCompleteLattice.le_csSup _ _
     (integral_bound_above (BddOn.of_bounded h)) (integral_bound_lower_of_bounded h)
 
 lemma lower_integral_le_upper {f:ℝ → ℝ} {I: BoundedInterval} (h: BddOn f I) :
@@ -94,8 +94,8 @@ lemma lower_integral_le_upper {f:ℝ → ℝ} {I: BoundedInterval} (h: BddOn f I
   exact integral_bound_lower_le_upper ha hb
 
 lemma upper_integral_le {f:ℝ → ℝ} {I: BoundedInterval} {M:ℝ} (h: ∀ x ∈ (I:Set ℝ), |f x| ≤ M) :
-  upper_integral f I ≤ M * |I|ₗ := by
-  exact ConditionallyCompleteLattice.csInf_le _ _
+  upper_integral f I ≤ M * |I|ₗ :=
+  ConditionallyCompleteLattice.csInf_le _ _
     (integral_bound_below (BddOn.of_bounded h)) (integral_bound_upper_of_bounded h)
 
 lemma upper_integral_le_integ {f g:ℝ → ℝ} {I: BoundedInterval} (hf: BddOn f I)
@@ -114,13 +114,13 @@ lemma lt_of_gt_upper_integral {f:ℝ → ℝ} {I: BoundedInterval} (hf: BddOn f 
   {X:ℝ} (hX: upper_integral f I < X ) :
   ∃ g, MajorizesOn g f I ∧ PiecewiseConstantOn g I ∧ PiecewiseConstantOn.integ g I < X := by
   obtain ⟨ Y, hY, hYX ⟩ := exists_lt_of_csInf_lt (integral_bound_upper_nonempty hf) hX
-  simp at hY; peel hY with h hY; simp_all; tauto
+  simp at hY; peel hY; simp_all; tauto
 
 lemma gt_of_lt_lower_integral {f:ℝ → ℝ} {I: BoundedInterval} (hf: BddOn f I)
   {X:ℝ} (hX: X < lower_integral f I) :
   ∃ h, MinorizesOn h f I ∧ PiecewiseConstantOn h I ∧ X < PiecewiseConstantOn.integ h I := by
   obtain ⟨ Y, hY, hYX ⟩ := exists_lt_of_lt_csSup (integral_bound_lower_nonempty hf) hX
-  simp at hY; peel hY with h hY; simp_all; tauto
+  simp at hY; peel hY; simp_all; tauto
 
 /-- Definition 11.3.4 (Riemann integral)
 As we permit junk values, the simplest definition for the Riemann integral is the upper integral.-/

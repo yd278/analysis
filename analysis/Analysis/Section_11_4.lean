@@ -31,8 +31,7 @@ theorem IntegrableOn.smul {I: BoundedInterval} (c:ℝ) {f:ℝ → ℝ} (hf: Inte
 
 theorem IntegrableOn.neg {I: BoundedInterval} {f:ℝ → ℝ} (hf: IntegrableOn f I) :
   IntegrableOn (-f) I ∧ integ (-f) I = -integ f I := by
-  have := IntegrableOn.smul (-1) hf
-  simpa using this
+  have := IntegrableOn.smul (-1) hf; simp_all
 
 /-- Theorem 11.4.1(c) / Exercise 11.4.1 -/
 theorem IntegrableOn.sub {I: BoundedInterval} {f g:ℝ → ℝ} (hf: IntegrableOn f I) (hg: IntegrableOn g I) :
@@ -96,10 +95,9 @@ theorem IntegrableOn.eq {I J: BoundedInterval} (hIJ: J ⊆ I)
 lemma nonneg_of_le_const_mul_eps {x C:ℝ} (h: ∀ ε>0, x ≤ C * ε) : x ≤ 0 := by
   by_cases hC: C > 0
   . by_contra!
-    specialize h (x/(2*C)) ( by positivity); convert_to x ≤ x/2 at h
-    . field_simp; ring
+    specialize h (x/(2*C)) (by positivity); convert_to x ≤ x/2 at h; field_simp; ring
     linarith
-  specialize h 1 (by norm_num); simp at h hC; linarith
+  specialize h 1 (by norm_num); simp_all; linarith
 
 /-- Theorem 11.4.3 (Max and min preserve integrability)-/
 theorem IntegrableOn.max {I: BoundedInterval} {f g:ℝ → ℝ} (hf: IntegrableOn f I) (hg: IntegrableOn g I) :
@@ -190,7 +188,7 @@ theorem integ_of_mul_nonneg {I: BoundedInterval} {f g:ℝ → ℝ} (hf: Integrab
       and_intros
       . peel hf_nonneg with x hx _; specialize hf'min _ hx; aesop
       . exact hf'const.max hzero
-      . exact lt_of_lt_of_le hf'int (hf'const.integ_mono (by intros; simp) (hf'const.max hzero))
+      . apply lt_of_lt_of_le hf'int (hf'const.integ_mono _ (hf'const.max hzero)); simp
       intro _ _; simp
     obtain ⟨ f', hf'min, hf'const, hf'int, hf'_nonneg ⟩ := this
     have : ∃ g', MinorizesOn g' g I ∧ PiecewiseConstantOn g' I ∧ integ g I - ε < PiecewiseConstantOn.integ g' I ∧ MajorizesOn g' 0 I := by
@@ -200,8 +198,8 @@ theorem integ_of_mul_nonneg {I: BoundedInterval} {f g:ℝ → ℝ} (hf: Integrab
       and_intros
       . peel hg_nonneg with x hx _; specialize hg'min _ hx; aesop
       . exact hg'const.max hzero
-      . apply lt_of_lt_of_le hg'int (hg'const.integ_mono (by intros; simp) (hg'const.max hzero))
-      intro _ _; simp
+      . apply lt_of_lt_of_le hg'int (hg'const.integ_mono _ (hg'const.max hzero)); simp
+      intro _; simp
     obtain ⟨ g', hg'min, hg'const, hg'int, hg'_nonneg ⟩ := this
     have : ∃ f'', MajorizesOn f'' f I ∧ PiecewiseConstantOn f'' I ∧ PiecewiseConstantOn.integ f'' I < integ f I + ε ∧ MinorizesOn f'' (fun _ ↦ M₁) I := by
       obtain ⟨ f'', hf''maj, hf''const, hf''int ⟩ := lt_of_gt_upper_integral hf.1 (show upper_integral f I < integ f I + ε  by linarith)
@@ -209,11 +207,11 @@ theorem integ_of_mul_nonneg {I: BoundedInterval} {f g:ℝ → ℝ} (hf: Integrab
       have hM₁_piece := (ConstantOn.of_const' M₁ I).piecewiseConstantOn
       and_intros
       . peel hM₁ with x hx hM₁; rw [abs_le'] at hM₁
-        specialize hf''maj _ hx; simp [hf''maj, hM₁.1]
+        simp [hf''maj _ hx, hM₁.1]
       . exact hf''const.min hM₁_piece
       . apply lt_of_le_of_lt ((hf''const.min hM₁_piece).integ_mono _ hf''const) hf''int
-        intros; simp [hf''maj, hM₁_piece]
-      intro _ _; simp
+        simp [hf''maj, hM₁_piece]
+      intro _; simp
     obtain ⟨ f'', hf''maj, hf''const, hf''int, hf''bound ⟩ := this
     have : ∃ g'', MajorizesOn g'' g I ∧ PiecewiseConstantOn g'' I ∧ PiecewiseConstantOn.integ g'' I < integ g I + ε ∧ MinorizesOn g'' (fun _ ↦ M₂) I := by
       obtain ⟨ g'', hg''maj, hg''const, hg''int ⟩ := lt_of_gt_upper_integral hg.1 (show upper_integral g I < integ g I + ε  by linarith)
@@ -221,21 +219,21 @@ theorem integ_of_mul_nonneg {I: BoundedInterval} {f g:ℝ → ℝ} (hf: Integrab
       have hM₂_piece := (ConstantOn.of_const' M₂ I).piecewiseConstantOn
       and_intros
       . peel hM₂ with x hx hM₂; rw [abs_le'] at hM₂
-        specialize hg''maj _ hx; simp [hg''maj, hM₂.1]
+        simp [hg''maj _ hx, hM₂.1]
       . exact hg''const.min hM₂_piece
       . apply lt_of_le_of_lt ((hg''const.min hM₂_piece).integ_mono _ hg''const) hg''int
-        intros; simp [hg''maj, hM₂_piece]
+        simp [hg''maj, hM₂_piece]
       intro _ _; simp
     obtain ⟨ g'', hg''maj, hg''const, hg''int, hg''bound ⟩ := this
-    have hf'g'_const := PiecewiseConstantOn.mul hf'const hg'const
+    have hf'g'_const := hf'const.mul hg'const
     have hf'g'_maj : MinorizesOn (f' * g') (f * g) I := by
       peel hf'min with x hx hf'min; specialize hg'min _ hx; specialize hf'_nonneg _ hx; specialize hg'_nonneg _ hx
-      simp at *; exact mul_le_mul hf'min hg'min (by positivity) (by linarith)
-    have hf''g''_const := PiecewiseConstantOn.mul hf''const hg''const
+      simp at *; apply mul_le_mul hf'min hg'min <;> linarith
+    have hf''g''_const := hf''const.mul hg''const
     have hf''g''_maj : MajorizesOn (f'' * g'') (f * g) I := by
       peel hf''maj with x hx hf''maj; specialize hg''maj _ hx; specialize hf''bound _ hx
       specialize hg_nonneg _ hx; specialize hf_nonneg _ hx
-      simp at *; exact mul_le_mul hf''maj hg''maj (by positivity) (by linarith)
+      simp at *; apply mul_le_mul hf''maj hg''maj <;> linarith
     have hupper_le := upper_integral_le_integ hmul_bound hf''g''_maj hf''g''_const
     have hlower_ge := integ_le_lower_integral hmul_bound hf'g'_maj hf'g'_const
     have hh_const := hf''g''_const.sub hf'g'_const
@@ -279,16 +277,16 @@ theorem integ_of_mul {I: BoundedInterval} {f g:ℝ → ℝ} (hf: IntegrableOn f 
   have hfminus_integ : IntegrableOn fminus I := (hf.min this).neg.1
   have hgplus_integ : IntegrableOn gplus I := hg.max this
   have hgminus_integ : IntegrableOn gminus I := (hg.min this).neg.1
-  have hfplus_nonneg : MajorizesOn fplus 0 I := by intro _ _; simp [fplus]
-  have hfminus_nonneg : MajorizesOn fminus 0 I := by intro _ _; simp [fminus]
-  have hgplus_nonneg : MajorizesOn gplus 0 I := by intro _ _; simp [gplus]
-  have hgminus_nonneg : MajorizesOn gminus 0 I := by intro _ _; simp [gminus]
+  have hfplus_nonneg : MajorizesOn fplus 0 I := by intro _; simp [fplus]
+  have hfminus_nonneg : MajorizesOn fminus 0 I := by intro _; simp [fminus]
+  have hgplus_nonneg : MajorizesOn gplus 0 I := by intro _; simp [gplus]
+  have hgminus_nonneg : MajorizesOn gminus 0 I := by intro _; simp [gminus]
   have hfplusgplus := integ_of_mul_nonneg hfplus_integ hgplus_integ hfplus_nonneg hgplus_nonneg
   have hfplusgminus := integ_of_mul_nonneg hfplus_integ hgminus_integ hfplus_nonneg hgminus_nonneg
   have hfminusgplus := integ_of_mul_nonneg hfminus_integ hgplus_integ hfminus_nonneg hgplus_nonneg
   have hfminusgminus := integ_of_mul_nonneg hfminus_integ hgminus_integ hfminus_nonneg hgminus_nonneg
-  have hf : f = fplus - fminus := by ext x; simp [fplus, fminus]
-  have hg : g = gplus - gminus := by ext x; simp [gplus, gminus]
+  have hf : f = fplus - fminus := by ext; simp [fplus, fminus]
+  have hg : g = gplus - gminus := by ext; simp [gplus, gminus]
   rw [hf, hg]
   ring_nf
   exact ((hfplusgplus.add (hfplusgminus.neg.1.sub hfminusgplus).1).1.add hfminusgminus).1
