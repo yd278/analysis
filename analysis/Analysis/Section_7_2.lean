@@ -58,7 +58,7 @@ theorem Series.partial_succ (s : Series) {N:ℤ} (h: N ≥ s.m-1) : s.partial (N
   rw [add_comm (s.partial N) _]
   have : N+1 ∉ Finset.Icc s.m N := by simp
   convert Finset.sum_insert this
-  exact (Finset.insert_Icc_right_eq_Icc_add_one (by linarith)).symm
+  symm; apply Finset.insert_Icc_right_eq_Icc_add_one; linarith
 
 theorem Series.partial_of_lt {s : Series} {N:ℤ} (h: N < s.m) : s.partial N = 0 := by
   unfold Series.partial
@@ -151,32 +151,24 @@ theorem Series.converges_of_alternating {m:ℤ} {a: { n // n ≥ m} → ℝ} (ha
   . intro h; replace h := decay_of_converges h
     rw [tendsto_iff_dist_tendsto_zero] at h ⊢
     rw [←Filter.tendsto_comp_val_Ici_atTop (a := m)] at h
-    convert h using 2 with heq n
+    convert h using 2 with _ n
     simp [n.property]
   intro h
   unfold converges convergesTo
   set b := mk' fun n ↦ (-1) ^ (n:ℤ) * a n
   set S := b.partial
   have claim0 {N:ℤ} (hN: N ≥ m) : S (N+1) = S N + (-1)^(N+1) * a ⟨ N+1, by linarith ⟩ := by
-    have h1 : N+1 ≥ m := by linarith
-    convert b.partial_succ ?_
-    simp [b, h1]; linarith
+    convert b.partial_succ ?_; simp [b, show N+1 ≥ m by linarith]; linarith
   have claim1 {N:ℤ} (hN: N ≥ m) : S (N+2) = S N + (-1)^(N+1) * (a ⟨ N+1, by linarith ⟩ - a ⟨ N+2, by linarith ⟩) := calc
       S (N+2) = S N + (-1)^(N+1) * a ⟨ N+1, by linarith ⟩ + (-1)^(N+2) * a ⟨ N+2, by linarith ⟩ := by
-        have hN2 : N+2 = N+1+1 := by abel
-        simp_rw [←claim0 hN, hN2]
-        exact claim0 (show N+1 ≥ m by linarith)
+        simp_rw [←claim0 hN, show N+2=N+1+1 by abel]; apply claim0; linarith
       _ = S N + (-1)^(N+1) * a ⟨ N+1, by linarith ⟩ + (-1) * (-1)^(N+1) * a ⟨ N+2, by linarith ⟩ := by
         congr; rw [←zpow_one_add₀ (by norm_num)]; congr 1; abel
       _ = _ := by ring
   have claim2 {N:ℤ} (hN: N ≥ m) (h': Odd N) : S (N+2) ≥ S N := by
-    rw [claim1 hN]
-    simp [Even.neg_one_zpow (Odd.add_one h')]
-    apply ha'; simp
+    rw [claim1 hN]; simp [h'.add_one.neg_one_zpow]; apply ha'; simp
   have claim3 {N:ℤ} (hN: N ≥ m) (h': Even N) : S (N+2) ≤ S N := by
-    rw [claim1 hN]
-    simp [Odd.neg_one_zpow (Even.add_one h')]
-    apply ha'; simp
+    rw [claim1 hN]; simp [h'.add_one.neg_one_zpow]; apply ha'; simp
   have why1 {N:ℤ} (hN: N ≥ m) (h': Even N) (k:ℕ) : S (N+2*k) ≤ S N := by sorry
   have why2 {N:ℤ} (hN: N ≥ m) (h': Even N) (k:ℕ) : S (N+2*k+1) ≥ S N - a ⟨ N+1, by linarith ⟩ := by sorry
   have why3 {N:ℤ} (hN: N ≥ m) (h': Even N) (k:ℕ) : S (N+2*k+1) ≤ S (N+2*k) := by sorry
@@ -187,10 +179,8 @@ theorem Series.converges_of_alternating {m:ℤ} {a: { n // n ≥ m} → ℝ} (ha
   have why5 {ε:ℝ} (hε: ε > 0) : ∃ N, ∀ n ≥ N, ∀ m ≥ N, |S n - S m| ≤ ε := by sorry
   have : CauchySeq S := by
     rw [Metric.cauchySeq_iff']
-    intro ε hε
-    obtain ⟨ N, hN ⟩ := why5 (half_pos hε); use N
-    intro n hn; specialize hN n hn N (le_refl _)
-    rw [Real.dist_eq]; linarith
+    intro ε hε; obtain ⟨ N, hN ⟩ := why5 (half_pos hε); use N
+    intro n hn; rw [Real.dist_eq]; linarith [hN n hn N (by simp)]
   exact cauchySeq_tendsto_of_complete this
 
 /-- Example 7.2.13 -/

@@ -260,7 +260,7 @@ theorem Nat.ne_of_gt (a b:Nat) : a > b → a ≠ b := by
 /-- If a > b and a < b then contradiction -/
 theorem Nat.not_lt_of_gt (a b:Nat) : a < b ∧ a > b → False := by
   intro h
-  have := (ge_antisymm (Nat.le_of_lt h.1) (Nat.le_of_lt h.2)).symm
+  have := (ge_antisymm (le_of_lt h.1) (le_of_lt h.2)).symm
   have := ne_of_lt _ _ h.1
   contradiction
 
@@ -283,17 +283,18 @@ theorem Nat.zero_le (a:Nat) : 0 ≤ a := by
   sorry
 
 /-- Proposition 2.2.13 (Trichotomy of order for natural numbers) / Exercise 2.2.4
-    Compare with Mathlib's `trichotomous`. -/
+    Compare with Mathlib's `trichotomous`.  Parts of this theorem have been placed
+    in the preceding Lean theorems. -/
 theorem Nat.trichotomous (a b:Nat) : a < b ∨ a = b ∨ a > b := by
   -- This proof is written to follow the structure of the original text.
   revert a; apply induction
   . have why : 0 ≤ b := b.zero_le
-    replace why := (Nat.le_iff_lt_or_eq _ _).mp why
+    replace why := (le_iff_lt_or_eq _ _).mp why
     tauto
   intro a ih
   rcases ih with case1 | case2 | case3
   . rw [lt_iff_succ_le] at case1
-    rw [Nat.le_iff_lt_or_eq] at case1
+    rw [le_iff_lt_or_eq] at case1
     tauto
   . have why : a++ > b := by sorry
     tauto
