@@ -17,7 +17,7 @@ theorem Chapter6.Sequence.isCauchy_iff_isCauSeq (a: ℕ → ℝ) :
   simp_rw [IsCauchy.coe, Real.dist_eq, IsCauSeq]
   constructor <;> intro h ε hε <;> specialize h (ε/2) (half_pos hε) <;> obtain ⟨ N, h ⟩ := h <;> use N
   . intro n hn
-    specialize h n hn N (le_refl _)
+    specialize h n hn N (by rfl)
     linarith
   intro n hn m hm
   calc
