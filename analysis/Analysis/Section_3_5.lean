@@ -142,7 +142,7 @@ example : ({1, 2}: Set) ×ˢ ({3, 4, 5}: Set) = ({
   ((mk_cartesian (2: Nat) (3: Nat)): Object),
   ((mk_cartesian (2: Nat) (4: Nat)): Object),
   ((mk_cartesian (2: Nat) (5: Nat)): Object)
-}: Set) := by apply ext; aesop
+}: Set) := by ext; aesop
 
 /-- Example 3.5.5 / Exercise 3.6.5. There is a bijection between `X ×ˢ Y` and `Y ×ˢ X`. -/
 noncomputable abbrev SetTheory.Set.prod_commutator (X Y:Set) : X ×ˢ Y ≃ Y ×ˢ X where
@@ -158,29 +158,31 @@ noncomputable abbrev SetTheory.Set.curry_equiv {X Y Z:Set} : (X → Y → Z) ≃
   left_inv := by intro; simp
   right_inv := by intro; simp [←pair_eq_fst_snd]
 
-/-- Definition 3.5.6 -/
-abbrev SetTheory.Set.tuple {I:Set} {X: I → Set} (a: ∀ i, X i) : Object :=
-  ((fun i ↦ ⟨ a i, by rw [mem_iUnion]; use i; exact (a i).property ⟩):I → iUnion I X)
+/-- Definition 3.5.6.  The indexing set `I` plays the role of `{ i : 1 ≤ i ≤ n }` in the text.
+    See Exercise 3.5.10 below for some connections betweeen this concept and the preceding notion
+    of Cartesian product and ordered pair.  -/
+abbrev SetTheory.Set.tuple {I:Set} {X: I → Set} (x: ∀ i, X i) : Object :=
+  ((fun i ↦ ⟨ x i, by rw [mem_iUnion]; use i; exact (x i).property ⟩):I → iUnion I X)
 
 /-- Definition 3.5.6 -/
 abbrev SetTheory.Set.iProd {I: Set} (X: I → Set) : Set :=
-  ((iUnion I X)^I).specify (fun t ↦ ∃ a : ∀ i, X i, t = tuple a)
+  ((iUnion I X)^I).specify (fun t ↦ ∃ x : ∀ i, X i, t = tuple x)
 
 /-- Definition 3.5.6 -/
 theorem SetTheory.Set.mem_iProd {I: Set} {X: I → Set} (t:Object) :
-    t ∈ iProd X ↔ ∃ a: ∀ i, X i, t = tuple a := by
+    t ∈ iProd X ↔ ∃ x: ∀ i, X i, t = tuple x := by
   simp only [iProd, specification_axiom'']; constructor
-  . intro ⟨ ht, a, h ⟩; use a
-  intro ⟨ a, ha ⟩
-  have h : t ∈ (I.iUnion X)^I := by simp [ha]
-  use h, a
+  . intro ⟨ ht, x, h ⟩; use x
+  intro ⟨ x, hx ⟩
+  have h : t ∈ (I.iUnion X)^I := by simp [hx]
+  use h, x
 
-theorem SetTheory.Set.tuple_mem_iProd {I: Set} {X: I → Set} (a: ∀ i, X i) :
-    tuple a ∈ iProd X := by rw [mem_iProd]; use a
+theorem SetTheory.Set.tuple_mem_iProd {I: Set} {X: I → Set} (x: ∀ i, X i) :
+    tuple x ∈ iProd X := by rw [mem_iProd]; use x
 
 @[simp]
-theorem SetTheory.Set.tuple_inj {I:Set} {X: I → Set} (a b: ∀ i, X i) :
-    tuple a = tuple b ↔ a = b := by sorry
+theorem SetTheory.Set.tuple_inj {I:Set} {X: I → Set} (x y: ∀ i, X i) :
+    tuple x = tuple y ↔ x = y := by sorry
 
 /-- Example 3.5.8. There is a bijection between `(X ×ˢ Y) ×ˢ Z` and `X ×ˢ (Y ×ˢ Z)`. -/
 noncomputable abbrev SetTheory.Set.prod_associator (X Y Z:Set) : (X ×ˢ Y) ×ˢ Z ≃ X ×ˢ (Y ×ˢ Z) where
