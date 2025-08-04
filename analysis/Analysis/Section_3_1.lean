@@ -204,7 +204,7 @@ instance SetTheory.Set.instInsert : Insert Object Set where
   insert x X := {x} ∪ X
 
 @[simp]
-theorem SetTheory.Set.mem_insert (x y: Object) (X: Set) : x ∈ insert y X ↔ x = y ∨ x ∈ X := by
+theorem SetTheory.Set.mem_insert (a b: Object) (X: Set) : a ∈ insert b X ↔ a = b ∨ a ∈ X := by
   simp [instInsert]
 
 /-- Axiom 3.3(b) (pair).  Note: in some applications one may have to cast {a,b}
