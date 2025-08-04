@@ -129,12 +129,12 @@ theorem SetTheory.Set.coe_eq {X Y:Set} (h: (X: Object) = (Y: Object)) : X = Y :=
 theorem SetTheory.Set.coe_eq_iff (X Y:Set) : (X: Object) = (Y: Object) ↔  X = Y :=
   ⟨ coe_eq, by rintro rfl; rfl ⟩
 
-/-- Axiom 3.2 (Equality of sets)-/
-abbrev SetTheory.Set.ext {X Y:Set} (h: ∀ x, x ∈ X ↔ x ∈ Y) : X = Y := extensionality _ _ h
+/-- Axiom 3.2 (Equality of sets).  The `[ext]` tag allows the `ext` tactic to work for sets. -/
+@[ext]
+theorem SetTheory.Set.ext {X Y:Set} (h: ∀ x, x ∈ X ↔ x ∈ Y) : X = Y := extensionality _ _ h
 
-/-- Axiom 3.2 (Equality of sets)-/
-theorem SetTheory.Set.ext_iff (X Y: Set) : X = Y ↔ ∀ x, x ∈ X ↔ x ∈ Y :=
-  ⟨ by rintro rfl; simp, ext ⟩
+/- Axiom 3.2 (Equality of sets)-/
+#check SetTheory.Set.ext_iff
 
 instance SetTheory.Set.instEmpty : EmptyCollection Set where
   emptyCollection := emptyset
@@ -278,8 +278,7 @@ theorem SetTheory.Set.union_comm (A B:Set) : A ∪ B = B ∪ A := by sorry
 /-- Lemma 3.1.12 (Basic properties of unions) / Exercise 3.1.3 -/
 theorem SetTheory.Set.union_assoc (A B C:Set) : (A ∪ B) ∪ C = A ∪ (B ∪ C) := by
   -- this proof is written to follow the structure of the original text.
-  apply ext
-  intro x
+  ext x
   constructor
   . intro hx
     rw [mem_union] at hx
@@ -314,7 +313,7 @@ theorem SetTheory.Set.triple_eq (a b c:Object) : {a,b,c} = ({a}:Set) ∪ {b,c} :
 /-- Example 3.1.10 -/
 theorem SetTheory.Set.pair_union_pair (a b c:Object) :
     ({a,b}:Set) ∪ {b,c} = {a,b,c} := by
-  apply ext; intros; simp only [mem_union, mem_pair, mem_triple]; tauto
+  ext; simp only [mem_union, mem_pair, mem_triple]; tauto
 
 /-- Definition 3.1.14.   -/
 instance SetTheory.Set.instSubset : HasSubset Set where
@@ -679,7 +678,7 @@ example : ({3, 5}:Set) ⊆ {1, 3, 5} := by
 
 /-- Example 3.1.17 (simplified). -/
 example : ({3, 5}:Set).specify (fun x ↦ x.val ≠ 3) = ({5}:Set) := by
-  apply ext; intros
+  ext
   simp only [mem_singleton, specification_axiom'']
   constructor
   · rintro ⟨h1, h2⟩; simp only [mem_pair] at h1; tauto
@@ -687,7 +686,7 @@ example : ({3, 5}:Set).specify (fun x ↦ x.val ≠ 3) = ({5}:Set) := by
 
 /-- Example 3.1.24 -/
 example : ({1, 2, 4}:Set) ∩ {2,3,4} = {2, 4} := by
-  apply ext
+  ext x
   -- Instead of unfolding repetitive branches by hand like earlier,
   -- you can use the `aesop` tactic which does this automatically.
   aesop
@@ -718,7 +717,7 @@ example : ({3,5,9}:Set).replace (P := fun x y ↦ ∃ (n:ℕ), x.val = n ∧ y =
 
 /-- Example 3.1.31 -/
 example : ({3,5,9}:Set).replace (P := fun _ y ↦ y=1) (by aesop) = {1} := by
-  apply ext; simp only [replacement_axiom]; aesop
+  ext; simp only [replacement_axiom]; aesop
 
 /-- Exercise 3.1.5.  One can use the `tfae_have` and `tfae_finish` tactics here. -/
 theorem SetTheory.Set.subset_tfae (A B:Set) : [A ⊆ B, A ∪ B = B, A ∩ B = A].TFAE := by sorry
