@@ -534,7 +534,7 @@ instance SetTheory.Set.instDistribLattice : DistribLattice Set where
   le_inf := by sorry
   le_sup_inf := by
     intro X Y Z; change (X ∪ Y) ∩ (X ∪ Z) ⊆ X ∪ (Y ∩ Z)
-    rw [←union_inter_distrib_left]; exact subset_self _
+    rw [←union_inter_distrib_left]
 
 /-- Sets have a minimal element.  -/
 instance SetTheory.Set.instOrderBot : OrderBot Set where
