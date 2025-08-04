@@ -30,8 +30,7 @@ theorem IntegrableOn.smul {I: BoundedInterval} (c:ℝ) {f:ℝ → ℝ} (hf: Inte
   sorry
 
 theorem IntegrableOn.neg {I: BoundedInterval} {f:ℝ → ℝ} (hf: IntegrableOn f I) :
-  IntegrableOn (-f) I ∧ integ (-f) I = -integ f I := by
-  have := IntegrableOn.smul (-1) hf; simp_all; tauto
+  IntegrableOn (-f) I ∧ integ (-f) I = -integ f I := by have := IntegrableOn.smul (-1) hf; aesop
 
 /-- Theorem 11.4.1(c) / Exercise 11.4.1 -/
 theorem IntegrableOn.sub {I: BoundedInterval} {f g:ℝ → ℝ} (hf: IntegrableOn f I) (hg: IntegrableOn g I) :
@@ -189,7 +188,7 @@ theorem integ_of_mul_nonneg {I: BoundedInterval} {f g:ℝ → ℝ} (hf: Integrab
       . peel hf_nonneg with x hx _; specialize hf'min _ hx; aesop
       . exact hf'const.max hzero
       . apply lt_of_lt_of_le hf'int (hf'const.integ_mono _ (hf'const.max hzero)); simp
-      intro _ _; simp
+      intro _; simp
     obtain ⟨ f', hf'min, hf'const, hf'int, hf'_nonneg ⟩ := this
     have : ∃ g', MinorizesOn g' g I ∧ PiecewiseConstantOn g' I ∧ integ g I - ε < PiecewiseConstantOn.integ g' I ∧ MajorizesOn g' 0 I := by
       obtain ⟨ g', hg'min, hg'const, hg'int ⟩ := gt_of_lt_lower_integral hg.1 (show integ g I - ε < lower_integral g I by linarith)
