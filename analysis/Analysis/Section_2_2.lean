@@ -182,9 +182,11 @@ lemma Nat.le_iff (n m:Nat) : n ≤ m ↔ ∃ a:Nat, m = n + a := by rfl
 lemma Nat.lt_iff (n m:Nat) : n < m ↔ (∃ a:Nat, m = n + a) ∧ n ≠ m := by rfl
 
 /-- Compare with Mathlib's `ge_iff_le`. -/
+@[symm]
 lemma Nat.ge_iff_le (n m:Nat) : n ≥ m ↔ m ≤ n := by rfl
 
 /-- Compare with Mathlib's `gt_iff_lt`. -/
+@[symm]
 lemma Nat.gt_iff_lt (n m:Nat) : n > m ↔ m < n := by rfl
 
 /-- Compare with Mathlib's `Nat.le_of_lt`. -/
@@ -217,10 +219,18 @@ theorem Nat.succ_gt_self (n:Nat) : n++ > n := by
 theorem Nat.ge_refl (a:Nat) : a ≥ a := by
   sorry
 
+@[refl]
+theorem Nat.le_refl (a:Nat) : a ≤ a := a.ge_refl
+
+/-- The refl tag allows for the `rfl` tactic to work for inequalities. -/
+example (a b:Nat): a+b ≥ a+b := by rfl
+
 /-- (b) (Order is transitive).  The `obtain` tactic will be useful here.
     Compare with Mathlib's `Nat.le_trans`. -/
 theorem Nat.ge_trans {a b c:Nat} (hab: a ≥ b) (hbc: b ≥ c) : a ≥ c := by
   sorry
+
+theorem Nat.le_trans {a b c:Nat} (hab: a ≤ b) (hbc: b ≤ c) : a ≤ c := Nat.ge_trans hbc hab
 
 /-- (c) (Order is anti-symmetric). Compare with Mathlib's `Nat.le_antisymm`. -/
 theorem Nat.ge_antisymm {a b:Nat} (hab: a ≥ b) (hba: b ≥ a) : a = b := by

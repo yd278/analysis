@@ -345,7 +345,7 @@ theorem SetTheory.Set.ssubset_def (X Y:Set) : X ⊂ Y ↔ (X ⊆ Y ∧ X ≠ Y) 
 theorem SetTheory.Set.subset_congr_left {A A' B:Set} (hAA':A = A') (hAB: A ⊆ B) : A' ⊆ B := by sorry
 
 /-- Examples 3.1.16 -/
-@[simp]
+@[simp, refl]
 theorem SetTheory.Set.subset_self (A:Set) : A ⊆ A := by sorry
 
 /-- Examples 3.1.16 -/

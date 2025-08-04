@@ -31,7 +31,7 @@ theorem IntegrableOn.smul {I: BoundedInterval} (c:ℝ) {f:ℝ → ℝ} (hf: Inte
 
 theorem IntegrableOn.neg {I: BoundedInterval} {f:ℝ → ℝ} (hf: IntegrableOn f I) :
   IntegrableOn (-f) I ∧ integ (-f) I = -integ f I := by
-  have := IntegrableOn.smul (-1) hf; simp_all
+  have := IntegrableOn.smul (-1) hf; simp_all; tauto
 
 /-- Theorem 11.4.1(c) / Exercise 11.4.1 -/
 theorem IntegrableOn.sub {I: BoundedInterval} {f g:ℝ → ℝ} (hf: IntegrableOn f I) (hg: IntegrableOn g I) :
