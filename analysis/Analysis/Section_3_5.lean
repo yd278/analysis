@@ -203,7 +203,7 @@ noncomputable abbrev SetTheory.Set.singleton_iProd_equiv (i:Object) (X:Set) :
   right_inv := sorry
 
 /-- Example 3.5.10 -/
-noncomputable abbrev SetTheory.Set.empty_iProd_equiv (X: (∅:Set) → Set) : iProd X ≃ Unit where
+abbrev SetTheory.Set.empty_iProd_equiv (X: (∅:Set) → Set) : iProd X ≃ Unit where
   toFun := sorry
   invFun := sorry
   left_inv := sorry
