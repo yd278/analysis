@@ -203,7 +203,7 @@ noncomputable abbrev SetTheory.Set.singleton_iProd_equiv (i:Object) (X:Set) :
   right_inv := sorry
 
 /-- Example 3.5.10 -/
-noncomputable abbrev SetTheory.Set.empty_iProd_equiv (X: (∅:Set) → Set) : iProd X ≃ Unit where
+abbrev SetTheory.Set.empty_iProd_equiv (X: (∅:Set) → Set) : iProd X ≃ Unit where
   toFun := sorry
   invFun := sorry
   left_inv := sorry
@@ -236,10 +236,25 @@ noncomputable abbrev SetTheory.Set.iProd_equiv_prod_triple (X: ({0,1,2}:Set) →
 /-- Connections with Mathlib's `Set.pi` -/
 noncomputable abbrev SetTheory.Set.iProd_equiv_pi (I:Set) (X: I → Set) :
     iProd X ≃ Set.pi .univ (fun i:I ↦ ((X i):_root_.Set Object)) where
-  toFun := sorry
-  invFun := sorry
-  left_inv := sorry
-  right_inv := sorry
+  toFun := fun t ↦
+    have h := (mem_iProd _).mp t.property
+    have x := h.choose
+    ⟨fun i ↦ x i, by simp⟩
+  invFun := fun x ↦
+    ⟨tuple fun i ↦ ⟨x.val i, by
+      have := x.property i; simpa
+    ⟩, by apply tuple_mem_iProd⟩
+  left_inv := by
+    intro t; ext
+    have h := (mem_iProd _).mp t.property
+    rw [h.choose_spec, tuple_inj]
+  right_inv := by
+    intro x; ext i
+    dsimp only []
+    generalize_proofs _ h
+    have ht := h.choose_spec
+    rw [tuple_inj] at ht
+    rw [←ht]
 
 
 /-
