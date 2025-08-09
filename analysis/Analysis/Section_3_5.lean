@@ -309,15 +309,12 @@ abbrev SetTheory.Set.Fin_embed (n N:ℕ) (h: n ≤ N) (i: Fin n) : Fin N := ⟨ 
   obtain ⟨ m, hm, im ⟩ := this; use m, by linarith
 ⟩
 
-/--
-  I suspect that this equivalence is non-computable and requires classical logic,
-  unless there is a clever trick.
--/
-noncomputable abbrev SetTheory.Set.Fin_equiv_Fin (n:ℕ) : Fin n ≃ _root_.Fin n where
-  toFun := sorry
-  invFun := sorry
-  left_inv := sorry
-  right_inv := sorry
+/-- Connections with Mathlib's `Fin n` -/
+noncomputable abbrev SetTheory.Set.Fin.Fin_equiv_Fin (n:ℕ) : Fin n ≃ _root_.Fin n where
+  toFun := fun m ↦ _root_.Fin.mk m (toNat_lt m)
+  invFun := fun m ↦ Fin_mk n m.val m.isLt
+  left_inv := by intro m; exact (toNat_spec m).2.symm
+  right_inv := by intro m; simp
 
 /-- Lemma 3.5.11 (finite choice) -/
 theorem SetTheory.Set.finite_choice {n:ℕ} {X: Fin n → Set} (h: ∀ i, X i ≠ ∅) : iProd X ≠ ∅ := by
