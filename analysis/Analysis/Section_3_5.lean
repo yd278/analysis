@@ -332,7 +332,7 @@ theorem SetTheory.Set.finite_choice {n:ℕ} {X: Fin n → Set} (h: ∀ i, X i �
   set last : Fin (n+1) := Fin_mk (n+1) n (by linarith)
   obtain ⟨ a, ha ⟩ := nonempty_def (h last)
   have x : ∀ i, X i := fun i =>
-    if h : (i : ℕ) = n then
+    if h : i = n then
       have : i = last := by ext; simpa [←Fin.coe_toNat, last]
       ⟨a, by rw [this]; exact ha⟩
     else
