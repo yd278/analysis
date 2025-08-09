@@ -331,21 +331,17 @@ theorem SetTheory.Set.finite_choice {n:ℕ} {X: Fin n → Set} (h: ∀ i, X i �
   rw [mem_iProd] at hx'; obtain ⟨ x', rfl ⟩ := hx'
   set last : Fin (n+1) := Fin_mk (n+1) n (by linarith)
   obtain ⟨ a, ha ⟩ := nonempty_def (h last)
-  set x : ∀ i, X i := by
-    intro i
-    classical
-    -- it is unfortunate here that classical logic is required to perform this gluing; this is
-    -- because `nat` is technically not an inductive type.  There should be some workaround
-    -- involving the equivalence between `nat` and `ℕ` (which is an inductive type).
-    cases decEq i last with
-      | isTrue heq => rw [heq]; exact ⟨ a, ha ⟩
-      | isFalse heq =>
-        have : ∃ m, ∃ h: m < n, X i = X' (Fin_mk n m h) := by
-          obtain ⟨ m, h, this ⟩ := mem_Fin' i
-          have h' : m ≠ n := by contrapose! heq; simp [this, last, heq]
-          replace h' : m < n := by contrapose! h'; linarith
-          use m, h'; simp [X']; congr
-        rw [this.choose_spec.choose_spec]; exact x' _
+  have x : ∀ i, X i := fun i =>
+    if h : (i : ℕ) = n then
+      have : i = last := by ext; simpa [←Fin.coe_toNat, last]
+      ⟨a, by rw [this]; exact ha⟩
+    else
+      have : i < n := by
+        apply Nat.lt_of_le_of_ne _ h
+        exact Nat.lt_succ_iff.mp (Fin.toNat_lt i)
+      let i' := Fin_mk n i this
+      have : X i = X' i' := by simp [X', i', Fin_embed]
+      ⟨x' i', by rw [this]; exact (x' i').property⟩
   exact nonempty_of_inhabited (tuple_mem_iProd x)
 
 /-- Exercise 3.5.1, second part (requires axiom of regularity) -/
