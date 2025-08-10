@@ -353,7 +353,11 @@ structure SetTheory.Set.Tuple (n:ℕ) where
   x: SetTheory.Set.Fin n → X
   surj: Function.Surjective x
 
-/-- A helper lemma so the `ext` tactic doesn't get stuck on dependent types. -/
+/--
+  Custom extensionality lemma for Exercise 3.5.2.
+  Placing `@[ext]` on the structure would generate a lemma requiring proof of `t.x = t'.x`,
+  but these functions have different types when `t.X ≠ t'.X`. This lemma handles that part.
+-/
 @[ext]
 lemma SetTheory.Set.Tuple.ext {n:ℕ} {t t':Tuple n}
     (hX : t.X = t'.X)
