@@ -348,11 +348,27 @@ abbrev OrderedPair.toObject' : OrderedPair ↪ Object where
   inj' := by sorry
 
 /-- An alternate definition of a tuple, used in Exercise 3.5.2 -/
-@[ext]
 structure SetTheory.Set.Tuple (n:ℕ) where
   X: Set
   x: SetTheory.Set.Fin n → X
   surj: Function.Surjective x
+
+/--
+  Custom extensionality lemma for Exercise 3.5.2.
+  Placing `@[ext]` on the structure would generate a lemma requiring proof of `t.x = t'.x`,
+  but these functions have different types when `t.X ≠ t'.X`. This lemma handles that part.
+-/
+@[ext]
+lemma SetTheory.Set.Tuple.ext {n:ℕ} {t t':Tuple n}
+    (hX : t.X = t'.X)
+    (hx : ∀ n : Fin n, ((t.x n):Object) = ((t'.x n):Object)) :
+    t = t' := by
+  rcases t with ⟨tX, tx, tsurj⟩
+  rcases t' with ⟨tX', tx', tsurj'⟩
+  subst hX
+  congr
+  ext m
+  apply hx
 
 /-- Exercise 3.5.2 -/
 theorem SetTheory.Set.Tuple.eq {n:ℕ} (t t':Tuple n) :
