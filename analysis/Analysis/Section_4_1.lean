@@ -171,8 +171,7 @@ theorem Int.trichotomous (x:Int) : x = 0 ∨ x.IsPos ∨ x.IsNeg := by
 
 /-- Lemma 4.1.5 (trichotomy of integers)-/
 theorem Int.not_pos_zero (x:Int) : x = 0 ∧ x.IsPos → False := by
-  rintro ⟨ rfl, ⟨ n, hn, hn' ⟩ ⟩; simp [←natCast_ofNat] at hn'
-  linarith
+  rintro ⟨ rfl, ⟨ n, hn, hn' ⟩ ⟩; simp_all [←natCast_ofNat]
 
 /-- Lemma 4.1.5 (trichotomy of integers)-/
 theorem Int.not_neg_zero (x:Int) : x = 0 ∧ x.IsNeg → False := by

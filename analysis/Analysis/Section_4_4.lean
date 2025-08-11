@@ -27,7 +27,7 @@ theorem Nat.exists_gt (x:ℚ) : ∃ n:ℕ, n > x := by
 /-- Proposition 4.4.3 (Interspersing of rationals) -/
 theorem Rat.exists_between_rat {x y:ℚ} (h: x < y) : ∃ z:ℚ, x < z ∧ z < y := by
   -- This proof is written to follow the structure of the original text.
-  -- The reader is encouraged to find quicker proofs, for instance
+  -- The reader is encouraged to find shorter proofs, for instance
   -- using Mathlib's `linarith` tactic.
   use (x+y)/2
   have h' : x/2 < y/2 := by
@@ -64,9 +64,8 @@ theorem Rat.not_exist_sqrt_two : ¬ ∃ x:ℚ, x^2 = 2 := by
   by_contra h; obtain ⟨ x, hx ⟩ := h
   have hnon : x ≠ 0 := by aesop
   wlog hpos : x > 0
-  . have hneg : -x > 0 := by
-      contrapose! hpos; contrapose! hnon; linarith
-    exact this (-x) (by simp [hx]) (by simp [hnon]) hneg
+  . have hneg : -x > 0 := by simp; order
+    apply this _ _ _ hneg <;> simp [hx,hnon]
   have hrep : ∃ p q:ℕ, p > 0 ∧ q > 0 ∧ p^2 = 2*q^2 := by
     use x.num.toNat, x.den
     observe hnum_pos : x.num > 0
@@ -105,7 +104,7 @@ theorem Rat.not_exist_sqrt_two : ¬ ∃ x:ℚ, x^2 = 2 := by
     | zero => exact hP
     | succ n ih => exact (hf _ ih).2
   have hlt (n:ℕ) : a (n+1) < a n := by
-    have : a (n+1) = f (a n) := Nat.rec_add_one p (fun n p ↦ f p) n
+    have : a (n+1) = f (a n) := n.rec_add_one p (fun n p ↦ f p)
     simp [this, hf _ (ha n)]
   exact Nat.no_infinite_descent ⟨ a, hlt ⟩
 
@@ -119,10 +118,9 @@ theorem Rat.exist_approx_sqrt_two {ε:ℚ} (hε:ε>0) : ∃ x ≥ (0:ℚ), x^2 <
     simp [add_mul]
     apply lt_of_le_of_ne (h (n*ε) (by positivity) hn)
     have := not_exist_sqrt_two
-    simp at this ⊢; exact this _
+    aesop
   obtain ⟨ n, hn ⟩ := Nat.exists_gt (2/ε)
-  rw [gt_iff_lt, div_lt_iff₀' (by positivity), mul_comm,
-      ←sq_lt_sq₀ (by norm_num) (by positivity)] at hn
+  rw [gt_iff_lt, div_lt_iff₀', mul_comm, ←sq_lt_sq₀] at hn <;> try positivity
   linarith [this n]
 
 /-- Example 4.4.6 -/
