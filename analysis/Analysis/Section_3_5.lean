@@ -203,7 +203,7 @@ noncomputable abbrev SetTheory.Set.singleton_iProd_equiv (i:Object) (X:Set) :
   right_inv := sorry
 
 /-- Example 3.5.10 -/
-noncomputable abbrev SetTheory.Set.empty_iProd_equiv (X: (∅:Set) → Set) : iProd X ≃ Unit where
+abbrev SetTheory.Set.empty_iProd_equiv (X: (∅:Set) → Set) : iProd X ≃ Unit where
   toFun := sorry
   invFun := sorry
   left_inv := sorry
@@ -236,10 +236,25 @@ noncomputable abbrev SetTheory.Set.iProd_equiv_prod_triple (X: ({0,1,2}:Set) →
 /-- Connections with Mathlib's `Set.pi` -/
 noncomputable abbrev SetTheory.Set.iProd_equiv_pi (I:Set) (X: I → Set) :
     iProd X ≃ Set.pi .univ (fun i:I ↦ ((X i):_root_.Set Object)) where
-  toFun := sorry
-  invFun := sorry
-  left_inv := sorry
-  right_inv := sorry
+  toFun := fun t ↦
+    have h := (mem_iProd _).mp t.property
+    have x := h.choose
+    ⟨fun i ↦ x i, by simp⟩
+  invFun := fun x ↦
+    ⟨tuple fun i ↦ ⟨x.val i, by
+      have := x.property i; simpa
+    ⟩, by apply tuple_mem_iProd⟩
+  left_inv := by
+    intro t; ext
+    have h := (mem_iProd _).mp t.property
+    rw [h.choose_spec, tuple_inj]
+  right_inv := by
+    intro x; ext i
+    dsimp only []
+    generalize_proofs _ h
+    have ht := h.choose_spec
+    rw [tuple_inj] at ht
+    rw [←ht]
 
 
 /-
@@ -294,15 +309,12 @@ abbrev SetTheory.Set.Fin_embed (n N:ℕ) (h: n ≤ N) (i: Fin n) : Fin N := ⟨ 
   obtain ⟨ m, hm, im ⟩ := this; use m, by linarith
 ⟩
 
-/--
-  I suspect that this equivalence is non-computable and requires classical logic,
-  unless there is a clever trick.
--/
-noncomputable abbrev SetTheory.Set.Fin_equiv_Fin (n:ℕ) : Fin n ≃ _root_.Fin n where
-  toFun := sorry
-  invFun := sorry
-  left_inv := sorry
-  right_inv := sorry
+/-- Connections with Mathlib's `Fin n` -/
+noncomputable abbrev SetTheory.Set.Fin.Fin_equiv_Fin (n:ℕ) : Fin n ≃ _root_.Fin n where
+  toFun := fun m ↦ _root_.Fin.mk m (toNat_lt m)
+  invFun := fun m ↦ Fin_mk n m.val m.isLt
+  left_inv := by intro m; exact (toNat_spec m).2.symm
+  right_inv := by intro m; simp
 
 /-- Lemma 3.5.11 (finite choice) -/
 theorem SetTheory.Set.finite_choice {n:ℕ} {X: Fin n → Set} (h: ∀ i, X i ≠ ∅) : iProd X ≠ ∅ := by
@@ -319,21 +331,15 @@ theorem SetTheory.Set.finite_choice {n:ℕ} {X: Fin n → Set} (h: ∀ i, X i �
   rw [mem_iProd] at hx'; obtain ⟨ x', rfl ⟩ := hx'
   set last : Fin (n+1) := Fin_mk (n+1) n (by linarith)
   obtain ⟨ a, ha ⟩ := nonempty_def (h last)
-  set x : ∀ i, X i := by
-    intro i
-    classical
-    -- it is unfortunate here that classical logic is required to perform this gluing; this is
-    -- because `nat` is technically not an inductive type.  There should be some workaround
-    -- involving the equivalence between `nat` and `ℕ` (which is an inductive type).
-    cases decEq i last with
-      | isTrue heq => rw [heq]; exact ⟨ a, ha ⟩
-      | isFalse heq =>
-        have : ∃ m, ∃ h: m < n, X i = X' (Fin_mk n m h) := by
-          obtain ⟨ m, h, this ⟩ := mem_Fin' i
-          have h' : m ≠ n := by contrapose! heq; simp [this, last, heq]
-          replace h' : m < n := by contrapose! h'; linarith
-          use m, h'; simp [X']; congr
-        rw [this.choose_spec.choose_spec]; exact x' _
+  have x : ∀ i, X i := fun i =>
+    if h : i = n then
+      have : i = last := by ext; simpa [←Fin.coe_toNat, last]
+      ⟨a, by rw [this]; exact ha⟩
+    else
+      have : i < n := lt_of_le_of_ne (Nat.lt_succ_iff.mp (Fin.toNat_lt i)) h
+      let i' := Fin_mk n i this
+      have : X i = X' i' := by simp [X', i', Fin_embed]
+      ⟨x' i', by rw [this]; exact (x' i').property⟩
   exact nonempty_of_inhabited (tuple_mem_iProd x)
 
 /-- Exercise 3.5.1, second part (requires axiom of regularity) -/
@@ -342,11 +348,27 @@ abbrev OrderedPair.toObject' : OrderedPair ↪ Object where
   inj' := by sorry
 
 /-- An alternate definition of a tuple, used in Exercise 3.5.2 -/
-@[ext]
 structure SetTheory.Set.Tuple (n:ℕ) where
   X: Set
   x: SetTheory.Set.Fin n → X
   surj: Function.Surjective x
+
+/--
+  Custom extensionality lemma for Exercise 3.5.2.
+  Placing `@[ext]` on the structure would generate a lemma requiring proof of `t.x = t'.x`,
+  but these functions have different types when `t.X ≠ t'.X`. This lemma handles that part.
+-/
+@[ext]
+lemma SetTheory.Set.Tuple.ext {n:ℕ} {t t':Tuple n}
+    (hX : t.X = t'.X)
+    (hx : ∀ n : Fin n, ((t.x n):Object) = ((t'.x n):Object)) :
+    t = t' := by
+  rcases t with ⟨tX, tx, tsurj⟩
+  rcases t' with ⟨tX', tx', tsurj'⟩
+  subst hX
+  congr
+  ext m
+  apply hx
 
 /-- Exercise 3.5.2 -/
 theorem SetTheory.Set.Tuple.eq {n:ℕ} (t t':Tuple n) :
