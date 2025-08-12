@@ -334,7 +334,7 @@ theorem SetTheory.Set.finite_choice {n:ℕ} {X: Fin n → Set} (h: ∀ i, X i �
   have x : ∀ i, X i := fun i =>
     if h : i = n then
       have : i = last := by ext; simpa [←Fin.coe_toNat, last]
-      ⟨a, by rw [this]; exact ha⟩
+      ⟨a, by rwa [this]⟩
     else
       have : i < n := lt_of_le_of_ne (Nat.lt_succ_iff.mp (Fin.toNat_lt i)) h
       let i' := Fin_mk n i this

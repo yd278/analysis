@@ -4,9 +4,9 @@ import Analysis.Appendix_B_1
 /-!
 # Analysis I, Appendix B.2: The decimal representation of real numbers
 
-Am implementation of the decimal representation of Mathlib's real numbers `ℝ`.
+An implementation of the decimal representation of Mathlib's real numbers `ℝ`.
 
-This is separate from the way decimal numerals are already represenated in Mathlib.  We also represent the integer part of the natural numbers just by `ℕ`, avoiding using the decimal representation from the
+This is separate from the way decimal numerals are already represented in Mathlib.  We also represent the integer part of the natural numbers just by `ℕ`, avoiding using the decimal representation from the
 previous section, although we still retain the `Digit` class.
 -/
 
