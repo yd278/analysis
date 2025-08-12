@@ -218,7 +218,7 @@ theorem SetTheory.Set.powerset_of_triple (a b c x:Object) :
   on_goal 3 => right; right; right; right; right; left
   on_goal 5 => right; right; right; right; right; right; left
   on_goal 1 => right; right; right; right; right; right; right
-  all_goals congr; apply Set.ext; simp; grind
+  all_goals congr; ext; simp; grind
 
 /-- Axiom 3.12 (Union) -/
 theorem SetTheory.Set.union_axiom (A: Set) (x:Object) :
