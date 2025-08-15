@@ -103,7 +103,7 @@ theorem Series.converges_of_permute_nonneg {a:ℕ → ℝ} (ha: (a:Series).nonne
         apply Finset.sum_le_sum_of_subset_of_nonneg
         . aesop
         intro i _ _; specialize haf i; aesop
-      _ = T M := by simp [T, Series.partial, af]; symm; exact sum_eq_sum af (by positivity)
+      _ = T M := by simp [T, Series.partial, af]; symm; apply sum_eq_sum af; positivity
       _ ≤ L' := by apply le_ciSup _ (M:ℤ); simp [BddAbove, Set.Nonempty, upperBounds, hTbound]
   linarith [ciSup_le hSL', ciSup_le hTL]
 
@@ -169,7 +169,7 @@ theorem Series.absConverges_of_permute {a:ℕ → ℝ} (ha : (a:Series).absConve
   set q := max q' N.toNat
   have why2 : X ⊆ Finset.Icc (N.toNat+1) q := by sorry
   have claim2 : |∑ n ∈ X, a n| ≤ ε/2 := calc
-    _ ≤ ∑ n ∈ X, |a n| := Finset.abs_sum_le_sum_abs a X
+    _ ≤ ∑ n ∈ X, |a n| := X.abs_sum_le_sum_abs a
     _ ≤ ∑ n ∈ .Icc (N.toNat+1) q, |a n| := by
       exact Finset.sum_le_sum_of_subset_of_nonneg why2 (by simp)
     _ ≤ ε/2 := by
@@ -177,8 +177,8 @@ theorem Series.absConverges_of_permute {a:ℕ → ℝ} (ha : (a:Series).absConve
       simp [hNpos]; rw [abs_of_nonneg (by positivity)]; symm
       convert Finset.sum_image (g := fun (n:ℕ) ↦ (n:ℤ)) (by simp) using 2
       ext x; simp; constructor
-      . intro ⟨ hpos, hx ⟩; use x.toNat; omega
-      intro ⟨ a, ⟨ ha, hb ⟩ ⟩; simp [←hb]; omega
+      . intro ⟨ _, _ ⟩; use x.toNat; omega
+      rintro ⟨ _, ⟨ _, rfl ⟩ ⟩; simp; omega
   calc
     _ ≤ |(af:Series).partial M' - (a:Series).partial N| + |(a:Series).partial N - L'| := abs_sub_le _ _ _
     _ < |(af:Series).partial M' - (a:Series).partial N| + ε/2 := by gcongr
@@ -211,6 +211,6 @@ theorem Series.absConverges_of_subseries {a:ℕ → ℝ} (ha: (a:Series).absConv
     and expressing `a n` as the difference of `a n + |a n|` and `|a n|`. -/
 theorem Series.absConverges_of_permute' {a:ℕ → ℝ} (ha : (a:Series).absConverges)
   {f: ℕ → ℕ} (hf: Function.Bijective f) :
-    (fun n ↦ a (f n):Series).absConverges  ∧ (a:Series).sum = (fun n ↦ a (f n) : Series).sum := by sorry
+    (fun n ↦ a (f n):Series).absConverges  ∧ (a:Series).sum = (fun n ↦ a (f n):Series).sum := by sorry
 
 end Chapter7

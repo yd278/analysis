@@ -243,7 +243,7 @@ theorem Int.countablyInfinite : CountablyInfinite ℤ := by
     intro h; use (-n).toNat; simp [h]
   have : CountablyInfinite (.univ : Set ℤ) := by
     convert h1.union h2; ext; simp; omega
-  exact (CountablyInfinite.equiv (.univ _)).mp this
+  rwa [←CountablyInfinite.equiv (.univ _)]
 
 /-- Lemma 8.1.12 -/
 theorem CountablyInfinite.lower_diag : CountablyInfinite { n : ℕ × ℕ | n.2 ≤ n.1 } := by

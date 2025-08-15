@@ -111,8 +111,8 @@ theorem exist_tendsTo_sup {E: Set ℝ} (hnon: E.Nonempty) (hbound: BddAbove E) :
   use fun n ↦ ↑(a n)
   constructor
   . intro n; have := (a n).property; simp_all [X]
-  apply Filter.Tendsto.squeeze (g := fun n:ℕ ↦ sSup E - 1/(n+1:ℝ)) (h := fun n:ℕ ↦ sSup E)
-  . convert tendsto_const_nhds.sub (a := sSup E) (b := 0)  _; simp
+  apply Filter.Tendsto.squeeze (g := fun n:ℕ ↦ sSup E - 1/(n+1:ℝ)) (h := fun _:ℕ ↦ sSup E)
+  . convert tendsto_const_nhds.sub (a := sSup E) (b := 0) _; simp
     exact tendsto_one_div_add_atTop_nhds_zero_nat
   . exact tendsto_const_nhds
   all_goals intro n; have := (a n).property; simp_all [X]
@@ -132,15 +132,15 @@ theorem exist_tendsTo_sup_of_closed {E: Set ℝ} (hnon: E.Nonempty) (hbound: Bdd
     apply IsClosed.csInf_mem _ Set.Nonempty.of_subtype
     . rw [bddBelow_def]; use sSup E - 1 / (n+1:ℝ); aesop
     . rw [show X n = E ∩ .Icc (sSup E - 1 / (n+1:ℝ)) (sSup E) by ext; aesop]
-      exact IsClosed.inter hclosed isClosed_Icc
+      exact hclosed.inter isClosed_Icc
   use a
   constructor
   . simp [X] at ha; aesop
-  apply Filter.Tendsto.squeeze (g := fun n:ℕ ↦ sSup E - 1/(n+1:ℝ)) (h := fun n:ℕ ↦ sSup E)
+  apply Filter.Tendsto.squeeze (g := fun n:ℕ ↦ sSup E - 1/(n+1:ℝ)) (h := fun _:ℕ ↦ sSup E)
   . convert tendsto_const_nhds.sub (a := sSup E) (b := 0) _; simp
     exact tendsto_one_div_add_atTop_nhds_zero_nat
   . exact tendsto_const_nhds
-  all_goals intro n; specialize ha n; simp_all [X]
+  all_goals intro n; simp_all [X, ha n]
 
 /-- Proposition 8.4.7 / Exercise 8.4.1 -/
 theorem exists_function {X Y : Type} {P : X → Y → Prop} (h: ∀ x, ∃ y, P x y) :
@@ -151,7 +151,7 @@ theorem exists_function {X Y : Type} {P : X → Y → Prop} (h: ∀ x, ∃ y, P 
 from `exists_function`, avoiding previous results that relied more explicitly
 on the axiom of choice. -/
 theorem axiom_of_choice_from_exists_function {I: Type} {X: I → Type} (h : ∀ i, Nonempty (X i)) :
-  Nonempty (∀ i, X i) := by use fun i ↦ (h i).some
+  Nonempty (∀ i, X i) := ⟨ fun i ↦ (h i).some ⟩
 
 /-- Exercise 8.4.2 -/
 theorem exists_set_singleton_intersect {I U:Type} {X: I → Set U} (h: Set.PairwiseDisjoint .univ X)

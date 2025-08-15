@@ -51,7 +51,7 @@ theorem Series.sum_of_nonneg_lt {s: Series} (h: s.nonneg) {M:ℝ} (hM: ∀ N, s.
 
 theorem Series.partial_le_sum_of_nonneg {s: Series} (hnon: s.nonneg) (hconv: s.converges) (N : ℤ) :
   s.partial N ≤ s.sum := by
-  apply Monotone.ge_of_tendsto (partial_of_nonneg hnon)
+  apply (partial_of_nonneg hnon).ge_of_tendsto
   simp [sum, hconv]; exact hconv.choose_spec
 
 /-- Some useful nonnegativity lemmas for later applications. -/
@@ -123,7 +123,7 @@ theorem Series.cauchy_criterion {s:Series} (hm: s.m = 1) (hs:s.nonneg) (hmono: �
         . simp [h1, pow_succ' _ (K+1)]; linarith
         simp [h2, hm]; linarith
       _ ≤ S (2^(K+1)-1) + ∑ n ∈ .Icc ((2:ℤ)^(K+1)) (2^(K+1+1)-1), s.seq (2^(K+1)) := by
-        gcongr with n hn; simp at hn; exact hmono' _ (by linarith) _ hn.1
+        gcongr with n hn; simp at hn; apply hmono' _ _ _ hn.1; linarith
       _ = _ := by simp [pow_succ']; left; ring_nf; norm_cast
     simp; constructor <;> linarith
   constructor
@@ -151,8 +151,8 @@ theorem Series.converges_qseries (q: ℝ) (hq: q > 0) : (mk' (m := 1) fun n ↦ 
     have hn1 : n ≥ 0 := by positivity
     have hn3 : n.toNat > 0 := by omega
     simp [s, hn, hn1]
-    apply inv_anti₀ (by positivity)
-    exact Real.rpow_le_rpow (by positivity) (by simp) (by positivity)
+    apply inv_anti₀; positivity
+    apply Real.rpow_le_rpow; positivity; simp; positivity
   rw [cauchy_criterion (by simp [s]) hs hmono]
   have (n:ℕ) : 2^n * s.seq (2^n) = (2^(1-q))^n := by
     have : 1 ≤ (2:ℤ)^n := by norm_cast; exact Nat.one_le_two_pow
@@ -160,7 +160,7 @@ theorem Series.converges_qseries (q: ℝ) (hq: q > 0) : (mk' (m := 1) fun n ↦ 
     rw [←Real.rpow_neg (by positivity), mul_comm, ←Real.rpow_add_one (by positivity), Real.rpow_pow_comm (by norm_num)]
     congr 1; abel
   simp [this, converges_geom_iff]
-  rw [abs_of_nonneg (by positivity), Real.rpow_lt_one_iff_of_pos (by positivity)]
+  rw [abs_of_nonneg, Real.rpow_lt_one_iff_of_pos] <;> try positivity
   simp
 
 /-- Remark 7.3.8 -/
@@ -175,7 +175,7 @@ theorem Series.zeta_eq {q:ℝ} (hq: q > 1) : (mk' (m := 1) fun n ↦ 1 / (n:ℝ)
   norm_cast; apply sum_of_converges
   have : Summable (fun (n : ℕ)↦ 1 / (n+1:ℝ) ^ q) := by
     convert (Real.summable_one_div_nat_add_rpow 1 q).mpr hq using 4 with n
-    rw [abs_of_nonneg (by positivity)]
+    rw [abs_of_nonneg]; positivity
   have tail (a: ℤ → ℝ) (L:ℝ) : Filter.atTop.Tendsto a (nhds L) ↔ Filter.atTop.Tendsto (fun n:ℕ ↦ a n) (nhds L) := by
     convert Filter.tendsto_map'_iff (g:= fun n:ℕ ↦ (n:ℤ) )
     simp
@@ -185,7 +185,7 @@ theorem Series.zeta_eq {q:ℝ} (hq: q > 1) : (mk' (m := 1) fun n ↦ 1 / (n:ℝ)
   simp [Series.partial]
   set e : ℕ ↪ ℤ := {
     toFun n := n+1
-    inj' := by intro a b h; simp_all
+    inj' := by intro _ _ _; simp_all
   }
   convert Finset.sum_map _ e _ using 2 with n _ m hm
   . ext x; simp [e]; constructor
