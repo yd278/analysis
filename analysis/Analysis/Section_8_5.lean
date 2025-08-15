@@ -103,7 +103,7 @@ theorem WellFoundedLT.iff (X:Type) [LinearOrder X] :
   rw [isWellFounded_iff, WellFounded.wellFounded_iff_has_min]
   peel with A hA; constructor
   . intro ⟨ x, hxA, h ⟩; use ⟨ x, hxA ⟩; intro ⟨ y, hy ⟩ this; specialize h y hy
-    simp at this ⊢; order
+    simp at *; order
   intro ⟨ ⟨ x, hx ⟩, h ⟩; refine ⟨ _, hx, ?_ ⟩; intro y hy; specialize h (b := ⟨ _, hy ⟩)
   simp at h; contrapose! h; simp [h]; order
 
@@ -136,7 +136,7 @@ theorem WellFoundedLT.subset {X:Type} [PartialOrder X] {A B: Set X} (hA: IsTotal
   set hAlin : LinearOrder A := LinearOrder.mk hA
   set hBlin : LinearOrder B := LinearOrder.mk (hA.subset hAB)
   rw [iff] at hwell ⊢; intro C hC
-  obtain ⟨ ⟨ ⟨ x, hx ⟩, hx' ⟩, hmin ⟩ := hwell ((Set.embeddingOfSubset _ _ hAB) '' C) (by aesop)
+  obtain ⟨ ⟨ ⟨ x, hx ⟩, hx' ⟩, hmin ⟩ := hwell ((B.embeddingOfSubset _ hAB) '' C) (by aesop)
   simp at hx'; obtain ⟨ y, hy, hyC, this ⟩ := hx'; use ⟨ _, hyC ⟩
   simp_all [IsMin, Set.embeddingOfSubset]; subst this; intros; aesop
 
@@ -173,7 +173,7 @@ example : IsStrictUpperBound (.Icc 1 2: Set ℝ) 3 := by sorry
 theorem IsMin.iff_lowerbound {X:Type} [PartialOrder X] {Y: Set X} (hY: IsTotal Y) (x₀ : X) : (∃ hx₀ : x₀ ∈ Y, IsMin (⟨ x₀, hx₀ ⟩:Y)) ↔ x₀ ∈ Y ∧ ∀ x ∈ Y, x₀ ≤ x := by
   constructor
   . rintro ⟨ hx₀, hmin ⟩; simp [IsMin, hx₀] at hmin ⊢
-    peel hmin with x hx hmin; specialize hY ⟨ _, hx ⟩ ⟨ _, hx₀ ⟩; aesop
+    peel hmin with x hx _; specialize hY ⟨ _, hx ⟩ ⟨ _, hx₀ ⟩; aesop
   intro h; use h.1; simp [IsMin]; aesop
 
 theorem IsMin.iff_lowerbound' {X:Type} [PartialOrder X] {Y: Set X} (hY: IsTotal Y) : (∃ x₀ : Y, IsMin x₀) ↔ ∃ x₀, x₀ ∈ Y ∧ ∀ x ∈ Y, x₀ ≤ x := by
@@ -181,7 +181,7 @@ theorem IsMin.iff_lowerbound' {X:Type} [PartialOrder X] {Y: Set X} (hY: IsTotal 
   . intro ⟨ ⟨ x₀, hx₀ ⟩, hmin ⟩
     have : ∃ (hx₀ : x₀ ∈ Y), IsMin (⟨ _, hx₀ ⟩:Y) := by use hx₀
     rw [iff_lowerbound hY x₀] at this; use x₀
-  intro ⟨ x₀, hx₀, hmin ⟩;obtain ⟨ hx₀, hmin' ⟩ := (iff_lowerbound hY x₀).mpr ⟨ hx₀, hmin ⟩; use ⟨ _, hx₀ ⟩
+  intro ⟨ x₀, hx₀, hmin ⟩; obtain ⟨ hx₀, _ ⟩ := (iff_lowerbound hY x₀).mpr ⟨ hx₀, hmin ⟩; use ⟨ _, hx₀ ⟩
 
 /-- Exercise 8.5.11 -/
 example {X:Type} [PartialOrder X] {Y Y':Set X} (hY: IsTotal Y) (hY': IsTotal Y') (hY_well: WellFoundedLT Y) (hY'_well: WellFoundedLT Y') (hYY': IsTotal (Y ∪ Y': Set X)) : WellFoundedLT (Y ∪ Y': Set X) := by sorry

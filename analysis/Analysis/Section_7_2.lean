@@ -56,8 +56,7 @@ abbrev Series.partial (s : Series) (N:ℤ) : ℝ := ∑ n ∈ Finset.Icc s.m N, 
 theorem Series.partial_succ (s : Series) {N:ℤ} (h: N ≥ s.m-1) : s.partial (N+1) = s.partial N + s.seq (N+1) := by
   unfold Series.partial
   rw [add_comm (s.partial N) _]
-  have : N+1 ∉ Finset.Icc s.m N := by simp
-  convert Finset.sum_insert this
+  convert Finset.sum_insert (show N+1 ∉ Finset.Icc s.m N by simp)
   symm; apply Finset.insert_Icc_right_eq_Icc_add_one; linarith
 
 theorem Series.partial_of_lt {s : Series} {N:ℤ} (h: N < s.m) : s.partial N = 0 := by

@@ -51,12 +51,12 @@ theorem Uncountable.power_set_nat : Uncountable (Set ℕ) := by
     contrapose! this; exact this.symm
   have : ¬ Finite (Set ℕ) := by
     by_contra!
-    have : Finite ((fun x:ℕ ↦ ({x}:Set ℕ)) '' (.univ)) := Finite.Set.subset (s := .univ) (by aesop)
+    have : Finite ((fun x:ℕ ↦ ({x}:Set ℕ)) '' .univ) := Finite.Set.subset (s := .univ) (by aesop)
     replace : Finite ℕ := by
       apply Finite.of_finite_univ
       rw [←Set.finite_coe_iff]
       apply Finite.Set.finite_of_finite_image (f := fun x ↦ ({x}:Set ℕ))
-      intro x _ y _ h; aesop
+      intro _ _ _ _ _; aesop
     have hinf : ¬ Finite ℕ := by rw [not_finite_iff_infinite]; infer_instance
     contradiction
   tauto
@@ -75,7 +75,7 @@ theorem Uncountable.real : Uncountable ℝ := by
     convert Summable.tsum_union_disjoint ?_ ?_ ?_ <;> try infer_instance
     . rw [hC]
     . rw [Set.disjoint_iff_inter_eq_empty]; ext n; simp [hAB n]
-    all_goals exact hsummable _
+    all_goals apply hsummable
   have h_nonneg (A:Set ℕ) : ∑' n:A, a n ≥ 0 := by simp [a]; positivity
   have h_congr {A B: Set ℕ} (hAB: A = B) : ∑' n:A, a n = ∑' n:B, a n  := by rw [hAB]
   have : Function.Injective f := by
@@ -142,10 +142,7 @@ theorem Uncountable.real : Uncountable ℝ := by
         calc
           _ = ∑' j:ℕ, (10:ℝ)^(-1-n₀:ℝ) * (1/(10:ℝ))^j := by
             apply tsum_congr; intro j
-            rw [Real.rpow_add (by positivity),
-                Real.rpow_neg (by positivity),
-                ←Real.inv_rpow (by positivity),
-                Real.rpow_natCast]
+            rw [Real.rpow_add, Real.rpow_neg, ←Real.inv_rpow, Real.rpow_natCast] <;> try positivity
             congr; norm_num
           _ = (10:ℝ)^(-1-n₀:ℝ) * ∑' j:ℕ, (1/(10:ℝ))^j := tsum_mul_left
           _ = _ := by
@@ -156,9 +153,7 @@ theorem Uncountable.real : Uncountable ℝ := by
       _ = (8 / (9:ℝ)) * (10:ℝ)^(-(n₀:ℝ)) := by ring
       _ > 0 := by positivity
     simp at this
-  replace : EqualCard (Set ℕ) (Set.range f) := by
-    use (Equiv.ofInjective _ this).toFun
-    exact (Equiv.ofInjective _ this).bijective
+  replace : EqualCard (Set ℕ) (Set.range f) := ⟨(Equiv.ofInjective _ this).toFun, (Equiv.ofInjective _ this).bijective⟩
   replace := (equiv this).mp power_set_nat
   contrapose this
   rw [not_uncountable_iff] at this ⊢
@@ -171,7 +166,7 @@ example {X:Type} [Finite X] : Nat.card (Set X) = 2 ^ Nat.card X := by
 open Classical in
 /-- Exercise 8.3.2.  Some subtle type changes due to how sets are implemented in Mathlib. Also we shift the sequence `D` by one so that we can work in `Set A` rather than `Set B`. -/
 theorem Schroder_Bernstein_lemma {X: Type} {A B C: Set X} (hAB: A ⊆ B) (hBC: B ⊆ C) (f: C ↪ A) :
-  let D : ℕ → Set A := Nat.rec ((f.image ∘ ((Set.embeddingOfSubset _ _ hBC).image)) {x:B | ↑x ∉ A}) (fun _ ↦ (f.image ∘ ((Set.embeddingOfSubset _ _ hBC).image) ∘ (Set.embeddingOfSubset _ _ hAB).image))
+  let D : ℕ → Set A := Nat.rec ((f.image ∘ ((B.embeddingOfSubset _ hBC).image)) {x:B | ↑x ∉ A}) (fun _ ↦ (f.image ∘ ((B.embeddingOfSubset _ hBC).image) ∘ (A.embeddingOfSubset _ hAB).image))
   Set.univ.PairwiseDisjoint D ∧
   let g : A → B := fun x ↦ if h: x ∈ ⋃ n, D n ∧ ∃ y:B, f ⟨↑y, hBC y.property⟩ = x then h.2.choose else ⟨ ↑x, hAB x.property ⟩
   Function.Bijective g
@@ -181,10 +176,7 @@ theorem Schroder_Bernstein_lemma {X: Type} {A B C: Set X} (hAB: A ⊆ B) (hBC: B
 abbrev LeCard (X Y: Type) : Prop := ∃ f: X → Y, Function.Injective f
 
 /-- Exercise 8.3.3 -/
-theorem Schroder_Bernstein {X Y:Type}
-  (hXY : LeCard X Y)
-  (hYX : LeCard Y X) :
-  EqualCard X Y := by
+theorem Schroder_Bernstein {X Y:Type} (hXY : LeCard X Y) (hYX : LeCard Y X) : EqualCard X Y := by
   sorry
 
 abbrev LtCard (X Y: Type) : Prop := LeCard X Y ∧ ¬ EqualCard X Y
