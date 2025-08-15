@@ -103,7 +103,7 @@ theorem EReal.sup_of_bounded_nonempty {E: Set ℝ} (hbound: BddAbove E) (hnon: E
   _ = sSup ((fun (x:ℝ) ↦ (x:WithTop ℝ)) '' E) := by
     symm; convert WithBot.coe_sSup' _ _
     . simp [hnon]
-    exact Monotone.map_bddAbove WithTop.coe_mono hbound
+    exact WithTop.coe_mono.map_bddAbove hbound
   _ = ((sSup E : ℝ) : WithTop ℝ) := by
     congr; symm; exact WithTop.coe_sSup' hbound
   _ = _ := rfl

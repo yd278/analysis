@@ -24,20 +24,22 @@ exponentiation which in the epilogue to this chapter we will show is identical t
 
 namespace Chapter6
 
+open Sequence
+
 /-- Lemma 6.7.1 (Continuity of exponentiation) -/
 lemma ratPow_continuous {x α:ℝ} (hx: x > 0) {q: ℕ → ℚ}
  (hq: ((fun n ↦ (q n:ℝ)):Sequence).TendsTo α) :
  ((fun n ↦ x^(q n:ℝ)):Sequence).Convergent := by
   -- This proof is rearranged slightly from the original text.
-  obtain ⟨ M, hM, hbound ⟩ := Sequence.bounded_of_convergent ⟨ α, hq ⟩
+  obtain ⟨ M, hM, hbound ⟩ := bounded_of_convergent ⟨ α, hq ⟩
   rcases lt_trichotomy x 1 with h | rfl | h
   . sorry
-  . simp; exact ⟨ 1, Sequence.lim_of_const 1 ⟩
+  . simp; exact ⟨ 1, lim_of_const 1 ⟩
   have h': 1 ≤ x := by linarith
-  rw [←Sequence.Cauchy_iff_convergent]
+  rw [←Cauchy_iff_convergent]
   intro ε hε
-  obtain ⟨ K, hK, hclose ⟩ := Sequence.lim_of_roots hx (ε*x^(-M)) (by positivity)
-  obtain ⟨ N, hN, hq ⟩ := Sequence.IsCauchy.convergent ⟨ α, hq ⟩ (1/(K+1:ℝ)) (by positivity)
+  obtain ⟨ K, hK, hclose ⟩ := lim_of_roots hx (ε*x^(-M)) (by positivity)
+  obtain ⟨ N, hN, hq ⟩ := IsCauchy.convergent ⟨ α, hq ⟩ (1/(K+1:ℝ)) (by positivity)
   simp [Real.CloseSeq, Real.dist_eq] at hclose hK hN
   lift N to ℕ using hN
   lift K to ℕ using hK
@@ -54,8 +56,7 @@ lemma ratPow_continuous {x α:ℝ} (hx: x > 0) {q: ℕ → ℚ}
   . replace : x^(q m:ℝ) ≤ x^(q n:ℝ) := by rw [Real.rpow_le_rpow_left_iff h]; norm_cast
     rw [abs_of_nonneg (by linarith)]
     calc
-      _ = x^(q m:ℝ) * (x^(q n - q m:ℝ) - 1) := by
-        ring_nf; rw [←Real.rpow_add (by linarith)]; ring_nf
+      _ = x^(q m:ℝ) * (x^(q n - q m:ℝ) - 1) := by ring_nf; rw [←Real.rpow_add (by linarith)]; ring_nf
       _ ≤ x^M * (x^(1/(K+1:ℝ)) - 1) := by
         gcongr <;> try exact h'
         . rw [sub_nonneg]; apply Real.one_le_rpow h' (by norm_cast; linarith)
@@ -84,25 +85,25 @@ lemma ratPow_lim_uniq {x α:ℝ} (hx: x > 0) {q q': ℕ → ℚ}
   set r := q - q'
   suffices : (fun n ↦ x^(r n:ℝ):Sequence).TendsTo 1
   . rw [←mul_one (lim ((fun n ↦ x^(q' n:ℝ)):Sequence))]
-    rw [Sequence.lim_eq] at this
-    convert (Sequence.lim_mul (b := (fun n ↦ x^(r n:ℝ):Sequence)) (ratPow_continuous hx hq') this.1).2
-    . rw [Sequence.mul_coe]
+    rw [lim_eq] at this
+    convert (lim_mul (b := (fun n ↦ x^(r n:ℝ):Sequence)) (ratPow_continuous hx hq') this.1).2
+    . rw [mul_coe]
       rcongr _ n
       rw [←Real.rpow_add (by linarith)]
       simp [r]
     rw [this.2]
   intro ε hε
-  have h1 := Sequence.lim_of_roots hx
-  have h2 := Sequence.tendsTo_inv h1 (by norm_num)
+  have h1 := lim_of_roots hx
+  have h2 := tendsTo_inv h1 (by norm_num)
   obtain ⟨ K1, hK1, h3 ⟩ := h1 ε hε
   obtain ⟨ K2, hK2, h4 ⟩ := h2 ε hε
-  simp [Inv.inv, Sequence.inv_coe] at hK1 hK2
+  simp [Inv.inv, inv_coe] at hK1 hK2
   lift K1 to ℕ using hK1
   lift K2 to ℕ using hK2
-  simp [Sequence.inv_coe] at h4
+  simp [inv_coe] at h4
   set K := max K1 K2
-  have hr := Sequence.tendsTo_sub hq hq'
-  rw [Sequence.sub_coe] at hr
+  have hr := tendsTo_sub hq hq'
+  rw [sub_coe] at hr
   obtain ⟨ N, hN, hr ⟩ := hr (1 / (K + 1:ℝ)) (by positivity)
   refine ⟨ N, by simp_all, ?_ ⟩
   intro n hn; simp at hn
@@ -119,11 +120,11 @@ lemma ratPow_lim_uniq {x α:ℝ} (hx: x > 0) {q q': ℕ → ℚ}
     rw [←Real.rpow_neg (by linarith)]
     gcongr; linarith
     simp [r]; linarith
-  constructor <;> linarith
+  and_intros <;> linarith
 
 theorem Real.eq_lim_of_rat (α:ℝ) : ∃ q: ℕ → ℚ, ((fun n ↦ (q n:ℝ)):Sequence).TendsTo α := by
-  obtain ⟨ q, hcauchy, hLIM ⟩ := Chapter5.Real.eq_lim (Chapter5.Real.equivR.symm α); use q
-  replace hcauchy := Sequence.lim_eq_LIM hcauchy
+  obtain ⟨ q, hcauchy, hLIM ⟩ := (Chapter5.Real.equivR.symm α).eq_lim; use q
+  replace hcauchy := lim_eq_LIM hcauchy
   simp only [←hLIM, Equiv.apply_symm_apply] at hcauchy
   convert hcauchy; aesop
 
@@ -139,13 +140,13 @@ lemma Real.rpow_eq_lim_ratPow {x α:ℝ} (hx: x > 0) {q: ℕ → ℚ}
 lemma Real.ratPow_tendsto_rpow {x α:ℝ} (hx: x > 0) {q: ℕ → ℚ}
  (hq: ((fun n ↦ (q n:ℝ)):Sequence).TendsTo α) :
  ((fun n ↦ x^(q n:ℝ)):Sequence).TendsTo (rpow x α) := by
-  rw [Sequence.lim_eq]
+  rw [lim_eq]
   exact ⟨ ratPow_continuous hx hq, (Real.rpow_eq_lim_ratPow hx hq).symm ⟩
 
 lemma Real.rpow_of_rat_eq_ratPow {x:ℝ} (hx: x > 0) {q: ℚ} :
   rpow x (q:ℝ) = x^(q:ℝ) := by
-  convert rpow_eq_lim_ratPow hx (α := q) (Sequence.lim_of_const _)
-  exact (Sequence.lim_eq.mp (Sequence.lim_of_const _)).2.symm
+  convert rpow_eq_lim_ratPow hx (α := q) (lim_of_const _)
+  exact (lim_eq.mp (lim_of_const _)).2.symm
 
 /-- Proposition 6.7.3(a) / Exercise 6.7.1 -/
 theorem Real.ratPow_nonneg {x:ℝ} (hx: x > 0) (q:ℝ) : rpow x q ≥ 0 := by
@@ -155,15 +156,13 @@ theorem Real.ratPow_nonneg {x:ℝ} (hx: x > 0) (q:ℝ) : rpow x q ≥ 0 := by
 theorem Real.ratPow_add {x:ℝ} (hx: x > 0) (q r:ℝ) : rpow x (q+r) = rpow x q * rpow x r := by
   obtain ⟨ q', hq' ⟩ := eq_lim_of_rat q
   obtain ⟨ r', hr' ⟩ := eq_lim_of_rat r
-  have hq'r' := Sequence.tendsTo_add hq' hr'
-  rw [Sequence.add_coe] at hq'r'
+  have hq'r' := tendsTo_add hq' hr'
+  rw [add_coe] at hq'r'
   convert_to ((fun n ↦ ((q' n + r' n:ℚ):ℝ)):Sequence).TendsTo (q + r) at hq'r'
   . rcongr _ n; simp
   have h1 := ratPow_continuous hx hq'
   have h2 := ratPow_continuous hx hr'
-  rw [rpow_eq_lim_ratPow hx hq', rpow_eq_lim_ratPow hx hr',
-      rpow_eq_lim_ratPow hx hq'r', ←(Sequence.lim_mul h1 h2).2,
-      Sequence.mul_coe]
+  rw [rpow_eq_lim_ratPow hx hq', rpow_eq_lim_ratPow hx hr', rpow_eq_lim_ratPow hx hq'r', ←(lim_mul h1 h2).2, mul_coe]
   rcongr n; rw [←Real.rpow_add (by linarith)]; simp
 
 
