@@ -259,17 +259,17 @@ theorem Sequence.finite_limsup_liminf_of_bounded {a:Sequence} (hbound: a.IsBound
     intro n hN; simp
     exact (le_abs_self _).trans (hbound n)
   have hliminf_bound : -M ≤ a.liminf := by
-    apply LE.le.trans (inf_ge_lower _) a.inf_le_liminf
+    apply (inf_ge_lower _).trans a.inf_le_liminf
     intro n hN; simp [←EReal.coe_neg]; rw [neg_le]
     exact (neg_le_abs _).trans (hbound n)
   constructor
   . use a.limsup.toReal
-    apply (EReal.coe_toReal _ _).symm
+    symm; apply EReal.coe_toReal
     . contrapose! hlimsup_bound; simp [hlimsup_bound]
     replace hliminf_bound := hliminf_bound.trans a.liminf_le_limsup
     contrapose! hliminf_bound; simp [hliminf_bound, ←EReal.coe_neg]
   use a.liminf.toReal
-  apply (EReal.coe_toReal _ _).symm
+  symm; apply EReal.coe_toReal
   . replace hlimsup_bound := a.liminf_le_limsup.trans hlimsup_bound
     contrapose! hlimsup_bound; simp [hlimsup_bound]
   contrapose! hliminf_bound; simp [hliminf_bound, ←EReal.coe_neg]

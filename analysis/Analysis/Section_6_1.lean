@@ -102,17 +102,12 @@ lemma Real.eventuallySteady_def (ε: ℝ) (a: Chapter6.Sequence) :
 
 /-- For fixed s, the function ε ↦ ε.Steady s is monotone -/
 theorem Real.Steady.mono {a: Chapter6.Sequence} {ε₁ ε₂: ℝ} (hε: ε₁ ≤ ε₂) (hsteady: ε₁.Steady a) :
-    ε₂.Steady a := by
-  peel 4 hsteady with n hn m hm hsteady
-  linarith
+    ε₂.Steady a := by peel 4 hsteady; linarith
 
 /-- For fixed s, the function ε ↦ ε.EventuallySteady s is monotone -/
 theorem Real.EventuallySteady.mono {a: Chapter6.Sequence} {ε₁ ε₂: ℝ} (hε: ε₁ ≤ ε₂)
   (hsteady: ε₁.EventuallySteady a) :
-    ε₂.EventuallySteady a := by
-  peel 2 hsteady with N hN hsteady
-  exact Real.Steady.mono hε hsteady
-
+    ε₂.EventuallySteady a := by peel 2 hsteady; solve_by_elim [Steady.mono]
 
 namespace Chapter6
 
@@ -132,7 +127,7 @@ lemma Sequence.IsCauchy.coe (a:ℕ → ℝ) :
     lift N to ℕ using hN; use N
     intro j hj k hk
     simp [Real.steady_def] at h'
-    specialize h' j (by omega) k (by omega)
+    specialize h' j ?_ k ?_ <;> try omega
     simp_all
   rintro ⟨ N, h' ⟩; refine ⟨ max N 0, by simp, ?_ ⟩
   intro n hn m hm; simp at hn hm
@@ -141,7 +136,7 @@ lemma Sequence.IsCauchy.coe (a:ℕ → ℝ) :
   simp [hn, hm, npos, mpos]
   lift n to ℕ using npos
   lift m to ℕ using mpos
-  specialize h' n (by omega) m (by omega)
+  specialize h' n ?_ m ?_ <;> try omega
   norm_cast
 
 lemma Sequence.IsCauchy.mk {n₀:ℤ} (a: {n // n ≥ n₀} → ℝ) :
@@ -153,9 +148,9 @@ lemma Sequence.IsCauchy.mk {n₀:ℤ} (a: {n // n ≥ n₀} → ℝ) :
     dsimp at hN
     intro j hj k hk
     simp only [Real.Steady, show max n₀ N = N by omega] at h'
-    specialize h' j (by omega) k (by omega)
+    specialize h' j ?_ k ?_ <;> try omega
     simp_all [show n₀ ≤ j by omega, hj, show n₀ ≤ k by omega]
-  rintro ⟨ N, hN, h' ⟩; exact ⟨ max n₀ N, by simp, by intro n hn m hm; simp_all ⟩
+  rintro ⟨ N, _, _ ⟩; exact ⟨ max n₀ N, by simp, by intro _ _ _ _; simp_all ⟩
 
 @[coe]
 abbrev Sequence.ofChapter5Sequence (a: Chapter5.Sequence) : Sequence :=
@@ -185,7 +180,7 @@ theorem Sequence.isCauchy_of_rat (a: Chapter5.Sequence) : a.IsCauchy ↔ (a:Sequ
   . intro h; rw [isCauchy_def] at h
     rw [Chapter5.Sequence.isCauchy_def]
     intro ε hε
-    specialize h (ε:ℝ) (by positivity)
+    specialize h ε (by positivity)
     rwa [is_eventuallySteady_of_rat]
   intro h
   rw [Chapter5.Sequence.isCauchy_def] at h
@@ -194,7 +189,7 @@ theorem Sequence.isCauchy_of_rat (a: Chapter5.Sequence) : a.IsCauchy ↔ (a:Sequ
   obtain ⟨ ε', hε', hlt ⟩ := exists_pos_rat_lt hε
   specialize h ε' hε'
   rw [is_eventuallySteady_of_rat] at h
-  exact Real.EventuallySteady.mono (le_of_lt hlt) h
+  exact h.mono (le_of_lt hlt)
 
 end Chapter6
 
@@ -221,14 +216,11 @@ theorem Real.CloseSeq.coe (ε : ℝ) (a : ℕ → ℝ) (L : ℝ):
 
 theorem Real.CloseSeq.mono {a: Chapter6.Sequence} {ε₁ ε₂ L: ℝ} (hε: ε₁ ≤ ε₂)
   (hclose: ε₁.CloseSeq a L) :
-    ε₂.CloseSeq a L := by
-  peel 2 hclose with n hn hclose; rw [Real.Close, Real.dist_eq] at *; linarith
+    ε₂.CloseSeq a L := by peel 2 hclose; rw [Real.Close, Real.dist_eq] at *; linarith
 
 theorem Real.EventuallyClose.mono {a: Chapter6.Sequence} {ε₁ ε₂ L: ℝ} (hε: ε₁ ≤ ε₂)
   (hclose: ε₁.EventuallyClose a L) :
-    ε₂.EventuallyClose a L := by
-  peel 2 hclose with N hN hclose; exact CloseSeq.mono hε hclose
-
+    ε₂.EventuallyClose a L := by peel 2 hclose; solve_by_elim [CloseSeq.mono]
 namespace Chapter6
 
 abbrev Sequence.TendsTo (a:Sequence) (L:ℝ) : Prop :=
@@ -320,7 +312,7 @@ a.TendsTo L ↔ a.Convergent ∧ lim a = L := by
   . intro h; by_contra! eq
     have : a.Convergent := by rw [convergent_def]; use L
     replace eq := a.tendsTo_unique (eq this)
-    replace this := lim_def this
+    replace := lim_def this
     tauto
   intro ⟨ h, h' ⟩; convert lim_def h; rw [h']
 
@@ -338,7 +330,7 @@ theorem Sequence.lim_harmonic :
   simp [hnpos, abs_inv]
   calc
     _ ≤ (N:ℝ)⁻¹ := by
-      rw [inv_le_inv₀ (by positivity) (by positivity)]
+      rw [inv_le_inv₀] <;> try positivity
       calc
         _ ≤ (n:ℝ) := by simp [hn]
         _ = (n.toNat:ℤ) := by simp [hnpos]
@@ -346,7 +338,7 @@ theorem Sequence.lim_harmonic :
         _ ≤ (n.toNat:ℝ) + 1 := by linarith
         _ ≤ _ := le_abs_self _
     _ ≤ ε := by
-      rw [inv_le_comm₀ (by positivity) (by positivity)]
+      rw [inv_le_comm₀] <;> try positivity
       rw [←inv_eq_one_div _] at hN; order
 
 /-- Proposition 6.1.12 / Exercise 6.1.5 -/

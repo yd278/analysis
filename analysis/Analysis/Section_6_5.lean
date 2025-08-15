@@ -18,7 +18,7 @@ Main constructions and results of this section:
 
 namespace Chapter6
 
-theorem Sequence.lim_of_const (c:ℝ) :  ((fun (n:ℕ) ↦ c):Sequence).TendsTo c := by sorry
+theorem Sequence.lim_of_const (c:ℝ) :  ((fun (_:ℕ) ↦ c):Sequence).TendsTo c := by sorry
 
 instance Sequence.inst_pow: Pow Sequence ℕ where
   pow a k := {
@@ -52,13 +52,12 @@ theorem Sequence.lim_of_power_decay {k:ℕ} :
     intro n hn; simp [a] at hn ⊢
     have hn' : 0 ≤ n+1 := by linarith
     simp [hn,hn']
-    rw [inv_le_inv₀ (by positivity) (by positivity),
-        Real.rpow_le_rpow_iff  (by positivity) (by positivity) (by positivity)]
+    rw [inv_le_inv₀, Real.rpow_le_rpow_iff] <;> try positivity
     simp [hn]
   replace ha' := convergent_of_antitone ha ha'
   have hpow (n:ℕ): (a^(n+1)).Convergent ∧ lim (a^(n+1)) = (lim a)^(n+1) := by
     induction' n with n ih
-    . simp only [zero_add, pow_one, _root_.pow_one, ha', true_and]
+    . simp [ha', -dite_pow]
     rw [pow_succ]
     convert lim_mul ih.1 ha'
     rw [ih.2]; rfl

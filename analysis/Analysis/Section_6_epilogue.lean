@@ -11,14 +11,14 @@ sequences, in particular using the language of filters.
 
 -/
 
+open Filter
+
 /-- Identification with the Cauchy sequence support in Mathlib/Algebra/Order/CauSeq/Basic -/
 theorem Chapter6.Sequence.isCauchy_iff_isCauSeq (a: ℕ → ℝ) :
     (a:Sequence).IsCauchy ↔ IsCauSeq _root_.abs a := by
   simp_rw [IsCauchy.coe, Real.dist_eq, IsCauSeq]
-  constructor <;> intro h ε hε <;> specialize h (ε/2) (half_pos hε) <;> obtain ⟨ N, h ⟩ := h <;> use N
-  . intro n hn
-    specialize h n hn N (by rfl)
-    linarith
+  constructor <;> intro h ε hε <;> have ⟨ N, h ⟩ := h _ (half_pos hε) <;> use N
+  . intro n hn; linarith [h n hn N (by rfl)]
   intro n hn m hm
   calc
     _ ≤ |a n - a N| + |a m - a N| := by simp [abs_sub_comm (a m) (a N), abs_sub_le]
@@ -33,41 +33,28 @@ theorem Chapter6.Sequence.Cauchy_iff_CauchySeq (a: ℕ → ℝ) :
 
 /-- Identification with `Filter.Tendsto` -/
 theorem Chapter6.Sequence.tendsto_iff_Tendsto (a: ℕ → ℝ) (L:ℝ) :
-    (a:Sequence).TendsTo L ↔ Filter.atTop.Tendsto a (nhds L) := by
+    (a:Sequence).TendsTo L ↔ atTop.Tendsto a (nhds L) := by
   rw [Metric.tendsto_atTop, tendsTo_iff]
   constructor <;> intro h ε hε
-  . specialize h (ε/2) (half_pos hε)
-    obtain ⟨ N, hN ⟩ := h; use N.toNat; intro n hn
-    specialize hN n (Int.toNat_le.mp hn)
-    simp at hN
-    rw [Real.dist_eq]
-    linarith
-  specialize h ε hε
-  obtain ⟨ N, hN ⟩ := h; use N; intro n hn
+  . have ⟨ N, hN ⟩ := h _ (half_pos hε); use N.toNat; intro n hn
+    specialize hN n (Int.toNat_le.mp hn); simp at hN
+    rw [Real.dist_eq]; linarith
+  have ⟨ N, hN ⟩ := h ε hε; use N; intro n hn
   have hpos : n ≥ 0 := LE.le.trans (by positivity) hn
   rw [ge_iff_le, ←Int.le_toNat hpos] at hn
-  specialize hN n.toNat hn
-  simp [hpos, ←Real.dist_eq, le_of_lt hN]
+  simp [hpos, ←Real.dist_eq, le_of_lt (hN n.toNat hn)]
 
-theorem Chapter6.Sequence.tendsto_iff_Tendsto' (a: Sequence) (L:ℝ) : a.TendsTo L ↔ Filter.atTop.Tendsto a.seq (nhds L) := by
+theorem Chapter6.Sequence.tendsto_iff_Tendsto' (a: Sequence) (L:ℝ) : a.TendsTo L ↔ atTop.Tendsto a.seq (nhds L) := by
   rw [Metric.tendsto_atTop, tendsTo_iff]
   constructor <;> intro h ε hε
-  . specialize h (ε/2) (half_pos hε)
-    obtain ⟨ N, hN ⟩ := h; use N
-    peel 2 hN with n hn hN
-    rw [Real.dist_eq]
-    linarith
-  specialize h ε hε
-  obtain ⟨ N, hN ⟩ := h; use N
-  peel 2 hN with n hn hN
-  simp [←Real.dist_eq, le_of_lt hN]
+  . have ⟨ N, hN ⟩ := h _ (half_pos hε); use N; peel 2 hN; rw [Real.dist_eq]; linarith
+  have ⟨ N, hN ⟩ := h _ hε; use N; peel 2 hN; rw [←Real.dist_eq]; linarith
 
 theorem Chapter6.Sequence.converges_iff_Tendsto (a: ℕ → ℝ) :
-    (a:Sequence).Convergent ↔ ∃ L, Filter.atTop.Tendsto a (nhds L) := by
-  simp_rw [←tendsto_iff_Tendsto]
+    (a:Sequence).Convergent ↔ ∃ L, atTop.Tendsto a (nhds L) := by simp_rw [←tendsto_iff_Tendsto]
 
-theorem Chapter6.Sequence.converges_iff_Tendsto' (a: Sequence) : a.Convergent ↔ ∃ L, Filter.atTop.Tendsto a.seq (nhds L) := by
-  simp_rw [←tendsto_iff_Tendsto']
+theorem Chapter6.Sequence.converges_iff_Tendsto' (a: Sequence) :
+    a.Convergent ↔ ∃ L, atTop.Tendsto a.seq (nhds L) := by simp_rw [←tendsto_iff_Tendsto']
 
 /-- A technicality: `CauSeq.IsComplete ℝ` was established for `_root_.abs` but not for `norm`. -/
 instance inst_real_complete : CauSeq.IsComplete ℝ norm := by convert Real.instIsCompleteAbs
@@ -123,35 +110,29 @@ theorem Chapter6.Sequence.Antitone_iff (a:ℕ → ℝ): (a:Sequence).IsAntitone 
 /-- Identification with `MapClusterPt` -/
 theorem Chapter6.Sequence.limit_point_iff (a:ℕ → ℝ) (L:ℝ) :
     (a:Sequence).LimitPoint L ↔ MapClusterPt L .atTop a := by
-  simp_rw [limit_point_def, mapClusterPt_iff_frequently,
-           Filter.frequently_atTop, Metric.mem_nhds_iff]
+  simp_rw [limit_point_def, mapClusterPt_iff_frequently, frequently_atTop, Metric.mem_nhds_iff]
   constructor
   . intro h s ⟨ ε, hε, hεs ⟩ N
-    specialize h (ε/2) (half_pos hε) N (by positivity)
-    obtain ⟨ n, hn1, hn2 ⟩ := h
+    have ⟨ n, hn1, hn2 ⟩ := h _ (half_pos hε) N (by positivity)
     have hn : n ≥ 0 := LE.le.trans (by positivity) hn1
     refine ⟨ n.toNat, by rwa [ge_iff_le, Int.le_toNat hn], ?_ ⟩
-    apply hεs
-    simp [Real.dist_eq, hn] at hn2 ⊢
-    linarith
+    apply hεs; simp [Real.dist_eq, hn] at *; linarith
   intro h ε hε N hN
-  specialize h (Metric.ball L ε) ⟨ ε, hε, by aesop ⟩ N.toNat
-  obtain ⟨ n, hn1, hn2 ⟩ := h
+  have ⟨ n, hn1, hn2 ⟩ := h (Metric.ball L ε) ⟨ ε, hε, by aesop ⟩ N.toNat
   have hn : n ≥ 0 := by positivity
   refine ⟨ n, by rwa [ge_iff_le, ←Int.toNat_le], ?_ ⟩
-  simp [Real.dist_eq, hn] at hn2 ⊢
-  linarith
+  simp [Real.dist_eq, hn] at *; linarith
 
 /-- Identification with `Filter.limsup` -/
 theorem Chapter6.Sequence.limsup_eq (a:ℕ → ℝ) :
-    (a:Sequence).limsup = Filter.limsup (fun n ↦ (a n:EReal)) .atTop := by
-  simp_rw [Filter.limsup_eq, Filter.eventually_atTop]
+    (a:Sequence).limsup = atTop.limsup (fun n ↦ (a n:EReal)) := by
+  simp_rw [Filter.limsup_eq, eventually_atTop]
   sorry
 
 /-- Identification with `Filter.liminf` -/
 theorem Chapter6.Sequence.liminf_eq (a:ℕ → ℝ) :
-    (a:Sequence).liminf = Filter.liminf (fun n ↦ (a n:EReal)) .atTop := by
-  simp_rw [Filter.liminf_eq, Filter.eventually_atTop]
+    (a:Sequence).liminf = atTop.liminf (fun n ↦ (a n:EReal)) := by
+  simp_rw [Filter.liminf_eq, eventually_atTop]
   sorry
 
 /-- Identification of `rpow` and Mathlib exponentiation -/
