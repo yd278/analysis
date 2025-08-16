@@ -111,7 +111,7 @@ theorem closure_of_Ioo {a b:ℝ} (h:a < b) : closure (.Ioo a b) = .Icc a b := by
   ext x; simp [closure_def, AdherentPt, Real.adherent']
   constructor
   . intro h; contrapose! h
-    rcases le_or_gt a x with h' | h'
+    obtain h' | h' := le_or_gt a x
     . specialize h h'
       use x-b, by linarith
       intro y ⟨ h1, h2 ⟩; observe : x-y ≤ |x-y|; linarith

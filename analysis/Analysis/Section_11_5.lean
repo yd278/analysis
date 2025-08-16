@@ -77,7 +77,7 @@ theorem integ_of_uniform_cts {I: BoundedInterval} {f:ℝ → ℝ} (hf: UniformCo
       _ = ∑ J ∈ P.intervals, ε * (b-a)/N := by apply Finset.sum_congr rfl; intro J hJ; simp [hlength _ hJ]; ring
       _ = _ := by simp [hcard]; field_simp
   have lower_le_upper : 0 ≤ upper_integral f I - lower_integral f I := by linarith [lower_integral_le_upper hfbound]
-  rcases le_iff_lt_or_eq.mp lower_le_upper with h | h
+  obtain h | h := le_iff_lt_or_eq.mp lower_le_upper
   . set ε := (upper_integral f I - lower_integral f I)/(2*(b-a))
     specialize this ε (by positivity); simp only [ε] at this
     replace : upper_integral f I - lower_integral f I ≤ (upper_integral f I - lower_integral f I)/2 := by

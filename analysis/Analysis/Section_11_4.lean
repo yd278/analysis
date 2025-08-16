@@ -154,7 +154,7 @@ theorem IntegrableOn.abs {I: BoundedInterval} {f:ℝ → ℝ} (hf: IntegrableOn 
   IntegrableOn (abs f) I := by
   have := (IntegrableOn.const 0 I).1
   convert ((hf.max this).sub (hf.min this)).1 using 1
-  ext x; rcases le_or_gt (f x) 0 with h | h
+  ext x; obtain h | h := le_or_gt (f x) 0
   . simp [h]
   simp [le_of_lt h]
 

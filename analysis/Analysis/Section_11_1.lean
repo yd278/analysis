@@ -269,21 +269,21 @@ noncomputable abbrev Partition.join {I J K:BoundedInterval} (P: Partition I) (Q:
 {
   intervals := P.intervals ∪ Q.intervals
   exists_unique x hx := by
-    simp [mem_iff, h.2] at hx; rcases hx with hx | hx
+    simp [mem_iff, h.2] at hx; obtain hx | hx := hx
     . choose L hLP hxL using (P.exists_unique _ hx).exists
       apply ExistsUnique.intro L (by aesop)
-      intro K ⟨hK, hxK⟩; simp at hK; rcases hK with hKP | hKQ
+      intro K ⟨hK, hxK⟩; simp at hK; obtain hKP | hKQ := hK
       . exact (P.exists_unique _ hx).unique ⟨ hKP, hxK ⟩ ⟨ hLP, hxL ⟩
       apply (K.subset_iff _).mp (Q.contains _ hKQ) at hxK
       have := congr(x ∈ $(h.1)); simp [hx, hxK] at this
     choose L hLQ hxL using (Q.exists_unique _ hx).exists
     apply ExistsUnique.intro L (by aesop)
-    intro K ⟨hK, hxK⟩; simp at hK; rcases hK with hKP | hKQ
+    intro K ⟨hK, hxK⟩; simp at hK; obtain hKP | hKQ := hK
     . apply (K.subset_iff _).mp (P.contains _ hKP) at hxK
       have := congr(x ∈ $(h.1)); simp [hx, hxK] at this
     exact (Q.exists_unique x hx).unique ⟨ hKQ, hxK ⟩ ⟨ hLQ, hxL ⟩
   contains L hL := by
-    simp at hL; rcases hL with hLP | hLQ
+    simp at hL; obtain hLP | hLQ := hL
     . apply (P.contains _ hLP).trans; simp [h, subset_iff]
     apply (Q.contains _ hLQ).trans; simp [h, subset_iff]
 }
@@ -298,11 +298,11 @@ noncomputable abbrev Partition.add_empty {I:BoundedInterval} (P: Partition I) : 
     choose J hJP hxJ using (P.exists_unique x hx).exists
     apply ExistsUnique.intro J (by aesop)
     intro K ⟨ hK, hxK ⟩
-    simp at hK; rcases hK with hK | rfl
+    simp at hK; obtain hK | rfl := hK
     . exact (P.exists_unique x hx).unique ⟨ hK, hxK ⟩ ⟨ hJP, hxJ ⟩
     simp [mem_iff] at hxK
   contains L hL := by
-    simp at hL; rcases hL with hL | rfl
+    simp at hL; obtain hL | rfl := hL
     . exact P.contains _ hL
     simp [subset_iff]
 }
@@ -418,7 +418,7 @@ theorem Partition.sum_of_length  (I: BoundedInterval) (P: Partition I) :
     choose c hc hK using P.exist_right h hI'
     cases I with
     | Ioo a₁ b₁ =>
-      rcases hK with hK | hK
+      obtain hK | hK := hK
       . simp_all [mem_iff, subset_iff, a, b]; use Ioo c b₁, hK, Ioc a₁ c; apply join_Ioc_Ioo <;> tauto
       simp_all [mem_iff, subset_iff, a, b]
       use Ico c b₁, hK, Ioo a₁ c
@@ -429,7 +429,7 @@ theorem Partition.sum_of_length  (I: BoundedInterval) (P: Partition I) :
     | Icc _ _ => simp [mem_iff, subset_iff, a, b] at hI' h; order
     | Ioc _ _ => simp [mem_iff, subset_iff, a, b] at hI' h; order
     | Ico a₁ b₁ =>
-      rcases hK with hK | hK
+      obtain hK | hK := hK
       . simp_all [mem_iff, subset_iff, a, b]; use Ioo c b₁, hK, Icc a₁ c; apply join_Icc_Ioo <;> tauto
       simp_all [mem_iff, subset_iff, a, b]; use Ico c b₁, hK, Ico a₁ c;  apply join_Ico_Ico <;> linarith
   obtain ⟨ K, L, hK, ⟨ h1, h2, h3 ⟩ ⟩ := this

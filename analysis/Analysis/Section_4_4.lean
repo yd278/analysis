@@ -77,7 +77,7 @@ theorem Rat.not_exist_sqrt_two : ¬ ∃ x:ℚ, x^2 = 2 := by
   set P : ℕ → Prop := fun p ↦ p > 0 ∧ ∃ q > 0, p^2 = 2*q^2
   have hP : ∃ p, P p := by aesop
   have hiter (p:ℕ) (hPp: P p) : ∃ q, q < p ∧ P q := by
-    rcases p.even_or_odd'' with hp | hp
+    obtain hp | hp := p.even_or_odd''
     . rw [even_iff_exists_two_mul] at hp
       obtain ⟨ k, rfl ⟩ := hp
       choose q hpos hq using hPp.2

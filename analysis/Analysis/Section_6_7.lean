@@ -32,7 +32,7 @@ lemma ratPow_continuous {x α:ℝ} (hx: x > 0) {q: ℕ → ℚ}
  ((fun n ↦ x^(q n:ℝ)):Sequence).Convergent := by
   -- This proof is rearranged slightly from the original text.
   choose M hM hbound using bounded_of_convergent ⟨ α, hq ⟩
-  rcases lt_trichotomy x 1 with h | rfl | h
+  obtain h | rfl | h := lt_trichotomy x 1
   . sorry
   . simp; exact ⟨ 1, lim_of_const 1 ⟩
   have h': 1 ≤ x := by linarith
@@ -52,7 +52,7 @@ lemma ratPow_continuous {x α:ℝ} (hx: x > 0) {q: ℕ → ℚ}
   lift n to ℕ using (by linarith)
   lift m to ℕ using (by linarith)
   simp at hn hm hq ⊢
-  rcases le_or_gt (q m) (q n) with hqq | hqq
+  obtain hqq | hqq := le_or_gt (q m) (q n)
   . replace : x^(q m:ℝ) ≤ x^(q n:ℝ) := by rw [rpow_le_rpow_left_iff h]; norm_cast
     rw [abs_of_nonneg (by linarith)]
     calc
@@ -112,7 +112,7 @@ lemma ratPow_lim_uniq {x α:ℝ} (hx: x > 0) {q q': ℕ → ℚ}
   simp [hn, dist_eq, abs_le', K, -Nat.cast_max] at h3 h4 ⊢
   specialize hr n (by simp [hn])
   simp [Close, hn, abs_le'] at hr
-  rcases lt_trichotomy x 1 with h | rfl | h
+  obtain h | rfl | h := lt_trichotomy x 1
   . sorry
   . simp; linarith
   have h5 : x ^ (r n.toNat:ℝ) ≤ x^(K + 1:ℝ)⁻¹ := by gcongr; linarith; simp_all [r]

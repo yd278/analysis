@@ -317,7 +317,7 @@ theorem Sequence.Cauchy_iff_convergent (a:Sequence) :
     replace h4 := h4.trans h3
     rw [EReal.coe_le_coe_iff] at h1 h4
     linarith
-  rcases le_iff_lt_or_eq.mp hlow with hlow | hlow
+  obtain hlow | hlow := le_iff_lt_or_eq.mp hlow
   . specialize hup ((L_plus - L_minus)/3) (by positivity)
     linarith
   linarith

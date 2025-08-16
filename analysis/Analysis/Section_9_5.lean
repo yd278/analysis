@@ -97,7 +97,7 @@ theorem ContinuousAt.iff_eq_left_right_limit {X: Set ℝ} {f: ℝ → ℝ} {x₀
   choose δ_minus hδ_minus hle using hle ε hε
   use min δ_plus δ_minus, (by positivity)
   intro x hx hxx₀
-  rcases lt_trichotomy x x₀ with hlt | rfl | hgt
+  obtain hlt | rfl | hgt := lt_trichotomy x x₀
   . sorry
   . sorry
   sorry

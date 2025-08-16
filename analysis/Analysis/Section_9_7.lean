@@ -22,7 +22,7 @@ namespace Chapter9
 theorem intermediate_value {a b:ℝ} (hab: a < b) {f:ℝ → ℝ} (hf: ContinuousOn f (.Icc a b)) {y:ℝ} (hy: y ∈ Set.Icc (f a) (f b) ∨ y ∈ Set.Icc (f a) (f b)) :
   ∃ c ∈ Set.Icc a b, f c = y := by
   -- This proof is written to follow the structure of the original text.
-  rcases hy with hy_left | hy_right
+  obtain hy_left | hy_right := hy
   . by_cases hya : y = f a
     . use a; simp [hya, le_of_lt hab]
     by_cases hyb : y = f b

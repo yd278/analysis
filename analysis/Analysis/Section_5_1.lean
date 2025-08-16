@@ -405,7 +405,7 @@ lemma IsBounded.finite {n:ℕ} (a: Fin n → ℚ) : ∃ M ≥ 0,  BoundedBy a M 
   have h1 : BoundedBy a' (M + |a n|) := fun m ↦ (hM m).trans (by simp)
   have h2 : |a n| ≤ M + |a n| := by simp [hpos]
   refine ⟨ M + |a n|, by positivity, ?_ ⟩
-  intro m; rcases Fin.eq_castSucc_or_eq_last m with ⟨ j, rfl ⟩ | rfl
+  intro m; obtain ⟨ j, rfl ⟩ | rfl := Fin.eq_castSucc_or_eq_last m
   . convert h1 j; simp
   convert h2; simp
 

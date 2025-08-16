@@ -20,9 +20,9 @@ namespace Chapter9
 theorem MonotoneOn.iff {X: Set ℝ} (f: ℝ → ℝ) : MonotoneOn f X  ↔ ∀ x ∈ X, ∀ y ∈ X, y > x → f y ≥ f x := by
   constructor
   . intros; solve_by_elim [le_of_lt]
-  intro _ _ _ _ _ hxy; rcases le_iff_lt_or_eq.mp hxy with hxy | hxy
+  intro _ _ _ _ _ hxy; obtain hxy | rfl := le_iff_lt_or_eq.mp hxy
   . solve_by_elim
-  simp [hxy]
+  simp
 
 theorem StrictMono.iff {X: Set ℝ} (f: ℝ → ℝ) : StrictMonoOn f X  ↔ ∀ x ∈ X, ∀ y ∈ X, y > x → f y > f x := by
   constructor <;> intros <;> solve_by_elim
@@ -30,9 +30,9 @@ theorem StrictMono.iff {X: Set ℝ} (f: ℝ → ℝ) : StrictMonoOn f X  ↔ ∀
 theorem AntitoneOn.iff {X: Set ℝ} (f: ℝ → ℝ) : AntitoneOn f X  ↔ ∀ x ∈ X, ∀ y ∈ X, y > x → f y ≤ f x := by
   constructor
   . intros; solve_by_elim [le_of_lt]
-  intro _ _ _ _ _ hxy; rcases le_iff_lt_or_eq.mp hxy with hxy | hxy
+  intro _ _ _ _ _ hxy; obtain hxy | rfl := le_iff_lt_or_eq.mp hxy
   . solve_by_elim
-  simp [hxy]
+  simp
 
 theorem StrictAntitone.iff {X: Set ℝ} (f: ℝ → ℝ) : StrictAntiOn f X  ↔ ∀ x ∈ X, ∀ y ∈ X, y > x → f y < f x := by
   constructor <;> intros <;> solve_by_elim

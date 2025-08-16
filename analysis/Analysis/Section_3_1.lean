@@ -280,11 +280,10 @@ theorem SetTheory.Set.union_assoc (A B C:Set) : (A ∪ B) ∪ C = A ∪ (B ∪ C
   -- this proof is written to follow the structure of the original text.
   ext x
   constructor
-  . intro hx
-    rw [mem_union] at hx
-    rcases hx with case1 | case2
+  . intro hx; rw [mem_union] at hx
+    obtain case1 | case2 := hx
     . rw [mem_union] at case1
-      rcases case1 with case1a | case1b
+      obtain case1a | case1b := case1
       . rw [mem_union]; tauto
       have : x ∈ B ∪ C := by rw [mem_union]; tauto
       rw [mem_union]; tauto

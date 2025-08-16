@@ -196,14 +196,14 @@ theorem Nat.countable_of_infinite (X : Set ℕ) [Infinite X] : CountablyInfinite
 
 /-- Corollary 8.1.6 -/
 theorem Nat.atMostCountable_subset (X: Set ℕ) : AtMostCountable X := by
-  rcases finite_or_infinite X with _ | _
+  obtain _ | _ := finite_or_infinite X
   . tauto
   simp [AtMostCountable, countable_of_infinite]
 
 /-- Corollary 8.1.7 -/
 theorem AtMostCountable.subset {X: Type} (hX : AtMostCountable X) (Y: Set X) : AtMostCountable Y := by
   -- This proof is written to follow the structure of the original text.
-  rcases hX with ⟨ f, hf ⟩ | h
+  obtain ⟨ f, hf ⟩ | hX := hX
   . let f' : Y → f '' Y := fun y ↦ ⟨ f y, by aesop ⟩
     have hf' : Function.Bijective f' := by
       sorry
@@ -256,7 +256,7 @@ theorem CountablyInfinite.lower_diag : CountablyInfinite { n : ℕ × ℕ | n.2 
   have hf : Function.Injective f := by
     rintro ⟨ ⟨ n, m ⟩, hnm ⟩ ⟨ ⟨ n',m'⟩, hnm' ⟩ h
     simp [A,f] at hnm hnm' ⊢ h
-    rcases lt_trichotomy n n' with hnn' | rfl | hnn'
+    obtain hnn' | rfl | hnn' := lt_trichotomy n n'
     . have : a n' + m' > a n + m := by calc
         _ ≥ a n' := by linarith
         _ ≥ a (n+1) := ha.monotone (by linarith)

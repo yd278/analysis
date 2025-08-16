@@ -40,7 +40,7 @@ theorem Series.converges_of_nonneg_iff {s: Series} (h: s.nonneg) : s.converges �
     use M; peel hM with N hM
     exact (le_abs_self _).trans hM
   intro hbound
-  rcases tendsto_of_monotone (partial_of_nonneg h) with hinfin | hfin
+  obtain hinfin | hfin := tendsto_of_monotone (partial_of_nonneg h)
   . choose M hM using hbound
     choose N hN using (hinfin.eventually_gt_atTop M).exists
     linarith [hM N]
@@ -129,10 +129,10 @@ theorem Series.cauchy_criterion {s:Series} (hm: s.m = 1) (hs:s.nonneg) (hmono: �
       _ = _ := by simp [pow_succ']; left; ring_nf; norm_cast
     simp; constructor <;> linarith
   constructor
-  . intro ⟨ M, hM ⟩; use 2*M; intro N; rcases lt_or_ge N 0 with hN | hN
+  . intro ⟨ M, hM ⟩; use 2*M; intro N; obtain hN | hN := lt_or_ge N 0
     . simp [T, Series.partial, htm, hN]; convert hM 0; simp [S, Series.partial, hm]
     rw [Int.eq_natCast_toNat.mpr hN]; apply (Lemma_7_3_6 N.toNat).2.trans; gcongr; solve_by_elim
-  intro ⟨ M, hM ⟩; use M; intro K'; rcases lt_or_ge K' 1 with hK' | hK'
+  intro ⟨ M, hM ⟩; use M; intro K'; obtain hK' | hK' := lt_or_ge K' 1
   . simp [S, Series.partial, hm, hK']; convert hM (-1)
   set K := (K'-1).toNat; have hK : K' = K + 1 := by rw [Int.toNat_of_nonneg (by linarith)]; abel
   calc

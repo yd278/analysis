@@ -286,7 +286,7 @@ theorem Sum'.of_countable_supp {X:Type} {f:X → ℝ} {A: Set X} (hA: CountablyI
     . intro ⟨ _, _ ⟩ ⟨ _, _ ⟩ h; simp [ι, E', Subtype.val_inj] at *; exact hg.1 h
     . intro ⟨ x, hx ⟩; choose n hn using hg.2 ⟨ x, hE hx ⟩; use ⟨ n, by aesop ⟩; simp [ι, hn]
   -- The cases of infinite and finite E' are handled separately.
-  rcases Nat.atMostCountable_subset E' with hE' | hE'
+  obtain hE' | hE' := Nat.atMostCountable_subset E'
   . --   use Nat.monotone_enum_of_infinite to enumerate E'
     --   show the partial sums of E' are a subsequence of the partial sums of A
     set hinf : Infinite E' := hE'.toInfinite
@@ -387,7 +387,7 @@ atTop.Tendsto f l ↔ atTop.Tendsto (f ∘ Nat.cast) l := by
 theorem Sum'.eq_tsum {X:Type} (f:X → ℝ) (h: AbsConvergent' f) :
   Sum' f = ∑' x, f x := by
   set E := {x | f x ≠ 0}
-  rcases h.countable_supp with hE | hE
+  obtain hE | hE := h.countable_supp
   . simp [Sum']
     choose g hg using hE.symm
     have : ((f ∘ Subtype.val) ∘ g:Series).absConverges := by

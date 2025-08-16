@@ -253,7 +253,7 @@ theorem Real.exist_sqrt_two : ∃ x:Real, x^2 = 2 := by
   have claim5 : x ≤ 2 := by rw [isLUB_def] at claim3; solve_by_elim [claim3.2]
   have claim6 : x.IsPos := by rw [isPos_iff]; linarith
   use x
-  rcases trichotomous' (x^2) 2 with h | h | h
+  obtain h | h | h := trichotomous' (x^2) 2
   . have claim11: ∃ ε, 0 < ε ∧ ε < 1 ∧ x^2 - 4*ε > 2 := by
       set ε := min (1/2) ((x^2-2)/8)
       have hx : x^2 - 2 > 0 := by linarith

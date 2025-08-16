@@ -36,8 +36,7 @@ abbrev EReal.IsFinite (x:EReal) : Prop := ∃ (y:Real), y = x
 abbrev EReal.IsInfinite (x:EReal) : Prop := x = ⊤ ∨ x = ⊥
 
 theorem EReal.infinite_iff_not_finite (x:EReal): x.IsInfinite ↔ ¬ x.IsFinite := by
-  unfold IsFinite IsInfinite
-  rcases EReal.def x with ⟨ y, rfl ⟩ | rfl | rfl <;> simp
+  obtain ⟨ y, rfl ⟩ | rfl | rfl := EReal.def x <;> simp [IsFinite, IsInfinite]
 
 /-- Definition 6.2.2 (Negation of extended reals) -/
 theorem EReal.neg_of_real (x:Real) : -(x:EReal) = (-x:ℝ) := rfl
@@ -48,7 +47,7 @@ theorem EReal.neg_of_real (x:Real) : -(x:EReal) = (-x:ℝ) := rfl
 /-- Definition 6.2.3 (Ordering of extended reals) -/
 theorem EReal.le_iff (x y:EReal) :
     x ≤ y ↔ (∃ (x' y':Real), x = x' ∧ y = y' ∧ x' ≤ y') ∨ y = ⊤ ∨ x = ⊥ := by
-  rcases EReal.def x with ⟨ x', rfl ⟩ | rfl | rfl <;> rcases EReal.def y with ⟨ y', rfl ⟩ | rfl | rfl <;> simp
+  obtain ⟨ x', rfl ⟩ | rfl | rfl := EReal.def x <;> obtain ⟨ y', rfl ⟩ | rfl | rfl := EReal.def y <;> simp
 
 /-- Definition 6.2.3 (Ordering of extended reals) -/
 theorem EReal.lt_iff (x y:EReal) : x < y ↔ x ≤ y ∧ x ≠ y := lt_iff_le_and_ne
@@ -115,7 +114,7 @@ theorem EReal.sup_of_unbounded_nonempty {E: Set ℝ} (hunbound: ¬ BddAbove E) (
     sSup ((fun (x:ℝ) ↦ (x:EReal)) '' E) = ⊤ := by
   rw [sSup_eq_top]
   intro b hb
-  rcases EReal.def b with ⟨ y, rfl ⟩ | rfl | rfl
+  obtain ⟨ y, rfl ⟩ | rfl | rfl := EReal.def b
   . simp; contrapose! hunbound; exact ⟨ y, hunbound ⟩
   . simp at hb
   simpa

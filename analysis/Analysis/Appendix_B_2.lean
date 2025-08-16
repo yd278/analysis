@@ -118,9 +118,9 @@ noncomputable instance RealDecimal.instCoeReal : Coe RealDecimal ℝ where
     | RealDecimal.neg d => -(d.toNNReal:ℝ)
 
 theorem RealDecimal.surj (x:ℝ) : ∃ d:RealDecimal, x = d := by
-  rcases le_or_gt 0 x with h | h
-  . obtain ⟨ d, hd ⟩ := NNRealDecimal.surj (x.toNNReal); use pos d; simp [←hd, h]
-  . obtain ⟨ d, hd ⟩ := NNRealDecimal.surj ((-x).toNNReal); use neg d; simp [←hd, (show 0 ≤ -x by linarith)]
+  obtain h | h := le_or_gt 0 x
+  . choose d hd using NNRealDecimal.surj (x.toNNReal); use pos d; simp [←hd, h]
+  . choose d hd using NNRealDecimal.surj ((-x).toNNReal); use neg d; simp [←hd, (show 0 ≤ -x by linarith)]
 
 /-- Exercise B.2.2 -/
 theorem RealDecimal.not_inj_one (d: RealDecimal) : (d:ℝ) = 1 ↔ (d = pos (NNRealDecimal.mk 1 fun _ ↦ 0) ∨ d = pos (NNRealDecimal.mk 0 fun _ ↦ 9)) := by
