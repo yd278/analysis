@@ -116,7 +116,7 @@ theorem finite_series_of_rearrange {n:ℕ} {X':Type*} (X: Finset X') (hcard: X.c
   simp [-mem_Icc, hπ]
   rw [sum_of_nonempty (by linarith) _]
   set x := g (π (n+1))
-  obtain ⟨⟨j, hj'⟩, hj⟩ := hh.surjective x
+  have ⟨⟨j, hj'⟩, hj⟩ := hh.surjective x
   simp at hj'; obtain ⟨ hj1, hj2 ⟩ := hj'
   set h' : ℤ → X := fun i ↦ if (i:ℤ) < j then h (π i) else h (π (i+1))
   have : ∑ i ∈ Icc (1:ℤ) (n + 1), f (h (π i)) = ∑ i ∈ Icc (1:ℤ) n, f (h' i) + f x := calc
@@ -184,11 +184,11 @@ theorem finite_series_eq {n:ℕ} {Y:Type*} (X: Finset Y) (f: Y → ℝ) (g: Icc 
     ∑ i ∈ X, f i = ∑ i ∈ Icc (1:ℤ) n, (if hi:i ∈ Icc (1:ℤ) n then f (g ⟨ i, hi ⟩) else 0) := by
   symm
   convert sum_bij (t:=X) (fun i hi ↦ g ⟨ i, hi ⟩ ) _ _ _ _
-  . intro i hi; simp [hi]
+  . aesop
   . intro i hi j hj h
     simpa [Subtype.val_inj, hg.injective.eq_iff] using h
   . intro b hb
-    obtain ⟨⟨i, hi⟩, h⟩ := hg.surjective ⟨ b, hb ⟩
+    have ⟨⟨i, hi⟩, h⟩ := hg.surjective ⟨ b, hb ⟩
     use i, hi; simp [h]
   intros; simp_all
 

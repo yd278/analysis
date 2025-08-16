@@ -60,7 +60,7 @@ theorem Series.partial_le_sum_of_nonneg {s: Series} (hnon: s.nonneg) (hconv: s.c
 theorem Series.partial_nonneg {s: Series} (hnon: s.nonneg) (N : ℤ) : 0 ≤ s.partial N := by
   simp [Series.partial]
   apply Finset.sum_nonneg
-  intros; apply hnon
+  aesop
 
 theorem Series.sum_of_nonneg {s:Series} (hnon: s.nonneg) : 0 ≤ s.sum := by
   by_cases h: s.converges <;> simp [Series.sum, h]
@@ -139,7 +139,7 @@ theorem Series.cauchy_criterion {s:Series} (hm: s.m = 1) (hs:s.nonneg) (hmono: �
     _ ≤ S (2 ^ (K+1) - 1) := by
       apply partial_of_nonneg hs; rw [hK]
       generalize K = n; induction' n with n hn; simp
-      simp [pow_succ] at hn ⊢; linarith
+      simp [pow_succ] at *; linarith
     _ ≤ T K := (Lemma_7_3_6 K).1
     _ ≤ M := hM K
 
@@ -153,8 +153,8 @@ theorem Series.converges_qseries (q: ℝ) (hq: q > 0) : (mk' (m := 1) fun n ↦ 
     have hn1 : n ≥ 0 := by positivity
     have hn3 : n.toNat > 0 := by omega
     simp [s, hn, hn1]
-    apply inv_anti₀; positivity
-    apply rpow_le_rpow; positivity; simp; positivity
+    apply_rules [inv_anti₀, rpow_le_rpow] <;> try positivity
+    simp
   rw [cauchy_criterion (by simp [s]) hs hmono]
   have (n:ℕ) : 2^n * s.seq (2^n) = (2^(1-q))^n := by
     have : 1 ≤ (2:ℤ)^n := by norm_cast; exact Nat.one_le_two_pow

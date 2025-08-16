@@ -147,10 +147,7 @@ theorem Series.ratio_ineq {c:ℤ → ℝ} (m:ℤ) (hpos: ∀ n ≥ m, c n > 0) :
     have hn' : n > 0 := by omega
     calc
       _ ≤ (A * (L+ε)^n)^(1/(n:ℝ)) := by
-        apply rpow_le_rpow (le_of_lt (hpos n (by omega)))
-        apply why2 n hn
-        have : n ≥ 0 := by omega
-        positivity
+        apply_rules [rpow_le_rpow, le_of_lt (hpos n _)]; omega; positivity
       _ = A^(1/(n:ℝ)) * ((L+ε)^n)^(1/(n:ℝ)) := mul_rpow (by positivity) (by positivity)
       _ = _ := by
         congr
@@ -173,12 +170,10 @@ theorem Series.ratio_ineq {c:ℤ → ℝ} (m:ℤ) (hpos: ∀ n ≥ m, c n > 0) :
       simp; convert one_mul _
       apply Tendsto.limsup_eq
       convert Tendsto.comp (f := fun n:ℤ ↦ (A ^ (n:ℝ)⁻¹)) (g := fun x:ℝ ↦ (x:EReal)) (y := nhds 1) _ _
-      . apply continuous_coe_real_ereal.tendsto' _ _ (by norm_num)
+      . apply continuous_coe_real_ereal.tendsto'; norm_num
       convert Tendsto.comp (f := fun n:ℤ ↦ (n:ℝ)⁻¹) (g := fun x:ℝ ↦ A^x) (y := nhds 0) _ _
-      . apply (continuous_const_rpow (by positivity)).tendsto' _ _ (by simp)
+      . apply (continuous_const_rpow (by positivity)).tendsto'; simp
       exact tendsto_inv_atTop_zero.comp tendsto_intCast_atTop_atTop
-
-
 
 /-- Corollary 7.5.3 (Ratio test)-/
 theorem Series.ratio_test_pos {s : Series} (hnon: ∀ n ≥ s.m, s.seq n ≠ 0)
@@ -214,6 +209,5 @@ theorem Series.root_self_converges : (fun (n:ℕ) ↦ (n:ℝ)^(1 / n : ℝ) : Se
 theorem Series.poly_mul_geom_converges {x:ℝ} (hx: |x|<1) (q:ℝ) : (fun n:ℕ ↦ (n:ℝ)^q * x^n : Series).converges
   ∧ atTop.Tendsto (fun n:ℕ ↦ (n:ℝ)^q * x^n) (nhds 0) := by
   sorry
-
 
 end Chapter7

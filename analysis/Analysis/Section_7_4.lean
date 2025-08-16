@@ -67,7 +67,7 @@ theorem Series.converges_of_permute_nonneg {a:ℕ → ℝ} (ha: (a:Series).nonne
         apply Finset.sum_le_sum_of_subset_of_nonneg
         · intro _ _; aesop
         intro i _ _; specialize ha i; aesop
-      _ = S N := by simp [S, Series.partial]; exact (sum_eq_sum (N:=N) a (by positivity)).symm
+      _ = S N := by simp [S, Series.partial]; symm; apply sum_eq_sum (N:=N) a; positivity
       _ ≤ L := by apply le_ciSup _ (N:ℤ); simp [BddAbove, Set.Nonempty, upperBounds, hSBound]
   have hTbound : ∃ Q, ∀ M, T M ≤ Q := by use L
   simp [hTbound]
@@ -171,7 +171,7 @@ theorem Series.absConverges_of_permute {a:ℕ → ℝ} (ha : (a:Series).absConve
   have claim2 : |∑ n ∈ X, a n| ≤ ε/2 := calc
     _ ≤ ∑ n ∈ X, |a n| := X.abs_sum_le_sum_abs a
     _ ≤ ∑ n ∈ .Icc (N.toNat+1) q, |a n| := by
-      exact Finset.sum_le_sum_of_subset_of_nonneg why2 (by simp)
+      apply Finset.sum_le_sum_of_subset_of_nonneg why2; simp
     _ ≤ ε/2 := by
       convert ha (N.toNat+1) _ q _ <;> try omega
       simp [hNpos]; rw [abs_of_nonneg (by positivity)]; symm

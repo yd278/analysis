@@ -23,8 +23,8 @@ theorem Sequence.lim_of_const (c:ℝ) :  ((fun (_:ℕ) ↦ c):Sequence).TendsTo 
 instance Sequence.inst_pow: Pow Sequence ℕ where
   pow a k := {
     m := a.m
-    seq := fun (n:ℤ) ↦ if n ≥ a.m then a n ^ k else 0
-    vanish := by intro n hn; rw [lt_iff_not_ge] at hn; simp [hn]
+    seq n := if n ≥ a.m then a n ^ k else 0
+    vanish n hn := by rw [lt_iff_not_ge] at hn; simp [hn]
   }
 
 @[simp]
@@ -70,7 +70,7 @@ theorem Sequence.lim_of_power_decay {k:ℕ} :
     rw [←Real.rpow_natCast,←Real.rpow_mul (by positivity)]
     convert Real.rpow_one _
     field_simp
-  simp only [lim_eq, ha', true_and, pow_eq_zero hlim]
+  simp [lim_eq, ha', pow_eq_zero hlim]
 
 /-- Lemma 6.5.2 / Exercise 6.5.2 -/
 theorem Sequence.lim_of_geometric {x:ℝ} (hx: |x| < 1) : ((fun (n:ℕ) ↦ x^n):Sequence).TendsTo 0 := by

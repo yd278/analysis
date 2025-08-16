@@ -93,7 +93,7 @@ example : ContinuousOn (fun x:ℝ ↦ 1/x) (Icc 0 1) := by sorry
 
 example : ¬ IntegrableOn (fun x:ℝ ↦ 1/x) (Icc 0 1) := by sorry
 
-open PiecewiseConstantOn in
+open PiecewiseConstantOn ConstantOn in
 /-- Proposition 11.5.3-/
 theorem integ_of_bdd_cts {I: BoundedInterval} {f:ℝ → ℝ} (hbound: BddOn f I)
   (hf: ContinuousOn f I) : IntegrableOn f I := by
@@ -153,7 +153,7 @@ theorem integ_of_bdd_cts {I: BoundedInterval} {f:ℝ → ℝ} (hbound: BddOn f I
       case Ioc _ _ => apply join_Ioc_Ioc <;> linarith
       case Ioo _ _ => apply join_Ioc_Ioo <;> linarith
     have hf' : IntegrableOn f I' := by
-      apply integ_of_cts $ ContinuousOn.mono hf $ subset_trans _  $ (subset_iff _ _).mp $ Ioo_subset I
+      apply integ_of_cts $ ContinuousOn.mono hf $ subset_trans _ $ (subset_iff _ _).mp $ Ioo_subset I
       intro _; simp; intros; split_ands <;> linarith
     choose h hhmin hhconst hhint using lt_of_gt_upper_integral hf'.1 (show upper_integral f I' < integ f I' + ε by linarith [hf'.2])
     classical
@@ -170,10 +170,10 @@ theorem integ_of_bdd_cts {I: BoundedInterval} {f:ℝ → ℝ} (hbound: BddOn f I
     have h'const : PiecewiseConstantOn h' I := by
       rw [of_join hjoin2 _]; split_ands
       . rw [of_join hjoin1 _]; split_ands
-        . exact (ConstantOn.of_const h'const_left).piecewiseConstantOn
+        . apply_rules [piecewiseConstantOn, of_const]
         apply hhconst.congr'
         intro x hx; simp [h', hx, mem_iff]
-      exact (ConstantOn.of_const h'const_right).piecewiseConstantOn
+      apply_rules [piecewiseConstantOn, of_const]
     have h'maj : MajorizesOn h' f I := by
       intro x hx; by_cases hxI': x ∈ I' <;> simp [h', hxI']
       . solve_by_elim
@@ -204,10 +204,10 @@ theorem integ_of_bdd_cts {I: BoundedInterval} {f:ℝ → ℝ} (hbound: BddOn f I
       split_ands
       . rw [of_join hjoin1 _]
         split_ands
-        . exact (ConstantOn.of_const g'const_left).piecewiseConstantOn
+        . apply_rules [piecewiseConstantOn, of_const]
         apply hgconst.congr'
         intro x hx; simp [g', hx, mem_iff]
-      exact (ConstantOn.of_const g'const_right).piecewiseConstantOn
+      apply_rules [piecewiseConstantOn, of_const]
     have g'maj : MinorizesOn g' f I := by
       intro x hx; by_cases hxI': x ∈ I' <;> simp [g', hxI']
       . solve_by_elim
