@@ -162,7 +162,7 @@ theorem sum_of_sum_of_AbsConvergent {f:ℕ × ℕ → ℝ} (hf:AbsConvergent f) 
   have hfminus_conv : AbsConvergent fminus := by sorry
   choose hfplus_conv' hfplus_sum using sum_of_sum_of_AbsConvergent_nonneg hfplus_conv hfplus_nonneg
   choose hfminus_conv' hfminus_sum using sum_of_sum_of_AbsConvergent_nonneg hfminus_conv hfminus_nonneg
-  and_intros
+  split_ands
   . intro n
     sorry
   convert convergesTo.sub hfplus_sum hfminus_sum using 1

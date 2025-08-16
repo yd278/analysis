@@ -82,7 +82,7 @@ theorem deriv_of_integ {a b:ℝ} (hab: a < b) {f:ℝ → ℝ} (hf: IntegrableOn 
     have h1 := this.1.mono (g := fun _ ↦ f x₀ + ε) (IntegrableOn.const _ _).1 ?_
     have h2 := (IntegrableOn.const _ _).1.mono (f := fun _ ↦ f x₀ - ε) this.1 ?_
     . simp [IntegrableOn.const, le_of_lt hx₀y] at h1 h2
-      and_intros
+      split_ands
       . convert h1 using 1; ring
       . simp [←sub_nonneg] at *; convert h2 using 1; ring
     all_goals intro z hz; simp [abs_lt] at *; specialize hconv z ?_ ?_ ?_ ?_ <;> linarith
@@ -200,7 +200,7 @@ theorem integ_eq_antideriv_sub {a b:ℝ} (h:a ≤ b) {f F: ℝ → ℝ}
         _ = F' b - F' a := by
           apply α_length_of_cts (by linarith) _ (by linarith) _ hF'_cts
           . simp [le_of_lt h]
-          intro _ _; simp [mem_iff] at *; and_intros <;> linarith
+          intro _ _; simp [mem_iff] at *; split_ands <;> linarith
         _ = _ := by congr 1 <;> apply hFF' <;> simp [le_of_lt h]
     have hlower (P: Partition (Icc a b)) : lower_riemann_sum f P ≤ F b - F a := by
       sorry

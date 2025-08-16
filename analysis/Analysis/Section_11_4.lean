@@ -134,7 +134,7 @@ theorem IntegrableOn.max {I: BoundedInterval} {f g:ℝ → ℝ} (hf: IntegrableO
     have hf'g'_le := integ_le_lower_integral hmax_bound hf'g'_maj hf'g'_const
     have : MinorizesOn (f'' ⊔ g'') (f' ⊔ g' + h) I := by
       peel hf'min with x hx hf'min; specialize hg'min _ hx; specialize hf''max _ hx; specialize hg''max _ hx
-      simp [h]; and_intros <;> linarith [le_max_left (f' x) (g' x), le_max_right (f' x) (g' x)]
+      simp [h]; split_ands <;> linarith [le_max_left (f' x) (g' x), le_max_right (f' x) (g' x)]
     have hf'g'_integ := integ_of_piecewise_const hf'g'_const
     have hf''g''_integ := integ_of_piecewise_const hf''g''_const
     have hf'g'h_integ := hf'g'_integ.1.add hh_IntegrableOn.eq.1
@@ -184,7 +184,7 @@ theorem integ_of_mul_nonneg {I: BoundedInterval} {f g:ℝ → ℝ} (hf: Integrab
       choose f' hf'min hf'const hf'int using gt_of_lt_lower_integral hf.1 (show integ f I - ε < lower_integral f I by linarith)
       use max f' 0
       have hzero := (ConstantOn.of_const' 0 I).piecewiseConstantOn
-      and_intros
+      split_ands
       . peel hf_nonneg with x hx _; specialize hf'min _ hx; aesop
       . exact hf'const.max hzero
       . apply lt_of_lt_of_le hf'int (hf'const.integ_mono _ (hf'const.max hzero)); simp
@@ -194,7 +194,7 @@ theorem integ_of_mul_nonneg {I: BoundedInterval} {f g:ℝ → ℝ} (hf: Integrab
       obtain ⟨ g', hg'min, hg'const, hg'int ⟩ := gt_of_lt_lower_integral hg.1 (show integ g I - ε < lower_integral g I by linarith)
       use max g' 0
       have hzero := (ConstantOn.of_const' 0 I).piecewiseConstantOn
-      and_intros
+      split_ands
       . peel hg_nonneg with x hx _; specialize hg'min _ hx; aesop
       . exact hg'const.max hzero
       . apply lt_of_lt_of_le hg'int (hg'const.integ_mono _ (hg'const.max hzero)); simp
@@ -204,7 +204,7 @@ theorem integ_of_mul_nonneg {I: BoundedInterval} {f g:ℝ → ℝ} (hf: Integrab
       obtain ⟨ f'', hf''maj, hf''const, hf''int ⟩ := lt_of_gt_upper_integral hf.1 (show upper_integral f I < integ f I + ε  by linarith)
       use min f'' (fun _ ↦ M₁)
       have hM₁_piece := (ConstantOn.of_const' M₁ I).piecewiseConstantOn
-      and_intros
+      split_ands
       . peel hM₁ with x hx hM₁; rw [abs_le'] at hM₁
         simp [hf''maj _ hx, hM₁.1]
       . exact hf''const.min hM₁_piece
@@ -216,7 +216,7 @@ theorem integ_of_mul_nonneg {I: BoundedInterval} {f g:ℝ → ℝ} (hf: Integrab
       obtain ⟨ g'', hg''maj, hg''const, hg''int ⟩ := lt_of_gt_upper_integral hg.1 (show upper_integral g I < integ g I + ε by linarith)
       use min g'' (fun _ ↦ M₂)
       have hM₂_piece := (ConstantOn.of_const' M₂ I).piecewiseConstantOn
-      and_intros
+      split_ands
       . peel hM₂ with x hx hM₂; rw [abs_le'] at hM₂
         simp [hg''maj _ hx, hM₂.1]
       . exact hg''const.min hM₂_piece

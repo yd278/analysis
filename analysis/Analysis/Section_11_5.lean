@@ -154,7 +154,7 @@ theorem integ_of_bdd_cts {I: BoundedInterval} {f:ℝ → ℝ} (hbound: BddOn f I
       case Ioo _ _ => apply join_Ioc_Ioo <;> linarith
     have hf' : IntegrableOn f I' := by
       apply integ_of_cts $ ContinuousOn.mono hf $ subset_trans _  $ (subset_iff _ _).mp $ Ioo_subset I
-      intro _; simp; intros; and_intros <;> linarith
+      intro _; simp; intros; split_ands <;> linarith
     choose h hhmin hhconst hhint using lt_of_gt_upper_integral hf'.1 (show upper_integral f I' < integ f I' + ε by linarith [hf'.2])
     classical
     set h' : ℝ → ℝ := fun x ↦ if x ∈ I' then h x else M
@@ -168,8 +168,8 @@ theorem integ_of_bdd_cts {I: BoundedInterval} {f:ℝ → ℝ} (hbound: BddOn f I
       replace hjoin1 := congrArg (fun A ↦ x ∈ A) hjoin1.2.1
       simp at hjoin1 hjoin2; tauto
     have h'const : PiecewiseConstantOn h' I := by
-      rw [of_join hjoin2 _]; and_intros
-      . rw [of_join hjoin1 _]; and_intros
+      rw [of_join hjoin2 _]; split_ands
+      . rw [of_join hjoin1 _]; split_ands
         . exact (ConstantOn.of_const h'const_left).piecewiseConstantOn
         apply hhconst.congr'
         intro x hx; simp [h', hx, mem_iff]
@@ -201,9 +201,9 @@ theorem integ_of_bdd_cts {I: BoundedInterval} {f:ℝ → ℝ} (hbound: BddOn f I
       simp at hjoin1 hjoin2; tauto
     have g'const : PiecewiseConstantOn g' I := by
       rw [of_join hjoin2 _]
-      and_intros
+      split_ands
       . rw [of_join hjoin1 _]
-        and_intros
+        split_ands
         . exact (ConstantOn.of_const g'const_left).piecewiseConstantOn
         apply hgconst.congr'
         intro x hx; simp [g', hx, mem_iff]

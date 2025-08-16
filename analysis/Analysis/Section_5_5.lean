@@ -135,7 +135,7 @@ lemma Real.LUB_claim2 {E : Set Real} (N:ℕ) {a b: ℕ → ℚ}
 : ∀ n ≥ N, ∀ n' ≥ N, |a n - a n'| ≤ 1 / (N+1) := by
     intro n hn n' hn'
     rw [abs_le]
-    and_intros
+    split_ands
     . specialize hm1 n; specialize hm2 n'
       have bound1 : ((a-b) n') < a n := by rw [lt_of_coe]; contrapose! hm2; solve_by_elim [upperBound_upper]
       have bound3 : 1/((n':ℚ)+1) ≤ 1/(N+1) := by gcongr
@@ -167,7 +167,7 @@ theorem Real.LUB_exist {E: Set Real} (hE: Set.Nonempty E) (hbound: BddAbove E): 
     have : LIM b = 0 := LIM.harmonic
     simp [←LIM_sub claim3 hb, S, this]
   rw [isLUB_def, upperBound_def]
-  and_intros
+  split_ands
   . intros; apply LIM_of_ge claim3
     peel hm1 with n hm1
     rw [upperBound_def] at hm1; solve_by_elim

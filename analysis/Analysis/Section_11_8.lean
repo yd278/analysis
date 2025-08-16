@@ -168,16 +168,16 @@ theorem α_length_of_cts {α:ℝ → ℝ} {I: BoundedInterval} {a b: ℝ}
   α[I]ₗ = α I.b - α I.a := by
   have ha_left : left_lim α I.a = α I.a := by
     apply left_lim_of_continuous _ (hα.continuousWithinAt (by simp [haa]; linarith))
-    exact ⟨ I.a - a, by linarith, by intro _; simp; intro _ _; and_intros <;> linarith ⟩
+    exact ⟨ I.a - a, by linarith, by intro _; simp; intro _ _; split_ands <;> linarith ⟩
   have ha_right : right_lim α I.a = α I.a := by
     apply right_lim_of_continuous _ (hα.continuousWithinAt (by simp [haa]; linarith))
-    exact ⟨ b - I.a, by linarith, by intro _; simp; intro _ _; and_intros <;> linarith ⟩
+    exact ⟨ b - I.a, by linarith, by intro _; simp; intro _ _; split_ands <;> linarith ⟩
   have hb_left : left_lim α I.b = α I.b := by
     apply left_lim_of_continuous _ (hα.continuousWithinAt (by simp [hbb]; linarith))
-    exact ⟨ I.b - a, by linarith, by intro _; simp; intro _ _; and_intros <;> linarith ⟩
+    exact ⟨ I.b - a, by linarith, by intro _; simp; intro _ _; split_ands <;> linarith ⟩
   have hb_right : right_lim α I.b = α I.b := by
     apply right_lim_of_continuous _ (hα.continuousWithinAt (by simp [hbb]; linarith))
-    exact ⟨ b - I.b, by linarith, by intro _; simp; intro _ _; and_intros <;> linarith ⟩
+    exact ⟨ b - I.b, by linarith, by intro _; simp; intro _ _; split_ands <;> linarith ⟩
   cases I with
   | Icc _ _ => simp [α_length, hb_right, ha_left, hab]
   | Ico _ _ => simp [α_length, hb_left, ha_left, hab]

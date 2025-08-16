@@ -178,67 +178,67 @@ abbrev BoundedInterval.joins (K I J: BoundedInterval) : Prop := (I:Set ℝ) ∩ 
   ∧ (K:Set ℝ) = (I:Set ℝ) ∪ (J:Set ℝ) ∧ |K|ₗ = |I|ₗ + |J|ₗ
 
 theorem BoundedInterval.join_Icc_Ioc {a b c:ℝ} (hab: a ≤ b) (hbc: b ≤ c) : (Icc a c).joins (Icc a b) (Ioc b c) := by
-  and_intros
+  split_ands
   . rw [Set.eq_empty_iff_forall_notMem]; intros; simp; intros; linarith
   . ext x; simp; constructor
     . intro ⟨ _, _ ⟩; simp_all [le_or_lt x b]
-    rintro (_ | _) <;> and_intros <;> linarith
+    rintro (_ | _) <;> split_ands <;> linarith
   simp [length, show a ≤ b by linarith, show b ≤ c by linarith, show a ≤ c by linarith]
 
 theorem BoundedInterval.join_Icc_Ioo {a b c:ℝ} (hab: a ≤ b) (hbc: b < c) : (Ico a c).joins (Icc a b) (Ioo b c) := by
-  and_intros
+  split_ands
   . rw [Set.eq_empty_iff_forall_notMem]; intros; simp; intros; linarith
   . ext x; simp; constructor
     . intro ⟨ _, _ ⟩; simp_all [le_or_lt x b]
-    rintro (_ | _) <;> and_intros <;> linarith
+    rintro (_ | _) <;> split_ands <;> linarith
   simp [length, show a ≤ b by linarith, show b ≤ c by linarith, show a ≤ c by linarith]
 
 theorem BoundedInterval.join_Ioc_Ioc {a b c:ℝ} (hab: a ≤ b) (hbc: b ≤ c) : (Ioc a c).joins (Ioc a b) (Ioc b c) := by
-  and_intros
+  split_ands
   . rw [Set.eq_empty_iff_forall_notMem]; intros; simp; intros; linarith
   . ext x; simp; constructor
     . intro ⟨ _, _ ⟩; simp_all [le_or_lt x b]
-    rintro (_ | _) <;> and_intros <;> linarith
+    rintro (_ | _) <;> split_ands <;> linarith
   simp [length, show a ≤ b by linarith, show b ≤ c by linarith, show a ≤ c by linarith]
 
 theorem BoundedInterval.join_Ioc_Ioo {a b c:ℝ} (hab: a ≤ b) (hbc: b < c) : (Ioo a c).joins (Ioc a b) (Ioo b c) := by
-  and_intros
+  split_ands
   . rw [Set.eq_empty_iff_forall_notMem]; intros; simp; intros; linarith
   . ext x; simp; constructor
     . intro ⟨ _, _ ⟩; simp_all [le_or_lt x b]
-    rintro (_ | _) <;> and_intros <;> linarith
+    rintro (_ | _) <;> split_ands <;> linarith
   simp [length, show a ≤ b by linarith, show b ≤ c by linarith, show a ≤ c by linarith]
 
 theorem BoundedInterval.join_Ico_Icc {a b c:ℝ} (hab: a ≤ b) (hbc: b ≤ c) : (Icc a c).joins (Ico a b) (Icc b c) := by
-  and_intros
+  split_ands
   . rw [Set.eq_empty_iff_forall_notMem]; intros; simp; intros; linarith
   . ext x; simp; constructor
     . intro ⟨ _, _ ⟩; simp_all [lt_or_le x b]
-    rintro (_ | _) <;> and_intros <;> linarith
+    rintro (_ | _) <;> split_ands <;> linarith
   simp [length, show a ≤ b by linarith, show b ≤ c by linarith, show a ≤ c by linarith]
 
 theorem BoundedInterval.join_Ico_Ico {a b c:ℝ} (hab: a ≤ b) (hbc: b ≤ c) : (Ico a c).joins (Ico a b) (Ico b c) := by
-  and_intros
+  split_ands
   . rw [Set.eq_empty_iff_forall_notMem]; intros; simp; intros; linarith
   . ext x; simp; constructor
     . intro ⟨ _, _ ⟩; simp_all [lt_or_le x b]
-    rintro (_ | _) <;> and_intros <;> linarith
+    rintro (_ | _) <;> split_ands <;> linarith
   simp [length, show a ≤ b by linarith, show b ≤ c by linarith, show a ≤ c by linarith]
 
 theorem BoundedInterval.join_Ioo_Icc {a b c:ℝ} (hab: a < b) (hbc: b ≤ c) : (Ioc a c).joins (Ioo a b) (Icc b c) := by
-  and_intros
+  split_ands
   . rw [Set.eq_empty_iff_forall_notMem]; intros; simp; intros; linarith
   . ext x; simp; constructor
     . intro ⟨ _, _ ⟩; simp_all [lt_or_le x b]
-    rintro (_ | _) <;> and_intros <;> linarith
+    rintro (_ | _) <;> split_ands <;> linarith
   simp [length, show a ≤ b by linarith, show b ≤ c by linarith, show a ≤ c by linarith]
 
 theorem BoundedInterval.join_Ioo_Ico {a b c:ℝ} (hab: a < b) (hbc: b ≤ c) : (Ioo a c).joins (Ioo a b) (Ico b c) := by
-  and_intros
+  split_ands
   . rw [Set.eq_empty_iff_forall_notMem]; intros; simp; intros; linarith
   . ext x; simp; constructor
     . intro ⟨ _, _ ⟩; simp_all [lt_or_le x b]
-    rintro (_ | _) <;> and_intros <;> linarith
+    rintro (_ | _) <;> split_ands <;> linarith
   simp [length, show a ≤ b by linarith, show b ≤ c by linarith, show a ≤ c by linarith]
 
 
@@ -388,7 +388,7 @@ theorem Partition.sum_of_length  (I: BoundedInterval) (P: Partition I) :
       have hKI' := (K.Ioo_subset.trans hKI).trans I.subset_Icc
       simp only [subset_iff] at hKI'
       have hKb : K.b = I.b := by
-        rw [le_antisymm_iff]; and_intros
+        rw [le_antisymm_iff]; split_ands
         . replace hKI' := csSup_le_csSup bddAbove_Icc (by simp [hsub]) hKI'
           simp_all [csSup_Ioo hsub, csSup_Icc (le_of_lt h)]
         have := K.subset_Icc _ hbK; simp only [mem_iff, Set.mem_Icc] at this; exact this.2

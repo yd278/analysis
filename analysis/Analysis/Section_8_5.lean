@@ -212,7 +212,7 @@ theorem WellFoundedLT.partialOrder {X:Type} [PartialOrder X] (x₀ : X) : ∃ Y 
   -- the formalization.
   have hF {Y:Set X} (hY: Y ∈ Ω₀) {x:X} (hxy : x ∈ Y \ {x₀}) : {y ∈ Y | y < x} ∈ Ω₀ := by
     simp [Ω₀, IsTotal] at hY ⊢; choose _ hmin using hY.2.2; simp_all [IsMin]
-    and_intros
+    split_ands
     . convert WellFoundedLT.subset (hwell := hY.2) (B := {y ∈ Y | y < x}) _ _
       . intro ⟨ _, _ ⟩ ⟨ _, _ ⟩; simp; solve_by_elim [hY.1]
       intro _; simp; tauto
