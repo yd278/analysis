@@ -54,7 +54,7 @@ theorem Sequence.lim_of_power_decay {k:ℕ} :
     simp [hn,hn']
     rw [inv_le_inv₀, Real.rpow_le_rpow_iff] <;> try positivity
     simp [hn]
-  replace ha' := convergent_of_antitone ha ha'
+  apply convergent_of_antitone ha at ha'
   have hpow (n:ℕ): (a^(n+1)).Convergent ∧ lim (a^(n+1)) = (lim a)^(n+1) := by
     induction' n with n ih
     . simp [ha', -dite_pow]

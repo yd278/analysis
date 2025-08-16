@@ -148,13 +148,13 @@ Compare with Mathlib's `Nat.mul_right_cancel` -/
 lemma Nat.mul_cancel_right {a b c: Nat} (h: a * c = b * c) (hc: c.IsPos) : a = b := by
   -- This proof is written to follow the structure of the original text.
   have := trichotomous a b
-  rcases this with hlt | heq | hgt
+  rcases this with hlt | rfl | hgt
   . replace hlt := mul_lt_mul_of_pos_right hlt hc
-    replace hlt := ne_of_lt _ _ hlt
+    apply ne_of_lt _ _ at hlt
     contradiction
-  . assumption
+  . rfl
   replace hgt := mul_gt_mul_of_pos_right hgt hc
-  replace hgt := ne_of_gt _ _ hgt
+  apply ne_of_gt _ _ at hgt
   contradiction
 
 /-- (Not from textbook) Nat is an ordered semiring.

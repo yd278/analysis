@@ -147,7 +147,7 @@ theorem Series.converges_of_alternating {m:ℤ} {a: { n // n ≥ m} → ℝ} (ha
     ((mk' (fun n ↦ (-1)^(n:ℤ) * a n)).converges ↔ Filter.atTop.Tendsto a (nhds 0)) := by
   -- This proof is written to follow the structure of the original text.
   constructor
-  . intro h; replace h := decay_of_converges h
+  . intro h; apply decay_of_converges at h
     rw [tendsto_iff_dist_tendsto_zero] at h ⊢
     rw [←Filter.tendsto_comp_val_Ici_atTop (a := m)] at h
     convert h using 2 with _ n

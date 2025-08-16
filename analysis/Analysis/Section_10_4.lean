@@ -49,7 +49,7 @@ theorem _root_.HasDerivWithinAt.of_inverse_of_zero_deriv {X Y: Set ℝ} {f: ℝ 
   (hf: HasDerivWithinAt f 0 X x₀) :
   ¬ DifferentiableWithinAt ℝ g Y y₀ := by
   by_contra this; rw [DifferentiableWithinAt.iff] at this; choose _ hg using this
-  replace hg := hf.of_inverse hfXY hgf hx₀ hfx₀ hcluster hg; simp_all
+  apply hf.of_inverse hfXY hgf hx₀ hfx₀ hcluster at hg; simp_all
 
 example : ¬ DifferentiableWithinAt ℝ (fun x:ℝ ↦ x^(1/3:ℝ)) (.Ici 0) 0 := by sorry
 

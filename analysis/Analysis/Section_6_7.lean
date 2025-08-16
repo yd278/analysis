@@ -124,7 +124,7 @@ lemma ratPow_lim_uniq {x α:ℝ} (hx: x > 0) {q q': ℕ → ℚ}
 
 theorem Real.eq_lim_of_rat (α:ℝ) : ∃ q: ℕ → ℚ, ((fun n ↦ (q n:ℝ)):Sequence).TendsTo α := by
   choose q hcauchy hLIM using (Chapter5.Real.equivR.symm α).eq_lim; use q
-  replace hcauchy := lim_eq_LIM hcauchy
+  apply lim_eq_LIM at hcauchy
   simp only [←hLIM, Equiv.apply_symm_apply] at hcauchy
   convert hcauchy; aesop
 

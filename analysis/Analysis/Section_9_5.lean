@@ -88,8 +88,8 @@ theorem ContinuousAt.iff_eq_left_right_limit {X: Set ℝ} {f: ℝ → ℝ} {x₀
   have := (ContinuousWithinAt.tfae X f h).out 0 2
   rw [this]
   intro ε hε
-  replace hre := right_limit.eq' hre
-  replace hle := left_limit.eq' hle
+  apply right_limit.eq' at hre
+  apply left_limit.eq' at hle
   rw [hright, ←Convergesto.iff] at hre
   rw [lheft, ←Convergesto.iff] at hle
   simp [Convergesto, Real.CloseNear, Real.CloseFn] at hre hle

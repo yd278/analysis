@@ -310,7 +310,7 @@ theorem Sum'.of_countable_supp {X:Type} {f:X → ℝ} {A: Set X} (hA: CountablyI
         intro x hx hx'; simp at hx hx'; contrapose! hx'
         choose n hn using (hι.comp ha_bij).2 ⟨ g x, hx' ⟩
         simp [ι, Subtype.val_inj] at hn
-        replace hn := hg.1 hn; subst hn
+        apply hg.1 at hn; subst hn
         use n; simpa [ha_mono.le_iff_le] using hx
       _ = _ := by
         apply sum_image

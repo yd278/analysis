@@ -312,7 +312,7 @@ a.TendsTo L ↔ a.Convergent ∧ lim a = L := by
   . intro h; by_contra! eq
     have : a.Convergent := by rw [convergent_def]; use L
     replace eq := a.tendsTo_unique (eq this)
-    replace := lim_def this
+    apply lim_def at this
     tauto
   intro ⟨ h, rfl ⟩; convert lim_def h
 

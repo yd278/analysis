@@ -299,7 +299,7 @@ theorem Nat.trichotomous (a b:Nat) : a < b ∨ a = b ∨ a > b := by
   -- This proof is written to follow the structure of the original text.
   revert a; apply induction
   . have why : 0 ≤ b := b.zero_le
-    replace why := (le_iff_lt_or_eq _ _).mp why
+    rw [le_iff_lt_or_eq] at why
     tauto
   intro a ih
   rcases ih with case1 | case2 | case3

@@ -270,7 +270,7 @@ theorem Sequence.finite_limsup_liminf_of_bounded {a:Sequence} (hbound: a.IsBound
     contrapose! hliminf_bound; simp [hliminf_bound, ←EReal.coe_neg]
   use a.liminf.toReal
   symm; apply EReal.coe_toReal
-  . replace hlimsup_bound := a.liminf_le_limsup.trans hlimsup_bound
+  . apply a.liminf_le_limsup.trans at hlimsup_bound
     contrapose! hlimsup_bound; simp [hlimsup_bound]
   contrapose! hliminf_bound; simp [hliminf_bound, ←EReal.coe_neg]
 

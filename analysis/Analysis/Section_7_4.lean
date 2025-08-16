@@ -141,7 +141,7 @@ theorem Series.absConverges_of_permute {a:ℕ → ℝ} (ha : (a:Series).absConve
   rw [converges_iff_tail_decay] at ha
   choose N₁ hN₁ ha using ha _ (half_pos hε); simp at hN₁
   have : ∃ N ≥ N₁, |(a:Series).partial N - L'| < ε/2 := by
-    replace hconv := convergesTo_sum hconv
+    apply convergesTo_sum at hconv
     simp [convergesTo, LinearOrderedAddCommGroup.tendsto_nhds] at hconv
     choose N hN using hconv _ (half_pos hε)
     use max N N₁, (by omega); convert hN _ (le_max_left _ _)

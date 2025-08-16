@@ -41,7 +41,7 @@ theorem Russells_paradox : ¬ axiom_of_universal_specification := by
     rw [←hΩ1] at hΩ2
     contradiction
   have : P (Ω:Object) := by use Ω
-  replace this := (hΩ _).mpr this
+  rw [←hΩ] at this
   contradiction
 
 /-- Axiom 3.9 (Regularity) -/

@@ -10,9 +10,9 @@ Some examples of proofs
 /-- Proposition A.3.1 -/
 example {A B C D: Prop} (hAC: A → C) (hCD: C → D) (hDB: D → B): A → B := by
   intro h
-  replace h := hAC h
-  replace h := hCD h
-  replace h := hDB h
+  apply hAC at h
+  apply hCD at h
+  apply hDB at h
   exact h
 
 /-- Proposition A.3.2 -/

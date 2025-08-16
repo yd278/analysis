@@ -78,7 +78,7 @@ theorem Series.root_test_pos {s : Series}
 theorem Series.root_test_neg {s : Series}
   (h : atTop.limsup (fun n ↦ ((|s.seq n|^(1/(n:ℝ)):ℝ):EReal)) > 1) : s.diverges := by
     -- This proof is written to follow the structure of the original text.
-    replace h := frequently_lt_of_lt_limsup (by isBoundedDefault) h
+    apply frequently_lt_of_lt_limsup (by isBoundedDefault) at h
     apply diverges_of_nodecay
     by_contra this; rw [LinearOrderedAddCommGroup.tendsto_nhds] at this; specialize this 1 (by positivity)
     choose n hn hs hs' using (h.and_eventually this).forall_exists_of_atTop 1
