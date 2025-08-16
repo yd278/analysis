@@ -52,7 +52,7 @@ theorem cts_of_integ {a b:ℝ} {f:ℝ → ℝ} (hf: IntegrableOn f (Icc a b)) :
     rw [abs_le'] at hM; simp; linarith
   replace {x y:ℝ} (hx: x ∈ Set.Icc a b) (hy: y ∈ Set.Icc a b) :
     |F y - F x| ≤ M * |x-y| := by
-    rcases lt_trichotomy x y with h | rfl | h
+    obtain h | rfl | h := lt_trichotomy x y
     . simp [abs_of_neg (show x-y < 0 by linarith), this h hx hy]
     . simp
     . simp [abs_of_pos (show 0 < x-y by linarith), abs_sub_comm, this h hy hx]
@@ -76,7 +76,7 @@ theorem deriv_of_integ {a b:ℝ} (hab: a < b) {f:ℝ → ℝ} (hf: IntegrableOn 
   rw [HasDerivWithinAt.iff_approx_linear]
   simp [(ContinuousWithinAt.tfae _ f hx₀).out 0 2] at hcts
   peel hcts with ε hε δ hδ hconv; intro y hy hyδ
-  rcases lt_trichotomy x₀ y with hx₀y | rfl | hx₀y
+  obtain hx₀y | rfl | hx₀y := lt_trichotomy x₀ y
   . have := ((hf.join (join_Icc_Ioc hy.1 hy.2)).1.join (join_Icc_Ioc hx₀.1 (le_of_lt hx₀y))).2
     simp [this.2, abs_le', abs_of_pos (show 0 < y - x₀ by linarith)]
     have h1 := this.1.mono (g := fun _ ↦ f x₀ + ε) (IntegrableOn.const _ _).1 ?_
@@ -120,7 +120,7 @@ theorem integ_eq_antideriv_sub {a b:ℝ} (h:a ≤ b) {f F: ℝ → ℝ}
   (hf: IntegrableOn f (Icc a b)) (hF: AntiderivOn F f (Icc a b)) :
   integ f (Icc a b) = F b - F a := by
   -- This proof is written to follow the structure of the original text.
-  rcases lt_or_eq_of_le h with h | h
+  obtain h | h := lt_or_eq_of_le h
   . have hF_cts : ContinuousOn F (.Icc a b) := by
       intro x hx; exact ContinuousWithinAt.of_differentiableWithinAt (hF.1 x hx)
     -- for technical reasons we need to extend F by constant outside of Icc a b
@@ -139,7 +139,7 @@ theorem integ_eq_antideriv_sub {a b:ℝ} (h:a ≤ b) {f F: ℝ → ℝ}
           apply Finset.sum_le_sum
           intro J hJ; by_cases hJ_empty : (J:Set ℝ) = ∅
           . simp [α_length_of_empty _ hJ_empty, length_of_empty hJ_empty]
-          rcases le_or_gt J.b J.a with hJab | hJab
+          obtain hJab | hJab := le_or_gt J.b J.a
           . push_neg at hJ_empty; choose x hx using hJ_empty
             cases J with
             | Ioo _ _ => simp at hx; linarith
@@ -149,25 +149,25 @@ theorem integ_eq_antideriv_sub {a b:ℝ} (h:a ≤ b) {f F: ℝ → ℝ}
               simp at hx
               simp [show c = d by linarith]
               have hnhds: (Ioo (a-1) (b+1):Set ℝ) ∈ nhds d := by
-                replace hJ := P.contains _ hJ
+                apply P.contains at hJ
                 simp [subset_iff] at hJ
                 rw [Set.Icc_subset_Icc_iff (by linarith)] at hJ
                 apply Ioo_mem_nhds <;> linarith
               rw [α_length_of_pt, jump_of_continuous hnhds (hF'_cts _ (mem_of_mem_nhds hnhds))]
           set c := J.a
           set d := J.b
-          replace hJ := P.contains _ hJ
+          apply P.contains at hJ
           have hJ' : Icc a b ⊆ Ioo (a-1/2) (b+1/2) := by apply Set.Icc_subset_Ioo <;> linarith
-          replace hJ' := ((Ioo_subset J).trans hJ).trans hJ'
+          apply ((Ioo_subset J).trans hJ).trans at hJ'
           simp [subset_iff] at hJ'
           rw [Set.Ioo_subset_Ioo_iff hJab] at hJ'
           have hJ'' : Icc a b ⊆ Ioo (a-1) (b+1) := by apply Set.Icc_subset_Ioo <;> linarith
-          replace hJ'' := hJ.trans hJ''
+          apply hJ.trans at hJ''
           rw [α_length_of_cts (by linarith) (le_of_lt hJab) (by linarith) hJ'' hF'_cts]
           have := HasDerivWithinAt.mean_value hJab (hF'_cts.mono ?_) ?_
           . choose e he hmean using this
             have : HasDerivWithinAt F' (f e) (.Ioo c d) e := by
-              replace hJ := (Ioo_subset J).trans hJ
+              apply (Ioo_subset J).trans at hJ
               simp [subset_iff] at hJ
               apply ((hF.2 e (hJ he)).mono hJ).congr (f := F)
               all_goals intros; solve_by_elim
@@ -190,7 +190,7 @@ theorem integ_eq_antideriv_sub {a b:ℝ} (h:a ≤ b) {f F: ℝ → ℝ}
             . intro _ _; simp at *; refine ⟨ ⟨ ?_, ?_ ⟩, ?_ ⟩ <;> linarith
             simp at he; rw [closure_Ioo (by linarith)]; simp; linarith
           . simp; rw [Set.Icc_subset_Ioo_iff (le_of_lt hJab)]; constructor <;> linarith
-          replace hJ := (Ioo_subset J).trans hJ
+          apply (Ioo_subset J).trans at hJ
           apply (hF.1.mono _).congr
           . intro x hx
             have : x ∈ Set.Icc a b := by specialize hJ _ hx; simpa using hJ

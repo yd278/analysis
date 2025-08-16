@@ -10,9 +10,9 @@ Some examples of proofs
 /-- Proposition A.3.1 -/
 example {A B C D: Prop} (hAC: A → C) (hCD: C → D) (hDB: D → B): A → B := by
   intro h
-  replace h := hAC h
-  replace h := hCD h
-  replace h := hDB h
+  apply hAC at h
+  apply hCD at h
+  apply hDB at h
   exact h
 
 /-- Proposition A.3.2 -/
@@ -88,14 +88,14 @@ example {A B C D: Prop} (hAC: A → C) (hCD: C → D) (hDB: D → B): A → B :=
 
 /-- Proposition A.3.4 -/
 example {A B C D E F G H I:Prop} (hAE: A → E) (hEB: E ∧ B → F) (hADG : A → G → D) (hHI: H ∨ I) (hFHC : F ∧ H → C) (hAHG : A ∧ H → G) (hIG: I → G) (hIGC: G → C) : A ∧ B → C ∧ D := by
-  rintro ⟨ hA, hB ⟩
+  intro ⟨ hA, hB ⟩
   have hE : E := hAE hA
   have hF : F := hEB ⟨hE, hB⟩
   suffices hCG : C ∧ G
   . obtain ⟨ hC, hG ⟩ := hCG
     have hD : D := hADG hA hG
     exact ⟨hC, hD⟩
-  rcases hHI with hH | hI
+  obtain hH | hI := hHI
   . have hC := hFHC ⟨ hF, hH⟩
     have hG := hAHG ⟨hA, hH⟩
     exact ⟨hC, hG⟩

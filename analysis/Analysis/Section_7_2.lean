@@ -35,17 +35,17 @@ structure Series where
 instance Series.instCoe : Coe (ℕ → ℝ) Series where
   coe := fun a ↦ {
     m := 0
-    seq := fun n ↦ if n ≥ 0 then a n.toNat else 0
-    vanish := by intro n hn; simp [hn]
+    seq n := if n ≥ 0 then a n.toNat else 0
+    vanish n hn := by simp [hn]
   }
 
 @[simp]
-theorem Series.eval_coe (a : ℕ → ℝ) (n : ℕ) : (a : Series).seq n = a n := by simp
+theorem Series.eval_coe (a: ℕ → ℝ) (n: ℕ) : (a: Series).seq n = a n := by simp
 
 abbrev Series.mk' {m:ℤ} (a: { n // n ≥ m } → ℝ) : Series where
   m := m
-  seq := fun n ↦ if h : n ≥ m then a ⟨n, h⟩ else 0
-  vanish := by intro n hn; simp [hn]
+  seq n := if h : n ≥ m then a ⟨n, h⟩ else 0
+  vanish n hn := by simp [hn]
 
 theorem Series.eval_mk' {m:ℤ} (a : { n // n ≥ m } → ℝ) {n : ℤ} (h:n ≥ m) :
     (Series.mk' a).seq n = a ⟨ n, h ⟩ := by simp [h]
@@ -147,7 +147,7 @@ theorem Series.converges_of_alternating {m:ℤ} {a: { n // n ≥ m} → ℝ} (ha
     ((mk' (fun n ↦ (-1)^(n:ℤ) * a n)).converges ↔ Filter.atTop.Tendsto a (nhds 0)) := by
   -- This proof is written to follow the structure of the original text.
   constructor
-  . intro h; replace h := decay_of_converges h
+  . intro h; apply decay_of_converges at h
     rw [tendsto_iff_dist_tendsto_zero] at h ⊢
     rw [←Filter.tendsto_comp_val_Ici_atTop (a := m)] at h
     convert h using 2 with _ n
@@ -165,9 +165,9 @@ theorem Series.converges_of_alternating {m:ℤ} {a: { n // n ≥ m} → ℝ} (ha
         congr; rw [←zpow_one_add₀ (by norm_num)]; congr 1; abel
       _ = _ := by ring
   have claim2 {N:ℤ} (hN: N ≥ m) (h': Odd N) : S (N+2) ≥ S N := by
-    rw [claim1 hN]; simp [h'.add_one.neg_one_zpow]; apply ha'; simp
+    simp [claim1 hN, h'.add_one.neg_one_zpow]; apply ha'; simp
   have claim3 {N:ℤ} (hN: N ≥ m) (h': Even N) : S (N+2) ≤ S N := by
-    rw [claim1 hN]; simp [h'.add_one.neg_one_zpow]; apply ha'; simp
+    simp [claim1 hN, h'.add_one.neg_one_zpow]; apply ha'; simp
   have why1 {N:ℤ} (hN: N ≥ m) (h': Even N) (k:ℕ) : S (N+2*k) ≤ S N := by sorry
   have why2 {N:ℤ} (hN: N ≥ m) (h': Even N) (k:ℕ) : S (N+2*k+1) ≥ S N - a ⟨ N+1, by linarith ⟩ := by sorry
   have why3 {N:ℤ} (hN: N ≥ m) (h': Even N) (k:ℕ) : S (N+2*k+1) ≤ S (N+2*k) := by sorry

@@ -18,6 +18,8 @@ Main constructions and results of this section:
 
 -/
 
+open EReal
+
 /-- Definition 6.2.1 -/
 theorem EReal.def (x:EReal) : (∃ (y:Real), y = x) ∨ x = ⊤ ∨ x = ⊥ := by
   revert x
@@ -27,15 +29,14 @@ theorem EReal.real_neq_infty (x:ℝ) : (x:EReal) ≠ ⊤ := coe_ne_top _
 
 theorem EReal.real_neq_neg_infty (x:ℝ) : (x:EReal) ≠ ⊥ := coe_ne_bot _
 
-theorem EReal.infty_neq_neg_infty : (⊤:EReal) ≠ (⊥:EReal) :=  add_top_iff_ne_bot.mp rfl
+theorem EReal.infty_neq_neg_infty : (⊤:EReal) ≠ (⊥:EReal) := add_top_iff_ne_bot.mp rfl
 
 abbrev EReal.IsFinite (x:EReal) : Prop := ∃ (y:Real), y = x
 
 abbrev EReal.IsInfinite (x:EReal) : Prop := x = ⊤ ∨ x = ⊥
 
 theorem EReal.infinite_iff_not_finite (x:EReal): x.IsInfinite ↔ ¬ x.IsFinite := by
-  unfold IsFinite IsInfinite
-  rcases EReal.def x with ⟨ y, rfl ⟩ | rfl | rfl <;> simp
+  obtain ⟨ y, rfl ⟩ | rfl | rfl := EReal.def x <;> simp [IsFinite, IsInfinite]
 
 /-- Definition 6.2.2 (Negation of extended reals) -/
 theorem EReal.neg_of_real (x:Real) : -(x:EReal) = (-x:ℝ) := rfl
@@ -46,7 +47,7 @@ theorem EReal.neg_of_real (x:Real) : -(x:EReal) = (-x:ℝ) := rfl
 /-- Definition 6.2.3 (Ordering of extended reals) -/
 theorem EReal.le_iff (x y:EReal) :
     x ≤ y ↔ (∃ (x' y':Real), x = x' ∧ y = y' ∧ x' ≤ y') ∨ y = ⊤ ∨ x = ⊥ := by
-  rcases EReal.def x with ⟨ x', rfl ⟩ | rfl | rfl <;> rcases EReal.def y with ⟨ y', rfl ⟩ | rfl | rfl <;> simp
+  obtain ⟨ x', rfl ⟩ | rfl | rfl := EReal.def x <;> obtain ⟨ y', rfl ⟩ | rfl | rfl := EReal.def y <;> simp
 
 /-- Definition 6.2.3 (Ordering of extended reals) -/
 theorem EReal.lt_iff (x y:EReal) : x < y ↔ x ≤ y ∧ x ≠ y := lt_iff_le_and_ne
@@ -54,22 +55,22 @@ theorem EReal.lt_iff (x y:EReal) : x < y ↔ x ≤ y ∧ x ≠ y := lt_iff_le_an
 #check EReal.coe_lt_coe_iff
 
 /-- Examples 6.2.4 -/
-example : (3:EReal) ≤ (5:EReal) := by rw [EReal.le_iff]; left; use (3:ℝ), (5:ℝ); norm_cast
+example : (3:EReal) ≤ (5:EReal) := by rw [le_iff]; left; use (3:ℝ), (5:ℝ); norm_cast
 
 
 /-- Examples 6.2.4 -/
-example : (3:EReal) < ⊤ := by simp [EReal.lt_iff, EReal.le_iff]; exact EReal.real_neq_infty 3
+example : (3:EReal) < ⊤ := by simp [lt_iff, le_iff]; exact real_neq_infty 3
 
 
 /-- Examples 6.2.4 -/
-example : (⊥:EReal) < ⊤ := by simp [EReal.lt_iff, EReal.le_iff]
+example : (⊥:EReal) < ⊤ := by simp [lt_iff, le_iff]
 
 
 /-- Examples 6.2.4 -/
 example : ¬ (3:EReal) ≤ ⊥ := by
   by_contra h
-  simp [EReal.le_iff] at h
-  exact EReal.real_neq_neg_infty 3 h
+  simp [le_iff] at h
+  exact real_neq_neg_infty 3 h
 
 #check instCompleteLinearOrderEReal
 
@@ -113,7 +114,7 @@ theorem EReal.sup_of_unbounded_nonempty {E: Set ℝ} (hunbound: ¬ BddAbove E) (
     sSup ((fun (x:ℝ) ↦ (x:EReal)) '' E) = ⊤ := by
   rw [sSup_eq_top]
   intro b hb
-  rcases EReal.def b with ⟨ y, rfl ⟩ | rfl | rfl
+  obtain ⟨ y, rfl ⟩ | rfl | rfl := EReal.def b
   . simp; contrapose! hunbound; exact ⟨ y, hunbound ⟩
   . simp at hb
   simpa
@@ -181,8 +182,8 @@ theorem EReal.inf_ge_upper (E: Set EReal) {M:EReal} (hM: M ∈ upperBounds E) : 
 
 /-- Not in textbook: identify the Chapter 5 extended reals with the Mathlib extended reals.
 -/
-noncomputable abbrev Chapter5.ExtendedReal.toEReal (x:Chapter5.ExtendedReal) : EReal := match x with
-  | real r => ((Chapter5.Real.equivR r):EReal)
+noncomputable abbrev Chapter5.ExtendedReal.toEReal (x:ExtendedReal) : EReal := match x with
+  | real r => ((Real.equivR r):EReal)
   | infty => ⊤
   | neg_infty => ⊥
 

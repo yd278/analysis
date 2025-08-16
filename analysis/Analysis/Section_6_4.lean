@@ -270,7 +270,7 @@ theorem Sequence.finite_limsup_liminf_of_bounded {a:Sequence} (hbound: a.IsBound
     contrapose! hliminf_bound; simp [hliminf_bound, ←EReal.coe_neg]
   use a.liminf.toReal
   symm; apply EReal.coe_toReal
-  . replace hlimsup_bound := a.liminf_le_limsup.trans hlimsup_bound
+  . apply a.liminf_le_limsup.trans at hlimsup_bound
     contrapose! hlimsup_bound; simp [hlimsup_bound]
   contrapose! hliminf_bound; simp [hliminf_bound, ←EReal.coe_neg]
 
@@ -317,7 +317,7 @@ theorem Sequence.Cauchy_iff_convergent (a:Sequence) :
     replace h4 := h4.trans h3
     rw [EReal.coe_le_coe_iff] at h1 h4
     linarith
-  rcases le_iff_lt_or_eq.mp hlow with hlow | hlow
+  obtain hlow | hlow := le_iff_lt_or_eq.mp hlow
   . specialize hup ((L_plus - L_minus)/3) (by positivity)
     linarith
   linarith

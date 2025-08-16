@@ -81,7 +81,7 @@ theorem Uncountable.real : Uncountable ℝ := by
   have : Function.Injective f := by
     intro A B hAB; by_contra!
     rw [←Set.symmDiff_nonempty] at this
-    replace this := Nat.min_spec this
+    apply Nat.min_spec at this
     set n₀ := Nat.min (symmDiff A B)
     simp [symmDiff] at this; choose h1 h2 using this
     wlog h : n₀ ∈ A ∧ n₀ ∉ B generalizing A B

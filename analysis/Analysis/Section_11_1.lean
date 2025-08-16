@@ -170,8 +170,8 @@ theorem BoundedInterval.length_of_subsingleton {I: BoundedInterval} : Subsinglet
   sorry
 
 theorem BoundedInterval.dist_le_length {I:BoundedInterval} {x y:ℝ} (hx: x ∈ I) (hy: y ∈ I) : |x - y| ≤ |I|ₗ := by
-  replace hx := subset_Icc I _ hx
-  replace hy := subset_Icc I _ hy
+  apply subset_Icc I at hx
+  apply subset_Icc I at hy
   simp_all [mem_iff, abs_le']; left; constructor <;> linarith
 
 abbrev BoundedInterval.joins (K I J: BoundedInterval) : Prop := (I:Set ℝ) ∩ (J:Set ℝ) = ∅
@@ -269,21 +269,21 @@ noncomputable abbrev Partition.join {I J K:BoundedInterval} (P: Partition I) (Q:
 {
   intervals := P.intervals ∪ Q.intervals
   exists_unique x hx := by
-    simp [mem_iff, h.2] at hx; rcases hx with hx | hx
+    simp [mem_iff, h.2] at hx; obtain hx | hx := hx
     . choose L hLP hxL using (P.exists_unique _ hx).exists
       apply ExistsUnique.intro L (by aesop)
-      intro K ⟨hK, hxK⟩; simp at hK; rcases hK with hKP | hKQ
+      intro K ⟨hK, hxK⟩; simp at hK; obtain hKP | hKQ := hK
       . exact (P.exists_unique _ hx).unique ⟨ hKP, hxK ⟩ ⟨ hLP, hxL ⟩
-      replace hxK := (K.subset_iff _).mp (Q.contains _ hKQ) hxK
+      apply (K.subset_iff _).mp (Q.contains _ hKQ) at hxK
       have := congr(x ∈ $(h.1)); simp [hx, hxK] at this
     choose L hLQ hxL using (Q.exists_unique _ hx).exists
     apply ExistsUnique.intro L (by aesop)
-    intro K ⟨hK, hxK⟩; simp at hK; rcases hK with hKP | hKQ
-    . replace hxK := (K.subset_iff _).mp (P.contains _ hKP) hxK
+    intro K ⟨hK, hxK⟩; simp at hK; obtain hKP | hKQ := hK
+    . apply (K.subset_iff _).mp (P.contains _ hKP) at hxK
       have := congr(x ∈ $(h.1)); simp [hx, hxK] at this
     exact (Q.exists_unique x hx).unique ⟨ hKQ, hxK ⟩ ⟨ hLQ, hxL ⟩
   contains L hL := by
-    simp at hL; rcases hL with hLP | hLQ
+    simp at hL; obtain hLP | hLQ := hL
     . apply (P.contains _ hLP).trans; simp [h, subset_iff]
     apply (Q.contains _ hLQ).trans; simp [h, subset_iff]
 }
@@ -298,11 +298,11 @@ noncomputable abbrev Partition.add_empty {I:BoundedInterval} (P: Partition I) : 
     choose J hJP hxJ using (P.exists_unique x hx).exists
     apply ExistsUnique.intro J (by aesop)
     intro K ⟨ hK, hxK ⟩
-    simp at hK; rcases hK with hK | rfl
+    simp at hK; obtain hK | rfl := hK
     . exact (P.exists_unique x hx).unique ⟨ hK, hxK ⟩ ⟨ hJP, hxJ ⟩
     simp [mem_iff] at hxK
   contains L hL := by
-    simp at hL; rcases hL with hL | rfl
+    simp at hL; obtain hL | rfl := hL
     . exact P.contains _ hL
     simp [subset_iff]
 }
@@ -375,7 +375,7 @@ theorem Partition.sum_of_length  (I: BoundedInterval) (P: Partition I) :
       have hKI : K ⊆ I := P.contains K hK
       by_cases hsub : Subsingleton (K:Set ℝ)
       . simp_all [mem_iff]
-        replace hbK := hsub.eq_singleton_of_mem hbK
+        apply hsub.eq_singleton_of_mem at hbK
         have : K = Icc (I.b) (I.b) := by
           sorry
         subst this
@@ -389,11 +389,11 @@ theorem Partition.sum_of_length  (I: BoundedInterval) (P: Partition I) :
       simp only [subset_iff] at hKI'
       have hKb : K.b = I.b := by
         rw [le_antisymm_iff]; split_ands
-        . replace hKI' := csSup_le_csSup bddAbove_Icc (by simp [hsub]) hKI'
+        . apply csSup_le_csSup bddAbove_Icc (by simp [hsub]) at hKI'
           simp_all [csSup_Ioo hsub, csSup_Icc (le_of_lt h)]
         have := K.subset_Icc _ hbK; simp only [mem_iff, Set.mem_Icc] at this; exact this.2
       have hKA : I.a ≤ K.a := by
-        replace hKI' := csInf_le_csInf bddBelow_Icc (by simp [hsub]) hKI'
+        apply csInf_le_csInf bddBelow_Icc (by simp [hsub]) at hKI'
         simp_all [csInf_Icc (le_of_lt h), csInf_Ioo]
       cases I with
       | Ioo _ _ => simp [mem_iff] at hI'
@@ -410,7 +410,7 @@ theorem Partition.sum_of_length  (I: BoundedInterval) (P: Partition I) :
           use Icc c₂ b₂, Ioo a₁ c₂, hK
           simp_all [a,b,subset_iff]
           have : c₂ ∈ Set.Icc c₂ b₁ := by simp; linarith
-          replace this := hKI this; simp at this
+          apply hKI at this; simp at this
           apply join_Ioo_Icc <;> tauto
         | Ioc c₂ b₂ => use Ioc c₂ b₂, Ioc a₁ c₂, hK; simp_all [b]; apply join_Ioc_Ioc <;> order
         | Ico _ _ => simp [mem_iff, subset_iff, a, b] at *; linarith
@@ -418,18 +418,18 @@ theorem Partition.sum_of_length  (I: BoundedInterval) (P: Partition I) :
     choose c hc hK using P.exist_right h hI'
     cases I with
     | Ioo a₁ b₁ =>
-      rcases hK with hK | hK
+      obtain hK | hK := hK
       . simp_all [mem_iff, subset_iff, a, b]; use Ioo c b₁, hK, Ioc a₁ c; apply join_Ioc_Ioo <;> tauto
       simp_all [mem_iff, subset_iff, a, b]
       use Ico c b₁, hK, Ioo a₁ c
-      replace hK := P.contains _ hK; simp [subset_iff] at hK
+      apply P.contains at hK; simp [subset_iff] at hK
       have : c ∈ Set.Ico c b₁ := by simp; linarith
-      replace this := hK this; simp at this
+      apply hK at this; simp at this
       apply join_Ioo_Ico <;> linarith
     | Icc _ _ => simp [mem_iff, subset_iff, a, b] at hI' h; order
     | Ioc _ _ => simp [mem_iff, subset_iff, a, b] at hI' h; order
     | Ico a₁ b₁ =>
-      rcases hK with hK | hK
+      obtain hK | hK := hK
       . simp_all [mem_iff, subset_iff, a, b]; use Ioo c b₁, hK, Icc a₁ c; apply join_Icc_Ioo <;> tauto
       simp_all [mem_iff, subset_iff, a, b]; use Ico c b₁, hK, Ico a₁ c;  apply join_Ico_Ico <;> linarith
   obtain ⟨ K, L, hK, ⟨ h1, h2, h3 ⟩ ⟩ := this
@@ -476,8 +476,8 @@ noncomputable instance Partition.instMax (I: BoundedInterval) : Max (Partition I
     contains L hL := by
       simp at hL
       obtain ⟨ J, hJ, K, hK, rfl ⟩ := hL
-      replace hJ := P.contains _ hJ
-      replace hK := P'.contains _ hK
+      apply P.contains at hJ
+      apply P'.contains at hK
       simp [subset_iff] at hJ hK ⊢
       exact Set.inter_subset_left.trans hJ
     }

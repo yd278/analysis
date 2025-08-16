@@ -146,12 +146,12 @@ theorem Nat.add_eq_zero (a b:Nat) (hab: a + b = 0) : a = 0 ∧ b = 0 := by
   -- This proof is written to follow the structure of the original text.
   by_contra h
   simp only [not_and_or, ←ne_eq] at h
-  rcases h with ha | hb
+  obtain ha | hb := h
   . rw [← isPos_iff] at ha
-    have : (a + b).IsPos := add_pos_left _ ha
+    observe : (a + b).IsPos
     contradiction
   rw [← isPos_iff] at hb
-  have : (a + b).IsPos := add_pos_right _ hb
+  observe : (a + b).IsPos
   contradiction
 
 /-
@@ -280,10 +280,9 @@ theorem Nat.not_lt_self {a: Nat} (h : a < a) : False := by
 
 theorem Nat.lt_of_le_of_lt {a b c : Nat} (hab: a ≤ b) (hbc: b < c) : a < c := by
   rw [lt_iff_add_pos] at *
-  rcases hab with ⟨d, hd⟩
-  rcases hbc with ⟨e, he1, he2⟩
-  use d + e
-  constructor
+  choose d hd using hab
+  choose e he1 he2 using hbc
+  use d + e; split_ands
   . exact add_pos_right d he1
   . rw [he2, hd, add_assoc]
 
@@ -298,11 +297,11 @@ theorem Nat.zero_le (a:Nat) : 0 ≤ a := by
 theorem Nat.trichotomous (a b:Nat) : a < b ∨ a = b ∨ a > b := by
   -- This proof is written to follow the structure of the original text.
   revert a; apply induction
-  . have why : 0 ≤ b := b.zero_le
-    replace why := (le_iff_lt_or_eq _ _).mp why
+  . observe why : 0 ≤ b
+    rw [le_iff_lt_or_eq] at why
     tauto
   intro a ih
-  rcases ih with case1 | case2 | case3
+  obtain case1 | case2 | case3 := ih
   . rw [lt_iff_succ_le] at case1
     rw [le_iff_lt_or_eq] at case1
     tauto

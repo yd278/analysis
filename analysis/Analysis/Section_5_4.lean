@@ -305,7 +305,7 @@ theorem Real.exists_rat_le_and_nat_ge {x:Real} (hx: x.IsPos) :
 /-- Corollary 5.4.13 (Archimedean property ) -/
 theorem Real.le_mul {ε:Real} (hε: ε.IsPos) (x:Real) : ∃ M:ℕ, M > 0 ∧ M * ε > x := by
   -- This proof is written to follow the structure of the original text.
-  rcases trichotomous x with rfl | hx | hx
+  obtain rfl | hx | hx := trichotomous x
   . use 1; simpa [isPos_iff] using hε
   . choose N hN using (exists_rat_le_and_nat_ge (div_of_pos hx hε)).2
     set M := N+1; refine ⟨ M, by positivity, ?_ ⟩
@@ -313,8 +313,7 @@ theorem Real.le_mul {ε:Real} (hε: ε.IsPos) (x:Real) : ∃ M:ℕ, M > 0 ∧ M 
     simp
     convert mul_lt_mul_right hN hε
     rw [isPos_iff] at hε; field_simp
-  use 1
-  rw [isPos_iff] at hε; rw [isNeg_iff] at hx; simp [hx]; linarith
+  use 1; simp_all [isPos_iff, isNeg_iff]; linarith
 
 /-- Proposition 5.4.14 / Exercise 5.4.5 -/
 theorem Real.rat_between {x y:Real} (hxy: x < y) : ∃ q:ℚ, x < (q:Real) ∧ (q:Real) < y := by sorry

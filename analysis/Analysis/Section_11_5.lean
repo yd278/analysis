@@ -77,7 +77,7 @@ theorem integ_of_uniform_cts {I: BoundedInterval} {f:ℝ → ℝ} (hf: UniformCo
       _ = ∑ J ∈ P.intervals, ε * (b-a)/N := by apply Finset.sum_congr rfl; intro J hJ; simp [hlength _ hJ]; ring
       _ = _ := by simp [hcard]; field_simp
   have lower_le_upper : 0 ≤ upper_integral f I - lower_integral f I := by linarith [lower_integral_le_upper hfbound]
-  rcases le_iff_lt_or_eq.mp lower_le_upper with h | h
+  obtain h | h := le_iff_lt_or_eq.mp lower_le_upper
   . set ε := (upper_integral f I - lower_integral f I)/(2*(b-a))
     specialize this ε (by positivity); simp only [ε] at this
     replace : upper_integral f I - lower_integral f I ≤ (upper_integral f I - lower_integral f I)/2 := by
@@ -93,7 +93,7 @@ example : ContinuousOn (fun x:ℝ ↦ 1/x) (Icc 0 1) := by sorry
 
 example : ¬ IntegrableOn (fun x:ℝ ↦ 1/x) (Icc 0 1) := by sorry
 
-open PiecewiseConstantOn in
+open PiecewiseConstantOn ConstantOn in
 /-- Proposition 11.5.3-/
 theorem integ_of_bdd_cts {I: BoundedInterval} {f:ℝ → ℝ} (hbound: BddOn f I)
   (hf: ContinuousOn f I) : IntegrableOn f I := by
@@ -153,7 +153,7 @@ theorem integ_of_bdd_cts {I: BoundedInterval} {f:ℝ → ℝ} (hbound: BddOn f I
       case Ioc _ _ => apply join_Ioc_Ioc <;> linarith
       case Ioo _ _ => apply join_Ioc_Ioo <;> linarith
     have hf' : IntegrableOn f I' := by
-      apply integ_of_cts $ ContinuousOn.mono hf $ subset_trans _  $ (subset_iff _ _).mp $ Ioo_subset I
+      apply integ_of_cts $ ContinuousOn.mono hf $ subset_trans _ $ (subset_iff _ _).mp $ Ioo_subset I
       intro _; simp; intros; split_ands <;> linarith
     choose h hhmin hhconst hhint using lt_of_gt_upper_integral hf'.1 (show upper_integral f I' < integ f I' + ε by linarith [hf'.2])
     classical
@@ -170,10 +170,10 @@ theorem integ_of_bdd_cts {I: BoundedInterval} {f:ℝ → ℝ} (hbound: BddOn f I
     have h'const : PiecewiseConstantOn h' I := by
       rw [of_join hjoin2 _]; split_ands
       . rw [of_join hjoin1 _]; split_ands
-        . exact (ConstantOn.of_const h'const_left).piecewiseConstantOn
+        . apply_rules [piecewiseConstantOn, of_const]
         apply hhconst.congr'
         intro x hx; simp [h', hx, mem_iff]
-      exact (ConstantOn.of_const h'const_right).piecewiseConstantOn
+      apply_rules [piecewiseConstantOn, of_const]
     have h'maj : MajorizesOn h' f I := by
       intro x hx; by_cases hxI': x ∈ I' <;> simp [h', hxI']
       . solve_by_elim
@@ -204,10 +204,10 @@ theorem integ_of_bdd_cts {I: BoundedInterval} {f:ℝ → ℝ} (hbound: BddOn f I
       split_ands
       . rw [of_join hjoin1 _]
         split_ands
-        . exact (ConstantOn.of_const g'const_left).piecewiseConstantOn
+        . apply_rules [piecewiseConstantOn, of_const]
         apply hgconst.congr'
         intro x hx; simp [g', hx, mem_iff]
-      exact (ConstantOn.of_const g'const_right).piecewiseConstantOn
+      apply_rules [piecewiseConstantOn, of_const]
     have g'maj : MinorizesOn g' f I := by
       intro x hx; by_cases hxI': x ∈ I' <;> simp [g', hxI']
       . solve_by_elim

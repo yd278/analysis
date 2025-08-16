@@ -42,7 +42,7 @@ theorem PiecewiseConstantOn.RS_integ_eq_integ_of_mul_deriv
   -- This proof is adapted from the structure of the original text.
   set α' := derivWithin α (Icc a b)
   have hf_integ: IntegrableOn f (Icc a b) := (integ_of_piecewise_const hf).1
-  have hfα'_integ: IntegrableOn (f * α') (Icc a b) := integ_of_mul hf_integ hα'
+  observe hfα'_integ: IntegrableOn (f * α') (Icc a b)
   refine ⟨ hfα'_integ, ?_ ⟩
   choose P hP using hf
   rw [PiecewiseConstantOn.RS_integ_def hP α, hfα'_integ.split P]
@@ -57,9 +57,9 @@ theorem PiecewiseConstantOn.RS_integ_eq_integ_of_mul_deriv
       congr
       have hJsub (hJab : J.a ≤ J.b) : J ⊆ Ioo (J.a - 1) (J.b + 1) :=
         (subset_Icc J).trans (by simp [subset_iff, Set.Icc_subset_Ioo_iff hJab])
-      rcases le_iff_eq_or_lt.mp (length_nonneg J) with hJab | hJab
+      obtain hJab | hJab := le_iff_eq_or_lt.mp (length_nonneg J)
       . rw [(integ_on_subsingleton hJab.symm).2]
-        simp [le_iff_lt_or_eq] at hJab; rcases hJab with hJab | hJab
+        simp [le_iff_lt_or_eq] at hJab; obtain hJab | hJab := hJab
         . rw [α_length_of_empty _ (empty_of_lt hJab)]
         rw [α_length_of_cts ?_ ?_ ?_ (hJsub ?_) hαcont.continuousOn]
         simp [show J.a = J.b by linarith]
@@ -67,12 +67,12 @@ theorem PiecewiseConstantOn.RS_integ_eq_integ_of_mul_deriv
       simp [length] at hJab
       rw [α_length_of_cts ?_ ?_ ?_ (hJsub ?_) hαcont.continuousOn ]
       . have : Icc J.a J.b ⊆ Icc a b := by
-          have := closure_mono ((subset_iff _ _).mp ((Ioo_subset J).trans (P.contains _ hJ)))
+          have := closure_mono $ (subset_iff _ _).mp $ (Ioo_subset J).trans $ P.contains _ hJ
           simpa [closure_Ioo (show J.a ≠ J.b by linarith), subset_iff] using this
         calc
           _ = Chapter11.integ α' (Icc J.a J.b) := (hα'.mono' this).eq (subset_Icc J) rfl rfl
           _ = _ := by
-            convert integ_eq_antideriv_sub (le_of_lt hJab) (hα'.mono' this) _
+            convert integ_eq_antideriv_sub (by order) (hα'.mono' this) _
             apply AntiderivOn.mono ⟨ hα_diff, _ ⟩ this
             intros; solve_by_elim [DifferentiableWithinAt.hasDerivWithinAt]
       all_goals linarith
@@ -96,11 +96,11 @@ theorem RS_integ_eq_integ_of_mul_deriv
     convert ge_iff_le.mp (derivative_of_monotone _ _ hα (hα_diff x hx))
     rw [←mem_closure_iff_clusterPt]
     simp at hx
-    rcases le_iff_lt_or_eq.mp hx.1 with h | h
-    . apply (closure_mono (s := .Ico a x)) _
+    obtain h | h := le_iff_lt_or_eq.mp hx.1
+    . apply closure_mono (s := .Ico a x) _
       . simp [closure_Ico (show a ≠ x by linarith), hx.1]
       intro _ _; simp_all; constructor <;> linarith
-    apply (closure_mono (s := .Ioc x b)) _
+    apply closure_mono (s := .Ioc x b) _
     . simp [closure_Ioc (show x ≠ b by linarith), hx.2]
     intro _ _; simp_all
   have h0 := hf.2
@@ -158,9 +158,9 @@ theorem PiecewiseConstantOn.RS_integ_of_comp {a b:ℝ} (hab: a < b) {φ f:ℝ �
     sorry
   have hfφ_piecewise' : PiecewiseConstantOn (f ∘ φ) (Icc a b) := ⟨ Q, hfφ_piecewise ⟩
   refine ⟨ hfφ_piecewise' , ?_ ⟩
-  rw [RS_integ_def hfφ_piecewise _]
+  rw [RS_integ_def hfφ_piecewise]
   unfold PiecewiseConstantWith.RS_integ
-  rw [Finset.sum_image _, ←Finset.sum_coe_sort (s := P.intervals)]
+  rw [Finset.sum_image, ←Finset.sum_coe_sort (s := P.intervals)]
   . apply Finset.sum_congr rfl
     intro J _
     congr 1
@@ -172,10 +172,10 @@ theorem PiecewiseConstantOn.RS_integ_of_comp {a b:ℝ} (hab: a < b) {φ f:ℝ �
   have h2 : x ∈ φ_inv K := by rwa [hφ_inv' J, hJK, ←hφ_inv' K] at h1
   simp [φ_inv] at h1 h2
   have h3 : φ x ∈ Icc (φ a) (φ b) := by
-    have := P.contains J.val J.property
+    have := P.contains _ J.property
     simp only [subset_iff, mem_iff] at this ⊢
     exact this h1.2
-  ext; apply (P.exists_unique _ h3).unique _ _ <;> simp [J.property, K.property, mem_iff, h1, h2]
+  ext; apply (P.exists_unique _ h3).unique <;> simp [J.property, K.property, mem_iff, h1, h2]
 
 /-- Proposition 11.10.6 (Change of variables formula II)-/
 theorem RS_integ_of_comp {a b:ℝ} (hab: a < b) {φ f: ℝ → ℝ}

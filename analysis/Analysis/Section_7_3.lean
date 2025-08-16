@@ -40,7 +40,7 @@ theorem Series.converges_of_nonneg_iff {s: Series} (h: s.nonneg) : s.converges �
     use M; peel hM with N hM
     exact (le_abs_self _).trans hM
   intro hbound
-  rcases tendsto_of_monotone (partial_of_nonneg h) with hinfin | hfin
+  obtain hinfin | hfin := tendsto_of_monotone (partial_of_nonneg h)
   . choose M hM using hbound
     choose N hN using (hinfin.eventually_gt_atTop M).exists
     linarith [hM N]
@@ -60,7 +60,7 @@ theorem Series.partial_le_sum_of_nonneg {s: Series} (hnon: s.nonneg) (hconv: s.c
 theorem Series.partial_nonneg {s: Series} (hnon: s.nonneg) (N : ℤ) : 0 ≤ s.partial N := by
   simp [Series.partial]
   apply Finset.sum_nonneg
-  intros; apply hnon
+  aesop
 
 theorem Series.sum_of_nonneg {s:Series} (hnon: s.nonneg) : 0 ≤ s.sum := by
   by_cases h: s.converges <;> simp [Series.sum, h]
@@ -129,17 +129,17 @@ theorem Series.cauchy_criterion {s:Series} (hm: s.m = 1) (hs:s.nonneg) (hmono: �
       _ = _ := by simp [pow_succ']; left; ring_nf; norm_cast
     simp; constructor <;> linarith
   constructor
-  . intro ⟨ M, hM ⟩; use 2*M; intro N; rcases lt_or_ge N 0 with hN | hN
+  . intro ⟨ M, hM ⟩; use 2*M; intro N; obtain hN | hN := lt_or_ge N 0
     . simp [T, Series.partial, htm, hN]; convert hM 0; simp [S, Series.partial, hm]
     rw [Int.eq_natCast_toNat.mpr hN]; apply (Lemma_7_3_6 N.toNat).2.trans; gcongr; solve_by_elim
-  intro ⟨ M, hM ⟩; use M; intro K'; rcases lt_or_ge K' 1 with hK' | hK'
+  intro ⟨ M, hM ⟩; use M; intro K'; obtain hK' | hK' := lt_or_ge K' 1
   . simp [S, Series.partial, hm, hK']; convert hM (-1)
   set K := (K'-1).toNat; have hK : K' = K + 1 := by rw [Int.toNat_of_nonneg (by linarith)]; abel
   calc
     _ ≤ S (2 ^ (K+1) - 1) := by
       apply partial_of_nonneg hs; rw [hK]
       generalize K = n; induction' n with n hn; simp
-      simp [pow_succ] at hn ⊢; linarith
+      simp [pow_succ] at *; linarith
     _ ≤ T K := (Lemma_7_3_6 K).1
     _ ≤ M := hM K
 
@@ -153,8 +153,8 @@ theorem Series.converges_qseries (q: ℝ) (hq: q > 0) : (mk' (m := 1) fun n ↦ 
     have hn1 : n ≥ 0 := by positivity
     have hn3 : n.toNat > 0 := by omega
     simp [s, hn, hn1]
-    apply inv_anti₀; positivity
-    apply rpow_le_rpow; positivity; simp; positivity
+    apply_rules [inv_anti₀, rpow_le_rpow] <;> try positivity
+    simp
   rw [cauchy_criterion (by simp [s]) hs hmono]
   have (n:ℕ) : 2^n * s.seq (2^n) = (2^(1-q))^n := by
     have : 1 ≤ (2:ℤ)^n := by norm_cast; exact Nat.one_le_two_pow

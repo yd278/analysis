@@ -45,26 +45,24 @@ structure Sequence where
 
 /-- Sequences can be thought of as functions from ℤ to ℝ. -/
 instance Sequence.instCoeFun : CoeFun Sequence (fun _ ↦ ℤ → ℝ) where
-  coe := fun a ↦ a.seq
+  coe a := a.seq
 
 @[coe]
 abbrev Sequence.ofNatFun (a:ℕ → ℝ) : Sequence :=
  {
     m := 0
-    seq := fun n ↦ if n ≥ 0 then a n.toNat else 0
-    vanish := by intros; simp_all
+    seq n := if n ≥ 0 then a n.toNat else 0
+    vanish := by simp_all
  }
 
 /-- Functions from ℕ to ℝ can be thought of as sequences. -/
 instance Sequence.instCoe : Coe (ℕ → ℝ) Sequence where
   coe := ofNatFun
 
-
 abbrev Sequence.mk' (m:ℤ) (a: { n // n ≥ m } → ℝ) : Sequence where
   m := m
-  seq := fun n ↦ if h : n ≥ m then a ⟨n, h⟩ else 0
-  vanish := by intros; simp_all
-
+  seq n := if h : n ≥ m then a ⟨n, h⟩ else 0
+  vanish := by simp_all
 
 lemma Sequence.eval_mk {n m:ℤ} (a: { n // n ≥ m } → ℝ) (h: n ≥ m) :
     (Sequence.mk' m a) n = a ⟨ n, h ⟩ := by simp [seq, h]
@@ -150,17 +148,17 @@ lemma Sequence.IsCauchy.mk {n₀:ℤ} (a: {n // n ≥ n₀} → ℝ) :
     simp only [Real.Steady, show max n₀ N = N by omega] at h'
     specialize h' j ?_ k ?_ <;> try omega
     simp_all [show n₀ ≤ j by omega, hj, show n₀ ≤ k by omega]
-  rintro ⟨ N, _, _ ⟩; exact ⟨ max n₀ N, by simp, by intro _ _ _ _; simp_all ⟩
+  rintro ⟨ N, _, _ ⟩; exact ⟨ max n₀ N, by simp, by intro _ _ _ _; aesop ⟩
 
 @[coe]
 abbrev Sequence.ofChapter5Sequence (a: Chapter5.Sequence) : Sequence :=
 {
   m := a.n₀
-  seq := fun n ↦ (a n:ℝ)
-  vanish := by intro n hn; simp [a.vanish n hn]
+  seq n := a n
+  vanish n hn := by simp [a.vanish n hn]
 }
 
-instance Chapter5.Sequence.inst_coe_sequence : Coe Chapter5.Sequence Sequence  where
+instance Chapter5.Sequence.inst_coe_sequence : Coe Chapter5.Sequence Sequence where
   coe := Sequence.ofChapter5Sequence
 
 @[simp]
@@ -274,8 +272,8 @@ theorem Sequence.tendsTo_unique (a:Sequence) {L L':ℝ} (h:L ≠ L') :
   specialize hL ε hε; choose N hN using hL
   specialize hL' ε hε; choose M hM using hL'
   set n := max N M
-  specialize hN n (le_max_left N M)
-  specialize hM n (le_max_right N M)
+  specialize hN n (by omega)
+  specialize hM n (by omega)
   have : |L-L'| ≤ 2 * |L-L'|/3 := calc
     _ = dist L L' := by rw [Real.dist_eq]
     _ ≤ dist L (a.seq n) + dist (a.seq n) L' := dist_triangle _ _ _
@@ -312,7 +310,7 @@ a.TendsTo L ↔ a.Convergent ∧ lim a = L := by
   . intro h; by_contra! eq
     have : a.Convergent := by rw [convergent_def]; use L
     replace eq := a.tendsTo_unique (eq this)
-    replace := lim_def this
+    apply lim_def at this
     tauto
   intro ⟨ h, rfl ⟩; convert lim_def h
 
@@ -389,8 +387,8 @@ example : ¬ ((fun (n:ℕ) ↦ (n+1:ℝ)):Sequence).Convergent := by sorry
 instance Sequence.inst_add : Add Sequence where
   add a b := {
     m := max a.m b.m
-    seq := fun (n:ℤ) ↦ if n ≥ max a.m b.m then a n + b n else 0
-    vanish := by intro n hn; rw [lt_iff_not_ge] at hn; simp [hn]
+    seq n := if n ≥ max a.m b.m then a n + b n else 0
+    vanish n hn := by rw [lt_iff_not_ge] at hn; simp [hn]
   }
 
 theorem Sequence.add_coe (a b: ℕ → ℝ) : (a:Sequence) + (b:Sequence) = (fun n ↦ a n + b n) := by
@@ -410,8 +408,8 @@ theorem Sequence.lim_add {a b:Sequence} (ha: a.Convergent) (hb: b.Convergent) :
 instance Sequence.inst_mul : Mul Sequence where
   mul a b := {
     m := max a.m b.m
-    seq := fun (n:ℤ) ↦ if n ≥ max a.m b.m then a n * b n else 0
-    vanish := by intro n hn; rw [lt_iff_not_ge] at hn; simp [hn]
+    seq n := if n ≥ max a.m b.m then a n * b n else 0
+    vanish n hn := by rw [lt_iff_not_ge] at hn; simp [hn]
   }
 
 theorem Sequence.mul_coe (a b: ℕ → ℝ) : (a:Sequence) * (b:Sequence) = (fun n ↦ a n * b n) := by
@@ -432,8 +430,8 @@ theorem Sequence.lim_mul {a b:Sequence} (ha: a.Convergent) (hb: b.Convergent) :
 instance Sequence.inst_smul : SMul ℝ Sequence where
   smul c a := {
     m := a.m
-    seq := fun (n:ℤ) ↦ c * a n
-    vanish := by intro n hn; simp [a.vanish n hn]
+    seq n := c * a n
+    vanish n hn := by simp [a.vanish n hn]
   }
 
 theorem Sequence.smul_coe (c:ℝ) (a:ℕ → ℝ) : (c • (a:Sequence)) = (fun n ↦ c * a n) := by
@@ -453,8 +451,8 @@ theorem Sequence.lim_smul (c:ℝ) {a:Sequence} (ha: a.Convergent) :
 instance Sequence.inst_sub : Sub Sequence where
   sub a b := {
     m := max a.m b.m
-    seq := fun (n:ℤ) ↦ if n ≥ max a.m b.m then a n - b n else 0
-    vanish := by intro n hn; rw [lt_iff_not_ge] at hn; simp [hn]
+    seq n := if n ≥ max a.m b.m then a n - b n else 0
+    vanish n hn := by rw [lt_iff_not_ge] at hn; simp [hn]
   }
 
 theorem Sequence.sub_coe (a b: ℕ → ℝ) : (a:Sequence) - (b:Sequence) = (fun n ↦ a n - b n) := by
@@ -474,8 +472,8 @@ theorem Sequence.LIM_sub {a b:Sequence} (ha: a.Convergent) (hb: b.Convergent) :
 noncomputable instance Sequence.inst_inv : Inv Sequence where
   inv a := {
     m := a.m
-    seq := fun (n:ℤ) ↦ (a n)⁻¹
-    vanish := by intro n hn; simp [a.vanish n hn]
+    seq n := (a n)⁻¹
+    vanish n hn := by simp [a.vanish n hn]
   }
 
 theorem Sequence.inv_coe (a: ℕ → ℝ) : (a:Sequence)⁻¹ = (fun n ↦ (a n)⁻¹) := by
@@ -496,8 +494,8 @@ theorem Sequence.lim_inv {a:Sequence} (ha: a.Convergent) (hnon: lim a ≠ 0) :
 noncomputable instance Sequence.inst_div : Div Sequence where
   div a b := {
     m := max a.m b.m
-    seq := fun (n:ℤ) ↦ if n ≥ max a.m b.m then a n / b n else 0
-    vanish := by intro n hn; rw [lt_iff_not_ge] at hn; simp [hn]
+    seq n := if n ≥ max a.m b.m then a n / b n else 0
+    vanish n hn := by rw [lt_iff_not_ge] at hn; simp [hn]
   }
 
 theorem Sequence.div_coe (a b: ℕ → ℝ) : (a:Sequence) / (b:Sequence) = (fun n ↦ a n / b n) := by
@@ -517,8 +515,8 @@ theorem Sequence.lim_div {a b:Sequence} (ha: a.Convergent) (hb: b.Convergent) (h
 instance Sequence.inst_max : Max Sequence where
   max a b := {
     m := max a.m b.m
-    seq := fun (n:ℤ) ↦ if n ≥ max a.m b.m then max (a n) (b n) else 0
-    vanish := by intro n hn; rw [lt_iff_not_ge] at hn; simp [hn]
+    seq n := if n ≥ max a.m b.m then max (a n) (b n) else 0
+    vanish n hn := by rw [lt_iff_not_ge] at hn; simp [hn]
   }
 
 theorem Sequence.max_coe (a b: ℕ → ℝ) : (a:Sequence) ⊔ (b:Sequence) = (fun n ↦ max (a n) (b n)) := by
@@ -538,8 +536,8 @@ theorem Sequence.lim_max {a b:Sequence} (ha: a.Convergent) (hb: b.Convergent) :
 instance Sequence.inst_min : Min Sequence where
   min a b := {
     m := max a.m b.m
-    seq := fun (n:ℤ) ↦ if n ≥ max a.m b.m then min (a n) (b n) else 0
-    vanish := by intro n hn; rw [lt_iff_not_ge] at hn; simp [hn]
+    seq n := if n ≥ max a.m b.m then min (a n) (b n) else 0
+    vanish n hn := by rw [lt_iff_not_ge] at hn; simp [hn]
   }
 
 theorem Sequence.min_coe (a b: ℕ → ℝ) : (a:Sequence) ⊓ (b:Sequence) = (fun n ↦ min (a n) (b n)) := by

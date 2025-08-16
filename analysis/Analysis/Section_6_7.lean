@@ -32,7 +32,7 @@ lemma ratPow_continuous {x α:ℝ} (hx: x > 0) {q: ℕ → ℚ}
  ((fun n ↦ x^(q n:ℝ)):Sequence).Convergent := by
   -- This proof is rearranged slightly from the original text.
   choose M hM hbound using bounded_of_convergent ⟨ α, hq ⟩
-  rcases lt_trichotomy x 1 with h | rfl | h
+  obtain h | rfl | h := lt_trichotomy x 1
   . sorry
   . simp; exact ⟨ 1, lim_of_const 1 ⟩
   have h': 1 ≤ x := by linarith
@@ -52,14 +52,14 @@ lemma ratPow_continuous {x α:ℝ} (hx: x > 0) {q: ℕ → ℚ}
   lift n to ℕ using (by linarith)
   lift m to ℕ using (by linarith)
   simp at hn hm hq ⊢
-  rcases le_or_gt (q m) (q n) with hqq | hqq
+  obtain hqq | hqq := le_or_gt (q m) (q n)
   . replace : x^(q m:ℝ) ≤ x^(q n:ℝ) := by rw [rpow_le_rpow_left_iff h]; norm_cast
     rw [abs_of_nonneg (by linarith)]
     calc
       _ = x^(q m:ℝ) * (x^(q n - q m:ℝ) - 1) := by ring_nf; rw [←rpow_add (by linarith)]; ring_nf
       _ ≤ x^M * (x^(1/(K+1:ℝ)) - 1) := by
         gcongr <;> try exact h'
-        . rw [sub_nonneg]; apply one_le_rpow h' (by norm_cast; linarith)
+        . rw [sub_nonneg]; apply one_le_rpow h'; norm_cast; linarith
         . specialize hbound m; simp_all [abs_le']
         rw [abs_le'] at hq; convert hq.1 using 1; field_simp
       _ ≤ x^M * (ε * x^(-M)) := by gcongr; simp_all [abs_le']
@@ -67,14 +67,14 @@ lemma ratPow_continuous {x α:ℝ} (hx: x > 0) {q: ℕ → ℚ}
   replace : x^(q n:ℝ) ≤ x^(q m:ℝ) := by rw [rpow_le_rpow_left_iff h]; norm_cast; linarith
   rw [abs_of_nonpos (by linarith)]
   calc
-    _ = x^(q n:ℝ) * (x^(q m - q n:ℝ) - 1) := by ring_nf; rw [←rpow_add (by linarith)]; ring_nf
+    _ = x^(q n:ℝ) * (x^(q m - q n:ℝ) - 1) := by ring_nf; rw [←rpow_add]; ring_nf; positivity
     _ ≤ x^M * (x^(1/(K+1:ℝ)) - 1) := by
       gcongr <;> try exact h'
-      . rw [sub_nonneg]; apply one_le_rpow h' (by norm_cast; linarith)
+      . rw [sub_nonneg]; apply one_le_rpow h'; norm_cast; linarith
       . specialize hbound n; simp_all [abs_le']
       rw [abs_le'] at hq; convert hq.2 using 1 <;> simp
     _ ≤ x^M * (ε * x^(-M)) := by gcongr; simp_all [abs_le']
-    _ = ε := by rw [mul_comm, mul_assoc, ←rpow_add (by linarith)]; simp
+    _ = ε := by rw [mul_comm, mul_assoc, ←rpow_add]; simp; positivity
 
 
 lemma ratPow_lim_uniq {x α:ℝ} (hx: x > 0) {q q': ℕ → ℚ}
@@ -112,7 +112,7 @@ lemma ratPow_lim_uniq {x α:ℝ} (hx: x > 0) {q q': ℕ → ℚ}
   simp [hn, dist_eq, abs_le', K, -Nat.cast_max] at h3 h4 ⊢
   specialize hr n (by simp [hn])
   simp [Close, hn, abs_le'] at hr
-  rcases lt_trichotomy x 1 with h | rfl | h
+  obtain h | rfl | h := lt_trichotomy x 1
   . sorry
   . simp; linarith
   have h5 : x ^ (r n.toNat:ℝ) ≤ x^(K + 1:ℝ)⁻¹ := by gcongr; linarith; simp_all [r]
@@ -124,7 +124,7 @@ lemma ratPow_lim_uniq {x α:ℝ} (hx: x > 0) {q q': ℕ → ℚ}
 
 theorem Real.eq_lim_of_rat (α:ℝ) : ∃ q: ℕ → ℚ, ((fun n ↦ (q n:ℝ)):Sequence).TendsTo α := by
   choose q hcauchy hLIM using (Chapter5.Real.equivR.symm α).eq_lim; use q
-  replace hcauchy := lim_eq_LIM hcauchy
+  apply lim_eq_LIM at hcauchy
   simp only [←hLIM, Equiv.apply_symm_apply] at hcauchy
   convert hcauchy; aesop
 
@@ -135,7 +135,6 @@ lemma Real.rpow_eq_lim_ratPow {x α:ℝ} (hx: x > 0) {q: ℕ → ℚ}
  (hq: ((fun n ↦ (q n:ℝ)):Sequence).TendsTo α) :
  rpow x α = lim ((fun n ↦ x^(q n:ℝ)):Sequence) :=
    ratPow_lim_uniq hx (eq_lim_of_rat α).choose_spec hq
-
 
 lemma Real.ratPow_tendsto_rpow {x α:ℝ} (hx: x > 0) {q: ℕ → ℚ}
  (hq: ((fun n ↦ (q n:ℝ)):Sequence).TendsTo α) :
@@ -159,11 +158,11 @@ theorem Real.ratPow_add {x:ℝ} (hx: x > 0) (q r:ℝ) : rpow x (q+r) = rpow x q 
   have hq'r' := tendsTo_add hq' hr'
   rw [add_coe] at hq'r'
   convert_to ((fun n ↦ ((q' n + r' n:ℚ):ℝ)):Sequence).TendsTo (q + r) at hq'r'
-  . rcongr _ n; simp
+  . aesop
   have h1 := ratPow_continuous hx hq'
   have h2 := ratPow_continuous hx hr'
   rw [rpow_eq_lim_ratPow hx hq', rpow_eq_lim_ratPow hx hr', rpow_eq_lim_ratPow hx hq'r', ←(lim_mul h1 h2).2, mul_coe]
-  rcongr n; rw [←rpow_add (by linarith)]; simp
+  rcongr n; rw [←rpow_add]; simp; linarith
 
 
 /-- Proposition 6.7.3(b) / Exercise 6.7.1 -/

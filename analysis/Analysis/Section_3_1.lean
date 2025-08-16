@@ -166,7 +166,7 @@ lemma SetTheory.Set.nonempty_def {X:Set} (h: X ≠ ∅) : ∃ x, x ∈ X := by
   -- This proof is written to follow the structure of the original text.
   by_contra! this
   have claim (x:Object) : x ∈ X ↔ x ∈ (∅:Set) := by simp [this, not_mem_empty]
-  replace claim := ext claim
+  apply ext at claim
   contradiction
 
 theorem SetTheory.Set.nonempty_of_inhabited {X:Set} {x:Object} (h:x ∈ X) : X ≠ ∅ := by
@@ -280,11 +280,10 @@ theorem SetTheory.Set.union_assoc (A B C:Set) : (A ∪ B) ∪ C = A ∪ (B ∪ C
   -- this proof is written to follow the structure of the original text.
   ext x
   constructor
-  . intro hx
-    rw [mem_union] at hx
-    rcases hx with case1 | case2
+  . intro hx; rw [mem_union] at hx
+    obtain case1 | case2 := hx
     . rw [mem_union] at case1
-      rcases case1 with case1a | case1b
+      obtain case1a | case1b := case1
       . rw [mem_union]; tauto
       have : x ∈ B ∪ C := by rw [mem_union]; tauto
       rw [mem_union]; tauto
@@ -358,8 +357,8 @@ theorem SetTheory.Set.subset_trans {A B C:Set} (hAB:A ⊆ B) (hBC:B ⊆ C) : A �
   rw [subset_def]
   intro x hx
   rw [subset_def] at hAB
-  replace hx := hAB x hx
-  replace hx := hBC x hx
+  apply hAB x at hx
+  apply hBC x at hx
   assumption
 
 /-- Proposition 3.1.17 (Partial ordering by set inclusion) -/
