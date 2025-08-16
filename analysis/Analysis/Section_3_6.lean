@@ -168,7 +168,7 @@ theorem SetTheory.Set.Fin_card {n:ℕ}: (Fin n).card = n := has_card_to_card _ _
 theorem SetTheory.Set.Fin_finite {n:ℕ}: (Fin n).finite := ⟨n, card_fin_eq n⟩
 
 theorem SetTheory.Set.EquivCard_to_has_card_eq {X Y:Set} (n: ℕ) (h: X ≈ Y): X.has_card n ↔ Y.has_card n := by
-  obtain ⟨f, hf⟩ := h; let e := Equiv.ofBijective f hf
+  choose f hf using h; let e := Equiv.ofBijective f hf
   constructor
   . intro hX; rw [has_card_iff] at *; choose g hg using hX
     use e.symm.trans (.ofBijective _ hg); apply Equiv.bijective

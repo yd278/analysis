@@ -139,10 +139,10 @@ example : Example_6_4_9.liminf = ⊤ := by sorry
 theorem Sequence.gt_limsup_bounds {a:Sequence} {x:EReal} (h: x > a.limsup) :
     ∃ N ≥ a.m, ∀ n ≥ N, a n < x := by
   -- This proof is written to follow the structure of the original text.
-  unfold Sequence.limsup at h
+  unfold limsup at h
   simp [sInf_lt_iff] at h
   obtain ⟨aN, ⟨ N, ⟨ hN, haN ⟩ ⟩, ha ⟩ := h; use N
-  simp [hN]; simp [haN, Sequence.upperseq] at ha; intro n hn
+  simp [hN]; simp [haN, upperseq] at ha; intro n hn
   have hn' : n ≥ (a.from N).m := by simp [hN, hn]
   convert lt_of_le_of_lt ((a.from N).le_sup hn') ha using 1
   simp [hn, hN.trans hn]
@@ -159,7 +159,7 @@ theorem Sequence.lt_limsup_bounds {a:Sequence} {x:EReal} (h: x < a.limsup) {N:�
   have hx : x < a.upperseq N := by
     apply lt_of_lt_of_le h (sInf_le _)
     simp; use N
-  choose n hn hxn _ using Sequence.exists_between_lt_sup hx
+  choose n hn hxn _ using exists_between_lt_sup hx
   simp [Sequence.from, hN] at hn; use n, hn
   convert gt_iff_lt.mpr hxn using 1
   simp [hn, hN.trans hn]
@@ -280,7 +280,7 @@ theorem Sequence.Cauchy_iff_convergent (a:Sequence) :
   -- This proof is written to follow the structure of the original text.
   refine ⟨ ?_, IsCauchy.convergent ⟩
   intro h
-  obtain ⟨ ⟨ L_plus, hL_plus ⟩, ⟨ L_minus, hL_minus ⟩ ⟩ :=
+  have ⟨ ⟨ L_plus, hL_plus ⟩, ⟨ L_minus, hL_minus ⟩ ⟩ :=
     finite_limsup_liminf_of_bounded (bounded_of_cauchy h)
   use L_minus
   simp [tendsTo_iff_eq_limsup_liminf, hL_minus, hL_plus]

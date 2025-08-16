@@ -33,7 +33,7 @@ theorem Russells_paradox : ¬ axiom_of_universal_specification := by
   -- This proof is written to follow the structure of the original text.
   intro h
   set P : Object → Prop := fun x ↦ ∃ X:Set, x = X ∧ x ∉ X
-  obtain ⟨Ω, hΩ⟩ := h P
+  choose Ω hΩ using h P
   by_cases h: (Ω:Object) ∈ Ω
   . have : P (Ω:Object) := (hΩ _).mp h
     obtain ⟨ Ω', ⟨ hΩ1, hΩ2⟩ ⟩ := this

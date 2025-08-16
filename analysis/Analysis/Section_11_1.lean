@@ -270,13 +270,13 @@ noncomputable abbrev Partition.join {I J K:BoundedInterval} (P: Partition I) (Q:
   intervals := P.intervals ∪ Q.intervals
   exists_unique x hx := by
     simp [mem_iff, h.2] at hx; rcases hx with hx | hx
-    . obtain ⟨ L, hLP, hxL ⟩ := (P.exists_unique _ hx).exists
+    . choose L hLP hxL using (P.exists_unique _ hx).exists
       apply ExistsUnique.intro L (by aesop)
       intro K ⟨hK, hxK⟩; simp at hK; rcases hK with hKP | hKQ
       . exact (P.exists_unique _ hx).unique ⟨ hKP, hxK ⟩ ⟨ hLP, hxL ⟩
       replace hxK := (K.subset_iff _).mp (Q.contains _ hKQ) hxK
       have := congr(x ∈ $(h.1)); simp [hx, hxK] at this
-    obtain ⟨ L, hLQ, hxL ⟩ := (Q.exists_unique _ hx).exists
+    choose L hLQ hxL using (Q.exists_unique _ hx).exists
     apply ExistsUnique.intro L (by aesop)
     intro K ⟨hK, hxK⟩; simp at hK; rcases hK with hKP | hKQ
     . replace hxK := (K.subset_iff _).mp (P.contains _ hKP) hxK
@@ -295,7 +295,7 @@ theorem Partition.intervals_of_join {I J K:BoundedInterval} {h:K.joins I J} (P: 
 noncomputable abbrev Partition.add_empty {I:BoundedInterval} (P: Partition I) : Partition I := {
   intervals := P.intervals ∪ {∅}
   exists_unique x hx := by
-    obtain ⟨ J, hJP, hxJ ⟩ := (P.exists_unique x hx).exists
+    choose J hJP hxJ using (P.exists_unique x hx).exists
     apply ExistsUnique.intro J (by aesop)
     intro K ⟨ hK, hxK ⟩
     simp at hK; rcases hK with hK | rfl
@@ -311,7 +311,7 @@ open Classical in
 noncomputable abbrev Partition.remove_empty {I:BoundedInterval} (P: Partition I) : Partition I := {
   intervals := P.intervals.filter (fun J ↦ (J:Set ℝ).Nonempty)
   exists_unique x hx := by
-    obtain ⟨ J, hJP, hxJ ⟩ := (P.exists_unique x hx).exists
+    choose J hJP hxJ using (P.exists_unique x hx).exists
     apply ExistsUnique.intro J (by simp_all [mem_iff]; exact Set.nonempty_of_mem hxJ )
     intro K ⟨ hK, hxK ⟩; simp at hK
     exact (P.exists_unique x hx).unique ⟨ hK.1, hxK ⟩ ⟨ hJP, hxJ ⟩
@@ -371,7 +371,7 @@ theorem Partition.sum_of_length  (I: BoundedInterval) (P: Partition I) :
   simp [length_of_subsingleton, length, -Set.subsingleton_coe] at h
   have : ∃ K L : BoundedInterval, K ∈ P ∧ I.joins L K := by
     by_cases hI' : I.b ∈ I
-    . obtain ⟨ K, hK, hbK ⟩ := (P.exists_unique I.b hI').exists
+    . choose K hK hbK using (P.exists_unique I.b hI').exists
       have hKI : K ⊆ I := P.contains K hK
       by_cases hsub : Subsingleton (K:Set ℝ)
       . simp_all [mem_iff]
@@ -415,7 +415,7 @@ theorem Partition.sum_of_length  (I: BoundedInterval) (P: Partition I) :
         | Ioc c₂ b₂ => use Ioc c₂ b₂, Ioc a₁ c₂, hK; simp_all [b]; apply join_Ioc_Ioc <;> order
         | Ico _ _ => simp [mem_iff, subset_iff, a, b] at *; linarith
       | Ico _ _ => simp [mem_iff] at hI'
-    obtain ⟨ c, hc, hK ⟩ := P.exist_right h hI'
+    choose c hc hK using P.exist_right h hI'
     cases I with
     | Ioo a₁ b₁ =>
       rcases hK with hK | hK
@@ -435,7 +435,7 @@ theorem Partition.sum_of_length  (I: BoundedInterval) (P: Partition I) :
   obtain ⟨ K, L, hK, ⟨ h1, h2, h3 ⟩ ⟩ := this
   have : ∃ P' : Partition L, P'.intervals = P.intervals.erase K := by
     sorry
-  obtain ⟨ P', hP' ⟩ := this
+  choose P' hP' using this
   rw [h3, ←Finset.add_sum_erase _ _ hK, ←hP', add_comm]; congr
   apply hn; simp [hP', Finset.card_erase_of_mem hK, hcard]
 

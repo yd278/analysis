@@ -30,7 +30,7 @@ theorem integ_of_monotone {a b:ℝ} {f:ℝ → ℝ} (hf: MonotoneOn f (Icc a b))
   set I := Icc a b
   have hab' : a ≤ b := by linarith
   have (ε:ℝ) (hε: 0 < ε) : upper_integral f I - lower_integral f I ≤ ((f b - f a) * (b-a)) *ε := by
-    obtain ⟨ N, hN ⟩ := exists_nat_gt (1/ε)
+    choose N hN using exists_nat_gt (1/ε)
     have hNpos : 0 < N := by rify; linarith [show 0 < 1/ε by positivity]
     set δ := (b-a)/N
     have hδpos : 0 < δ := by positivity

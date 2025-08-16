@@ -36,15 +36,15 @@ theorem integ_of_uniform_cts {I: BoundedInterval} {f:ℝ → ℝ} (hf: UniformCo
   have hsing' : 0 < b-a := by linarith
   have (ε:ℝ) (hε: ε > 0) : upper_integral f I - lower_integral f I ≤ ε * (b-a) := by
     rw [UniformContinuousOn.iff] at hf
-    obtain ⟨ δ, hδ, hf ⟩ := hf ε hε; simp [Real.Close, Real.dist_eq] at hf
-    obtain ⟨ N, hN ⟩ := exists_nat_gt ((b-a)/δ)
+    choose δ hδ hf using hf ε hε; simp [Real.Close, Real.dist_eq] at hf
+    choose N hN using exists_nat_gt ((b-a)/δ)
     have hNpos : 0 < N := by
       have : 0 < (b-a)/δ := by positivity
       rify; order
     have hN' : (b-a)/N < δ := by rwa [div_lt_comm₀ (by positivity) (by positivity)]
     have : ∃ P: Partition I, P.intervals.card = N ∧ ∀ J ∈ P.intervals, |J|ₗ = (b-a) / N := by
       sorry
-    obtain ⟨ P, hcard, hlength ⟩ := this
+    choose P hcard hlength using this
     calc
       _ ≤ ∑ J ∈ P.intervals, (sSup (f '' J) - sInf (f '' J)) * |J|ₗ := by
         have h1 := upper_integ_le_upper_sum hfbound P
@@ -155,7 +155,7 @@ theorem integ_of_bdd_cts {I: BoundedInterval} {f:ℝ → ℝ} (hbound: BddOn f I
     have hf' : IntegrableOn f I' := by
       apply integ_of_cts $ ContinuousOn.mono hf $ subset_trans _  $ (subset_iff _ _).mp $ Ioo_subset I
       intro _; simp; intros; and_intros <;> linarith
-    obtain ⟨ h, hhmin, hhconst, hhint ⟩ := lt_of_gt_upper_integral hf'.1 (show upper_integral f I' < integ f I' + ε by linarith [hf'.2])
+    choose h hhmin hhconst hhint using lt_of_gt_upper_integral hf'.1 (show upper_integral f I' < integ f I' + ε by linarith [hf'.2])
     classical
     set h' : ℝ → ℝ := fun x ↦ if x ∈ I' then h x else M
     have h'const_left (x:ℝ) (hx: x ∈ Ileft) : h' x = M := by
@@ -188,7 +188,7 @@ theorem integ_of_bdd_cts {I: BoundedInterval} {f:ℝ → ℝ} (hbound: BddOn f I
     have h'integ5 : PiecewiseConstantOn.integ h' I' = PiecewiseConstantOn.integ h I' := by
       apply PiecewiseConstantOn.integ_congr
       intro x hx; simp [h', hx, mem_iff]
-    obtain ⟨ g, hgmin, hgconst, hgint ⟩ := gt_of_lt_lower_integral hf'.1 (show integ f I' - ε < lower_integral f I' by linarith [hf'.2])
+    choose g hgmin hgconst hgint using gt_of_lt_lower_integral hf'.1 (show integ f I' - ε < lower_integral f I' by linarith [hf'.2])
     set g' : ℝ → ℝ := fun x ↦ if x ∈ I' then g x else -M
     have g'const_left (x:ℝ) (hx: x ∈ Ileft) : g' x = -M := by
       simp [g', hx, mem_iff]; intro hx'
