@@ -40,12 +40,12 @@ theorem Series.converges_of_permute_nonneg {a:ℕ → ℝ} (ha: (a:Series).nonne
       symm; apply sum_of_converges; simp [convergesTo, L]
       apply tendsto_atTop_isLUB hSmono (isLUB_csSup _ _)
       . use (S 0); aesop
-      obtain ⟨ Q, hQ ⟩ := hSBound; use Q; simp [upperBounds, hQ]
+      choose Q hQ using hSBound; use Q; simp [upperBounds, hQ]
     have Tsum : L' = (af:Series).sum := by
       symm; apply sum_of_converges; simp [convergesTo, L']
       apply tendsto_atTop_isLUB hTmono (isLUB_csSup _ _)
       . use (T 0); aesop
-      obtain ⟨ Q, hQ ⟩ := this.1; use Q; simp [upperBounds, hQ]
+      choose Q hQ using this.1; use Q; simp [upperBounds, hQ]
     simp [←Ssum, ←Tsum, this.2, converges_of_nonneg_iff haf]
     convert this.1
   have hTL (M:ℤ) : T M ≤ L := by
@@ -59,7 +59,7 @@ theorem Series.converges_of_permute_nonneg {a:ℕ → ℝ} (ha: (a:Series).nonne
     have hN : ∃ N, ∀ m ∈ Y, f m ≤ N := by
       use (Y.image f).sup id; intro m hm
       apply Finset.le_sup (f := id); simp; use m
-    obtain ⟨ N, hN ⟩ := hN
+    choose N hN using hN
     calc
       _ = ∑ m ∈ Y, af m := by simp [T, Series.partial, af]; exact sum_eq_sum af hM
       _ = ∑ n ∈ f '' Y, a n := by symm; convert Finset.sum_image (by solve_by_elim [hf.injective]); simp
@@ -81,11 +81,11 @@ theorem Series.converges_of_permute_nonneg {a:ℕ → ℝ} (ha: (a:Series).nonne
     set X := Finset.Iic N.toNat
     have hM : ∃ M, ∀ n ∈ X, ∃ m, f m = n ∧ m ≤ M := by
       use (X.preimage f (Set.injOn_of_injective hf.1)).sup id
-      intro n hn; obtain ⟨ m, hm ⟩ := hf.2 n
+      intro n hn; choose m hm using hf.2 n
       refine ⟨ _, hm, ?_ ⟩
       apply Finset.le_sup (f := id)
       simp [Finset.mem_preimage, hm, hn]
-    obtain ⟨ M, hM ⟩ := hM
+    choose M hM using hM
     have sum_eq_sum (b:ℕ → ℝ) {N:ℤ} (hN: N ≥ 0)
       : ∑ n ∈ .Icc 0 N, (if 0 ≤ n then b n.toNat else 0) = ∑ n ∈ .Iic N.toNat, b n := by
       convert Finset.sum_image (g := Int.ofNat) (by simp)
@@ -139,20 +139,20 @@ theorem Series.absConverges_of_permute {a:ℕ → ℝ} (ha : (a:Series).absConve
   simp [convergesTo, LinearOrderedAddCommGroup.tendsto_nhds]
   intro ε hε
   rw [converges_iff_tail_decay] at ha
-  obtain ⟨ N₁, hN₁, ha ⟩ := ha _ (half_pos hε); simp at hN₁
+  choose N₁ hN₁ ha using ha _ (half_pos hε); simp at hN₁
   have : ∃ N ≥ N₁, |(a:Series).partial N - L'| < ε/2 := by
     replace hconv := convergesTo_sum hconv
     simp [convergesTo, LinearOrderedAddCommGroup.tendsto_nhds] at hconv
-    obtain ⟨ N, hN ⟩ := hconv _ (half_pos hε)
+    choose N hN using hconv _ (half_pos hε)
     use max N N₁, (by omega); convert hN _ (le_max_left _ _)
-  obtain ⟨ N, hN, hN2 ⟩ := this
+  choose N hN hN2 using this
   have hNpos : N ≥ 0 := by linarith
   let finv : ℕ → ℕ := Function.invFun f
   have : ∃ M, ∀ n ≤ N.toNat, finv n ≤ M := by
     use ((Finset.Iic (N.toNat)).image finv).sup id
     intro n hn
     apply Finset.le_sup (f := id); simp [Finset.mem_image]; use n, hn; rfl
-  obtain ⟨ M, hM ⟩ := this; use M; intro M' hM'
+  choose M hM using this; use M; intro M' hM'
   have hM'_pos : M' ≥ 0 := by linarith
   have why : (Finset.Iic M'.toNat).image f ⊇ .Iic N.toNat := by
     sorry
@@ -165,7 +165,7 @@ theorem Series.absConverges_of_permute {a:ℕ → ℝ} (ha : (a:Series).absConve
       . simp [X, why]
       . infer_instance
       rw [Finset.disjoint_right]; intro n hn; simp only [X, Finset.mem_sdiff] at hn; tauto
-  obtain ⟨ q', hq ⟩ := X.bddAbove
+  choose q' hq using X.bddAbove
   set q := max q' N.toNat
   have why2 : X ⊆ Finset.Icc (N.toNat+1) q := by sorry
   have claim2 : |∑ n ∈ X, a n| ≤ ε/2 := calc
@@ -173,7 +173,7 @@ theorem Series.absConverges_of_permute {a:ℕ → ℝ} (ha : (a:Series).absConve
     _ ≤ ∑ n ∈ .Icc (N.toNat+1) q, |a n| := by
       exact Finset.sum_le_sum_of_subset_of_nonneg why2 (by simp)
     _ ≤ ε/2 := by
-      convert ha (N.toNat+1) (by omega) q (by omega)
+      convert ha (N.toNat+1) _ q _ <;> try omega
       simp [hNpos]; rw [abs_of_nonneg (by positivity)]; symm
       convert Finset.sum_image (g := fun (n:ℕ) ↦ (n:ℤ)) (by simp) using 2
       ext x; simp; constructor

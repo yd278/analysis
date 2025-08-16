@@ -22,7 +22,7 @@ theorem BddAbove.unbounded_iff (X:Set ℝ) : ¬ BddAbove X ↔ ∀ M, ∃ x ∈ 
 theorem BddAbove.unbounded_iff' (X:Set ℝ) : ¬ BddAbove X ↔ sSup ((fun x:ℝ ↦ (x:EReal)) '' X) = ⊤ := by
   simp [sSup_eq_top, unbounded_iff]
   constructor
-  . intro h M hM; obtain ⟨ x, hx, hxM ⟩ := h M.toReal
+  . intro h M hM; choose x hx hxM using h M.toReal
     use x, hx; revert M; simp [EReal.forall]
   intro h M; specialize h (M:EReal) (by simp); simp_all
 
@@ -32,7 +32,7 @@ theorem BddBelow.unbounded_iff (X:Set ℝ) : ¬ BddBelow X ↔ ∀ M, ∃ x ∈ 
 theorem BddBelow.unbounded_iff' (X:Set ℝ) : ¬ BddBelow X ↔ sInf ((fun x:ℝ ↦ (x:EReal)) '' X) = ⊥ := by
   simp [sInf_eq_bot, unbounded_iff]
   constructor
-  . intro h M hM; obtain ⟨ x, hx, hxM ⟩ := h M.toReal
+  . intro h M hM; choose x hx hxM using h M.toReal
     use x, hx; revert M; simp [EReal.forall]
   intro h M; specialize h (M:EReal) (by simp); simp_all
 

@@ -178,7 +178,7 @@ theorem Series.converges_of_alternating {m:ℤ} {a: { n // n ≥ m} → ℝ} (ha
   have why5 {ε:ℝ} (hε: ε > 0) : ∃ N, ∀ n ≥ N, ∀ m ≥ N, |S n - S m| ≤ ε := by sorry
   have : CauchySeq S := by
     rw [Metric.cauchySeq_iff']
-    intro ε hε; obtain ⟨ N, hN ⟩ := why5 (half_pos hε); use N
+    intro ε hε; choose N hN using why5 (half_pos hε); use N
     intro n hn; rw [Real.dist_eq]; linarith [hN n hn N (by simp)]
   exact cauchySeq_tendsto_of_complete this
 
@@ -197,8 +197,8 @@ theorem Series.example_7_2_13c :  example_7_2_13.condConverges := by
 instance Series.inst_add : Add Series where
   add a b := {
     m := max a.m b.m
-    seq := fun (n:ℤ) ↦ if n ≥ max a.m b.m then a.seq n + b.seq n else 0
-    vanish := by intro n hn; rw [lt_iff_not_ge] at hn; simp [hn]
+    seq n := if n ≥ max a.m b.m then a.seq n + b.seq n else 0
+    vanish n hn := by rw [lt_iff_not_ge] at hn; simp [hn]
   }
 
 theorem Series.add_coe (a b: ℕ → ℝ) : (a:Series) + (b:Series) = (fun n ↦ a n + b n) := by
@@ -216,8 +216,8 @@ theorem Series.add {s t:Series} (hs: s.converges) (ht: t.converges) :
 instance Series.inst.smul : SMul ℝ Series where
   smul c s := {
     m := s.m
-    seq := fun n ↦ if n ≥ s.m then c * s.seq n else 0
-    vanish := by intro n hn; rw [lt_iff_not_ge] at hn; simp [hn]
+    seq n := if n ≥ s.m then c * s.seq n else 0
+    vanish n hn := by rw [lt_iff_not_ge] at hn; simp [hn]
   }
 
 theorem Series.smul_coe (a: ℕ → ℝ) (c: ℝ) : (c • a:Series) = (fun n ↦ c * a n) := by
@@ -236,8 +236,8 @@ theorem Series.smul {c:ℝ} {s:Series} (hs: s.converges) :
 instance Series.inst_sub : Sub Series where
   sub a b := {
     m := max a.m b.m
-    seq := fun (n:ℤ) ↦ if n ≥ max a.m b.m then a.seq n - b.seq n else 0
-    vanish := by intro n hn; rw [lt_iff_not_ge] at hn; simp [hn]
+    seq n := if n ≥ max a.m b.m then a.seq n - b.seq n else 0
+    vanish n hn := by rw [lt_iff_not_ge] at hn; simp [hn]
   }
 
 theorem Series.sub_coe (a b: ℕ → ℝ) : (a:Series) - (b:Series) = (fun n ↦ a n - b n) := by

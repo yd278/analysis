@@ -186,7 +186,7 @@ theorem Sequence.isCauchy_of_rat (a: Chapter5.Sequence) : a.IsCauchy ↔ (a:Sequ
   rw [Chapter5.Sequence.isCauchy_def] at h
   rw [isCauchy_def]
   intro ε hε
-  obtain ⟨ ε', hε', hlt ⟩ := exists_pos_rat_lt hε
+  choose ε' hε' hlt using exists_pos_rat_lt hε
   specialize h ε' hε'
   rw [is_eventuallySteady_of_rat] at h
   exact h.mono (le_of_lt hlt)
@@ -265,14 +265,14 @@ theorem Sequence.tendsTo_unique (a:Sequence) {L L':ℝ} (h:L ≠ L') :
     ¬ (a.TendsTo L ∧ a.TendsTo L') := by
   -- This proof is written to follow the structure of the original text.
   by_contra this
-  obtain ⟨ hL, hL' ⟩ := this
+  choose hL hL' using this
   replace h : L - L' ≠ 0 := by contrapose! h; linarith
   replace h : |L-L'| > 0 := by positivity
   set ε := |L-L'| / 3
   have hε : ε > 0 := by positivity
   rw [tendsTo_iff] at hL hL'
-  specialize hL ε hε; obtain ⟨ N, hN ⟩ := hL
-  specialize hL' ε hε; obtain ⟨ M, hM ⟩ := hL'
+  specialize hL ε hε; choose N hN using hL
+  specialize hL' ε hε; choose M hM using hL'
   set n := max N M
   specialize hN n (le_max_left N M)
   specialize hM n (le_max_right N M)
@@ -314,7 +314,7 @@ a.TendsTo L ↔ a.Convergent ∧ lim a = L := by
     replace eq := a.tendsTo_unique (eq this)
     replace := lim_def this
     tauto
-  intro ⟨ h, h' ⟩; convert lim_def h; rw [h']
+  intro ⟨ h, rfl ⟩; convert lim_def h
 
 
 /-- Proposition 6.1.11 -/
@@ -323,7 +323,7 @@ theorem Sequence.lim_harmonic :
   -- This proof is written to follow the structure of the original text.
   rw [←lim_eq, tendsTo_iff]
   intro ε hε
-  obtain ⟨ N, hN ⟩ := exists_int_gt (1 / ε); use N; intro n hn
+  choose N hN using exists_int_gt (1 / ε); use N; intro n hn
   have hNpos : (N:ℝ) > 0 := by apply LT.lt.trans _ hN; positivity
   simp at hNpos
   have hnpos : n ≥ 0 := by linarith

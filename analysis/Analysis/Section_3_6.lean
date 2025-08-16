@@ -77,7 +77,7 @@ theorem SetTheory.Set.pos_card_nonempty {n:ℕ} (h: n ≥ 1) {X:Set} (hX: X.has_
     rw [mem_Fin]
     use 0, (by linarith); rfl
   rw [has_card_iff] at hX
-  obtain ⟨ f, hf ⟩ := hX
+  choose f hf using hX
   sorry
   -- obtain a contradiction from the fact that `f` is a bijection  from the empty set to a
   -- non-empty set.
@@ -90,17 +90,17 @@ theorem SetTheory.Set.card_erase {n:ℕ} (h: n ≥ 1) {X:Set} (hX: X.has_card n)
     (X \ {x.val}).has_card (n-1) := by
   -- This proof has been rewritten from the original text to try to make it friendlier to
   -- formalize in Lean.
-  rw [has_card_iff] at hX; obtain ⟨ f, hf ⟩ := hX
+  rw [has_card_iff] at hX; choose f hf using hX
   set X' : Set := X \ {x.val}
   set ι : X' → X := fun ⟨y, hy⟩ ↦ ⟨ y, by aesop ⟩
   have hι (x:X') : (ι x:Object) = x := rfl
-  obtain ⟨ m₀, hm₀, hm₀f ⟩ := (mem_Fin _ _).mp (f x).property
+  choose m₀ hm₀ hm₀f using (mem_Fin _ _).mp (f x).property
   set g : X' → Fin (n-1) := fun x' ↦
     if h' : f (ι x') < m₀ then
-      Fin_mk _ (f (ι x')) (by have := SetTheory.Set.Fin.toNat_lt (f (ι x')); omega)
+      Fin_mk _ (f (ι x')) (by have := Fin.toNat_lt (f (ι x')); omega)
     else
       Fin_mk _ (f (ι x') - 1) (by
-        have := SetTheory.Set.Fin.toNat_lt (f (ι x'))
+        have := Fin.toNat_lt (f (ι x'))
         have : (f (ι x'):ℕ) ≠ m₀ := by
           have := x'.property
           simp [X'] at this; contrapose! this; intros; simp [←this, Subtype.val_inj, hf.1.eq_iff, ι] at hm₀f
@@ -119,7 +119,7 @@ theorem SetTheory.Set.card_uniq {X:Set} {n m:ℕ} (h1: X.has_card n) (h2: X.has_
     exact pos_card_nonempty (by omega) h2
   intro X m h1 h2
   have : X ≠ ∅ := pos_card_nonempty (by omega) h1
-  obtain ⟨ x, hx ⟩ := nonempty_def this
+  choose x hx using nonempty_def this
   have : m ≠ 0 := by contrapose! this; simpa [has_card_zero, this] using h2
   specialize hn (card_erase ?_ h1 ⟨ _, hx ⟩) (card_erase ?_ h2 ⟨ _, hx ⟩) <;> omega
 
@@ -139,9 +139,9 @@ theorem SetTheory.Set.bounded_on_finite {n:ℕ} (f: Fin n → nat) : ∃ M, ∀ 
 /-- Theorem 3.6.12 -/
 theorem SetTheory.Set.nat_infinite : infinite nat := by
   -- This proof is written to follow the structure of the original text.
-  by_contra this; obtain ⟨n, hn⟩ := this
+  by_contra this; choose n hn using this
   simp [has_card] at hn; symm at hn; simp [HasEquiv.Equiv, Setoid.r, EqualCard] at hn
-  obtain ⟨ f, hf ⟩ := hn; obtain ⟨ M, hM ⟩ := bounded_on_finite f
+  choose f hf using hn; choose M hM using bounded_on_finite f
   replace hf := hf.surjective (M+1:ℕ); contrapose! hf
   peel hM with i hi; contrapose! hi
   apply_fun nat_equiv.symm at hi; simp_all
@@ -168,20 +168,20 @@ theorem SetTheory.Set.Fin_card {n:ℕ}: (Fin n).card = n := has_card_to_card _ _
 theorem SetTheory.Set.Fin_finite {n:ℕ}: (Fin n).finite := ⟨n, card_fin_eq n⟩
 
 theorem SetTheory.Set.EquivCard_to_has_card_eq {X Y:Set} (n: ℕ) (h: X ≈ Y): X.has_card n ↔ Y.has_card n := by
-  obtain ⟨f, hf⟩ := h; let e := Equiv.ofBijective f hf
+  choose f hf using h; let e := Equiv.ofBijective f hf
   constructor
-  . intro hX; rw [has_card_iff] at hX ⊢; obtain ⟨g, hg⟩ := hX
+  . intro hX; rw [has_card_iff] at *; choose g hg using hX
     use e.symm.trans (.ofBijective _ hg); apply Equiv.bijective
-  . intro hY; rw [has_card_iff] at hY ⊢; obtain ⟨g, hg⟩ := hY
+  . intro hY; rw [has_card_iff] at *; choose g hg using hY
     use e.trans (.ofBijective _ hg); apply Equiv.bijective
 
 theorem SetTheory.Set.EquivCard_to_card_eq {X Y:Set} (h: X ≈ Y): X.card = Y.card := by
   by_cases hX: X.finite <;> by_cases hY: Y.finite <;> try rw [finite] at hX hY
-  . obtain ⟨nX, hXn⟩ := hX; obtain ⟨nY, hYn⟩ := hY
+  . choose nX hXn using hX; choose nY hYn using hY
     simp [has_card_to_card _ _ hXn, has_card_to_card _ _ hYn, EquivCard_to_has_card_eq _ h] at *
     solve_by_elim [card_uniq]
-  . obtain ⟨nX, hXn⟩ := hX; rw [EquivCard_to_has_card_eq _ h] at hXn; tauto
-  . obtain ⟨nY, hYn⟩ := hY; rw [←EquivCard_to_has_card_eq _ h] at hYn; tauto
+  . choose nX hXn using hX; rw [EquivCard_to_has_card_eq _ h] at hXn; tauto
+  . choose nY hYn using hY; rw [←EquivCard_to_has_card_eq _ h] at hYn; tauto
   simp [card, hX, hY]
 
 /-- Proposition 3.6.14 (a) / Exercise 3.6.4 -/

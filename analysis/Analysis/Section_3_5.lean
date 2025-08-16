@@ -54,7 +54,7 @@ def OrderedPair.toObject : OrderedPair ↪ Object where
   inj' := by sorry
 
 instance OrderedPair.inst_coeObject : Coe OrderedPair Object where
-  coe := OrderedPair.toObject
+  coe := toObject
 
 /--
   A technical operation, turning a object `x` and a set `Y` to a set `{x} × Y`, needed to define
@@ -153,10 +153,10 @@ noncomputable abbrev SetTheory.Set.prod_commutator (X Y:Set) : X ×ˢ Y ≃ Y ×
 
 /-- Example 3.5.5. A function of two variables can be thought of as a function of a pair. -/
 noncomputable abbrev SetTheory.Set.curry_equiv {X Y Z:Set} : (X → Y → Z) ≃ (X ×ˢ Y → Z) where
-  toFun := fun f z ↦ f (fst z) (snd z)
-  invFun := fun f x y ↦ f ⟨ (⟨ x, y ⟩:OrderedPair), by simp ⟩
-  left_inv := by intro; simp
-  right_inv := by intro; simp [←pair_eq_fst_snd]
+  toFun f z := f (fst z) (snd z)
+  invFun f x y := f ⟨ (⟨ x, y ⟩:OrderedPair), by simp ⟩
+  left_inv _ := by simp
+  right_inv _ := by simp [←pair_eq_fst_snd]
 
 /-- Definition 3.5.6.  The indexing set `I` plays the role of `{ i : 1 ≤ i ≤ n }` in the text.
     See Exercise 3.5.10 below for some connections betweeen this concept and the preceding notion
@@ -186,10 +186,10 @@ theorem SetTheory.Set.tuple_inj {I:Set} {X: I → Set} (x y: ∀ i, X i) :
 
 /-- Example 3.5.8. There is a bijection between `(X ×ˢ Y) ×ˢ Z` and `X ×ˢ (Y ×ˢ Z)`. -/
 noncomputable abbrev SetTheory.Set.prod_associator (X Y Z:Set) : (X ×ˢ Y) ×ˢ Z ≃ X ×ˢ (Y ×ˢ Z) where
-  toFun := fun p ↦ mk_cartesian (fst (fst p)) (mk_cartesian (snd (fst p)) (snd p))
-  invFun := fun p ↦ mk_cartesian (mk_cartesian (fst p) (fst (snd p))) (snd (snd p))
-  left_inv := by intro; simp
-  right_inv := by intro; simp
+  toFun p := mk_cartesian (fst (fst p)) (mk_cartesian (snd (fst p)) (snd p))
+  invFun p := mk_cartesian (mk_cartesian (fst p) (fst (snd p))) (snd (snd p))
+  left_inv _ := by simp
+  right_inv _ := by simp
 
 /--
   Example 3.5.10. I suspect most of the equivalences will require classical reasoning and only be
@@ -236,21 +236,12 @@ noncomputable abbrev SetTheory.Set.iProd_equiv_prod_triple (X: ({0,1,2}:Set) →
 /-- Connections with Mathlib's `Set.pi` -/
 noncomputable abbrev SetTheory.Set.iProd_equiv_pi (I:Set) (X: I → Set) :
     iProd X ≃ Set.pi .univ (fun i:I ↦ ((X i):_root_.Set Object)) where
-  toFun := fun t ↦
-    have h := (mem_iProd _).mp t.property
-    have x := h.choose
-    ⟨fun i ↦ x i, by simp⟩
-  invFun := fun x ↦
-    ⟨tuple fun i ↦ ⟨x.val i, by
-      have := x.property i; simpa
-    ⟩, by apply tuple_mem_iProd⟩
-  left_inv := by
-    intro t; ext
-    have h := (mem_iProd _).mp t.property
-    rw [h.choose_spec, tuple_inj]
-  right_inv := by
-    intro x; ext i
-    dsimp only []
+  toFun t := ⟨fun i ↦ ((mem_iProd _).mp t.property).choose i, by simp⟩
+  invFun x :=
+    ⟨tuple fun i ↦ ⟨x.val i, by have := x.property i; simpa⟩, by apply tuple_mem_iProd⟩
+  left_inv t := by ext; rw [((mem_iProd _).mp t.property).choose_spec, tuple_inj]
+  right_inv x := by
+    ext; dsimp
     generalize_proofs _ h
     have ht := h.choose_spec
     rw [tuple_inj] at ht
@@ -275,20 +266,20 @@ theorem SetTheory.Set.mem_Fin (n:ℕ) (x:Object) : x ∈ Fin n ↔ ∃ m, m < n 
       x = (⟨ x, h1 ⟩:nat) := rfl
       _ = _ := by congr; simp
   intro ⟨ m, hm, h ⟩
-  use (by rw [h, ←SetTheory.Object.ofnat_eq]; exact (m:nat).property)
+  use (by rw [h, ←Object.ofnat_eq]; exact (m:nat).property)
   convert hm; simp [h, Equiv.symm_apply_eq]; rfl
 
 abbrev SetTheory.Set.Fin_mk (n m:ℕ) (h: m < n): Fin n := ⟨ m, by rw [mem_Fin]; use m ⟩
 
 theorem SetTheory.Set.mem_Fin' {n:ℕ} (x:Fin n) : ∃ m, ∃ h : m < n, x = Fin_mk n m h := by
-  obtain ⟨ m, hm, this ⟩ := (mem_Fin _ _).mp x.property; use m, hm
+  choose m hm this using (mem_Fin _ _).mp x.property; use m, hm
   simp [Fin_mk, ←Subtype.val_inj, this]
 
 @[coe]
 noncomputable abbrev SetTheory.Set.Fin.toNat {n:ℕ} (i: Fin n) : ℕ := (mem_Fin' i).choose
 
 noncomputable instance SetTheory.Set.Fin.inst_coeNat {n:ℕ} : CoeOut (Fin n) ℕ where
-  coe := SetTheory.Set.Fin.toNat
+  coe := toNat
 
 theorem SetTheory.Set.Fin.toNat_spec {n:ℕ} (i: Fin n) :
     ∃ h : i < n, i = Fin_mk n i h := (mem_Fin' i).choose_spec
@@ -302,19 +293,19 @@ theorem SetTheory.Set.Fin.coe_toNat {n:ℕ} (i: Fin n) : ((i:ℕ):Object) = (i:O
 @[simp]
 theorem SetTheory.Set.Fin.toNat_mk {n:ℕ} (m:ℕ) (h: m < n) : (Fin_mk n m h : ℕ) = m := by
   have := coe_toNat (Fin_mk n m h)
-  rwa [SetTheory.Object.natCast_inj] at this
+  rwa [Object.natCast_inj] at this
 
 abbrev SetTheory.Set.Fin_embed (n N:ℕ) (h: n ≤ N) (i: Fin n) : Fin N := ⟨ i.val, by
   have := i.property; rw [mem_Fin] at this ⊢
-  obtain ⟨ m, hm, im ⟩ := this; use m, by linarith
+  choose m hm im using this; use m, by linarith
 ⟩
 
 /-- Connections with Mathlib's `Fin n` -/
 noncomputable abbrev SetTheory.Set.Fin.Fin_equiv_Fin (n:ℕ) : Fin n ≃ _root_.Fin n where
-  toFun := fun m ↦ _root_.Fin.mk m (toNat_lt m)
-  invFun := fun m ↦ Fin_mk n m.val m.isLt
-  left_inv := by intro m; exact (toNat_spec m).2.symm
-  right_inv := by intro m; simp
+  toFun m := _root_.Fin.mk m (toNat_lt m)
+  invFun m := Fin_mk n m.val m.isLt
+  left_inv m := (toNat_spec m).2.symm
+  right_inv m := by simp
 
 /-- Lemma 3.5.11 (finite choice) -/
 theorem SetTheory.Set.finite_choice {n:ℕ} {X: Fin n → Set} (h: ∀ i, X i ≠ ∅) : iProd X ≠ ∅ := by
@@ -327,10 +318,10 @@ theorem SetTheory.Set.finite_choice {n:ℕ} {X: Fin n → Set} (h: ∀ i, X i �
     apply nonempty_of_inhabited (x := tuple empty); rw [mem_iProd]; use empty
   set X' : Fin n → Set := fun i ↦ X (Fin_embed n (n+1) (by linarith) i)
   have hX' (i: Fin n) : X' i ≠ ∅ := h _
-  obtain ⟨ x'_obj, hx' ⟩ := nonempty_def (hn hX')
+  choose x'_obj hx' using nonempty_def (hn hX')
   rw [mem_iProd] at hx'; obtain ⟨ x', rfl ⟩ := hx'
   set last : Fin (n+1) := Fin_mk (n+1) n (by linarith)
-  obtain ⟨ a, ha ⟩ := nonempty_def (h last)
+  choose a ha using nonempty_def (h last)
   have x : ∀ i, X i := fun i =>
     if h : i = n then
       have : i = last := by ext; simpa [←Fin.coe_toNat, last]
@@ -350,7 +341,7 @@ abbrev OrderedPair.toObject' : OrderedPair ↪ Object where
 /-- An alternate definition of a tuple, used in Exercise 3.5.2 -/
 structure SetTheory.Set.Tuple (n:ℕ) where
   X: Set
-  x: SetTheory.Set.Fin n → X
+  x: Fin n → X
   surj: Function.Surjective x
 
 /--
@@ -363,12 +354,7 @@ lemma SetTheory.Set.Tuple.ext {n:ℕ} {t t':Tuple n}
     (hX : t.X = t'.X)
     (hx : ∀ n : Fin n, ((t.x n):Object) = ((t'.x n):Object)) :
     t = t' := by
-  rcases t with ⟨tX, tx, tsurj⟩
-  rcases t' with ⟨tX', tx', tsurj'⟩
-  subst hX
-  congr
-  ext m
-  apply hx
+  have ⟨_, _, _⟩ := t; have ⟨_, _, _⟩ := t'; subst hX; congr; ext; apply hx
 
 /-- Exercise 3.5.2 -/
 theorem SetTheory.Set.Tuple.eq {n:ℕ} (t t':Tuple n) :

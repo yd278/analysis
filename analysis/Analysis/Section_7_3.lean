@@ -20,6 +20,8 @@ Main constructions and results of this section:
 
 namespace Chapter7
 
+open Real
+
 abbrev Series.nonneg (s: Series) : Prop := ∀ n, s.seq n ≥ 0
 
 abbrev Series.partial_of_nonneg {s: Series} (h: s.nonneg) : Monotone s.partial := by sorry
@@ -34,13 +36,13 @@ theorem Series.converges_of_nonneg_iff {s: Series} (h: s.nonneg) : s.converges �
       apply S.bounded_of_convergent
       rw [Chapter6.Sequence.converges_iff_Tendsto']
       convert hconv
-    obtain ⟨ M, hpos, hM ⟩ := this
+    choose M hpos hM using this
     use M; peel hM with N hM
     exact (le_abs_self _).trans hM
   intro hbound
   rcases tendsto_of_monotone (partial_of_nonneg h) with hinfin | hfin
-  . obtain ⟨ M, hM ⟩ := hbound
-    obtain ⟨ N, hN ⟩ := (hinfin.eventually_gt_atTop M).exists
+  . choose M hM using hbound
+    choose N hN using (hinfin.eventually_gt_atTop M).exists
     linarith [hM N]
   exact hfin
 
@@ -58,7 +60,7 @@ theorem Series.partial_le_sum_of_nonneg {s: Series} (hnon: s.nonneg) (hconv: s.c
 theorem Series.partial_nonneg {s: Series} (hnon: s.nonneg) (N : ℤ) : 0 ≤ s.partial N := by
   simp [Series.partial]
   apply Finset.sum_nonneg
-  intros; exact hnon _
+  intros; apply hnon
 
 theorem Series.sum_of_nonneg {s:Series} (hnon: s.nonneg) : 0 ≤ s.sum := by
   by_cases h: s.converges <;> simp [Series.sum, h]
@@ -95,7 +97,7 @@ theorem Series.cauchy_criterion {s:Series} (hm: s.m = 1) (hs:s.nonneg) (hmono: �
     induction' K with K hK
     . simp [S,T,Series.partial, hm, htm, t]; linarith [hs 1]
     observe h2K : 1 ≤ 2^K; observe h2K' : 1 ≤ 2^(K+1)
-    obtain ⟨ hK1, hK2 ⟩ := hK
+    choose hK1 hK2 using hK
     have claim1 : T (K + 1) = T K + 2^(K+1) * s.seq (2^(K+1)) := by convert t.partial_succ _; linarith
     have claim2a : S (2^(K+1)) ≥ S (2^K) + 2^K * s.seq (2^(K+1)) := calc
       _ = S (2^K) + ∑ n ∈ .Ioc (2^K) (2^(K+1)), s.seq n := by
@@ -152,15 +154,15 @@ theorem Series.converges_qseries (q: ℝ) (hq: q > 0) : (mk' (m := 1) fun n ↦ 
     have hn3 : n.toNat > 0 := by omega
     simp [s, hn, hn1]
     apply inv_anti₀; positivity
-    apply Real.rpow_le_rpow; positivity; simp; positivity
+    apply rpow_le_rpow; positivity; simp; positivity
   rw [cauchy_criterion (by simp [s]) hs hmono]
   have (n:ℕ) : 2^n * s.seq (2^n) = (2^(1-q))^n := by
     have : 1 ≤ (2:ℤ)^n := by norm_cast; exact Nat.one_le_two_pow
     simp [s, this]
-    rw [←Real.rpow_neg (by positivity), mul_comm, ←Real.rpow_add_one (by positivity), Real.rpow_pow_comm (by norm_num)]
+    rw [←rpow_neg (by positivity), mul_comm, ←rpow_add_one (by positivity), rpow_pow_comm (by norm_num)]
     congr 1; abel
   simp [this, converges_geom_iff]
-  rw [abs_of_nonneg, Real.rpow_lt_one_iff_of_pos] <;> try positivity
+  rw [abs_of_nonneg, rpow_lt_one_iff_of_pos] <;> try positivity
   simp
 
 /-- Remark 7.3.8 -/
@@ -174,7 +176,7 @@ theorem Series.zeta_eq {q:ℝ} (hq: q > 1) : (mk' (m := 1) fun n ↦ 1 / (n:ℝ)
   rw [←hL]
   norm_cast; apply sum_of_converges
   have : Summable (fun (n : ℕ)↦ 1 / (n+1:ℝ) ^ q) := by
-    convert (Real.summable_one_div_nat_add_rpow 1 q).mpr hq using 4 with n
+    convert (summable_one_div_nat_add_rpow 1 q).mpr hq using 4 with n
     rw [abs_of_nonneg]; positivity
   have tail (a: ℤ → ℝ) (L:ℝ) : Filter.atTop.Tendsto a (nhds L) ↔ Filter.atTop.Tendsto (fun n:ℕ ↦ a n) (nhds L) := by
     convert Filter.tendsto_map'_iff (g:= fun n:ℕ ↦ (n:ℤ) )
@@ -185,7 +187,7 @@ theorem Series.zeta_eq {q:ℝ} (hq: q > 1) : (mk' (m := 1) fun n ↦ 1 / (n:ℝ)
   simp [Series.partial]
   set e : ℕ ↪ ℤ := {
     toFun n := n+1
-    inj' := by intro _ _ _; simp_all
+    inj' _ _ _ := by simp_all
   }
   convert Finset.sum_map _ e _ using 2 with n _ m hm
   . ext x; simp [e]; constructor

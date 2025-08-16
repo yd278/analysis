@@ -40,7 +40,7 @@ theorem not_integrable : BddOn f_9_3_21 (Icc 0 1) ∧ ¬ IntegrableOn f_9_3_21 (
     . rw [bddAbove_def]; use 1
       intro s hs; simp at hs; obtain ⟨ x, hx, rfl ⟩ := hs
       by_cases h: ∃ y:ℚ, y = x <;> simp [f_9_3_21, h]
-    simp at hJ0'; obtain ⟨ z, hz, hz' ⟩ := Dense.exists_between (Rat.denseRange_cast (𝕜 := ℝ)) hJ0'
+    simp at hJ0'; choose z hz hz' using Dense.exists_between (Rat.denseRange_cast (𝕜 := ℝ)) hJ0'
     simp at hz hz' ⊢; obtain ⟨ q, rfl ⟩ := hz
     exact ⟨ ↑q, (subset_iff _ _).mp (Ioo_subset J) (by simp [hz']), q, rfl ⟩
   have hupper (P: Partition (Icc 0 1)) : upper_riemann_sum f_9_3_21 P = 1 := by
@@ -62,7 +62,7 @@ theorem not_integrable : BddOn f_9_3_21 (Icc 0 1) ∧ ¬ IntegrableOn f_9_3_21 (
         use 0; intro s hs; simp at hs; obtain ⟨ x, hx, rfl ⟩ := hs
         by_cases h: ∃ y:ℚ, y = x <;> simp [f_9_3_21, h]
       simp at hJ0'
-      obtain ⟨ z, hz, hz' ⟩ := Dense.exists_between dense_irrational hJ0'
+      choose z hz hz' using Dense.exists_between dense_irrational hJ0'
       simp at hz hz' ⊢
       refine ⟨ z, (subset_iff _ _).mp (Ioo_subset J) (by simp [hz']), ?_ ⟩
       intro q; contrapose! hz; simp [←hz]

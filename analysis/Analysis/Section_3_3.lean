@@ -102,7 +102,7 @@ abbrev SetTheory.Set.P_3_3_3b : Nat → Nat → Prop := fun x y ↦ (y+1:ℕ) = 
 
 theorem SetTheory.Set.not_P_3_3_3b_existsUnique : ¬ ∀ x, ∃! y: Nat, P_3_3_3b x y := by
   by_contra h
-  obtain ⟨ n, hn, _ ⟩ := h (0:Nat)
+  choose n hn _ using h (0:Nat)
   have : ((0:Nat):ℕ) = 0 := by simp [OfNat.ofNat]
   simp [P_3_3_3b, this] at hn
 
@@ -116,7 +116,7 @@ theorem SetTheory.Set.P_3_3_3c_existsUnique (x: (Nat \ {(0:Object)}: Set)) :
   obtain ⟨ x, hx ⟩ := x; simp at hx; obtain ⟨ hx1, hx2 ⟩ := hx
   set n := ((⟨ x, hx1 ⟩:Nat):ℕ)
   have : x = (n:Nat) := by simp [n]
-  simp [P_3_3_3c, this, SetTheory.Object.ofnat_eq'] at hx2 ⊢
+  simp [P_3_3_3c, this, Object.ofnat_eq'] at hx2 ⊢
   replace hx2 : n = (n-1) + 1 := by omega
   apply ExistsUnique.intro ((n-1:ℕ):Nat)
   . simp [←hx2]
@@ -131,8 +131,8 @@ theorem SetTheory.Set.f_3_3_3c_eval (x: (Nat \ {(0:Object)}: Set)) (y: Nat) :
 /-- Create a version of a non-zero `n` inside `Nat \ {0}` for any natural number n. -/
 abbrev SetTheory.Set.coe_nonzero (n:ℕ) (h: n ≠ 0): (Nat \ {(0:Object)}: Set) :=
   ⟨((n:ℕ):Object), by
-    simp [SetTheory.Object.ofnat_eq',h]
-    rw [←SetTheory.Object.ofnat_eq]
+    simp [Object.ofnat_eq',h]
+    rw [←Object.ofnat_eq]
     exact Subtype.property _
   ⟩
 

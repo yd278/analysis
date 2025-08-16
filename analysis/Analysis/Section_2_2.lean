@@ -345,29 +345,21 @@ such as `order` and `calc` to be applicable to the Chapter 2 natural numbers. -/
 instance Nat.instLinearOrder : LinearOrder Nat where
   le_refl := ge_refl
   le_trans a b c hab hbc := ge_trans hbc hab
-  lt_iff_le_not_le := by
-    intro a b
+  lt_iff_le_not_le a b := by
     constructor
-    intro h
-    constructor
-    . exact le_of_lt h
-    . by_contra h'
+    . intro h; refine ⟨ le_of_lt h, ?_ ⟩
+      by_contra h'
       exact not_lt_self (lt_of_le_of_lt h' h)
-
     rintro ⟨ h1, h2 ⟩
-    rw [lt_iff, ← le_iff]
-    constructor
-    exact h1
+    rw [lt_iff, ←le_iff]; refine ⟨ h1, ?_ ⟩
     by_contra h
-    rw [h] at h2
-    apply h2
-    exact ge_refl b
+    subst h
+    contradiction
   le_antisymm a b hab hba := ge_antisymm hba hab
-  le_total := by
-    intro a b
-    obtain h | h | h := trichotomous a b
+  le_total a b := by
+    obtain h | rfl | h := trichotomous a b
     . left; exact le_of_lt h
-    . simp [h, ge_refl]
+    . simp [ge_refl]
     . right; exact le_of_lt h
   toDecidableLE := decidableRel
 
@@ -389,9 +381,7 @@ example (a b c d e:Nat) (hab: a ≤ b) (hbc: b < c) (hcd: c ≤ d)
 /-- (Not from textbook) Nat has the structure of an ordered monoid. This allows for tactics
 such as `gcongr` to be applicable to the Chapter 2 natural numbers. -/
 instance Nat.isOrderedAddMonoid : IsOrderedAddMonoid Nat where
-  add_le_add_left := by
-    intro a b hab c
-    exact (add_le_add_left a b c).mp hab
+  add_le_add_left a b hab c := (add_le_add_left a b c).mp hab
 
 /-- This illustration of the `gcongr` tactic is not from the
     textbook. -/

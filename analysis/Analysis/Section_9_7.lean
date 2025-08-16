@@ -64,12 +64,12 @@ theorem intermediate_value {a b:ℝ} (hab: a < b) {f:ℝ → ℝ} (hf: Continuou
     replace hne : c < b := by contrapose! hne; simp at hc; linarith
     have hfc_lower : y ≤ f c := by
       have : ∃ N:ℕ, ∀ n ≥ N, (c+1/(n+1:ℝ)) < b := by
-        obtain ⟨ N, hN ⟩ := exists_nat_gt (1/(b-c))
+        choose N hN using exists_nat_gt (1/(b-c))
         use N; intro n hn
         have hpos : 0 < b-c := by linarith
         have : 1/(n+1:ℝ) < b-c := by rw [one_div_lt] <;> (try positivity); apply hN.trans; norm_cast; linarith
         linarith
-      obtain ⟨ N, hN ⟩ := this
+      choose N hN using this
       have hmem : ∀ n ≥ N, (c + 1/(n+1:ℝ)) ∈ Set.Icc a b := by
         intro n hn
         simp only [Set.mem_Icc, le_of_lt (hN n hn), and_true]

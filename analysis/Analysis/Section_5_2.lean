@@ -100,15 +100,14 @@ lemma Sequence.equiv_example :
           (show (2:ℚ) ≤ 10 by norm_num) _)
         convert Nat.cast_le.mpr (Section_4_3.two_pow_geq (N+1)) using 1 <;> try infer_instance
         all_goals simp
-    obtain ⟨ N, hN ⟩ := exists_nat_gt (2 / ε)
+    choose N hN using exists_nat_gt (2 / ε)
     refine ⟨ N, (hN' N).trans ?_ ⟩
     rw [div_le_iff₀ (by positivity)]
     rw [div_lt_iff₀ hε] at hN
     apply le_of_lt (hN.trans _)
     rw [mul_comm]; gcongr; linarith
-  obtain ⟨ N, hN ⟩ := hN; use N; intro n hn
-  exact (hab' N n hn).trans hN
-
+  choose N hN using hN; use N; intro n hn
+  linarith [hab' N n hn]
 
 /-- Exercise 5.2.1 -/
 theorem Sequence.isCauchy_of_equiv {a b: ℕ → ℚ} (hab: Equiv a b) :

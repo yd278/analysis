@@ -91,7 +91,7 @@ theorem AtMostCountable.iff (X : Type) : AtMostCountable X ↔ Countable X := by
 theorem CountablyInfinite.iff_image_inj {A:Type} (X: Set A) : CountablyInfinite X ↔ ∃ f : ℕ ↪ A, X = f '' .univ := by
   constructor
   . intro ⟨ g, hg ⟩
-    obtain ⟨ f, hleft, hright ⟩ := Function.bijective_iff_has_inverse.mp hg
+    choose f hleft hright using Function.bijective_iff_has_inverse.mp hg
     refine ⟨ ⟨ Subtype.val ∘ f, ?_ ⟩, ?_ ⟩
     . intro x y hxy; apply hright.injective; simp_all [Subtype.val_inj]
     ext; simp; constructor

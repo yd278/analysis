@@ -58,7 +58,7 @@ noncomputable abbrev jump (f: ℝ → ℝ) (x₀:ℝ) : ℝ :=
 theorem right_lim_of_continuous {X:Set ℝ} {f: ℝ → ℝ} {x₀:ℝ}
   (h : ∃ ε>0, .Ico x₀ (x₀+ε) ⊆ X) (hf: ContinuousWithinAt f X x₀) :
   right_lim f x₀ = f x₀ := by
-  obtain ⟨ ε, hε, hX ⟩ := h
+  choose ε hε hX using h
   apply right_lim_def
   rw [ContinuousWithinAt.eq_1] at hf
   replace hf : (nhdsWithin x₀ (.Ioo x₀ (x₀ + ε))).Tendsto f  (nhds (f x₀)) :=
@@ -75,7 +75,7 @@ theorem right_lim_of_continuous {X:Set ℝ} {f: ℝ → ℝ} {x₀:ℝ}
 theorem left_lim_of_continuous {X:Set ℝ} {f: ℝ → ℝ} {x₀:ℝ}
   (h : ∃ ε>0, .Ioc (x₀-ε) x₀ ⊆ X) (hf: ContinuousWithinAt f X x₀) :
   left_lim f x₀ = f x₀ := by
-  obtain ⟨ ε, hε, hX ⟩ := h
+  choose ε hε hX using h
   apply left_lim_def
   rw [ContinuousWithinAt.eq_1] at hf
   replace hf : (nhdsWithin x₀ (.Ioo (x₀ - ε) x₀)).Tendsto f (nhds (f x₀)) :=
@@ -94,7 +94,7 @@ theorem jump_of_continuous {X:Set ℝ} {f: ℝ → ℝ} {x₀:ℝ}
   (h : X ∈ nhds x₀) (hf: ContinuousWithinAt f X x₀) :
   jump f x₀ = 0 := by
   rw [mem_nhds_iff_exists_Ioo_subset] at h
-  obtain ⟨ l, u, hx₀, hX ⟩ := h; simp at hx₀
+  choose l u hx₀ hX using h; simp at hx₀
   have hl : ∃ ε>0, .Ioc (x₀-ε) x₀ ⊆ X :=
     ⟨ x₀-l, by linarith, Set.Subset.trans (by intro _ _; simp_all; linarith) hX ⟩
   have hu : ∃ ε>0, .Ico x₀ (x₀+ε) ⊆ X :=
@@ -168,16 +168,16 @@ theorem α_length_of_cts {α:ℝ → ℝ} {I: BoundedInterval} {a b: ℝ}
   α[I]ₗ = α I.b - α I.a := by
   have ha_left : left_lim α I.a = α I.a := by
     apply left_lim_of_continuous _ (hα.continuousWithinAt (by simp [haa]; linarith))
-    exact ⟨ I.a - a, by linarith, by intro _; simp; intro _ _; and_intros <;> linarith ⟩
+    exact ⟨ I.a - a, by linarith, by intro _; simp; intro _ _; split_ands <;> linarith ⟩
   have ha_right : right_lim α I.a = α I.a := by
     apply right_lim_of_continuous _ (hα.continuousWithinAt (by simp [haa]; linarith))
-    exact ⟨ b - I.a, by linarith, by intro _; simp; intro _ _; and_intros <;> linarith ⟩
+    exact ⟨ b - I.a, by linarith, by intro _; simp; intro _ _; split_ands <;> linarith ⟩
   have hb_left : left_lim α I.b = α I.b := by
     apply left_lim_of_continuous _ (hα.continuousWithinAt (by simp [hbb]; linarith))
-    exact ⟨ I.b - a, by linarith, by intro _; simp; intro _ _; and_intros <;> linarith ⟩
+    exact ⟨ I.b - a, by linarith, by intro _; simp; intro _ _; split_ands <;> linarith ⟩
   have hb_right : right_lim α I.b = α I.b := by
     apply right_lim_of_continuous _ (hα.continuousWithinAt (by simp [hbb]; linarith))
-    exact ⟨ b - I.b, by linarith, by intro _; simp; intro _ _; and_intros <;> linarith ⟩
+    exact ⟨ b - I.b, by linarith, by intro _; simp; intro _ _; split_ands <;> linarith ⟩
   cases I with
   | Icc _ _ => simp [α_length, hb_right, ha_left, hab]
   | Ico _ _ => simp [α_length, hb_left, ha_left, hab]
@@ -366,20 +366,20 @@ lemma RS_integral_bound_lower_of_bounded {f:ℝ → ℝ} {M:ℝ} {I: BoundedInte
 lemma RS_integral_bound_upper_nonempty {f:ℝ → ℝ} {I: BoundedInterval} (h: BddOn f I)
   {α:ℝ → ℝ} (hα: Monotone α) :
   ((PiecewiseConstantOn.RS_integ · I α) '' {g | MajorizesOn g f I ∧ PiecewiseConstantOn g I}).Nonempty := by
-  obtain ⟨ M, h ⟩ := h; exact Set.nonempty_of_mem (RS_integral_bound_upper_of_bounded h hα)
+  choose M h using h; exact Set.nonempty_of_mem (RS_integral_bound_upper_of_bounded h hα)
 
 lemma RS_integral_bound_lower_nonempty {f:ℝ → ℝ} {I: BoundedInterval} (h: BddOn f I)
   {α:ℝ → ℝ} (hα: Monotone α) :
   ((PiecewiseConstantOn.RS_integ · I α) '' {g | MinorizesOn g f I ∧ PiecewiseConstantOn g I}).Nonempty := by
-  obtain ⟨ M, h ⟩ := h; exact Set.nonempty_of_mem (RS_integral_bound_lower_of_bounded h hα)
+  choose M h using h; exact Set.nonempty_of_mem (RS_integral_bound_lower_of_bounded h hα)
 
 lemma RS_integral_bound_lower_le_upper {f:ℝ → ℝ} {I: BoundedInterval} {a b:ℝ}
   {α:ℝ → ℝ} (hα: Monotone α)
   (ha: a ∈ (PiecewiseConstantOn.RS_integ · I α) '' {g | MajorizesOn g f I ∧ PiecewiseConstantOn g I})
   (hb: b ∈ (PiecewiseConstantOn.RS_integ · I α) '' {g | MinorizesOn g f I ∧ PiecewiseConstantOn g I})
   : b ≤ a:= by
-    obtain ⟨ g, ⟨ ⟨ hmaj, hgp⟩, hgi ⟩ ⟩ := ha
-    obtain ⟨ h, ⟨ ⟨ hmin, hhp⟩, hhi ⟩ ⟩ := hb
+    have ⟨ g, ⟨ ⟨ hmaj, hgp⟩, hgi ⟩ ⟩ := ha
+    have ⟨ h, ⟨ ⟨ hmin, hhp⟩, hhi ⟩ ⟩ := hb
     rw [←hgi, ←hhi]; apply hhp.RS_integ_mono hα _ hgp; intro _ hx; linarith [hmin _ hx, hmaj _ hx]
 
 lemma RS_integral_bound_below {f:ℝ → ℝ} {I: BoundedInterval} (h: BddOn f I)
@@ -432,13 +432,13 @@ lemma lt_of_gt_upper_RS_integral {f:ℝ → ℝ} {I: BoundedInterval} (hf: BddOn
   {α: ℝ → ℝ} (hα: Monotone α) {X:ℝ} (hX: upper_RS_integral f I α < X ) :
   ∃ g, MajorizesOn g f I ∧ PiecewiseConstantOn g I ∧ PiecewiseConstantOn.RS_integ g I α < X := by
   have ⟨ Y, hY, hYX ⟩ := exists_lt_of_csInf_lt (RS_integral_bound_upper_nonempty hf hα) hX
-  simp at hY; obtain ⟨ g, ⟨ hmaj, hgp ⟩, hgi ⟩ := hY; exact ⟨ g, hmaj, hgp, by rwa [hgi] ⟩
+  simp at hY; have ⟨ g, ⟨ hmaj, hgp ⟩, hgi ⟩ := hY; exact ⟨ g, hmaj, hgp, by rwa [hgi] ⟩
 
 lemma gt_of_lt_lower_RS_integral {f:ℝ → ℝ} {I: BoundedInterval} (hf: BddOn f I)
   {α:ℝ → ℝ} (hα: Monotone α) {X:ℝ} (hX: X < lower_RS_integral f I α) :
   ∃ h, MinorizesOn h f I ∧ PiecewiseConstantOn h I ∧ X < PiecewiseConstantOn.RS_integ h I α := by
   have ⟨ Y, hY, hYX ⟩ := exists_lt_of_lt_csSup (RS_integral_bound_lower_nonempty hf hα) hX
-  simp at hY; obtain ⟨ h, ⟨ hmin, hhp ⟩, hhi ⟩ := hY; exact ⟨ h, hmin, hhp, by rwa [hhi] ⟩
+  simp at hY; have ⟨ h, ⟨ hmin, hhp ⟩, hhi ⟩ := hY; exact ⟨ h, hmin, hhp, by rwa [hhi] ⟩
 
 /-- Analogue of Definition 11.3.4 -/
 noncomputable abbrev RS_integ (f:ℝ → ℝ) (I: BoundedInterval) (α:ℝ → ℝ) : ℝ := upper_RS_integral f I α

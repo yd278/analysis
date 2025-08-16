@@ -30,7 +30,7 @@ theorem cts_of_integ {a b:ℝ} {f:ℝ → ℝ} (hf: IntegrableOn f (Icc a b)) :
   ContinuousOn (fun x => integ f (Icc a x)) (.Icc a b) := by
   -- This proof is written to follow the structure of the original text.
   set F : ℝ → ℝ := fun x => integ f (Icc a x)
-  obtain ⟨ M, hM ⟩ := hf.1
+  choose M hM using hf.1
   have {x y:ℝ} (hxy: x < y) (hx: x ∈ Set.Icc a b) (hy: y ∈ Set.Icc a b) : |F y - F x| ≤ M * (y - x) := by
     simp at hx hy
     have := (hf.join (join_Icc_Ioc hy.1 hy.2)).1
@@ -52,9 +52,9 @@ theorem cts_of_integ {a b:ℝ} {f:ℝ → ℝ} (hf: IntegrableOn f (Icc a b)) :
     rw [abs_le'] at hM; simp; linarith
   replace {x y:ℝ} (hx: x ∈ Set.Icc a b) (hy: y ∈ Set.Icc a b) :
     |F y - F x| ≤ M * |x-y| := by
-    rcases lt_trichotomy x y with h | h | h
+    rcases lt_trichotomy x y with h | rfl | h
     . simp [abs_of_neg (show x-y < 0 by linarith), this h hx hy]
-    . simp [h]
+    . simp
     . simp [abs_of_pos (show 0 < x-y by linarith), abs_sub_comm, this h hy hx]
   replace : UniformContinuousOn F (.Icc a b) := by
     simp [Metric.uniformContinuousOn_iff, Real.dist_eq, -Set.mem_Icc]
@@ -82,7 +82,7 @@ theorem deriv_of_integ {a b:ℝ} (hab: a < b) {f:ℝ → ℝ} (hf: IntegrableOn 
     have h1 := this.1.mono (g := fun _ ↦ f x₀ + ε) (IntegrableOn.const _ _).1 ?_
     have h2 := (IntegrableOn.const _ _).1.mono (f := fun _ ↦ f x₀ - ε) this.1 ?_
     . simp [IntegrableOn.const, le_of_lt hx₀y] at h1 h2
-      and_intros
+      split_ands
       . convert h1 using 1; ring
       . simp [←sub_nonneg] at *; convert h2 using 1; ring
     all_goals intro z hz; simp [abs_lt] at *; specialize hconv z ?_ ?_ ?_ ?_ <;> linarith
@@ -140,7 +140,7 @@ theorem integ_eq_antideriv_sub {a b:ℝ} (h:a ≤ b) {f F: ℝ → ℝ}
           intro J hJ; by_cases hJ_empty : (J:Set ℝ) = ∅
           . simp [α_length_of_empty _ hJ_empty, length_of_empty hJ_empty]
           rcases le_or_gt J.b J.a with hJab | hJab
-          . push_neg at hJ_empty; obtain ⟨ x, hx ⟩ := hJ_empty
+          . push_neg at hJ_empty; choose x hx using hJ_empty
             cases J with
             | Ioo _ _ => simp at hx; linarith
             | Ioc _ _ => simp at hx; linarith
@@ -165,7 +165,7 @@ theorem integ_eq_antideriv_sub {a b:ℝ} (h:a ≤ b) {f F: ℝ → ℝ}
           replace hJ'' := hJ.trans hJ''
           rw [α_length_of_cts (by linarith) (le_of_lt hJab) (by linarith) hJ'' hF'_cts]
           have := HasDerivWithinAt.mean_value hJab (hF'_cts.mono ?_) ?_
-          . obtain ⟨ e, he, hmean ⟩ := this
+          . choose e he hmean using this
             have : HasDerivWithinAt F' (f e) (.Ioo c d) e := by
               replace hJ := (Ioo_subset J).trans hJ
               simp [subset_iff] at hJ
@@ -181,7 +181,7 @@ theorem integ_eq_antideriv_sub {a b:ℝ} (h:a ≤ b) {f F: ℝ → ℝ}
                 _ ≤ _ := by
                   gcongr; apply le_csSup
                   . rw [bddAbove_def]
-                    obtain ⟨ M, hM ⟩ := hf.1; use M
+                    choose M hM using hf.1; use M
                     simp [abs_le', F', -Set.mem_Icc] at hM ⊢
                     intro x hx; rw [subset_iff] at hJ; specialize hM x (hJ hx); tauto
                   simp; use e; simp; exact ((subset_iff _ _).mp (Ioo_subset J)) he
@@ -200,7 +200,7 @@ theorem integ_eq_antideriv_sub {a b:ℝ} (h:a ≤ b) {f F: ℝ → ℝ}
         _ = F' b - F' a := by
           apply α_length_of_cts (by linarith) _ (by linarith) _ hF'_cts
           . simp [le_of_lt h]
-          intro _ _; simp [mem_iff] at *; and_intros <;> linarith
+          intro _ _; simp [mem_iff] at *; split_ands <;> linarith
         _ = _ := by congr 1 <;> apply hFF' <;> simp [le_of_lt h]
     have hlower (P: Partition (Icc a b)) : lower_riemann_sum f P ≤ F b - F a := by
       sorry

@@ -44,13 +44,13 @@ noncomputable abbrev Sum {X:Type} (f: X → ℝ) : ℝ := if h: AbsConvergent f 
 
 theorem Sum.of_finite {X:Type} [hX:Finite X] (f:X → ℝ) : Sum f = ∑ x ∈ @Finset.univ X (Fintype.ofFinite X), f x := by
   have : ¬ AbsConvergent f := by
-    by_contra!; obtain ⟨ g, hg, _ ⟩ := this
+    by_contra!; choose g hg _ using this
     rw [←hg.finite_iff, ←not_infinite_iff_finite] at hX; apply hX; infer_instance
   simp [Sum, this, hX]
 
 theorem AbsConvergent.comp {X: Type} {f:X → ℝ} {g:ℕ → X} (h: Bijective g) (hf: AbsConvergent f) : (f ∘ g:Series).absConverges := by
   choose g' hbij hconv using hf
-  obtain ⟨ g'_inv, hleft, hright ⟩ := bijective_iff_has_inverse.mp hbij
+  choose g'_inv hleft hright using bijective_iff_has_inverse.mp hbij
   have hG : Bijective (g'_inv ∘ g) := .comp ⟨hright.injective, hleft.surjective⟩ h
   convert (absConverges_of_permute hconv hG).1 using 4 with n
   simp [hright (g n.toNat)]
@@ -58,9 +58,9 @@ theorem AbsConvergent.comp {X: Type} {f:X → ℝ} {g:ℕ → X} (h: Bijective g
 theorem Sum.eq {X: Type} {f:X → ℝ} {g:ℕ → X} (h: Bijective g) (hfg: (f ∘ g:Series).absConverges) : (f ∘ g:Series).convergesTo (Sum f) := by
   have : AbsConvergent f := .mk h hfg
   simp [Sum, this]
-  obtain ⟨ hbij, hconv ⟩ := this.choose_spec
+  choose hbij hconv using this.choose_spec
   set g' := this.choose
-  obtain ⟨ g'_inv, hleft, hright ⟩ := bijective_iff_has_inverse.mp hbij
+  choose g'_inv hleft hright using bijective_iff_has_inverse.mp hbij
   convert convergesTo_sum (converges_of_absConverges hfg) using 1
   have hG : Bijective (g'_inv ∘ g) := .comp ⟨hright.injective, hleft.surjective⟩ h
   convert (absConverges_of_permute hconv hG).2 using 4 with _ n
@@ -68,7 +68,7 @@ theorem Sum.eq {X: Type} {f:X → ℝ} {g:ℕ → X} (h: Bijective g) (hfg: (f �
 
 theorem Sum.of_comp {X Y:Type} {f:X → ℝ} (h: AbsConvergent f) {g: Y → X} (hbij: Bijective g) : AbsConvergent (f ∘ g) ∧ Sum f = Sum (f ∘ g) := by
   choose g' hbij' hconv' using h
-  obtain ⟨ g_inv, hleft, hright ⟩ := bijective_iff_has_inverse.mp hbij
+  choose g_inv hleft hright using bijective_iff_has_inverse.mp hbij
   have hbij_g_inv_g' : Bijective (g_inv ∘ g') := .comp ⟨hright.injective, hleft.surjective⟩ hbij'
   have hident : (f ∘ g) ∘ g_inv ∘ g' = f ∘ g' := by ext n; simp [hright (g' n)]
   refine ⟨ ⟨ g_inv ∘ g', ⟨ hbij_g_inv_g', by convert hconv' ⟩ ⟩, ?_ ⟩
@@ -128,16 +128,15 @@ theorem sum_of_sum_of_AbsConvergent_nonneg {f:ℕ × ℕ → ℝ} (hf:AbsConverg
     exact sum_of_nonneg (hnon n.toNat)
   have hconv' : (fun n ↦ (a n).sum:Series).converges := by
     rw [converges_of_nonneg_iff hnon']; use L
-  replace : (fun n ↦ (a n).sum:Series).sum ≤ L :=
-    le_of_tendsto' (convergesTo_sum hconv') this
+  replace : (fun n ↦ (a n).sum:Series).sum ≤ L := le_of_tendsto' (convergesTo_sum hconv') this
   replace : (fun n ↦ (a n).sum:Series).sum = L := by
     apply le_antisymm this (le_of_forall_sub_le _); intro ε hε
     replace : ∃ X, ∑ p ∈ X, f p ≥ L - ε := by
       sorry
-    obtain ⟨ X, hX ⟩ := this
+    choose X hX using this
     have : ∃ N, ∃ M, X ⊆ (Icc 0 N) ×ˢ (Icc 0 M) := by
       sorry
-    obtain ⟨ N, M, hX' ⟩ := this
+    choose N M hX' using this
     calc
       _ ≤ ∑ p ∈ X, f p := hX
       _ ≤ ∑ p ∈ (Icc 0 N) ×ˢ (Icc 0 M), f p := sum_le_sum_of_subset_of_nonneg hX' (by solve_by_elim)
@@ -161,9 +160,9 @@ theorem sum_of_sum_of_AbsConvergent {f:ℕ × ℕ → ℝ} (hf:AbsConvergent f) 
   have hdiff : f = fplus - fminus := by sorry
   have hfplus_conv : AbsConvergent fplus := by sorry
   have hfminus_conv : AbsConvergent fminus := by sorry
-  obtain ⟨ hfplus_conv', hfplus_sum⟩ := sum_of_sum_of_AbsConvergent_nonneg hfplus_conv hfplus_nonneg
-  obtain ⟨ hfminus_conv', hfminus_sum⟩ := sum_of_sum_of_AbsConvergent_nonneg hfminus_conv hfminus_nonneg
-  and_intros
+  choose hfplus_conv' hfplus_sum using sum_of_sum_of_AbsConvergent_nonneg hfplus_conv hfplus_nonneg
+  choose hfminus_conv' hfminus_sum using sum_of_sum_of_AbsConvergent_nonneg hfminus_conv hfminus_nonneg
+  split_ands
   . intro n
     sorry
   convert convergesTo.sub hfplus_sum hfminus_sum using 1
@@ -221,7 +220,7 @@ theorem AbsConvergent'.of_finite {X:Type} [Finite X] (f:X → ℝ) : AbsConverge
 theorem AbsConvergent'.of_countable {X:Type} (hX:CountablyInfinite X) {f:X → ℝ} :
   AbsConvergent' f ↔ AbsConvergent f := by
   constructor
-  . intro hf; simp [bddAbove_def] at hf; obtain ⟨ L, hL ⟩ := hf
+  . intro hf; simp [bddAbove_def] at hf; choose L hL using hf
     have ⟨ g, hg ⟩ := hX.symm; refine ⟨ g, hg, ?_ ⟩
     unfold absConverges
     rw [converges_of_nonneg_iff]
@@ -245,7 +244,7 @@ theorem AbsConvergent'.countable_supp {X:Type} {f:X → ℝ} (hf: AbsConvergent'
 theorem AbsConvergent'.subtype {X:Type} {f:X → ℝ} (hf: AbsConvergent' f) (A: Set X) :
   AbsConvergent' (fun x:A ↦ f x) := by
   apply BddAbove.mono _ hf
-  intro z hz; simp at hz ⊢; obtain ⟨ A, hA ⟩ := hz
+  intro z hz; simp at hz ⊢; choose A hA using hz
   use A.map (Embedding.subtype _); simp [hA]
 
 /-- A generalized sum.  Note that this will give junk values if `f` is not `AbsConvergent'`. -/
@@ -278,20 +277,20 @@ theorem Sum'.of_countable_supp {X:Type} {f:X → ℝ} {A: Set X} (hA: CountablyI
   -- The main challenge here is to relate a sum on E with a sum on A.  First, we show containment.
   have hE : E ⊆ A := by intro _; simp [E]; by_contra!; aesop
   -- Now, we map A back to the natural numbers, thus identifying E with a subset E' of ℕ.
-  obtain ⟨ g, hg ⟩ := hA.symm
+  choose g hg using hA.symm
   have hsum := Sum.eq hg (hconv'.comp hg)
   set E' := { n | ↑(g n) ∈ E }
   set ι : E' → E := fun ⟨ n, hn ⟩ ↦ ⟨ g n, by aesop ⟩
   have hι: Bijective ι := by
     constructor
     . intro ⟨ _, _ ⟩ ⟨ _, _ ⟩ h; simp [ι, E', Subtype.val_inj] at *; exact hg.1 h
-    . intro ⟨ x, hx ⟩; obtain ⟨ n, hn ⟩ := hg.2 ⟨ x, hE hx ⟩; use ⟨ n, by aesop ⟩; simp [ι, hn]
+    . intro ⟨ x, hx ⟩; choose n hn using hg.2 ⟨ x, hE hx ⟩; use ⟨ n, by aesop ⟩; simp [ι, hn]
   -- The cases of infinite and finite E' are handled separately.
   rcases Nat.atMostCountable_subset E' with hE' | hE'
   . --   use Nat.monotone_enum_of_infinite to enumerate E'
     --   show the partial sums of E' are a subsequence of the partial sums of A
     set hinf : Infinite E' := hE'.toInfinite
-    obtain ⟨ a, ha_bij, ha_mono ⟩ := (Nat.monotone_enum_of_infinite E').exists
+    choose a ha_bij ha_mono using (Nat.monotone_enum_of_infinite E').exists
     have : atTop.Tendsto (Nat.cast ∘ Subtype.val ∘ a: ℕ → ℤ) atTop := by
       apply tendsto_natCast_atTop_atTop.comp (StrictMono.tendsto_atTop _)
       intro _ _ hnm; simp [ha_mono hnm]
@@ -309,7 +308,7 @@ theorem Sum'.of_countable_supp {X:Type} {f:X → ℝ} {A: Set X} (hA: CountablyI
         . intro m hm; simp at hm ⊢; obtain ⟨ n, hn, rfl ⟩ := hm
           simp [ha_mono.monotone hn]
         intro x hx hx'; simp at hx hx'; contrapose! hx'
-        obtain ⟨ n, hn ⟩ := (hι.comp ha_bij).2 ⟨ g x, hx' ⟩
+        choose n hn using (hι.comp ha_bij).2 ⟨ g x, hx' ⟩
         simp [ι, Subtype.val_inj] at hn
         replace hn := hg.1 hn; subst hn
         use n; simpa [ha_mono.le_iff_le] using hx
@@ -325,7 +324,7 @@ theorem Sum'.of_countable_supp {X:Type} {f:X → ℝ} {A: Set X} (hA: CountablyI
   simp [Sum.of_finite, Series.convergesTo]
   apply tendsto_nhds_of_eventually_eq
   have hE'bound : BddAbove E' := Set.Finite.bddAbove hE'
-  rw [bddAbove_def] at hE'bound; obtain ⟨ N, hN ⟩ := hE'bound
+  rw [bddAbove_def] at hE'bound; choose N hN using hE'bound
   rw [eventually_atTop]
   use N; intro N' hN'
   lift N' to ℕ using (LE.le.trans (by positivity) hN')
@@ -350,14 +349,14 @@ theorem AbsConvergent'.iff_Summable {X:Type} (f:X → ℝ) : AbsConvergent' f �
     set s := Set.range fun A ↦ ∑ x ∈ A, |f x|
     have hnon : s.Nonempty := by simp [s]; use 0, ∅; simp
     have : (sSup s)-ε < sSup s := by linarith
-    simp [lt_csSup_iff h hnon,s] at this; obtain ⟨ S, hS ⟩ := this
+    simp [lt_csSup_iff h hnon,s] at this; choose S hS using this
     use S; intro T hT
     rw [abs_of_nonneg (by positivity)]
     have : ∑ x ∈ T, |f x| + ∑ x ∈ S, |f x| ≤ sSup s := by
       apply ConditionallyCompleteLattice.le_csSup _ _ h
       simp [s]; exact ⟨ T ∪ S, sum_union hT ⟩
     linarith
-  intro h; obtain ⟨ S, hS ⟩ := h 1 (by norm_num)
+  intro h; choose S hS using h 1 (by norm_num)
   rw [bddAbove_def]
   use ∑ x ∈ S, |f x| + 1; simp; intro T
   calc
@@ -390,7 +389,7 @@ theorem Sum'.eq_tsum {X:Type} (f:X → ℝ) (h: AbsConvergent' f) :
   set E := {x | f x ≠ 0}
   rcases h.countable_supp with hE | hE
   . simp [Sum']
-    obtain ⟨ g, hg ⟩ := hE.symm
+    choose g hg using hE.symm
     have : ((f ∘ Subtype.val) ∘ g:Series).absConverges := by
       apply AbsConvergent.comp hg
       simp [←AbsConvergent'.of_countable hE,]
@@ -461,7 +460,7 @@ theorem permute_convergesTo_of_divergent {a: ℕ → ℝ} (ha: (a:Series).conver
   ∃ f : ℕ → ℕ, Bijective f ∧ (a ∘ f:Series).convergesTo L
   := by
   -- This proof is written to follow the structure of the original text.
-  obtain ⟨ h1, h2 ⟩ := divergent_parts_of_divergent ha ha'
+  choose h1 h2 using divergent_parts_of_divergent ha ha'
   set A_plus := { n | a n ≥ 0 }
   set A_minus := {n | a n < 0 }
   have hdisj : Disjoint A_plus A_minus := by

@@ -72,10 +72,10 @@ abbrev Real.IsNeg (x:Real) : Prop :=
   ∃ a:ℕ → ℚ, BoundedAwayNeg a ∧ (a:Sequence).IsCauchy ∧ x = LIM a
 
 theorem Real.isPos_def (x:Real) :
-    Real.IsPos x ↔ ∃ a:ℕ → ℚ, BoundedAwayPos a ∧ (a:Sequence).IsCauchy ∧ x = LIM a := by rfl
+    IsPos x ↔ ∃ a:ℕ → ℚ, BoundedAwayPos a ∧ (a:Sequence).IsCauchy ∧ x = LIM a := by rfl
 
 theorem Real.isNeg_def (x:Real) :
-    Real.IsNeg x ↔ ∃ a:ℕ → ℚ, BoundedAwayNeg a ∧ (a:Sequence).IsCauchy ∧ x = LIM a := by rfl
+    IsNeg x ↔ ∃ a:ℕ → ℚ, BoundedAwayNeg a ∧ (a:Sequence).IsCauchy ∧ x = LIM a := by rfl
 
 /-- Proposition 5.4.4 (basic properties of positive reals) / Exercise 5.4.1 -/
 theorem Real.trichotomous (x:Real) : x = 0 ∨ x.IsPos ∨ x.IsNeg := by sorry
@@ -117,21 +117,21 @@ noncomputable abbrev Real.abs (x:Real) : Real := if x.IsPos then x else (if x.Is
 
 /-- Definition 5.4.5 (absolute value) -/
 @[simp]
-theorem Real.abs_of_pos (x:Real) (hx: x.IsPos) : Real.abs x = x := by
-  simp [Real.abs, hx]
+theorem Real.abs_of_pos (x:Real) (hx: x.IsPos) : abs x = x := by
+  simp [abs, hx]
 
 /-- Definition 5.4.5 (absolute value) -/
 @[simp]
-theorem Real.abs_of_neg (x:Real) (hx: x.IsNeg) : Real.abs x = -x := by
-  have : ¬ x.IsPos := by have := Real.not_pos_neg x; simpa [hx] using this
-  simp [Real.abs, hx, this]
+theorem Real.abs_of_neg (x:Real) (hx: x.IsNeg) : abs x = -x := by
+  have : ¬ x.IsPos := by have := not_pos_neg x; simpa [hx] using this
+  simp [abs, hx, this]
 
 /-- Definition 5.4.5 (absolute value) -/
 @[simp]
-theorem Real.abs_of_zero : Real.abs 0 = 0 := by
-  have hpos: ¬ (0:Real).IsPos := by have := Real.not_zero_pos 0; simpa using this
-  have hneg: ¬ (0:Real).IsNeg := by have := Real.not_zero_neg 0; simpa using this
-  simp [Real.abs, hpos, hneg]
+theorem Real.abs_of_zero : abs 0 = 0 := by
+  have hpos: ¬ (0:Real).IsPos := by have := not_zero_pos 0; simpa using this
+  have hneg: ¬ (0:Real).IsNeg := by have := not_zero_neg 0; simpa using this
+  simp [abs, hpos, hneg]
 
 /-- Definition 5.4.6 (Ordering of the reals) -/
 instance Real.instLT : LT Real where
@@ -209,7 +209,7 @@ theorem Real.inv_of_pos {x:Real} (hx: x.IsPos) : x⁻¹.IsPos := by
     have id : -(1:Real) = (-1:ℚ) := by simp
     simp only [hident, neg_iff_pos_of_neg, id, pos_of_coe, self_mul_inv hnon] at this
     linarith
-  have trich := Real.trichotomous x⁻¹
+  have trich := trichotomous x⁻¹
   simpa [hinv_non, hnonneg] using trich
 
 theorem Real.div_of_pos {x y:Real} (hx: x.IsPos) (hy: y.IsPos) : (x/y).IsPos := by sorry
@@ -241,8 +241,8 @@ theorem Real.LIM_of_nonneg {a: ℕ → ℚ} (ha: ∀ n, a n ≥ 0) (hcauchy: (a:
   -- This proof is written to follow the structure of the original text.
   by_contra! hlim
   set x := LIM a
-  rw [←isNeg_iff, isNeg_def] at hlim; obtain ⟨ b, hb, hb_cauchy, hlim ⟩ := hlim
-  rw [boundedAwayNeg_def] at hb; obtain ⟨ c, cpos, hb ⟩ := hb
+  rw [←isNeg_iff, isNeg_def] at hlim; choose b hb hb_cauchy hlim using hlim
+  rw [boundedAwayNeg_def] at hb; choose c cpos hb using hb
   have claim1 : ∀ n, ¬ (c/2).Close (a n) (b n) := by
     intro n; specialize ha n; specialize hb n
     simp [Section_4_3.close_iff]
@@ -253,7 +253,7 @@ theorem Real.LIM_of_nonneg {a: ℕ → ℚ} (ha: ∀ n, a n ≥ 0) (hcauchy: (a:
   have claim2 : ¬ (c/2).EventuallyClose (a:Sequence) (b:Sequence) := by
     contrapose! claim1
     rw [Rat.eventuallyClose_iff] at claim1
-    peel claim1 with N claim1; specialize claim1 N (le_refl _)
+    peel claim1 with N claim1; specialize claim1 N (by rfl)
     rwa [Section_4_3.close_iff]
   have claim3 : ¬ Sequence.Equiv a b := by
     contrapose! claim2
@@ -284,15 +284,15 @@ theorem Real.LIM_mono_fail :
 theorem Real.exists_rat_le_and_nat_ge {x:Real} (hx: x.IsPos) :
     (∃ q:ℚ, q > 0 ∧ (q:Real) ≤ x) ∧ ∃ N:ℕ, x < (N:Real) := by
   -- This proof is written to follow the structure of the original text.
-  rw [isPos_def] at hx; obtain ⟨ a, hbound, hcauchy, heq ⟩ := hx
-  rw [boundedAwayPos_def] at hbound; obtain ⟨ q, hq, hbound ⟩ := hbound
+  rw [isPos_def] at hx; choose a hbound hcauchy heq using hx
+  rw [boundedAwayPos_def] at hbound; choose q hq hbound using hbound
   have := Sequence.isBounded_of_isCauchy hcauchy
-  rw [Sequence.isBounded_def] at this; obtain ⟨ r, hr, this ⟩ := this
+  rw [Sequence.isBounded_def] at this; choose r hr this using this
   simp [Sequence.boundedBy_def] at this
   refine ⟨ ⟨ q, hq, ?_ ⟩, ?_ ⟩
   . convert LIM_mono (Sequence.IsCauchy.const _) hcauchy hbound
     exact Real.ratCast_def q
-  obtain ⟨ N, hN ⟩ := exists_nat_gt r; use N
+  choose N hN using exists_nat_gt r; use N
   calc
     x ≤ r := by
       rw [Real.ratCast_def r]
@@ -307,7 +307,7 @@ theorem Real.le_mul {ε:Real} (hε: ε.IsPos) (x:Real) : ∃ M:ℕ, M > 0 ∧ M 
   -- This proof is written to follow the structure of the original text.
   rcases trichotomous x with rfl | hx | hx
   . use 1; simpa [isPos_iff] using hε
-  . obtain ⟨ N, hN ⟩ := (exists_rat_le_and_nat_ge (div_of_pos hx hε)).2
+  . choose N hN using (exists_rat_le_and_nat_ge (div_of_pos hx hε)).2
     set M := N+1; refine ⟨ M, by positivity, ?_ ⟩
     replace hN : x/ε < M := hN.trans (by simp [M])
     simp

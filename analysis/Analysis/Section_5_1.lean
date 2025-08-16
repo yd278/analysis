@@ -270,13 +270,13 @@ lemma Sequence.IsCauchy.coe (a:ℕ → ℚ) :
     (a:Sequence).IsCauchy ↔ ∀ ε > (0:ℚ), ∃ N, ∀ j ≥ N, ∀ k ≥ N,
     Section_4_3.dist (a j) (a k) ≤ ε := by
   constructor <;> intro h ε hε
-  · obtain ⟨ N, hN, h' ⟩ := h ε hε
+  · choose N hN h' using h ε hε
     lift N to ℕ using hN; use N
     intro j hj k hk
     simp [Rat.steady_def] at h'
     specialize h' j (by omega) k (by omega)
     simp_all [hj, hk, h']; exact h'
-  obtain ⟨ N, h' ⟩ := h ε hε
+  choose N h' using h ε hε
   refine ⟨ max N 0, by simp, ?_ ⟩
   intro n hn m hm; simp at hn hm
   have npos : 0 ≤ n := by omega
@@ -289,16 +289,16 @@ lemma Sequence.IsCauchy.coe (a:ℕ → ℚ) :
 lemma Sequence.IsCauchy.mk {n₀:ℤ} (a: {n // n ≥ n₀} → ℚ) :
     (mk' n₀ a).IsCauchy ↔ ∀ ε > (0:ℚ), ∃ N ≥ n₀, ∀ j ≥ N, ∀ k ≥ N,
     Section_4_3.dist (mk' n₀ a j) (mk' n₀ a k) ≤ ε := by
-  constructor <;> intro h ε hε <;> obtain ⟨ N, hN, h' ⟩ := h ε hε
+  constructor <;> intro h ε hε <;> choose N hN h' using h ε hε
   · refine ⟨ N, hN, ?_ ⟩
     dsimp at hN; intro j hj k hk
     simp only [Rat.Steady, show max n₀ N = N by omega] at h'
-    specialize h' j (by omega) k (by omega)
+    specialize h' j _ k _ <;> try omega
     simp_all [show n₀ ≤ j by omega, hj, show n₀ ≤ k by omega]
     exact h'
   refine ⟨ max n₀ N, by simp, ?_ ⟩
   intro n hn m hm; simp_all
-  exact h' n (by omega) m (by omega)
+  apply h' n _ m <;> omega
 
 noncomputable def Sequence.sqrt_two : Sequence := (fun n:ℕ ↦ ((⌊ (Real.sqrt 2)*10^n ⌋ / 10^n):ℚ))
 
@@ -345,8 +345,8 @@ theorem Sequence.IsCauchy.harmonic : (mk' 1 (fun n ↦ (1:ℚ)/n)).IsCauchy := b
     have hk'' : 1/k ≤ (1:ℚ)/N := by gcongr
     observe hk''' : (0:ℚ) ≤ 1/k
     constructor <;> linarith
-  simp at hdist hN ⊢; apply hdist.trans
-  rw [inv_le_comm₀ (by positivity) (by positivity)]
+  simp at *; apply hdist.trans
+  rw [inv_le_comm₀] <;> try positivity
   order
 
 abbrev BoundedBy {n:ℕ} (a: Fin n → ℚ) (M:ℚ) : Prop :=
@@ -386,7 +386,7 @@ example : ((fun n:ℕ ↦ (-1:ℚ)^n):Sequence).IsBounded := by
 example : ¬ ((fun n:ℕ ↦ (-1:ℚ)^n):Sequence).IsCauchy := by
   rw [Sequence.IsCauchy.coe]
   by_contra h; specialize h (1/2 : ℚ) (by norm_num)
-  obtain ⟨ N, h ⟩ := h; specialize h N (by omega) (N+1) (by omega)
+  choose N h using h; specialize h N _ (N+1) _ <;> try omega
   by_cases h': Even N
   · simp [Even.neg_one_pow h', Odd.neg_one_pow (Even.add_one h'), Section_4_3.dist] at h
     norm_num at h
@@ -401,8 +401,8 @@ lemma IsBounded.finite {n:ℕ} (a: Fin n → ℚ) : ∃ M ≥ 0,  BoundedBy a M 
   induction' n with n hn
   . use 0; simp [boundedBy_def]
   set a' : Fin n → ℚ := fun m ↦ a m
-  obtain ⟨ M, hpos, hM ⟩ := hn a'
-  have h1 : BoundedBy a' (M + |a n|) := by intro m; exact (hM m).trans (by simp)
+  choose M hpos hM using hn a'
+  have h1 : BoundedBy a' (M + |a n|) := fun m ↦ (hM m).trans (by simp)
   have h2 : |a n| ≤ M + |a n| := by simp [hpos]
   refine ⟨ M + |a n|, by positivity, ?_ ⟩
   intro m; rcases Fin.eq_castSucc_or_eq_last m with ⟨ j, rfl ⟩ | rfl

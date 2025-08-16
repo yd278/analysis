@@ -242,7 +242,7 @@ theorem finite_series_of_finite_series {XX YY:Type*} (X: Finset XX) (Y: Finset Y
   . sorry
   intro X hX
   have hnon : X.Nonempty := by rw [←card_ne_zero]; linarith
-  obtain ⟨ x₀, hx₀ ⟩ := hnon.exists_mem
+  choose x₀ hx₀ using hnon.exists_mem
   set X' := X.erase x₀
   have hcard : X'.card = n := by simp [X', card_erase_of_mem hx₀, hX]
   have hunion : X = X' ∪ {x₀} := by ext x; by_cases h:x = x₀ <;> simp [h,X', hx₀]

@@ -63,7 +63,7 @@ theorem right_limit.conv {X: Set ℝ} {f: ℝ → ℝ} {x₀:ℝ} (had: Adherent
   (a:ℕ → ℝ) (ha: ∀ n, a n ∈ X ∩ .Ioi x₀)
   (hconv: Filter.atTop.Tendsto a (nhds x₀)) :
   Filter.atTop.Tendsto (fun n ↦ f (a n)) (nhds (right_limit X f x₀)) := by
-  obtain ⟨ L, hL ⟩ := h
+  choose L hL using h
   apply Convergesto.comp had _ ha hconv
   rwa [Convergesto.iff, (eq had hL).2]
 
@@ -72,7 +72,7 @@ theorem left_limit.conv {X: Set ℝ} {f: ℝ → ℝ} {x₀:ℝ} (had: AdherentP
   (a:ℕ → ℝ) (ha: ∀ n, a n ∈ X ∩ .Iio x₀)
   (hconv: Filter.atTop.Tendsto a (nhds x₀)) :
   Filter.atTop.Tendsto (fun n ↦ f (a n)) (nhds (left_limit X f x₀)) := by
-  obtain ⟨ L, hL ⟩ := h
+  choose L hL using h
   apply Convergesto.comp had _ ha hconv
   rwa [Convergesto.iff, (eq had hL).2]
 
@@ -93,11 +93,11 @@ theorem ContinuousAt.iff_eq_left_right_limit {X: Set ℝ} {f: ℝ → ℝ} {x₀
   rw [hright, ←Convergesto.iff] at hre
   rw [lheft, ←Convergesto.iff] at hle
   simp [Convergesto, Real.CloseNear, Real.CloseFn] at hre hle
-  obtain ⟨ δ_plus, hδ_plus, hre ⟩ := hre ε hε
-  obtain ⟨ δ_minus, hδ_minus, hle ⟩ := hle ε hε
+  choose δ_plus hδ_plus hre using hre ε hε
+  choose δ_minus hδ_minus hle using hle ε hε
   use min δ_plus δ_minus, (by positivity)
   intro x hx hxx₀
-  rcases lt_trichotomy x x₀ with hlt | heq | hgt
+  rcases lt_trichotomy x x₀ with hlt | rfl | hgt
   . sorry
   . sorry
   sorry
