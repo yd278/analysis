@@ -58,14 +58,14 @@ theorem BddOn.of_continuous_on_compact {a b:ℝ} (h:a < b) {f:ℝ → ℝ} (hf: 
   have hXclosed : IsClosed X := Icc_closed
   have hXbounded : Bornology.IsBounded X := Icc_bounded _ _
   have haX (n:ℕ): x n ∈ X := by simp [X]; exact ⟨ (hx n).1, (hx n).2.1 ⟩
-  obtain ⟨ n, hn, ⟨ L, hLX, hconv ⟩ ⟩ := ((Heine_Borel X).mp ⟨ hXclosed, hXbounded ⟩) x haX
+  have ⟨ n, hn, ⟨ L, hLX, hconv ⟩ ⟩ := ((Heine_Borel X).mp ⟨ hXclosed, hXbounded ⟩) x haX
   have why (j:ℕ) : n j ≥ j := why_7_6_3 hn j
   replace hf := hf.continuousWithinAt hLX
   rw [ContinuousWithinAt.iff] at hf
   replace hf := hf.comp (AdherentPt.of_mem hLX) (fun j ↦ haX (n j)) hconv
   replace hf := Metric.isBounded_range_of_tendsto _ hf
-  rw [isBounded_def] at hf; obtain ⟨ M, hpos, hM ⟩ := hf
-  obtain ⟨ j, hj ⟩ := exists_nat_gt M
+  rw [isBounded_def] at hf; choose M hpos hM using hf
+  choose j hj using exists_nat_gt M
   replace hx := (hx (n j)).2.2
   replace hM : f (x (n j)) ∈ Set.Icc (-M) M := by apply hM; simp
   simp [←abs_le] at hM
@@ -85,7 +85,7 @@ theorem BddBelowOn.isMinOn {f:ℝ → ℝ} {X:Set ℝ} {x₀:ℝ} (h: IsMinOn f 
 theorem IsMaxOn.of_continuous_on_compact {a b:ℝ} (h:a < b) {f:ℝ → ℝ} (hf: ContinuousOn f (.Icc a b)) :
   ∃ xmax ∈ Set.Icc a b, IsMaxOn f (.Icc a b) xmax := by
   -- This proof is written to follow the structure of the original text.
-  obtain ⟨ M, hM ⟩ := BddOn.of_continuous_on_compact h hf
+  choose M hM using BddOn.of_continuous_on_compact h hf
   set E := f '' (.Icc a b)
   have hE : E ⊆ .Icc (-M) M := by rintro _ ⟨ x, hx, rfl ⟩; simp [hM x hx, ←abs_le]
   have hnon : E ≠ ∅ := by simp [E]; contrapose! h; rw [Set.Icc_eq_empty_iff] at h; linarith
@@ -104,7 +104,7 @@ theorem IsMaxOn.of_continuous_on_compact {a b:ℝ} (h:a < b) {f:ℝ → ℝ} (hf
   have hfx (n:ℕ) : m - 1/(n+1:ℝ) < f (x n) := (claim2 n).choose_spec.2
   observe hclosed : IsClosed (.Icc a b)
   observe hbounded : Bornology.IsBounded (.Icc a b)
-  obtain ⟨ n, hn, ⟨ xmax, hmax, hconv⟩ ⟩ := (Heine_Borel (.Icc a b)).mp ⟨hclosed, hbounded⟩ x hx
+  have ⟨ n, hn, ⟨ xmax, hmax, hconv⟩ ⟩ := (Heine_Borel (.Icc a b)).mp ⟨hclosed, hbounded⟩ x hx
   use xmax, hmax
   have hn_lower (j:ℕ) : n j ≥ j := why_7_6_3 hn j
   have hconv' : Filter.atTop.Tendsto (fun j ↦ f (x (n j))) (nhds (f xmax)) :=
@@ -146,11 +146,11 @@ theorem sInf.of_isMinOn {f:ℝ → ℝ} {X:Set ℝ} {x₀:ℝ} (hx₀: x₀ ∈ 
   refine ⟨ ⟨x₀, hx₀, rfl ⟩, h ⟩
 
 theorem sSup.of_continuous_on_compact {a b:ℝ} (h:a < b) (f:ℝ → ℝ) (hf: ContinuousOn f (.Icc a b)) : ∃ xmax ∈ Set.Icc a b, sSup (f '' .Icc a b) = f xmax := by
-  obtain ⟨ xmax, hmax, hhas ⟩ := IsMaxOn.of_continuous_on_compact h hf
+  choose xmax hmax hhas using IsMaxOn.of_continuous_on_compact h hf
   exact ⟨ xmax, hmax, sSup.of_isMaxOn hmax hhas ⟩
 
 theorem sInf.of_continuous_on_compact {a b:ℝ} (h:a < b) (f:ℝ → ℝ) (hf: ContinuousOn f (.Icc a b)) : ∃ xmin ∈ Set.Icc a b, sInf (f '' .Icc a b) = f xmin := by
-  obtain ⟨ xmin, hmin, hhas ⟩ := IsMinOn.of_continuous_on_compact h hf
+  choose xmin hmin hhas using IsMinOn.of_continuous_on_compact h hf
   exact ⟨ xmin, hmin, sInf.of_isMinOn hmin hhas ⟩
 
 /-- Exercise 9.6.1 -/

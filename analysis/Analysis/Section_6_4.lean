@@ -159,7 +159,7 @@ theorem Sequence.lt_limsup_bounds {a:Sequence} {x:EReal} (h: x < a.limsup) {N:�
   have hx : x < a.upperseq N := by
     apply lt_of_lt_of_le h (sInf_le _)
     simp; use N
-  obtain ⟨ n, hn, hxn, _ ⟩ := Sequence.exists_between_lt_sup hx
+  choose n hn hxn _ using Sequence.exists_between_lt_sup hx
   simp [Sequence.from, hN] at hn; use n, hn
   convert gt_iff_lt.mpr hxn using 1
   simp [hn, hN.trans hn]
@@ -237,8 +237,8 @@ example : ((fun (n:ℕ) ↦ (2:ℝ)^(-(n:ℤ))):Sequence).TendsTo 0 := by
 
 abbrev Sequence.abs (a:Sequence) : Sequence where
   m := a.m
-  seq := fun n ↦ |a n|
-  vanish := by intro n hn; simp [a.vanish n hn]
+  seq n := |a n|
+  vanish n hn := by simp [a.vanish n hn]
 
 
 /-- Corollary 6.4.17 (Zero test for sequences) / Exercise 6.4.7 -/
@@ -252,8 +252,8 @@ theorem Sequence.tendsTo_zero_iff (a:Sequence) :
 -/
 theorem Sequence.finite_limsup_liminf_of_bounded {a:Sequence} (hbound: a.IsBounded) :
     (∃ L_plus:ℝ, a.limsup = L_plus) ∧ (∃ L_minus:ℝ, a.liminf = L_minus) := by
-  obtain ⟨ M, hMpos, hbound ⟩ := hbound
-  unfold Sequence.BoundedBy at hbound
+  choose M hMpos hbound using hbound
+  unfold BoundedBy at hbound
   have hlimsup_bound : a.limsup ≤ M := by
     apply a.limsup_le_sup.trans (sup_le_upper _)
     intro n hN; simp
@@ -290,7 +290,7 @@ theorem Sequence.Cauchy_iff_convergent (a:Sequence) :
     linarith
   have hup (ε:ℝ) (hε: ε>0) : L_plus - L_minus ≤ 2*ε := by
     specialize h ε hε
-    obtain ⟨ N, hN, hsteady ⟩ := h
+    choose N hN hsteady using h
     unfold Real.Steady Real.Close at hsteady
     have hN0 : N ≥ (a.from N).m := by simp [Sequence.from, hN]
     have hN1 : (a.from N).seq N = a.seq N := by simp [Sequence.from, hN]

@@ -44,7 +44,7 @@ theorem _root_.Filter.Tendsto.of_div' {a b L:ℝ} (hab: a < b) {f g f' g': ℝ �
     by_contra this
     simp at hx
     have := HasDerivWithinAt.exist_zero hx.1 (hgcon.mono ?_) (hg.mono ?_) (by rw [hga, this])
-    . obtain ⟨ y, hy, hgy ⟩ := this; simp at hy
+    . choose y hy hgy using this; simp at hy
       have : y ∈ Set.Icc a b := by simp; and_intros <;> linarith
       specialize hgnon y this
       rw [DifferentiableOn.eq_1] at hf hg; specialize hg y this
@@ -72,7 +72,7 @@ theorem _root_.Filter.Tendsto.of_div' {a b L:ℝ} (hab: a < b) {f g f' g': ℝ �
         apply hdiff.mono; intro _; simp; intros; and_intros <;> linarith
       have ha : h a = 0 := by simp [h, hfa, hga]
       have hb : h (x n) = 0 := by simp [h]; ring
-      obtain ⟨ yn, hyn, hdh ⟩ := HasDerivWithinAt.exist_zero hx.1 hcon hdiff (by rw [ha, hb])
+      choose yn hyn hdh using HasDerivWithinAt.exist_zero hx.1 hcon hdiff (by rw [ha, hb])
       use yn, hyn
       rw [DifferentiableOn.eq_1] at hf hg
       have h1 : HasDerivWithinAt f (f' yn) (.Ioo a (x n)) yn := by

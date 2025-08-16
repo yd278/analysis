@@ -42,7 +42,7 @@ theorem Series.root_test_pos {s : Series}
     have hα' : 0 < α + ε := by linarith
     have := eventually_lt_of_limsup_lt hε' (by isBoundedDefault)
     rw [eventually_atTop] at this
-    obtain ⟨ N', hN ⟩ := this; set N := max N' (max s.m 1)
+    choose N' hN using this; set N := max N' (max s.m 1)
     have (n:ℤ) (hn: n ≥ N) : |s.seq n| ≤ (α + ε)^n := by
       have : n ≥ N' := by omega
       have npos : 0 < n := by omega
@@ -81,7 +81,7 @@ theorem Series.root_test_neg {s : Series}
     replace h := frequently_lt_of_lt_limsup (by isBoundedDefault) h
     apply diverges_of_nodecay
     by_contra this; rw [LinearOrderedAddCommGroup.tendsto_nhds] at this; specialize this 1 (by positivity)
-    obtain ⟨ n, hn, hs, hs' ⟩ := (Frequently.and_eventually h this).forall_exists_of_atTop 1
+    choose n hn hs hs' using (h.and_eventually this).forall_exists_of_atTop 1
     simp at hs'; replace hs' := rpow_lt_one (by positivity) hs' (show 0 < 1/(n:ℝ) by positivity)
     rw [show (1:EReal) = (1:ℝ) by simp, EReal.coe_lt_coe_iff] at hs
     linarith
@@ -132,7 +132,7 @@ theorem Series.ratio_ineq {c:ℤ → ℝ} (m:ℤ) (hpos: ∀ n ≥ m, c n > 0) :
   rw [this]
   have hε' : L' < (L+ε:ℝ) := by rw [hL', EReal.coe_lt_coe_iff]; linarith
   have := eventually_lt_of_limsup_lt hε' (by isBoundedDefault)
-  rw [eventually_atTop] at this; obtain ⟨ N', hN ⟩ := this
+  rw [eventually_atTop] at this; choose N' hN using this
   set N := max N' (max m 1)
   have (n:ℤ) (hn: n ≥ N) : c (n+1) / c n ≤ (L + ε) := by
     have : n ≥ N' := by omega

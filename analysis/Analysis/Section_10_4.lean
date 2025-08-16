@@ -48,7 +48,7 @@ theorem _root_.HasDerivWithinAt.of_inverse_of_zero_deriv {X Y: Set ℝ} {f: ℝ 
   (hcluster: ClusterPt x₀ (.principal (X \ {x₀})))
   (hf: HasDerivWithinAt f 0 X x₀) :
   ¬ DifferentiableWithinAt ℝ g Y y₀ := by
-  by_contra this; rw [DifferentiableWithinAt.iff] at this; obtain ⟨ _, hg ⟩ := this
+  by_contra this; rw [DifferentiableWithinAt.iff] at this; choose _ hg using this
   replace hg := hf.of_inverse hfXY hgf hx₀ hfx₀ hcluster hg; simp_all
 
 example : ¬ DifferentiableWithinAt ℝ (fun x:ℝ ↦ x^(1/3:ℝ)) (.Ici 0) 0 := by sorry
@@ -64,7 +64,7 @@ theorem inverse_function_theorem {X Y: Set ℝ} {f: ℝ → ℝ} {g:ℝ → ℝ}
     -- This proof is written to follow the structure of the original text.
     have had : AdherentPt y₀ (Y \ {y₀}) := by
       simp [←AdherentPt_def, limit_of_AdherentPt] at hcluster ⊢
-      obtain ⟨ x, hx, hconv ⟩ := hcluster; use f ∘ x
+      choose x hx hconv using hcluster; use f ∘ x
       constructor
       . intro n; refine ⟨ by aesop, ?_ ⟩
         have hx2 := (hx n).2; contrapose! hx2; apply_fun g at hx2

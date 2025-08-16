@@ -182,7 +182,7 @@ theorem UniformContinuousOn.of_continuousOn {a b:ℝ} {f:ℝ → ℝ}
   by_contra h; rw [iff_preserves_equiv] at h
   simp only [ge_iff_le, Function.comp_apply, not_forall, Classical.not_imp, gt_iff_lt, not_exists,
   not_and, sup_le_iff, dite_eq_ite, and_imp, not_le, forall_const, exists_and_left] at h
-  obtain ⟨ x, y, hx, hy, hequiv, ε, hε, h ⟩ := h
+  choose x y hx hy hequiv ε hε h using h
   set E : Set ℕ := {n | ¬ ε.Close (f (x n)) (f (y n)) }
   have hE : Infinite E := by
     rw [←not_finite_iff_infinite]
@@ -202,7 +202,7 @@ theorem UniformContinuousOn.of_continuousOn {a b:ℝ} {f:ℝ → ℝ}
   have hymem (j:ℕ) : y (n j) ∈ Set.Icc a b := hy (n j)
   observe hclosed : IsClosed (.Icc a b)
   observe hbounded : Bornology.IsBounded (.Icc a b)
-  obtain ⟨ j, hj, ⟨ L, hL, hconv⟩ ⟩ := (Heine_Borel (.Icc a b)).mp ⟨ hclosed, hbounded ⟩ _ hxmem
+  have ⟨ j, hj, ⟨ L, hL, hconv⟩ ⟩ := (Heine_Borel (.Icc a b)).mp ⟨ hclosed, hbounded ⟩ _ hxmem
   replace hcont := ContinuousOn.continuousWithinAt hcont hL
   have hconv' := hconv.comp_of_continuous hL hcont (fun k ↦ hxmem (j k))
   rw [Sequence.equiv_iff] at hequiv

@@ -25,8 +25,8 @@ namespace Chapter8
 /-- Theorem 8.3.1 -/
 theorem EqualCard.power_set_false (X:Type) : ¬ EqualCard X (Set X) := by
   -- This proof is written to follow the structure of the original text.
-  by_contra!; obtain ⟨f, hf⟩ := this
-  set A := {x | x ∉ f x }; obtain ⟨ x, hx ⟩ := hf.2 A
+  by_contra!; choose f hf using this
+  set A := {x | x ∉ f x }; choose x hx using hf.2 A
   by_cases h : x ∈ A <;> have h' := h
   . simp [A] at h'; simp_all
   rw [←hx] at h'
@@ -83,7 +83,7 @@ theorem Uncountable.real : Uncountable ℝ := by
     rw [←Set.symmDiff_nonempty] at this
     replace this := Nat.min_spec this
     set n₀ := Nat.min (symmDiff A B)
-    simp [symmDiff] at this; obtain ⟨ h1, h2 ⟩ := this
+    simp [symmDiff] at this; choose h1 h2 using this
     wlog h : n₀ ∈ A ∧ n₀ ∉ B generalizing A B
     . simp [h] at h1
       exact this hAB.symm

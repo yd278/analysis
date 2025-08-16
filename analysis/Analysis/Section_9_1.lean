@@ -81,7 +81,7 @@ example : ¬ AdherentPt 2 (.Ioo 0 1) := by sorry
 theorem closure_def (X:Set ℝ) : closure X = { x | AdherentPt x X } := by
   ext; simp [Real.mem_closure_iff, AdherentPt, Real.adherent']
   constructor <;> intro h ε hε
-  all_goals obtain ⟨ y, hy, hxy ⟩ := h (ε/2) (half_pos hε); exact ⟨ y, hy, by rw [abs_sub_comm]; linarith ⟩
+  all_goals choose y hy hxy using h _ (half_pos hε); exact ⟨ y, hy, by rw [abs_sub_comm]; linarith ⟩
 
 theorem closure_def' (X:Set ℝ) (x :ℝ) : x ∈ closure X ↔ AdherentPt x X := by
   simp [closure_def]
