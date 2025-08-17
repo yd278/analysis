@@ -24,7 +24,7 @@ theorem not_integrable : BddOn f_9_3_21 (Icc 0 1) ∧ ¬ IntegrableOn f_9_3_21 (
   -- This proof is adapted from the structure of the original text.
   have hbdd: BddOn f_9_3_21 (Icc 0 1):= by
     use 1; intro x _; by_cases h: ∃ y:ℚ, y = x <;> simp [f_9_3_21, h]
-  refine ⟨ hbdd, ?_ ⟩
+  refine' ⟨ hbdd, _ ⟩
   have hsup (P: Partition (Icc 0 1)) : ∀ J ∈ P.intervals, (sSup (f_9_3_21 '' (J:Set ℝ))) * |J|ₗ = |J|ₗ := by
     intro J hJ; by_cases hJ0: |J|ₗ = 0
     . simp [hJ0]
@@ -64,7 +64,7 @@ theorem not_integrable : BddOn f_9_3_21 (Icc 0 1) ∧ ¬ IntegrableOn f_9_3_21 (
       simp at hJ0'
       choose z hz hz' using Dense.exists_between dense_irrational hJ0'
       simp at hz hz' ⊢
-      refine ⟨ z, (subset_iff _ _).mp (Ioo_subset J) (by simp [hz']), ?_ ⟩
+      refine' ⟨ z, (subset_iff _ _).mp (Ioo_subset J) (by simp [hz']), _ ⟩
       intro q; contrapose! hz; simp [←hz]
     apply le_csInf
     . contrapose! hJ0; simp_all

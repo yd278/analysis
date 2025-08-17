@@ -66,7 +66,7 @@ theorem inverse_function_theorem {X Y: Set ℝ} {f: ℝ → ℝ} {g:ℝ → ℝ}
       simp [←AdherentPt_def, limit_of_AdherentPt] at hcluster ⊢
       choose x hx hconv using hcluster; use f ∘ x
       constructor
-      . intro n; refine ⟨ by aesop, ?_ ⟩
+      . intro n; refine' ⟨ by aesop, _ ⟩
         have hx2 := (hx n).2; contrapose! hx2; apply_fun g at hx2
         simpa [←hfx₀, hgf _ hx₀, hgf _ (hx n).1] using hx2
       rw [←hfx₀]

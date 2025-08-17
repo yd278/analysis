@@ -81,7 +81,7 @@ theorem Chapter6.Sequence.isBounded_iff_isBounded_range (a:ℕ → ℝ):
       _ = _ := by ring
   intro ⟨ C, h ⟩
   have : C ≥ 0 := by specialize h 0 0; simpa using h
-  refine ⟨ C + |a 0|, by positivity, ?_ ⟩
+  refine' ⟨ C + |a 0|, by positivity, _ ⟩
   intro n; by_cases hn: n ≥ 0 <;> simp [hn]
   . calc
       _ ≤ |a n.toNat - a 0| + |a 0| := by
@@ -115,12 +115,12 @@ theorem Chapter6.Sequence.limit_point_iff (a:ℕ → ℝ) (L:ℝ) :
   . intro h s ⟨ ε, hε, hεs ⟩ N
     have ⟨ n, hn1, hn2 ⟩ := h _ (half_pos hε) N (by positivity)
     have hn : n ≥ 0 := LE.le.trans (by positivity) hn1
-    refine ⟨ n.toNat, by rwa [ge_iff_le, Int.le_toNat hn], ?_ ⟩
+    refine' ⟨ n.toNat, by rwa [ge_iff_le, Int.le_toNat hn], _ ⟩
     apply hεs; simp [Real.dist_eq, hn] at *; linarith
   intro h ε hε N hN
   have ⟨ n, hn1, hn2 ⟩ := h (Metric.ball L ε) ⟨ ε, hε, by aesop ⟩ N.toNat
   have hn : n ≥ 0 := by positivity
-  refine ⟨ n, by rwa [ge_iff_le, ←Int.toNat_le], ?_ ⟩
+  refine' ⟨ n, by rwa [ge_iff_le, ←Int.toNat_le], _ ⟩
   simp [Real.dist_eq, hn] at *; linarith
 
 /-- Identification with `Filter.limsup` -/

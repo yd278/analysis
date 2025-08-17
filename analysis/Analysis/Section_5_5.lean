@@ -124,7 +124,7 @@ lemma Real.LUB_claim1 (n : ℕ) {E: Set Real} (hE: Set.Nonempty E) (hbound: BddA
       simp [ε] at hK ⊢; exact upperBound_upper (by order) hbound
     choose m _ _ hm hm' using claim1_4; use m
     have : (m/(n+1):ℚ) = m*ε := by simp [ε,ratCast_mul]; field_simp
-    refine ⟨ by convert hm, ?_ ⟩
+    refine' ⟨ by convert hm, _ ⟩
     convert hm'; simp [ratCast_sub, this, sub_mul, ε]
   intro _ _ ⟨ _, _ ⟩ ⟨ _, _ ⟩; solve_by_elim [upperBound_discrete_unique]
 

@@ -137,13 +137,13 @@ theorem sSup.of_isMaxOn {f:ℝ → ℝ} {X:Set ℝ} {x₀:ℝ} (hx₀: x₀ ∈ 
   sSup (f '' X) = f x₀ := by
   apply IsGreatest.csSup_eq
   simp [IsGreatest, mem_upperBounds]
-  refine ⟨ ⟨x₀, hx₀, rfl ⟩, h ⟩
+  exact ⟨ ⟨x₀, hx₀, rfl ⟩, h ⟩
 
 theorem sInf.of_isMinOn {f:ℝ → ℝ} {X:Set ℝ} {x₀:ℝ} (hx₀: x₀ ∈ X) (h: IsMinOn f X x₀) :
   sInf (f '' X) = f x₀ := by
   apply IsLeast.csInf_eq
   simp [IsLeast, mem_lowerBounds]
-  refine ⟨ ⟨x₀, hx₀, rfl ⟩, h ⟩
+  exact ⟨ ⟨x₀, hx₀, rfl ⟩, h ⟩
 
 theorem sSup.of_continuous_on_compact {a b:ℝ} (h:a < b) (f:ℝ → ℝ) (hf: ContinuousOn f (.Icc a b)) : ∃ xmax ∈ Set.Icc a b, sSup (f '' .Icc a b) = f xmax := by
   choose xmax hmax hhas using IsMaxOn.of_continuous_on_compact h hf

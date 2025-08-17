@@ -98,7 +98,7 @@ theorem Real.eq_lim (x:Real) : ∃ (a:ℕ → ℚ), (a:Sequence).IsCauchy ∧ x 
   apply Quot.ind _ x; intro a; use (a:ℕ → ℚ)
   observe : ((a:ℕ → ℚ):Sequence) = a.toSequence
   rw [this, LIM_def (by convert a.cauchy)]
-  refine ⟨ a.cauchy, ?_ ⟩
+  refine' ⟨ a.cauchy, _ ⟩
   congr; ext n; simp; replace := congr($this n); simp_all
 
 /-- Definition 5.3.1 (Real numbers) -/
@@ -347,7 +347,7 @@ theorem Real.boundedAwayZero_of_nonzero {x:Real} (hx: x ≠ 0) :
   set a : ℕ → ℚ := fun n ↦ if n < n₀ then (ε/2) else b n
   have not_hard : Sequence.Equiv a b := by sorry
   have ha : (a:Sequence).IsCauchy := (Sequence.isCauchy_of_equiv not_hard).mpr hb
-  refine ⟨ a, ha, ?_, by rw [(LIM_eq_LIM ha hb).mpr not_hard] ⟩
+  refine' ⟨ a, ha, _, by rw [(LIM_eq_LIM ha hb).mpr not_hard] ⟩
   rw [bounded_away_zero_def]
   use ε/2, half_pos hε
   intro n; by_cases hn: n < n₀ <;> simp [a, hn, le_abs_self _]

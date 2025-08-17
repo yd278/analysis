@@ -82,7 +82,7 @@ theorem Series.converges_of_permute_nonneg {a:ℕ → ℝ} (ha: (a:Series).nonne
     have hM : ∃ M, ∀ n ∈ X, ∃ m, f m = n ∧ m ≤ M := by
       use (X.preimage f (Set.injOn_of_injective hf.1)).sup id
       intro n hn; choose m hm using hf.2 n
-      refine ⟨ _, hm, ?_ ⟩
+      refine' ⟨ _, hm, _ ⟩
       apply Finset.le_sup (f := id)
       simp [Finset.mem_preimage, hm, hn]
     choose M hM using hM
