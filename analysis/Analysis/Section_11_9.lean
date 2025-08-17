@@ -187,7 +187,7 @@ theorem integ_eq_antideriv_sub {a b:ℝ} (h:a ≤ b) {f F: ℝ → ℝ}
                   simp; use e; simp; exact ((subset_iff _ _).mp (Ioo_subset J)) he
             rw [←mem_closure_iff_clusterPt]
             apply closure_mono (s := .Ioo e d)
-            . intro _ _; simp at *; refine ⟨ ⟨ ?_, ?_ ⟩, ?_ ⟩ <;> linarith
+            . intro _ _; simp at *; refine' ⟨ ⟨ _, _ ⟩, _ ⟩ <;> linarith
             simp at he; rw [closure_Ioo (by linarith)]; simp; linarith
           . simp; rw [Set.Icc_subset_Ioo_iff (le_of_lt hJab)]; constructor <;> linarith
           apply (Ioo_subset J).trans at hJ

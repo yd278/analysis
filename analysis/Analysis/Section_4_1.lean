@@ -161,11 +161,11 @@ theorem Int.trichotomous (x:Int) : x = 0 ∨ x.IsPos ∨ x.IsNeg := by
   obtain ⟨ a, b, rfl ⟩ := eq_diff x
   obtain h_lt | rfl | h_gt := _root_.trichotomous (r := LT.lt) a b
   . obtain ⟨ c, rfl ⟩ := Nat.exists_eq_add_of_lt h_lt
-    right; right; refine ⟨ c+1, by linarith, ?_ ⟩
+    right; right; refine' ⟨ c+1, by linarith, _ ⟩
     simp_rw [natCast_eq, neg_eq, eq]; abel
   . left; simp_rw [ofNat_eq, eq, add_zero, zero_add]
   obtain ⟨ c, rfl ⟩ := Nat.exists_eq_add_of_lt h_gt
-  right; left; refine ⟨ c+1, by linarith, ?_ ⟩
+  right; left; refine' ⟨ c+1, by linarith, _ ⟩
   simp_rw [natCast_eq, eq]; abel
 
 /-- Lemma 4.1.5 (trichotomy of integers)-/

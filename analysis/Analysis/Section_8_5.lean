@@ -104,7 +104,7 @@ theorem WellFoundedLT.iff (X:Type) [LinearOrder X] :
   peel with A hA; constructor
   . intro ⟨ x, hxA, h ⟩; use ⟨ x, hxA ⟩; intro ⟨ y, hy ⟩ this; specialize h y hy
     simp at *; order
-  intro ⟨ ⟨ x, hx ⟩, h ⟩; refine ⟨ _, hx, ?_ ⟩; intro y hy; specialize h (b := ⟨ _, hy ⟩)
+  intro ⟨ ⟨ x, hx ⟩, h ⟩; refine' ⟨ _, hx, _ ⟩; intro y hy; specialize h (b := ⟨ _, hy ⟩)
   simp at h; contrapose! h; simp [h]; order
 
 theorem WellFoundedLT.iff' {X:Type} [PartialOrder X] (h: IsTotal X) :

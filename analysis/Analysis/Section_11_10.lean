@@ -43,7 +43,7 @@ theorem PiecewiseConstantOn.RS_integ_eq_integ_of_mul_deriv
   set α' := derivWithin α (Icc a b)
   have hf_integ: IntegrableOn f (Icc a b) := (integ_of_piecewise_const hf).1
   observe hfα'_integ: IntegrableOn (f * α') (Icc a b)
-  refine ⟨ hfα'_integ, ?_ ⟩
+  refine' ⟨ hfα'_integ, _ ⟩
   choose P hP using hf
   rw [PiecewiseConstantOn.RS_integ_def hP α, hfα'_integ.split P]
   apply Finset.sum_congr rfl; intro J hJ
@@ -125,7 +125,7 @@ theorem RS_integ_eq_integ_of_mul_deriv
     linarith
   have h3 : lower_integral (f * α') (Icc a b) ≤
     upper_integral (f * α') (Icc a b) := lower_integral_le_upper hfα'_bound
-  refine ⟨ ⟨ hfα'_bound, ?_ ⟩, ?_ ⟩ <;> linarith
+  refine' ⟨ ⟨ hfα'_bound, _ ⟩, _ ⟩ <;> linarith
 
 /-- Lemma 11.10.5 / Exercise 11.10.2-/
 theorem PiecewiseConstantOn.RS_integ_of_comp {a b:ℝ} (hab: a < b) {φ f:ℝ → ℝ}
@@ -157,7 +157,7 @@ theorem PiecewiseConstantOn.RS_integ_of_comp {a b:ℝ} (hab: a < b) {φ f:ℝ �
   have hfφ_piecewise : PiecewiseConstantWith (f ∘ φ) Q := by
     sorry
   have hfφ_piecewise' : PiecewiseConstantOn (f ∘ φ) (Icc a b) := ⟨ Q, hfφ_piecewise ⟩
-  refine ⟨ hfφ_piecewise' , ?_ ⟩
+  refine' ⟨ hfφ_piecewise' , _ ⟩
   rw [RS_integ_def hfφ_piecewise]
   unfold PiecewiseConstantWith.RS_integ
   rw [Finset.sum_image, ←Finset.sum_coe_sort (s := P.intervals)]
@@ -205,7 +205,7 @@ theorem RS_integ_of_comp {a b:ℝ} (hab: a < b) {φ f: ℝ → ℝ}
     linarith [integ_le_lower_RS_integral hfφ_bdd this hpc.1 hφ_mono]
   have hle : lower_RS_integral (f ∘ φ) (Icc a b) φ ≤ upper_RS_integral (f ∘ φ) (Icc a b) φ :=
     lower_RS_integral_le_upper hfφ_bdd hφ_mono
-  refine ⟨ ⟨ hfφ_bdd, ?_ ⟩, ?_ ⟩ <;> linarith
+  refine' ⟨ ⟨ hfφ_bdd, _ ⟩, _ ⟩ <;> linarith
 
 /-- Proposition 11.10.7 (Change of variables formula III)-/
 theorem integ_of_comp {a b:ℝ} (hab: a < b) {φ f: ℝ → ℝ}
@@ -218,7 +218,7 @@ theorem integ_of_comp {a b:ℝ} (hab: a < b) {φ f: ℝ → ℝ}
     integ f (Icc (φ a) (φ b)) := by
  have h1 := RS_integ_of_comp hab hφ_cont hφ_mono hf
  have h2 := RS_integ_eq_integ_of_mul_deriv hab hφ_mono hφ_diff hφ_cont hφ' h1.1
- refine ⟨ h2.1, by aesop ⟩
+ exact ⟨ h2.1, by aesop ⟩
 
 /-- Exercise 11.10.3-/
 example {a b:ℝ} (hab: a < b) {f: ℝ → ℝ} (hf: IntegrableOn f (Icc a b)) :

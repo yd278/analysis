@@ -40,11 +40,11 @@ theorem ExistsUnique.iff_subsingleton_nonempty  {α: Sort*} {p: α → Prop} :
   (∃! x, p x) ↔ (Subsingleton {x // p x} ∧ Nonempty {x // p x}) := by
   constructor
   · intro h; obtain ⟨ x₀, hx₀ ⟩ := h.exists
-    refine ⟨ ⟨ ?_ ⟩, ⟨ _, hx₀ ⟩⟩
+    refine' ⟨ ⟨ _ ⟩, ⟨ _, hx₀ ⟩⟩
     intro ⟨ x, hx ⟩ ⟨ y, hy ⟩
     exact (Subtype.mk.injEq _ _ _ _).symm ▸ (h.unique hx hy)
   intro ⟨ hsing, ⟨ x₀, hx₀ ⟩ ⟩
   apply ExistsUnique.intro _ hx₀; intro y hy
   exact Subtype.mk.injEq _ _ _ _ ▸ (hsing.elim ⟨ _, hy ⟩ ⟨ _, hx₀ ⟩)
 
-#print axioms ExistsUnique.iff_subsingleton_nonempty 
+#print axioms ExistsUnique.iff_subsingleton_nonempty

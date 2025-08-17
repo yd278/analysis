@@ -83,7 +83,7 @@ theorem SetTheory.Set.mem_cartesian (z:Object) (X Y:Set) :
   simp only [SProd.sprod, union_axiom]; constructor
   . intro ⟨ S, hz, hS ⟩; rw [replacement_axiom] at hS; obtain ⟨ x, hx ⟩ := hS
     use x; simp_all
-  rintro ⟨ x, y, rfl ⟩; use slice x Y; refine ⟨ by simp, ?_ ⟩
+  rintro ⟨ x, y, rfl ⟩; use slice x Y; refine' ⟨ by simp, _ ⟩
   rw [replacement_axiom]; use x
 
 noncomputable abbrev SetTheory.Set.fst {X Y:Set} (z:X ×ˢ Y) : X :=

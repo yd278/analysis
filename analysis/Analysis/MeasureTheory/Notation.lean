@@ -4,6 +4,10 @@ import Mathlib.Tactic
 # Introduction to Measure Theory, Chapter 0: Notation
 
 A companion to Chapter 0 of the book "An introduction to Measure Theory".
+
+We use existing Mathlib constructions, such as `Set.indicator`, `EuclideanSpace`, `ENNReal`,
+and `tsum` to describe the concepts defined in Chapter 0.
+
 -/
 
 /-- A version of `Set.indicator` suitable for this text. -/
@@ -42,6 +46,7 @@ theorem ENNReal.upward_continuous {x y:ℕ → ENNReal} (hx: Monotone x) (hy: Mo
  {x₀ y₀ : ENNReal} (hx_lim: atTop.Tendsto x (nhds x₀))
  (hy_lim: atTop.Tendsto y (nhds y₀)) :
   atTop.Tendsto (fun n ↦ x n * y n) (nhds (x₀ * y₀)) := by
+  -- This proof is written to follow the structure of the original text.
   have hx_lt (n:ℕ): x n ≤ x₀ := hx.ge_of_tendsto hx_lim n
   have hy_lt (n:ℕ): y n ≤ y₀ := hy.ge_of_tendsto hy_lim n
   have zero_conv : atTop.Tendsto (fun n:ℕ ↦ (0:ENNReal)) (nhds 0) := tendsto_const_nhds
@@ -120,3 +125,33 @@ example : ∃ (x y:ℕ → ENNReal) (hx: Antitone x) (hy: Antitone y)
 #check ENNReal.tsum_eq_iSup_sum
 
 #check Equiv.tsum_eq
+
+/-- Exercise 0.0.1 -/
+example {A:Type} {x : A → ENNReal} (hx: ∑' α, x α < ⊤) :
+  ∃ E: Set A, Countable E ∧ ∀ α ∉ E, x α = 0 := by
+  sorry
+
+/-- Theorem 0.0.2 -/
+theorem ENNReal.tsum_of_tsum (x: ℕ → ℕ → ENNReal) : ∑' p:ℕ × ℕ, x p.1 p.2 = ∑' n, ∑' m, x n m := by
+  -- This proof is written to largely follow the structure of the original text.
+  refine' le_antisymm _ _
+  . rw [ENNReal.tsum_eq_iSup_sum]; apply iSup_le; intro F
+    have : ∃ N, F ⊆ .range N ×ˢ .range N := by
+      sorry
+    choose N hN using this
+    calc
+      _ ≤ ∑ p ∈ .range N ×ˢ .range N, x p.1 p.2 := by
+        sorry
+      _ = ∑ n ∈ .range N, ∑ m ∈ .range N, x n m := by
+        sorry
+      _ ≤ ∑' n, ∑ m ∈ .range N, x n m := by
+        sorry
+      _ ≤ _ := by
+        sorry
+  sorry
+
+/-- Theorem 0.0.2 -/
+theorem ENNReal.tsum_of_tsum' (x: ℕ → ℕ → ENNReal) : ∑' p:ℕ × ℕ, x p.1 p.2 = ∑' m, ∑' n, x n m := by
+  sorry
+
+#check ENNReal.tsum_comm

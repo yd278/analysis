@@ -39,7 +39,7 @@ def finite_choice_trunc {X:Type*} {f:X → ℕ} {N:ℕ} (h: ∀ n < N, Trunc {x 
   Trunc {g: Fin N → X // ∀ n, f (g n) = n} := by
   induction' N with N ih
   . apply Trunc.mk
-    refine ⟨ Fin.elim0, ?_ ⟩
+    refine' ⟨ Fin.elim0, _ ⟩
     simp only [IsEmpty.forall_iff, exists_const]
   specialize ih ?_
   . intro n hn; exact h n (Nat.lt_add_right 1 hn)

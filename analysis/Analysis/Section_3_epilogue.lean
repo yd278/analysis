@@ -23,7 +23,7 @@ lemma PSet.ofNat_mem_ofNat_of_lt (m n : ℕ) : n < m → ofNat n ∈ ofNat m := 
   | step _ ih => rw [ofNat]; exact mem_insert_of_mem _ ih
 
 lemma PSet.mem_ofNat_iff (n m : ℕ) : ofNat n ∈ ofNat m ↔ n < m := by
-  refine ⟨ ?_, ofNat_mem_ofNat_of_lt m n ⟩
+  refine' ⟨ _, ofNat_mem_ofNat_of_lt m n ⟩
   contrapose!; rw [le_iff_lt_or_eq]; rintro (h|rfl)
   · exact mem_asymm (ofNat_mem_ofNat_of_lt _ _ h)
   exact mem_irrefl _
