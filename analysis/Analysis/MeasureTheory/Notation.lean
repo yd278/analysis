@@ -131,27 +131,44 @@ example {A:Type} {x : A → ENNReal} (hx: ∑' α, x α < ⊤) :
   ∃ E: Set A, Countable E ∧ ∀ α ∉ E, x α = 0 := by
   sorry
 
-/-- Theorem 0.0.2 -/
+/-- Theorem 0.0.2 (Tonelli's theorem for series)  -/
 theorem ENNReal.tsum_of_tsum (x: ℕ → ℕ → ENNReal) : ∑' p:ℕ × ℕ, x p.1 p.2 = ∑' n, ∑' m, x n m := by
   -- This proof is written to largely follow the structure of the original text.
   refine' le_antisymm _ _
   . rw [ENNReal.tsum_eq_iSup_sum]; apply iSup_le; intro F
     have : ∃ N, F ⊆ .range N ×ˢ .range N := by
-      sorry
+      have _ : IsOrderBornology ℕ := {
+        isBounded_iff_bddBelow_bddAbove s := by
+          constructor
+          . intro h; simp
+            rw [Metric.isBounded_iff_subset_closedBall 0] at h
+            choose N hN using h
+            rw [bddAbove_def]; use ⌊ N ⌋₊
+            intro n hn; specialize hN hn; simp [dist] at hN; exact Nat.le_floor hN
+          intro ⟨ h1, h2 ⟩; exact Metric.isBounded_of_bddAbove_of_bddBelow h2 h1
+        }
+      choose N₁ hN₁ using bddAbove_def.mp F.finite_toSet.isBounded.image_fst.bddAbove
+      choose N₂ hN₂ using bddAbove_def.mp F.finite_toSet.isBounded.image_snd.bddAbove
+      use N₁ ⊔ N₂ + 1; intro ⟨ n, m ⟩ hnm; simp_all
+      specialize hN₁ _ _ hnm; specialize hN₂ _ _ hnm; omega
     choose N hN using this
     calc
-      _ ≤ ∑ p ∈ .range N ×ˢ .range N, x p.1 p.2 := by
-        sorry
-      _ = ∑ n ∈ .range N, ∑ m ∈ .range N, x n m := by
-        sorry
-      _ ≤ ∑' n, ∑ m ∈ .range N, x n m := by
-        sorry
-      _ ≤ _ := by
-        sorry
-  sorry
+      _ ≤ ∑ p ∈ .range N ×ˢ .range N, x p.1 p.2 := Finset.sum_le_sum_of_subset hN
+      _ = ∑ n ∈ .range N, ∑ m ∈ .range N, x n m := Finset.sum_product' _ _ _
+      _ ≤ ∑' n, ∑ m ∈ .range N, x n m := ENNReal.sum_le_tsum _
+      _ ≤ _ := by apply ENNReal.tsum_le_tsum; intro n; apply ENNReal.sum_le_tsum
+  apply le_of_tendsto' (tendsto_nat_tsum _); intro N
+  apply le_of_tendsto' (f := fun M ↦ ∑ n ∈ .range N, ∑ m ∈ .range M, x n m) (x := atTop)
+  . apply tendsto_finset_sum; intro n _; apply tendsto_nat_tsum
+  intro M
+  calc
+    _ = ∑ p ∈ .range N ×ˢ .range M, x p.1 p.2 := by symm; apply Finset.sum_product
+    _ ≤ _ := ENNReal.sum_le_tsum _
 
 /-- Theorem 0.0.2 -/
 theorem ENNReal.tsum_of_tsum' (x: ℕ → ℕ → ENNReal) : ∑' p:ℕ × ℕ, x p.1 p.2 = ∑' m, ∑' n, x n m := by
   sorry
 
 #check ENNReal.tsum_comm
+
+/-- Exercise 0.0.2 -/
