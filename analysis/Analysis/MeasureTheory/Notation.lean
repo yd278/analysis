@@ -171,4 +171,17 @@ theorem ENNReal.tsum_of_tsum' (x: ℕ → ℕ → ENNReal) : ∑' p:ℕ × ℕ, 
 
 #check ENNReal.tsum_comm
 
-/-- Exercise 0.0.2 -/
+/-- Exercise 0.0.2 (Tonelli's theorem for series over arbitrary sets)-/
+example {A B:Type*} (x: A → B → ENNReal) : ∑' p:A × B, x p.1 p.2 = ∑' a, ∑' b, x a b := by
+  sorry
+
+example {A B:Type*} (x: A → B → ENNReal) : ∑' p:A × B, x p.1 p.2 = ∑' b, ∑' a, x a b := by
+  sorry
+
+/-- Axiom 0.0.4 (Axiom of choice)-/
+noncomputable def Set.choose {A: Type*} {E: A → Type*} (hE: ∀ n, Nonempty (E n)) :
+∀ n, E n := fun n ↦ (hE n).some
+
+/-- Corollary 0.0.5 (Axiom of countable choice) -/
+noncomputable def Countable.choose {E: ℕ → Type*} (hE: ∀ n, Nonempty (E n)) :
+∀ n, E n := Set.choose hE
