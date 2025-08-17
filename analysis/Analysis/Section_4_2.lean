@@ -62,7 +62,7 @@ theorem Rat.eq (a c:ℤ) {b d:ℤ} (hb: b ≠ 0) (hd: d ≠ 0): a // b = c // d 
 /-- Definition 4.2.1 (Rationals) -/
 theorem Rat.eq_diff (n:Rat) : ∃ a b, b ≠ 0 ∧ n = a // b := by
   apply Quot.ind _ n; intro ⟨ a, b, h ⟩
-  use a, b; refine ⟨ h, ?_ ⟩
+  refine ⟨ a, b, h, ?_ ⟩
   simp [formalDiv, h]; rfl
 
 /--
@@ -159,7 +159,6 @@ AddGroup.ofLeftAxioms (by
   have hbd : b*d ≠ 0 := Int.mul_ne_zero hb hd
   have hdf : d*f ≠ 0 := Int.mul_ne_zero hd hf
   have hbdf : b*d*f ≠ 0 := Int.mul_ne_zero hbd hf
-
   rw [add_eq _ _ hb hd, add_eq _ _ hbd hf, add_eq _ _ hd hf,
       add_eq _ _ hb hdf, ←mul_assoc b, eq _ _ hbdf hbdf]
   ring
@@ -198,7 +197,7 @@ theorem Rat.coe_Rat_eq (a:ℤ) {b:ℤ} (hb: b ≠ 0) : (a/b:ℚ) = a // b := by
   rw [eq _ _ hden hb]
   qify
   have hq : num / den = q := Rat.num_div_den q
-  rwa [div_eq_div_iff _ _] at hq <;> simp [hden, hb]
+  rwa [div_eq_div_iff] at hq <;> simp [hden, hb]
 
 /-- Default definition of division -/
 instance Rat.instDivInvMonoid : DivInvMonoid Rat where
