@@ -36,13 +36,14 @@ theorem EuclideanSpace'.dot_apply {n:ℕ} (x y: EuclideanSpace' n) : x ⬝ y = �
 #check ENNReal.mul_top
 #check lt_top_iff_ne_top
 
-open Filter in
+open Filter
+
 theorem ENNReal.upward_continuous {x y:ℕ → ENNReal} (hx: Monotone x) (hy: Monotone y)
  {x₀ y₀ : ENNReal} (hx_lim: atTop.Tendsto x (nhds x₀))
  (hy_lim: atTop.Tendsto y (nhds y₀)) :
   atTop.Tendsto (fun n ↦ x n * y n) (nhds (x₀ * y₀)) := by
-  have hx_lt (n:ℕ): x n ≤ x₀ := Monotone.ge_of_tendsto hx hx_lim n
-  have hy_lt (n:ℕ): y n ≤ y₀ := Monotone.ge_of_tendsto hy hy_lim n
+  have hx_lt (n:ℕ): x n ≤ x₀ := hx.ge_of_tendsto hx_lim n
+  have hy_lt (n:ℕ): y n ≤ y₀ := hy.ge_of_tendsto hy_lim n
   have zero_conv : atTop.Tendsto (fun n:ℕ ↦ (0:ENNReal)) (nhds 0) := tendsto_const_nhds
   have top_conv : atTop.Tendsto (fun n:ℕ ↦ (⊤:ENNReal)) (nhds ⊤) := tendsto_const_nhds
   obtain rfl | hx₀ := eq_zero_or_pos x₀
@@ -79,7 +80,7 @@ theorem ENNReal.upward_continuous {x y:ℕ → ENNReal} (hx: Monotone x) (hy: Mo
     have : atTop.Tendsto (fun n ↦ x n * y ny) (nhds ⊤) := by
       convert Tendsto.comp (g := fun z ↦ z * y ny) _ hx_lim
       convert (ENNReal.continuous_mul_const hyn').tendsto ⊤
-      rw [ENNReal.top_mul (by order)]
+      rw [top_mul (by order)]
     apply tendsto_nhds_top_mono this
     simp [EventuallyLE, eventually_atTop]
     use ny; intro n hn
@@ -100,11 +101,22 @@ theorem ENNReal.upward_continuous {x y:ℕ → ENNReal} (hx: Monotone x) (hy: Mo
   set y' : ℕ → NNReal := fun n ↦ (y n).toNNReal
   set x₀' : NNReal := x₀.toNNReal
   set y₀' : NNReal := y₀.toNNReal
-  have hxx₀' : x₀ = x₀' := by rw [ENNReal.coe_toNNReal]; order
-  have hyy₀' : y₀ = y₀' := by rw [ENNReal.coe_toNNReal]; order
-  have hxx' (n:ℕ) : x n = x' n := by rw [ENNReal.coe_toNNReal]; specialize hx_lt n; order
-  have hyy' (n:ℕ) : y n = y' n := by rw [ENNReal.coe_toNNReal]; specialize hy_lt n; order
+  have hxx₀' : x₀ = x₀' := by rw [coe_toNNReal]; order
+  have hyy₀' : y₀ = y₀' := by rw [coe_toNNReal]; order
+  have hxx' (n:ℕ) : x n = x' n := by rw [coe_toNNReal]; specialize hx_lt n; order
+  have hyy' (n:ℕ) : y n = y' n := by rw [coe_toNNReal]; specialize hy_lt n; order
   change atTop.Tendsto (fun n ↦ x n) (nhds x₀) at hx_lim
   change atTop.Tendsto (fun n ↦ y n) (nhds y₀) at hy_lim
-  simp [hxx', hyy', hxx₀', hyy₀',←ENNReal.coe_mul] at hx_lim hy_lim ⊢
-  exact Filter.Tendsto.mul hx_lim hy_lim
+  simp [hxx', hyy', hxx₀', hyy₀',←coe_mul] at *
+  solve_by_elim [Filter.Tendsto.mul]
+
+example : ∃ (x y:ℕ → ENNReal) (hx: Antitone x) (hy: Antitone y)
+ (x₀ y₀:ENNReal) (hx_lim: atTop.Tendsto x (nhds x₀))
+ (hy_lim: atTop.Tendsto y (nhds y₀)), ¬ atTop.Tendsto (fun n ↦ x n * y n) (nhds (x₀ * y₀)) := by
+ sorry
+
+#check ENNReal.tendsto_nat_tsum
+
+#check ENNReal.tsum_eq_iSup_sum
+
+#check Equiv.tsum_eq

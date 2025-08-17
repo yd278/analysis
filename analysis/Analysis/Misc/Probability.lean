@@ -4,6 +4,8 @@ import Mathlib.Tactic
 
 namespace ProbabilityTheory
 
+/-- Todo: separate out the `prob_top` hypothesis, to allow for the zero finitely additive
+measure (useful as a junk value for conditional expectation) -/
 class FinitelyAdditive (A:Type*) [BooleanAlgebra A] where
   prob : A → ℝ
   prob_top : prob ⊤ = 1
