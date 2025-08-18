@@ -216,7 +216,7 @@ instance Rat.instField : Field Rat where
     have hden : (den:ℤ) ≠ 0 := by simp [den, q.den_nz]
     rw [← Rat.num_div_den q]
     convert coe_Rat_eq _ hden
-    rw [coe_Int_eq, coe_Nat_eq, div_eq, inv_eq, mul_eq, eq] <;> simp [num, hden, den, q.den_nz]
+    rw [coe_Int_eq, coe_Nat_eq, div_eq, inv_eq, mul_eq, eq] <;> simp [num, den, q.den_nz]
   qsmul := _
   nnqsmul := _
 

@@ -89,11 +89,11 @@ theorem Series.converges_of_permute_nonneg {a:ℕ → ℝ} (ha: (a:Series).nonne
     have sum_eq_sum (b:ℕ → ℝ) {N:ℤ} (hN: N ≥ 0)
       : ∑ n ∈ .Icc 0 N, (if 0 ≤ n then b n.toNat else 0) = ∑ n ∈ .Iic N.toNat, b n := by
       convert Finset.sum_image (g := Int.ofNat) (by simp)
-      ext x; simp [X]; constructor
+      ext x; simp; constructor
       . intro ⟨ _, _ ⟩; use x.toNat; omega
       rintro ⟨ _, ⟨ _, rfl ⟩ ⟩; omega
     calc
-      _ = ∑ n ∈ X, a n := by simp [S, Series.partial, sum_eq_sum, hN, X]
+      _ = ∑ n ∈ X, a n := by simp [S, sum_eq_sum, hN, X]
       _ = ∑ n ∈ ((Finset.Iic M).filter (f · ∈ X)).image f, a n := by
         congr; ext; simp; constructor
         . intro h; obtain ⟨ m, rfl, hm' ⟩ := hM _ h; use m

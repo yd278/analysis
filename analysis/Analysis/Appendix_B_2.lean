@@ -97,7 +97,7 @@ theorem NNRealDecimal.not_inj : (1:NNReal) = (mk 1 fun _ ↦ 0) ∧ (1:NNReal) =
     have : (10:NNReal)^(-n:ℝ) = 10^(-n-1:ℝ) * 10 := by
       rw [←NNReal.rpow_add_one (by norm_num)]; simp
     have hnine : ((9:Digit):ℕ) = 9 := rfl
-    simp [this, hnine, ←NNReal.coe_inj]
+    simp [this, ←NNReal.coe_inj]
     rw [NNReal.coe_sub, NNReal.coe_sub]
     . simp; linarith
     . apply NNReal.rpow_le_one_of_one_le_of_nonpos (by norm_num) (by linarith)

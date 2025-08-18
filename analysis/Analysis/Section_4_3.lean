@@ -205,7 +205,7 @@ theorem pow_abs (x:ℚ) (n:ℕ) : |x|^n = |x^n| := by sorry
   Here we use the Mathlib notion of integer exponentiation
 -/
 theorem zpow_neg (x:ℚ) (n:ℕ) : x^(-(n:ℤ)) = 1/(x^n) := by
-  simp only [ne_eq, _root_.zpow_neg, zpow_natCast, one_div]
+  simp only [_root_.zpow_neg, zpow_natCast, one_div]
 
 example (x:ℚ): x^(-3:ℤ) = 1/(x^3) := zpow_neg x 3
 

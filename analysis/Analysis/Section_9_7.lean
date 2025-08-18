@@ -83,7 +83,7 @@ theorem intermediate_value {a b:ℝ} (hab: a < b) {f:ℝ → ℝ} (hf: Continuou
         solve_by_elim [notMem_of_csSup_lt]
       replace : ∀ n ≥ N, f (c + 1/(n+1:ℝ)) ≥ y := by
         intro n hn; specialize this n hn; contrapose! this
-        simp [E, this, le_of_lt (hN n hn)]
+        simp [E]
         have := hmem n hn
         simp_all [Set.mem_Icc]
       have hconv : Filter.atTop.Tendsto (fun n:ℕ ↦ c + 1/(n+1:ℝ)) (nhds c) := by

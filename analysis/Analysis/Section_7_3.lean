@@ -95,7 +95,7 @@ theorem Series.cauchy_criterion {s:Series} (hm: s.m = 1) (hs:s.nonneg) (hmono: �
   set T := t.partial
   have Lemma_7_3_6 (K:ℕ) : S (2^(K+1) - 1) ≤ T K ∧ T K ≤ 2 * S (2^K) := by
     induction' K with K hK
-    . simp [S,T,Series.partial, hm, htm, t]; linarith [hs 1]
+    . simp [S,T,Series.partial, hm, t]; linarith [hs 1]
     observe h2K : 1 ≤ 2^K; observe h2K' : 1 ≤ 2^(K+1)
     choose hK1 hK2 using hK
     have claim1 : T (K + 1) = T K + 2^(K+1) * s.seq (2^(K+1)) := by convert t.partial_succ _; linarith

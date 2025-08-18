@@ -121,16 +121,16 @@ abbrev BoundedInterval.b (I: BoundedInterval) : ℝ := match I with
   | Ico _ b => b
 
 theorem BoundedInterval.subset_Icc (I: BoundedInterval) : I ⊆ Icc I.a I.b := match I with
-  | Ioo _ _ => by simp [Ioo, Icc, a, b, subset_iff, Set.Ioo_subset_Icc_self]
-  | Icc _ _ => by simp [Icc, a, b, subset_iff]
-  | Ioc _ _ => by simp [Ioc, Icc, a, b, subset_iff, Set.Ioc_subset_Icc_self]
-  | Ico _ _ => by simp [Ico, Icc, a, b, subset_iff, Set.Ico_subset_Icc_self]
+  | Ioo _ _ => by simp [a, b, subset_iff, Set.Ioo_subset_Icc_self]
+  | Icc _ _ => by simp [a, b, subset_iff]
+  | Ioc _ _ => by simp [a, b, subset_iff, Set.Ioc_subset_Icc_self]
+  | Ico _ _ => by simp [a, b, subset_iff, Set.Ico_subset_Icc_self]
 
 theorem BoundedInterval.Ioo_subset (I: BoundedInterval) : Ioo I.a I.b ⊆ I := match I with
-  | Ioo _ _ => by simp [Ioo, a, b, subset_iff]
-  | Icc _ _ => by simp [Icc, a, b, subset_iff, Set.Ioo_subset_Icc_self]
-  | Ioc _ _ => by simp [Ioc, Ioo, a, b, subset_iff, Set.Ioo_subset_Ioc_self]
-  | Ico _ _ => by simp [Ico, Ioo, a, b, subset_iff, Set.Ioo_subset_Ico_self]
+  | Ioo _ _ => by simp [a, b, subset_iff]
+  | Icc _ _ => by simp [a, b, subset_iff, Set.Ioo_subset_Icc_self]
+  | Ioc _ _ => by simp [a, b, subset_iff, Set.Ioo_subset_Ioc_self]
+  | Ico _ _ => by simp [a, b, subset_iff, Set.Ioo_subset_Ico_self]
 
 instance BoundedInterval.instTrans : IsTrans BoundedInterval (· ⊆ ·) where
   trans I J K hIJ hJK := by simp_all [subset_iff]; exact hIJ.trans hJK
@@ -154,14 +154,14 @@ example : |Icc 5 5|ₗ = 0 := by
   sorry
 
 theorem BoundedInterval.length_nonneg (I: BoundedInterval) : 0 ≤ |I|ₗ := by
-  simp [length, max_le_iff]
+  simp
 
 theorem BoundedInterval.empty_of_lt {I: BoundedInterval} (h: I.b < I.a) : (I:Set ℝ) = ∅ := by
   cases I with
-  | Ioo _ _ => simp [Ioo, le_of_lt h]
-  | Icc _ _ => simp [Icc, h]
-  | Ioc _ _ => simp [Ioc, le_of_lt h]
-  | Ico _ _ => simp [Ico, le_of_lt h]
+  | Ioo _ _ => simp [le_of_lt h]
+  | Icc _ _ => simp [h]
+  | Ioc _ _ => simp [le_of_lt h]
+  | Ico _ _ => simp [le_of_lt h]
 
 theorem BoundedInterval.length_of_empty {I: BoundedInterval} (hI: (I:Set ℝ) = ∅) : |I|ₗ = 0 := by
   sorry
@@ -290,7 +290,7 @@ noncomputable abbrev Partition.join {I J K:BoundedInterval} (P: Partition I) (Q:
 
 @[simp]
 theorem Partition.intervals_of_join {I J K:BoundedInterval} {h:K.joins I J} (P: Partition I) (Q: Partition J) : (P.join Q h).intervals = P.intervals ∪ Q.intervals := by
-  simp [Partition.join, dif_pos h]
+  simp
 
 noncomputable abbrev Partition.add_empty {I:BoundedInterval} (P: Partition I) : Partition I := {
   intervals := P.intervals ∪ {∅}
@@ -320,7 +320,7 @@ noncomputable abbrev Partition.remove_empty {I:BoundedInterval} (P: Partition I)
 
 @[simp]
 theorem Partition.intervals_of_add_empty (I: BoundedInterval) (P: Partition I) : (P.add_empty).intervals = P.intervals ∪ {∅} := by
-  simp [Partition.add_empty, Finset.union_empty]
+  simp
 
 example : ∃ P:Partition (Icc 1 8),
   P.intervals = {Icc 1 1, Ioo 1 3, Ico 3 5, Icc 5 5, Ioc 5 8, ∅} := by
@@ -380,10 +380,10 @@ theorem Partition.sum_of_length  (I: BoundedInterval) (P: Partition I) :
           sorry
         subst this
         cases I with
-        | Ioo _ _ => simp [mem_iff] at hI'
+        | Ioo _ _ => simp at hI'
         | Icc a b => use (Icc b b), hK, Ico a b; apply join_Ico_Icc <;> order
         | Ioc a b => use (Icc b b), hK, Ioo a b; apply join_Ioo_Icc <;> order
-        | Ico _ _ => simp [mem_iff] at hI'
+        | Ico _ _ => simp at hI'
       simp [length_of_subsingleton, -Set.subsingleton_coe] at hsub
       have hKI' := (K.Ioo_subset.trans hKI).trans I.subset_Icc
       simp only [subset_iff] at hKI'
@@ -391,7 +391,7 @@ theorem Partition.sum_of_length  (I: BoundedInterval) (P: Partition I) :
         rw [le_antisymm_iff]; split_ands
         . apply csSup_le_csSup bddAbove_Icc (by simp [hsub]) at hKI'
           simp_all [csSup_Ioo hsub, csSup_Icc (le_of_lt h)]
-        have := K.subset_Icc _ hbK; simp only [mem_iff, Set.mem_Icc] at this; exact this.2
+        have := K.subset_Icc _ hbK; simp only [mem_iff] at this; exact this.2
       have hKA : I.a ≤ K.a := by
         apply csInf_le_csInf bddBelow_Icc (by simp [hsub]) at hKI'
         simp_all [csInf_Icc (le_of_lt h), csInf_Ioo]
@@ -405,7 +405,7 @@ theorem Partition.sum_of_length  (I: BoundedInterval) (P: Partition I) :
         | Ico _ _ => simp [a, b, mem_iff] at *; linarith
       | Ioc a₁ b₁ =>
         cases K with
-        | Ioo _ _ => simp_all [mem_iff, subset_iff]
+        | Ioo _ _ => simp_all [mem_iff]
         | Icc c₂ b₂ =>
           use Icc c₂ b₂, Ioo a₁ c₂, hK
           simp_all [a,b,subset_iff]
@@ -419,19 +419,19 @@ theorem Partition.sum_of_length  (I: BoundedInterval) (P: Partition I) :
     cases I with
     | Ioo a₁ b₁ =>
       obtain hK | hK := hK
-      . simp_all [mem_iff, subset_iff, a, b]; use Ioo c b₁, hK, Ioc a₁ c; apply join_Ioc_Ioo <;> tauto
-      simp_all [mem_iff, subset_iff, a, b]
+      . simp_all [mem_iff, a, b]; use Ioo c b₁, hK, Ioc a₁ c; apply join_Ioc_Ioo <;> tauto
+      simp_all [mem_iff, a, b]
       use Ico c b₁, hK, Ioo a₁ c
       apply P.contains at hK; simp [subset_iff] at hK
       have : c ∈ Set.Ico c b₁ := by simp; linarith
       apply hK at this; simp at this
       apply join_Ioo_Ico <;> linarith
-    | Icc _ _ => simp [mem_iff, subset_iff, a, b] at hI' h; order
-    | Ioc _ _ => simp [mem_iff, subset_iff, a, b] at hI' h; order
+    | Icc _ _ => simp [mem_iff, a, b] at hI' h; order
+    | Ioc _ _ => simp [mem_iff, a, b] at hI' h; order
     | Ico a₁ b₁ =>
       obtain hK | hK := hK
-      . simp_all [mem_iff, subset_iff, a, b]; use Ioo c b₁, hK, Icc a₁ c; apply join_Icc_Ioo <;> tauto
-      simp_all [mem_iff, subset_iff, a, b]; use Ico c b₁, hK, Ico a₁ c;  apply join_Ico_Ico <;> linarith
+      . simp_all [mem_iff, a, b]; use Ioo c b₁, hK, Icc a₁ c; apply join_Icc_Ioo <;> tauto
+      simp_all [mem_iff, a, b]; use Ico c b₁, hK, Ico a₁ c;  apply join_Ico_Ico <;> linarith
   obtain ⟨ K, L, hK, ⟨ h1, h2, h3 ⟩ ⟩ := this
   have : ∃ P' : Partition L, P'.intervals = P.intervals.erase K := by
     sorry

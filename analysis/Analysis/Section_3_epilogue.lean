@@ -94,7 +94,7 @@ noncomputable instance ZFSet.inst_SetTheory : Chapter3.SetTheory.{u + 1,u + 1} w
         use y,hy; simp_all [←(huniq y hy).choose_eq hf]
     · rintro ⟨f,rfl⟩
       simp; constructor
-      · intro _ hs; simp at hs; obtain ⟨y,hy,rfl⟩ := hs; simp_all [pair_mem_prod]
+      · intro _ hs; simp at hs; obtain ⟨y,hy,rfl⟩ := hs; simp_all
       · intro _ hy; simp_all
   union := sUnion
   union_axiom _ _ := by simp [And.comm]

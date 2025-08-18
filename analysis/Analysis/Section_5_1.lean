@@ -60,7 +60,7 @@ abbrev Sequence.mk' (n₀:ℤ) (a: { n // n ≥ n₀ } → ℚ) : Sequence where
   vanish := by aesop
 
 lemma Sequence.eval_mk {n n₀:ℤ} (a: { n // n ≥ n₀ } → ℚ) (h: n ≥ n₀) :
-    (Sequence.mk' n₀ a) n = a ⟨ n, h ⟩ := by simp [seq, h]
+    (Sequence.mk' n₀ a) n = a ⟨ n, h ⟩ := by simp [h]
 
 @[simp]
 lemma Sequence.eval_coe (n:ℕ) (a: ℕ → ℚ) : (a:Sequence) n = a n := by norm_cast
@@ -203,7 +203,7 @@ abbrev Sequence.from (a:Sequence) (n₁:ℤ) : Sequence :=
 
 lemma Sequence.from_eval (a:Sequence) {n₁ n:ℤ} (hn: n ≥ n₁) :
   (a.from n₁) n = a n := by
-  simp [Sequence.from, seq, hn]
+  simp [hn]
   intro h; exact (a.vanish _ h).symm
 
 end Chapter5
@@ -235,7 +235,7 @@ lemma Sequence.ex_5_1_7_b : (0.1:ℚ).Steady (((fun n:ℕ ↦ (n+1:ℚ)⁻¹ ):S
   intro n hn m hm; simp at hn hm
   lift n to ℕ using (by omega)
   lift m to ℕ using (by omega)
-  simp_all [hn, hm, Rat.Close]
+  simp_all [Rat.Close]
   wlog h : m ≤ n
   · specialize this m n (by omega) (by omega) (by omega)
     rwa [abs_sub_comm] at this
@@ -275,7 +275,7 @@ lemma Sequence.IsCauchy.coe (a:ℕ → ℚ) :
     intro j hj k hk
     simp [Rat.steady_def] at h'
     specialize h' j (by omega) k (by omega)
-    simp_all [hj, hk, h']; exact h'
+    simp_all; exact h'
   choose N h' using h ε hε
   refine ⟨ max N 0, by simp, ?_ ⟩
   intro n hn m hm; simp at hn hm
@@ -294,7 +294,7 @@ lemma Sequence.IsCauchy.mk {n₀:ℤ} (a: {n // n ≥ n₀} → ℚ) :
     dsimp at hN; intro j hj k hk
     simp only [Rat.Steady, show max n₀ N = N by omega] at h'
     specialize h' j _ k _ <;> try omega
-    simp_all [show n₀ ≤ j by omega, hj, show n₀ ≤ k by omega]
+    simp_all [show n₀ ≤ j by omega, show n₀ ≤ k by omega]
     exact h'
   refine ⟨ max n₀ N, by simp, ?_ ⟩
   intro n hn m hm; simp_all
@@ -399,7 +399,7 @@ example : ¬ ((fun n:ℕ ↦ (-1:ℚ)^n):Sequence).IsCauchy := by
 lemma IsBounded.finite {n:ℕ} (a: Fin n → ℚ) : ∃ M ≥ 0,  BoundedBy a M := by
   -- this proof is written to follow the structure of the original text.
   induction' n with n hn
-  . use 0; simp [boundedBy_def]
+  . use 0; simp
   set a' : Fin n → ℚ := fun m ↦ a m
   choose M hpos hM using hn a'
   have h1 : BoundedBy a' (M + |a n|) := fun m ↦ (hM m).trans (by simp)

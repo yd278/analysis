@@ -40,7 +40,7 @@ lemma Sequence.pow_succ (a:Sequence) (k:ℕ) : a^(k+1) = a^k * a := by
   simp only [HPow.hPow, Pow.pow, HMul.hMul, Mul.mul]
   by_cases h: n ≥ a.m
   . simp [h]; rfl
-  simp [h, a.vanish n (by linarith)]
+  simp [h]
 
 /-- Corollary 6.5.1 -/
 theorem Sequence.lim_of_power_decay {k:ℕ} :
@@ -53,7 +53,7 @@ theorem Sequence.lim_of_power_decay {k:ℕ} :
     have hn' : 0 ≤ n+1 := by linarith
     simp [hn,hn']
     rw [inv_le_inv₀, Real.rpow_le_rpow_iff] <;> try positivity
-    simp [hn]
+    simp
   apply convergent_of_antitone ha at ha'
   have hpow (n:ℕ): (a^(n+1)).Convergent ∧ lim (a^(n+1)) = (lim a)^(n+1) := by
     induction' n with n ih
