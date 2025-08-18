@@ -12,6 +12,11 @@ package «Analysis» where
 require mathlib from git
   "https://github.com/leanprover-community/mathlib4.git" @ "v4.20.1"
 
+-- This library is needed to build the online version.
+-- If ../book/lakefile.lean requires verso @ "v4.X.Y", then this line should require
+-- subverso @ "verso-v4.X.Y".
+require subverso from git "https://github.com/leanprover/subverso" @ "verso-v4.23.0-rc2"
+
 @[default_target]
 lean_lib «Analysis» where
   -- add any library configuration options here
