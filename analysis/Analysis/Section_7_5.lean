@@ -68,7 +68,7 @@ theorem Series.root_test_pos {s : Series}
       simp [hn.1, hn.2, hn']
       convert this n hn.2; symm; convert zpow_natCast _ _; omega
     unfold absConverges at this ⊢
-    rw [converges_from _ k]; convert this; simp; refine' ⟨ by omega, _ ⟩
+    rw [converges_from _ k]; convert this; simp; refine ⟨ by omega, ?_ ⟩
     ext n
     by_cases hnm : n ≥ s.m <;> simp [hnm]
     by_cases hn: n ≥ N <;> simp [hn] <;> intros <;> omega
@@ -106,7 +106,7 @@ theorem Series.ratio_ineq {c:ℤ → ℝ} (m:ℤ) (hpos: ∀ n ≥ m, c n > 0) :
     atTop.limsup (fun n ↦ ↑(c (n+1) / c n:ℝ))
     := by
   -- This proof is written to follow the structure of the original text.
-  refine' ⟨ _, liminf_le_limsup (by isBoundedDefault) (by isBoundedDefault), _ ⟩
+  refine ⟨ ?_, liminf_le_limsup (by isBoundedDefault) (by isBoundedDefault), ?_ ⟩
   . sorry
   set L' := limsup (fun n ↦ ((c (n+1) / c n:ℝ):EReal)) .atTop
   by_cases hL : L' = ⊤; simp [hL]

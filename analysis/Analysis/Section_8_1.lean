@@ -92,7 +92,7 @@ theorem CountablyInfinite.iff_image_inj {A:Type} (X: Set A) : CountablyInfinite 
   constructor
   . intro ⟨ g, hg ⟩
     choose f hleft hright using Function.bijective_iff_has_inverse.mp hg
-    refine' ⟨ ⟨ Subtype.val ∘ f, _ ⟩, _ ⟩
+    refine ⟨ ⟨ Subtype.val ∘ f, ?_ ⟩, ?_ ⟩
     . intro x y hxy; apply hright.injective; simp_all [Subtype.val_inj]
     ext; simp; constructor
     . intro hx; use g ⟨ _, hx ⟩; simp [hleft _]
@@ -211,7 +211,7 @@ theorem AtMostCountable.subset {X: Type} (hX : AtMostCountable X) (Y: Set X) : A
   simp [AtMostCountable, show Finite Y by infer_instance]
 
 theorem AtMostCountable.subset' {A: Type} {X Y: Set A} (hX: AtMostCountable X) (hY: Y ⊆ X) : AtMostCountable Y := by
-  refine' (equiv ⟨ fun y ↦ ⟨ ↑↑y, y.property ⟩, _, _ ⟩).mp (subset hX { x : X | ↑x ∈ Y })
+  refine (equiv ⟨ fun y ↦ ⟨ ↑↑y, y.property ⟩, ?_, ?_ ⟩).mp (subset hX { x : X | ↑x ∈ Y })
   . intro ⟨ ⟨ _, _ ⟩, _ ⟩ ⟨ ⟨ _, _ ⟩, _ ⟩ _; simp_all
   rintro ⟨ y, hy ⟩; use ⟨ ⟨ y, hY hy ⟩, by aesop ⟩
 
@@ -234,12 +234,12 @@ theorem Int.countablyInfinite : CountablyInfinite ℤ := by
   have h1 : CountablyInfinite {n:ℤ | n ≥ 0} := by
     rw [CountablyInfinite.iff_image_inj]
     use ⟨ (↑·:ℕ → ℤ), by intro _ _ _; simp_all ⟩
-    ext n; simp; refine' ⟨ _, by aesop ⟩
+    ext n; simp; refine ⟨ ?_, by aesop ⟩
     . intro h; use n.toNat; simp [h]
   have h2 : CountablyInfinite {n:ℤ | n ≤ 0} := by
     rw [CountablyInfinite.iff_image_inj]
     use ⟨ (-↑·:ℕ → ℤ), by intro _ _ _; simp_all ⟩
-    ext n; simp; refine' ⟨ _, by aesop ⟩
+    ext n; simp; refine ⟨ ?_, by aesop ⟩
     intro h; use (-n).toNat; simp [h]
   have : CountablyInfinite (.univ : Set ℤ) := by
     convert h1.union h2; ext; simp; omega
@@ -284,7 +284,7 @@ theorem CountablyInfinite.lower_diag : CountablyInfinite { n : ℕ × ℕ | n.2 
 /-- Corollary 8.1.13 -/
 theorem CountablyInfinite.prod_nat : CountablyInfinite (ℕ × ℕ) := by
   have upper_diag : CountablyInfinite { n : ℕ × ℕ | n.1 ≤ n.2 } := by
-    refine' (equiv ⟨ fun ⟨ (n, m), _ ⟩ ↦ ⟨ (m, n), by aesop ⟩, _, _ ⟩).mp lower_diag
+    refine (equiv ⟨ fun ⟨ (n, m), _ ⟩ ↦ ⟨ (m, n), by aesop ⟩, ?_, ?_ ⟩).mp lower_diag
     . intro ⟨ (_, _), _ ⟩ ⟨ (_, _), _ ⟩ _; aesop
     intro ⟨ (n, m), _ ⟩; use ⟨ (m, n), by aesop ⟩
   have : CountablyInfinite (.univ : Set (ℕ × ℕ)) := by

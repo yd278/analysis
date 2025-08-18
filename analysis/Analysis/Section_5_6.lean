@@ -162,7 +162,7 @@ theorem Real.pow_cancel {y z:Real} (hy: y > 0) (hz: z > 0) {n:ℕ} (hn: n ≥ 1)
   (h: y^n = z^n) : y = z := by sorry
 
 example : ¬(∀ (y:Real) (z:Real) (n:ℕ) (_: n ≥ 1) (_: y^n = z^n), y = z) := by
-  simp; refine' ⟨ (-3), 3, 2, _, _, _ ⟩ <;> norm_num
+  simp; refine ⟨ (-3), 3, 2, ?_, ?_, ?_ ⟩ <;> norm_num
 
 /-- Definition 5.6.7 -/
 noncomputable abbrev Real.ratPow (x:Real) (q:ℚ) : Real := (x.root q.den)^(q.num)
@@ -172,7 +172,7 @@ noncomputable instance Real.instRatPow : Pow Real ℚ where
 
 theorem Rat.eq_quot (q:ℚ) : ∃ a:ℤ, ∃ b:ℕ, b > 0 ∧ q = a / b := by
   use q.num, q.den; have := q.den_nz
-  exact ⟨ by omega, (Rat.num_div_den q).symm ⟩
+  refine ⟨ by omega, (Rat.num_div_den q).symm ⟩
 
 /-- Lemma 5.6.8 -/
 theorem Real.pow_root_eq_pow_root {a a':ℤ} {b b':ℕ} (hb: b > 0) (hb' : b' > 0)

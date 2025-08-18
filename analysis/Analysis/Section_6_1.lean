@@ -127,7 +127,7 @@ lemma Sequence.IsCauchy.coe (a:ℕ → ℝ) :
     simp [Real.steady_def] at h'
     specialize h' j ?_ k ?_ <;> try omega
     simp_all
-  rintro ⟨ N, h' ⟩; refine' ⟨ max N 0, by simp, _ ⟩
+  rintro ⟨ N, h' ⟩; refine ⟨ max N 0, by simp, ?_ ⟩
   intro n hn m hm; simp at hn hm
   have npos : 0 ≤ n := by omega
   have mpos : 0 ≤ m := by omega
@@ -142,7 +142,7 @@ lemma Sequence.IsCauchy.mk {n₀:ℤ} (a: {n // n ≥ n₀} → ℝ) :
     ↔ ∀ ε > 0, ∃ N ≥ n₀, ∀ j ≥ N, ∀ k ≥ N, dist (mk' n₀ a j) (mk' n₀ a k) ≤ ε := by
   peel with ε hε
   constructor
-  · rintro ⟨ N, hN, h' ⟩; refine' ⟨ N, hN, _ ⟩
+  · rintro ⟨ N, hN, h' ⟩; refine ⟨ N, hN, ?_ ⟩
     dsimp at hN
     intro j hj k hk
     simp only [Real.Steady, show max n₀ N = N by omega] at h'

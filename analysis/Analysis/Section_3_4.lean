@@ -124,7 +124,7 @@ theorem SetTheory.Set.image_preimage_f_3_4_2 :
 /-- Example 3.4.7 (using the Mathlib notion of preimage) -/
 example : (fun n:ℤ ↦ n^2) ⁻¹' {0,1,4} = {-2,-1,0,1,2} := by
   ext x
-  refine' ⟨ _, by aesop ⟩
+  refine ⟨ ?_, by aesop ⟩
   rintro (h | h | h)
   on_goal 3 => have : 2 ^ 2 = (4:ℤ) := (by norm_num); rw [←h, sq_eq_sq_iff_eq_or_eq_neg] at this
   all_goals aesop
@@ -169,7 +169,7 @@ theorem SetTheory.Set.example_3_4_9 (F:Object) :
     F ∈ ({0,1}:Set) ^ ({4,7}:Set) ↔ F = f_3_4_9_a
     ∨ F = f_3_4_9_b ∨ F = f_3_4_9_c ∨ F = f_3_4_9_d := by
   rw [powerset_axiom]
-  refine' ⟨_, by aesop ⟩
+  refine ⟨?_, by aesop ⟩
   rintro ⟨f, rfl⟩
   unfold f_3_4_9_a f_3_4_9_b f_3_4_9_c f_3_4_9_d
   have h1 := (f ⟨4, by simp⟩).property
@@ -208,7 +208,7 @@ theorem SetTheory.Set.powerset_of_triple (a b c x:Object) :
     ∨ x = ({b,c}:Set)
     ∨ x = ({a,b,c}:Set) := by
   simp only [mem_powerset, subset_def, mem_triple]
-  refine' ⟨ _, by aesop ⟩
+  refine ⟨ ?_, by aesop ⟩
   rintro ⟨Y, rfl, hY⟩; by_cases ha : a ∈ Y <;> by_cases hb : b ∈ Y <;> by_cases hc : c ∈ Y
   on_goal 8 => left
   on_goal 4 => right; left
@@ -253,7 +253,7 @@ noncomputable abbrev SetTheory.Set.index_example : ({1,2,3}:Set) → Set :=
 theorem SetTheory.Set.iUnion_example : iUnion {1,2,3} index_example = {2,3,4,5} := by
   apply Set.ext; intro x
   simp only [mem_iUnion, index_example, Insert.insert]
-  refine' ⟨ by aesop, _ ⟩
+  refine ⟨ by aesop, ?_ ⟩
   simp only [mem_union, Subtype.exists]
   rintro (h | h | h)
   map_tacs [use 1; use 2; use 3]

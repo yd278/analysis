@@ -346,11 +346,11 @@ instance Nat.instLinearOrder : LinearOrder Nat where
   le_trans a b c hab hbc := ge_trans hbc hab
   lt_iff_le_not_le a b := by
     constructor
-    . intro h; refine' ⟨ le_of_lt h, _ ⟩
+    . intro h; refine ⟨ le_of_lt h, ?_ ⟩
       by_contra h'
       exact not_lt_self (lt_of_le_of_lt h' h)
     rintro ⟨ h1, h2 ⟩
-    rw [lt_iff, ←le_iff]; refine' ⟨ h1, _ ⟩
+    rw [lt_iff, ←le_iff]; refine ⟨ h1, ?_ ⟩
     by_contra h
     subst h
     contradiction

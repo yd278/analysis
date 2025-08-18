@@ -105,7 +105,7 @@ lemma ratPow_lim_uniq {x α:ℝ} (hx: x > 0) {q q': ℕ → ℚ}
   have hr := tendsTo_sub hq hq'
   rw [sub_coe] at hr
   choose N hN hr using hr (1 / (K + 1:ℝ)) (by positivity)
-  refine' ⟨ N, by simp_all, _ ⟩
+  refine ⟨ N, by simp_all, ?_ ⟩
   intro n hn; simp at hn
   specialize h3 K (by simp [K])
   specialize h4 K (by simp [K])

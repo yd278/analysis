@@ -277,7 +277,7 @@ lemma Sequence.IsCauchy.coe (a:ℕ → ℚ) :
     specialize h' j (by omega) k (by omega)
     simp_all [hj, hk, h']; exact h'
   choose N h' using h ε hε
-  refine' ⟨ max N 0, by simp, _ ⟩
+  refine ⟨ max N 0, by simp, ?_ ⟩
   intro n hn m hm; simp at hn hm
   have npos : 0 ≤ n := by omega
   have mpos : 0 ≤ m := by omega
@@ -290,13 +290,13 @@ lemma Sequence.IsCauchy.mk {n₀:ℤ} (a: {n // n ≥ n₀} → ℚ) :
     (mk' n₀ a).IsCauchy ↔ ∀ ε > (0:ℚ), ∃ N ≥ n₀, ∀ j ≥ N, ∀ k ≥ N,
     Section_4_3.dist (mk' n₀ a j) (mk' n₀ a k) ≤ ε := by
   constructor <;> intro h ε hε <;> choose N hN h' using h ε hε
-  · refine' ⟨ N, hN, _ ⟩
+  · refine ⟨ N, hN, ?_ ⟩
     dsimp at hN; intro j hj k hk
     simp only [Rat.Steady, show max n₀ N = N by omega] at h'
     specialize h' j _ k _ <;> try omega
     simp_all [show n₀ ≤ j by omega, hj, show n₀ ≤ k by omega]
     exact h'
-  refine' ⟨ max n₀ N, by simp, _ ⟩
+  refine ⟨ max n₀ N, by simp, ?_ ⟩
   intro n hn m hm; simp_all
   apply h' n _ m <;> omega
 
@@ -325,7 +325,7 @@ theorem Sequence.IsCauchy.harmonic : (mk' 1 (fun n ↦ (1:ℚ)/n)).IsCauchy := b
     observe : (1/ε) > 0
     observe : (N:ℚ) > 0
     norm_cast at this
-  refine' ⟨ N, by norm_cast, _ ⟩
+  refine ⟨ N, by norm_cast, ?_ ⟩
   intro j hj k hk
   lift j to ℕ using (by linarith)
   lift k to ℕ using (by linarith)
@@ -379,7 +379,7 @@ example : ¬ ((fun n:ℕ ↦ (-1)^n * (n+1:ℚ)):Sequence).IsBounded := by sorry
 
 /-- Example 5.1.13 -/
 example : ((fun n:ℕ ↦ (-1:ℚ)^n):Sequence).IsBounded := by
-  refine' ⟨ 1, by norm_num, _ ⟩
+  refine ⟨ 1, by norm_num, ?_ ⟩
   intro i; by_cases h: 0 ≤ i <;> simp [h]
 
 /-- Example 5.1.13 -/
@@ -404,7 +404,7 @@ lemma IsBounded.finite {n:ℕ} (a: Fin n → ℚ) : ∃ M ≥ 0,  BoundedBy a M 
   choose M hpos hM using hn a'
   have h1 : BoundedBy a' (M + |a n|) := fun m ↦ (hM m).trans (by simp)
   have h2 : |a n| ≤ M + |a n| := by simp [hpos]
-  refine' ⟨ M + |a n|, by positivity, _ ⟩
+  refine ⟨ M + |a n|, by positivity, ?_ ⟩
   intro m; obtain ⟨ j, rfl ⟩ | rfl := Fin.eq_castSucc_or_eq_last m
   . convert h1 j; simp
   convert h2; simp

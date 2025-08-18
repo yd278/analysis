@@ -71,7 +71,7 @@ theorem Sum.of_comp {X Y:Type} {f:X → ℝ} (h: AbsConvergent f) {g: Y → X} (
   choose g_inv hleft hright using bijective_iff_has_inverse.mp hbij
   have hbij_g_inv_g' : Bijective (g_inv ∘ g') := .comp ⟨hright.injective, hleft.surjective⟩ hbij'
   have hident : (f ∘ g) ∘ g_inv ∘ g' = f ∘ g' := by ext n; simp [hright (g' n)]
-  refine' ⟨ ⟨ g_inv ∘ g', ⟨ hbij_g_inv_g', by convert hconv' ⟩ ⟩, _ ⟩
+  refine ⟨ ⟨ g_inv ∘ g', ⟨ hbij_g_inv_g', by convert hconv' ⟩ ⟩, ?_ ⟩
   have h := eq (f := f ∘ g) hbij_g_inv_g' (by convert hconv')
   rw [hident] at h
   exact convergesTo_uniq (eq hbij' hconv') h
@@ -196,7 +196,7 @@ theorem sum_of_sum_of_AbsConvergent' {f:ℕ × ℕ → ℝ} (hf:AbsConvergent f)
   have ⟨ g, hg, hconv ⟩ := hf
   convert sum_of_sum_of_AbsConvergent (f := f ∘ π) _ using 2
   . exact (Sum.of_comp hf hπ).2
-  refine' ⟨ _, hπ.comp hg, _ ⟩
+  refine ⟨ _, hπ.comp hg, ?_ ⟩
   convert hconv using 2
 
 /-- Theorem 8.2.2, fourth version -/
@@ -221,7 +221,7 @@ theorem AbsConvergent'.of_countable {X:Type} (hX:CountablyInfinite X) {f:X → �
   AbsConvergent' f ↔ AbsConvergent f := by
   constructor
   . intro hf; simp [bddAbove_def] at hf; choose L hL using hf
-    have ⟨ g, hg ⟩ := hX.symm; refine' ⟨ g, hg, _ ⟩
+    have ⟨ g, hg ⟩ := hX.symm; refine ⟨ g, hg, ?_ ⟩
     unfold absConverges
     rw [converges_of_nonneg_iff]
     . use L; intro N; by_cases hN: N ≥ 0
@@ -271,7 +271,7 @@ theorem Sum'.of_countable_supp {X:Type} {f:X → ℝ} {A: Set X} (hA: CountablyI
   have hconv' : AbsConvergent (fun x:A ↦ f x) :=
     (AbsConvergent'.of_countable hA).mp (hconv.subtype A)
   rw [AbsConvergent'.of_countable hA]
-  refine' ⟨ hconv', _ ⟩
+  refine ⟨ hconv', ?_ ⟩
   unfold Sum'
   set E := { x | f x ≠ 0 }
   -- The main challenge here is to relate a sum on E with a sum on A.  First, we show containment.
@@ -369,7 +369,7 @@ theorem AbsConvergent'.iff_Summable {X:Type} (f:X → ℝ) : AbsConvergent' f �
 /-- Maybe suitable for porting to Mathlib?-/
 theorem Filter.Eventually.int_natCast_atTop (p: ℤ → Prop) :
   (∀ᶠ n in .atTop, p n) ↔ ∀ᶠ n:ℕ in .atTop, p ↑n := by
-  refine' ⟨ Eventually.natCast_atTop, _ ⟩
+  refine ⟨ Eventually.natCast_atTop, ?_ ⟩
   simp [eventually_atTop]
   intro N hN; use N; intro n hn
   lift n to ℕ using (by omega)
@@ -491,7 +491,7 @@ theorem permute_convergesTo_of_divergent {a: ℕ → ℝ} (ha: (a:Series).conver
   have hconv : atTop.Tendsto (a ∘ n') (nhds 0) := by sorry
   have hsum : (a ∘ n':Series).convergesTo L := by sorry
   use n'
-  refine' ⟨ ⟨ hn'_inj, hn'_surj ⟩, _ ⟩; convert hsum
+  refine ⟨ ⟨ hn'_inj, hn'_surj ⟩, ?_ ⟩; convert hsum
 
 /-- Exercise 8.2.6 -/
 theorem permute_diverges_of_divergent {a: ℕ → ℝ} (ha: (a:Series).converges)

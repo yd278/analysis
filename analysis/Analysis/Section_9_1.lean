@@ -270,7 +270,7 @@ theorem mem_Icc_isLimit {a b x:ℝ} (h: a < b) (hx: x ∈ Set.Icc a b) : LimitPt
       have : (n+(b - x)⁻¹)⁻¹ > 0 := by positivity
       have : (b-x)⁻¹ ≤ n + (b - x)⁻¹ := by linarith
       have : (n + (b - x)⁻¹)⁻¹ ≤ b-x := by rwa [inv_le_comm₀ (by positivity) (by positivity)]
-      refine' ⟨ ⟨ _, _⟩, _ ⟩ <;> linarith
+      refine ⟨ ⟨ ?_, ?_⟩, ?_ ⟩ <;> linarith
     convert Filter.Tendsto.const_add x (c := 0) _; simp
     convert Filter.Tendsto.comp (f := fun (k:ℕ) ↦ (k:ℝ)) (g := fun k ↦ 1/(k+(b-x)⁻¹)) _ tendsto_natCast_atTop_atTop
     convert tendsto_mul_add_inv_atTop_nhds_zero 1 (b - x)⁻¹ (by norm_num) using 2 with n; simp
@@ -309,7 +309,7 @@ theorem isBounded_def (X: Set ℝ) : Bornology.IsBounded X ↔ ∃ M > 0, X ⊆ 
   simp [isBounded_iff_forall_norm_le]
   constructor
   . intro ⟨ C, hC ⟩; use (max C 1)
-    refine' ⟨ lt_of_lt_of_le (by norm_num) (le_max_right _ _), _ ⟩
+    refine ⟨ lt_of_lt_of_le (by norm_num) (le_max_right _ _), ?_ ⟩
     peel hC with x hx hC; rw [abs_le'] at hC; simp [hC.1, hC.2]; linarith [le_max_left C 1]
   intro ⟨ M, hM, hXM ⟩; use M; intro x hx; specialize hXM hx; simp_all [abs_le']; linarith [hXM.1]
 

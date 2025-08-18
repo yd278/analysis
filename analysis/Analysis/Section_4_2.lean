@@ -62,7 +62,7 @@ theorem Rat.eq (a c:ℤ) {b d:ℤ} (hb: b ≠ 0) (hd: d ≠ 0): a // b = c // d 
 /-- Definition 4.2.1 (Rationals) -/
 theorem Rat.eq_diff (n:Rat) : ∃ a b, b ≠ 0 ∧ n = a // b := by
   apply Quot.ind _ n; intro ⟨ a, b, h ⟩
-  refine' ⟨ a, b, h, _ ⟩
+  refine ⟨ a, b, h, ?_ ⟩
   simp [formalDiv, h]; rfl
 
 /--
