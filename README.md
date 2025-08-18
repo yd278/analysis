@@ -175,3 +175,15 @@ To build the project's web page after [installing Lean](https://lean-lang.org/do
 
 After this, `book/_site/` contains the project's web page.
 This can be served as a webpage by executing `python3 serve.py`
+
+### Updating the Lean/Mathlib version
+
+Because this project uses a deprecated method to conditionally require `doc-gen4`
+in order to update the version of Lean and Mathlib used in the project you need to:
+* edit the `analysis/lakefile.lean` to change the `require` lines for Mathlib and doc-gen4,
+  to pin to the tag corresponding to the next Lean version
+  (it is highly recommended that you update in incremental steps)
+* edit the `analysis/lean-toolchain` to change the Lean version to the next version
+* in `analysis/`, run `lake update -Kenv=dev`
+* this may have the side effect of setting your `lean-toolchain` to the *latest* Lean version;
+  if so, revert it to the intended version
