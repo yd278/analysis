@@ -157,7 +157,31 @@ theorem BoundedInterval.partition (S: Finset BoundedInterval) : ∃ T: Finset Bo
   let T := Finset.univ.image (fun x:endpoints ↦ BoundedInterval.Icc x x)
     ∪ (Finset.range (k-1)).image (fun n ↦ BoundedInterval.Ioo (a n) (a (n+1)))
   refine' ⟨T,_,_⟩
-  . sorry
+  . rw [Set.pairwiseDisjoint_iff]
+    intro I hI J hJ hIJ
+    have := hIJ.some_mem
+    simp_all [T]
+    obtain ⟨ x, hx, rfl ⟩ | ⟨ n, hn, rfl ⟩ := hI
+      <;> obtain ⟨ y, hy, rfl ⟩ | ⟨ m, hm, rfl ⟩ := hJ
+      <;> simp at this
+    . rw [show x=y by cc]
+    . rw [this.1] at this
+      set n := sorted.symm ⟨ x, hx ⟩
+      have hax : x = sorted n := by simp [n]
+      obtain ⟨ n, hn ⟩ := n
+      simp [a, show m < k by omega, show m+1 < k by omega, hax] at this
+      omega
+    . rw [this.2] at this
+      set m := sorted.symm ⟨ y, hy ⟩
+      have hay : y = sorted m := by simp [m]
+      obtain ⟨ m, hm ⟩ := m
+      simp [a, show n < k by omega, show n+1 < k by omega, hay] at this
+      omega
+    have h1 : a n < a (m+1) := this.1.1.trans this.2.2
+    have h2 : a m < a (n+1) := this.2.1.trans this.1.2
+    simp [a, show n < k by omega, show n+1 < k by omega,
+          show m < k by omega, show m+1 < k by omega] at h1 h2
+    rw [show n=m by omega]
   intro I hI
   use {J | J.val ⊆ I }
   ext x; constructor
