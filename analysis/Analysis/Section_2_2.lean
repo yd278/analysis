@@ -344,7 +344,7 @@ such as `order` and `calc` to be applicable to the Chapter 2 natural numbers. -/
 instance Nat.instLinearOrder : LinearOrder Nat where
   le_refl := ge_refl
   le_trans a b c hab hbc := ge_trans hbc hab
-  lt_iff_le_not_le a b := by
+  lt_iff_le_not_ge a b := by
     constructor
     . intro h; refine ⟨ le_of_lt h, ?_ ⟩
       by_contra h'

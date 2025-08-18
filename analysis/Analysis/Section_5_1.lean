@@ -400,13 +400,13 @@ lemma IsBounded.finite {n:ℕ} (a: Fin n → ℚ) : ∃ M ≥ 0,  BoundedBy a M 
   -- this proof is written to follow the structure of the original text.
   induction' n with n hn
   . use 0; simp [boundedBy_def]
-  set a' : Fin n → ℚ := fun m ↦ a m
+  set a' : Fin n → ℚ := fun m ↦ a m.castSucc
   choose M hpos hM using hn a'
-  have h1 : BoundedBy a' (M + |a n|) := fun m ↦ (hM m).trans (by simp)
-  have h2 : |a n| ≤ M + |a n| := by simp [hpos]
-  refine ⟨ M + |a n|, by positivity, ?_ ⟩
+  have h1 : BoundedBy a' (M + |a (Fin.ofNat _ n)|) := fun m ↦ (hM m).trans (by simp)
+  have h2 : |a (Fin.ofNat _ n)| ≤ M + |a (Fin.ofNat _ n)| := by simp [hpos]
+  refine ⟨ M + |a (Fin.ofNat _ n)|, by positivity, ?_ ⟩
   intro m; obtain ⟨ j, rfl ⟩ | rfl := Fin.eq_castSucc_or_eq_last m
-  . convert h1 j; simp
+  . exact h1 j
   convert h2; simp
 
 /-- Lemma 5.1.15 (Cauchy sequences are bounded) / Exercise 5.1.1 -/
