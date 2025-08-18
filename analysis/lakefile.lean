@@ -11,13 +11,6 @@ package «Analysis» where
 -- Require Mathlib (the comprehensive library of mathematics in Lean)
 require mathlib from git
   "https://github.com/leanprover-community/mathlib4.git" @ "v4.20.1"
--- Needed to build book
-require subverso from git
-  "https://github.com/leanprover/subverso.git" @ "main"
-require MD4Lean from git
-  "https://github.com/acmepjz/md4lean" @ "main"
-
-
 
 @[default_target]
 lean_lib «Analysis» where
