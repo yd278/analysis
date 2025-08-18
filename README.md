@@ -162,9 +162,7 @@ More resource suggestions welcome!
 To build this project after [installing Lean](https://lean-lang.org/documentation/setup/) and cloning this repository, follow these steps:
 
 ```
-% cd analysis/
-% lake exe cache get
-% lake build
+% ./build.sh
 ```
 
 ### Building the project's web page
@@ -172,13 +170,7 @@ To build this project after [installing Lean](https://lean-lang.org/documentatio
 To build the project's web page after [installing Lean](https://lean-lang.org/documentation/setup/) and cloning this repository, follow these steps:
 
 ```
-% cd analysis/
-% lake exe cache get
-% lake -R -Kenv=dev build Analysis:docs
-% lake build
-% cd ../book/
-% lake exe analysis-book
-% cd ../
+% ./build-web.sh
 ```
 
 After this, `book/_site/` contains the project's web page.
