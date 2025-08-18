@@ -64,7 +64,7 @@ theorem integ_of_monotone {a b:ℝ} {f:ℝ → ℝ} (hf: MonotoneOn f (Icc a b))
             _ = a + δ * ((x-a)/δ) := by field_simp
             _ < _ := by gcongr; exact Nat.lt_floor_add_one _
         apply ExistsUnique.intro (e j)
-        . refine' ⟨ _, hxj ⟩; right; use j; simp [j, Nat.floor_lt hxaδ, div_lt_iff₀' hδpos]; linarith
+        . refine ⟨ ?_, hxj ⟩; right; use j; simp [j, Nat.floor_lt hxaδ, div_lt_iff₀' hδpos]; linarith
         rintro J ⟨ rfl | ⟨ k, hk, rfl ⟩, hxJ ⟩
         . simp [mem_iff] at hxJ; linarith
         simp [mem_iff, e] at hxJ hxj
@@ -127,7 +127,7 @@ theorem integ_of_monotone {a b:ℝ} {f:ℝ → ℝ} (hf: MonotoneOn f (Icc a b))
         rw [div_le_iff₀' (by positivity), mul_comm, mul_assoc]
         nth_rewrite 1 [←mul_one (b-a)]
         gcongr; rw [←div_le_iff₀' (by positivity)]; linarith
-  refine' ⟨ hbound, _ ⟩
+  refine ⟨ hbound, ?_ ⟩
   have low_le_up : lower_integral f I ≤ upper_integral f I := lower_integral_le_upper hbound
   linarith [nonneg_of_le_const_mul_eps this]
 

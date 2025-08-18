@@ -101,7 +101,7 @@ lemma Sequence.equiv_example :
         convert Nat.cast_le.mpr (Section_4_3.two_pow_geq (N+1)) using 1 <;> try infer_instance
         all_goals simp
     choose N hN using exists_nat_gt (2 / ε)
-    refine' ⟨ N, (hN' N).trans _ ⟩
+    refine ⟨ N, (hN' N).trans ?_ ⟩
     rw [div_le_iff₀ (by positivity)]
     rw [div_lt_iff₀ hε] at hN
     apply le_of_lt (hN.trans _)

@@ -44,13 +44,13 @@ theorem lower_integral_congr {f g:ℝ → ℝ} {I: BoundedInterval} (h: Set.EqOn
 
 lemma integral_bound_upper_of_bounded {f:ℝ → ℝ} {M:ℝ} {I: BoundedInterval} (h: ∀ x ∈ (I:Set ℝ), |f x| ≤ M) : M * |I|ₗ ∈ (PiecewiseConstantOn.integ · I) '' {g | MajorizesOn g f I ∧ PiecewiseConstantOn g I} := by
   simp
-  refine' ⟨ fun _ ↦ M , ⟨ ⟨ _, _, ⟩, PiecewiseConstantOn.integ_const _ _ ⟩ ⟩
+  refine ⟨ fun _ ↦ M , ⟨ ⟨ ?_, ?_, ⟩, PiecewiseConstantOn.integ_const _ _ ⟩ ⟩
   . peel h with _ _ _; simp_all [abs_le']
   exact (ConstantOn.of_const (c := M) (by simp)).piecewiseConstantOn
 
 lemma integral_bound_lower_of_bounded {f:ℝ → ℝ} {M:ℝ} {I: BoundedInterval} (h: ∀ x ∈ (I:Set ℝ), |f x| ≤ M) : -M * |I|ₗ ∈ (PiecewiseConstantOn.integ · I) '' {g | MinorizesOn g f I ∧ PiecewiseConstantOn g I} := by
   simp
-  refine' ⟨ fun _ ↦ -M , ⟨ ⟨ _, _, ⟩, by convert PiecewiseConstantOn.integ_const _ _ using 1; simp ⟩ ⟩
+  refine ⟨ fun _ ↦ -M , ⟨ ⟨ ?_, ?_, ⟩, by convert PiecewiseConstantOn.integ_const _ _ using 1; simp ⟩ ⟩
   . peel h with _ _ _; simp [abs_le'] at *; linarith
   exact (ConstantOn.of_const (c := -M) (by simp)).piecewiseConstantOn
 

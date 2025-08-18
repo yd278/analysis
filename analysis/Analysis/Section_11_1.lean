@@ -90,7 +90,7 @@ noncomputable instance BoundedInterval.instInter : Inter BoundedInterval where
 
 @[simp]
 theorem BoundedInterval.inter_eq (I J: BoundedInterval) : (I ∩ J : BoundedInterval) = (I:Set ℝ) ∩ (J:Set ℝ)  :=
-  (inter I J).choose_spec.symm
+  (BoundedInterval.inter I J).choose_spec.symm
 
 example :
   (Ioo 2 4 ∩ Icc 4 6) = (Icc 4 4 : Set ℝ) := by

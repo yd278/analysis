@@ -27,7 +27,7 @@ theorem integ_of_uniform_cts {I: BoundedInterval} {f:ℝ → ℝ} (hf: UniformCo
   -- This proof is written to follow the structure of the original text.
   have hfbound : BddOn f I := by
     rw [BddOn.iff']; exact hf.of_bounded subset_rfl (Bornology.IsBounded.of_boundedInterval I)
-  refine' ⟨ hfbound, _ ⟩
+  refine ⟨ hfbound, ?_ ⟩
   by_cases hsing : |I|ₗ = 0
   . exact (integ_on_subsingleton hsing).1.2
   simp [length] at hsing

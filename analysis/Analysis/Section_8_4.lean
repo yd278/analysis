@@ -106,7 +106,7 @@ theorem exist_tendsTo_sup {E: Set ℝ} (hnon: E.Nonempty) (hbound: BddAbove E) :
     have : 1 / (n+1:ℝ) > 0 := by positivity
     choose s hs using (lt_csSup_iff hbound hnon).mp (show sSup E - 1 / (n+1:ℝ) < sSup E by linarith)
     use s; simp_all [X]
-    exact ⟨ by linarith, ConditionallyCompleteLattice.le_csSup _ _ hbound hs.1 ⟩
+    refine ⟨ by linarith, ConditionallyCompleteLattice.le_csSup _ _ hbound hs.1 ⟩
   have ⟨ a ⟩ := axiom_of_countable_choice hX
   use fun n ↦ ↑(a n)
   constructor
@@ -126,7 +126,7 @@ theorem exist_tendsTo_sup_of_closed {E: Set ℝ} (hnon: E.Nonempty) (hbound: Bdd
     have : 1 / (n+1:ℝ) > 0 := by positivity
     choose s hs using (lt_csSup_iff hbound hnon).mp (show sSup E - 1 / (n+1:ℝ) < sSup E by linarith)
     use s; simp_all [X]
-    exact ⟨ by linarith, ConditionallyCompleteLattice.le_csSup _ _ hbound hs.1 ⟩
+    refine ⟨ by linarith, ConditionallyCompleteLattice.le_csSup _ _ hbound hs.1 ⟩
   set a : ℕ → ℝ := fun n ↦ sInf (X n)
   have ha (n:ℕ) : a n ∈ X n := by
     apply IsClosed.csInf_mem _ Set.Nonempty.of_subtype

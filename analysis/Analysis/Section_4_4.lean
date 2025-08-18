@@ -70,7 +70,7 @@ theorem Rat.not_exist_sqrt_two : ¬ ∃ x:ℚ, x^2 = 2 := by
     use x.num.toNat, x.den
     observe hnum_pos : x.num > 0
     observe hden_pos : x.den > 0
-    refine' ⟨ by simp [hpos], hden_pos, _ ⟩
+    refine ⟨ by simp [hpos], hden_pos, ?_ ⟩
     rw [←num_div_den x] at hx; field_simp at hx
     have hnum_cast : x.num = x.num.toNat := Int.eq_natCast_toNat.mpr (by positivity)
     rw [hnum_cast] at hx; norm_cast at hx

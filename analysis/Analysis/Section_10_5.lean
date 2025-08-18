@@ -57,9 +57,9 @@ theorem _root_.Filter.Tendsto.of_div' {a b L:ℝ} (hab: a < b) {f g f' g': ℝ �
       intro _; simp; intros; split_ands <;> linarith
     . intro _; simp; intro _ _; split_ands <;> linarith
     intro _; simp; intros; split_ands <;> linarith
-  refine' ⟨ this, _ ⟩
+  refine ⟨ this, ?_ ⟩
   rw [nhdsWithin.eq_1] at hderiv ⊢
-  rw [←Convergesto.iff, Convergesto.iff_conv]
+  rw [←Convergesto.iff, Convergesto.iff_conv _ _ _]
   . intro x hx hconv
     have hxy (n:ℕ) : ∃ yn ∈ Set.Ioo a (x n), (f (x n))/(g (x n)) = f' yn / (g' yn) := by
       set h : ℝ → ℝ := fun x' ↦ (f x') * (g (x n)) - (g x') * (f (x n))

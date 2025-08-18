@@ -289,7 +289,7 @@ theorem Real.exists_rat_le_and_nat_ge {x:Real} (hx: x.IsPos) :
   have := Sequence.isBounded_of_isCauchy hcauchy
   rw [Sequence.isBounded_def] at this; choose r hr this using this
   simp [Sequence.boundedBy_def] at this
-  refine' ⟨ ⟨ q, hq, _ ⟩, _ ⟩
+  refine ⟨ ⟨ q, hq, ?_ ⟩, ?_ ⟩
   . convert LIM_mono (Sequence.IsCauchy.const _) hcauchy hbound
     exact Real.ratCast_def q
   choose N hN using exists_nat_gt r; use N
@@ -308,7 +308,7 @@ theorem Real.le_mul {ε:Real} (hε: ε.IsPos) (x:Real) : ∃ M:ℕ, M > 0 ∧ M 
   obtain rfl | hx | hx := trichotomous x
   . use 1; simpa [isPos_iff] using hε
   . choose N hN using (exists_rat_le_and_nat_ge (div_of_pos hx hε)).2
-    set M := N+1; refine' ⟨ M, by positivity, _ ⟩
+    set M := N+1; refine ⟨ M, by positivity, ?_ ⟩
     replace hN : x/ε < M := hN.trans (by simp [M])
     simp
     convert mul_lt_mul_right hN hε

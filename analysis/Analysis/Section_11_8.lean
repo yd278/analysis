@@ -203,35 +203,35 @@ theorem α_len_of_id (I: BoundedInterval) : (fun x ↦ x)[I]ₗ = |I|ₗ := by
 abbrev BoundedInterval.joins' (K I J: BoundedInterval) : Prop :=  K.joins I J ∧ ∀ α:ℝ → ℝ, α[K]ₗ = α[I]ₗ + α[J]ₗ
 
 theorem BoundedInterval.join_Icc_Ioc' {a b c:ℝ} (hab: a ≤ b) (hbc: b ≤ c) : (Icc a c).joins' (Icc a b) (Ioc b c) := by
-  refine' ⟨ join_Icc_Ioc hab hbc, _ ⟩
+  refine ⟨ join_Icc_Ioc hab hbc, ?_ ⟩
   simp [α_length, show a ≤ b by linarith, show b ≤ c by linarith, show a ≤ c by linarith]
 
 theorem BoundedInterval.join_Icc_Ioo' {a b c:ℝ} (hab: a ≤ b) (hbc: b < c) : (Ico a c).joins' (Icc a b) (Ioo b c) := by
-  refine' ⟨ join_Icc_Ioo hab hbc, _ ⟩
+  refine ⟨ join_Icc_Ioo hab hbc, ?_ ⟩
   simp [α_length, show a ≤ b by linarith, show b < c by linarith, show a ≤ c by linarith]
 
 theorem BoundedInterval.join_Ioc_Ioc' {a b c:ℝ} (hab: a ≤ b) (hbc: b ≤ c) : (Ioc a c).joins' (Ioc a b) (Ioc b c) := by
-  refine' ⟨ join_Ioc_Ioc hab hbc, _ ⟩
+  refine ⟨ join_Ioc_Ioc hab hbc, ?_ ⟩
   simp [α_length, show a ≤ b by linarith, show b ≤ c by linarith, show a ≤ c by linarith]
 
 theorem BoundedInterval.join_Ioc_Ioo' {a b c:ℝ} (hab: a ≤ b) (hbc: b < c) : (Ioo a c).joins' (Ioc a b) (Ioo b c) := by
-  refine' ⟨ join_Ioc_Ioo hab hbc, _ ⟩
+  refine ⟨ join_Ioc_Ioo hab hbc, ?_ ⟩
   simp [α_length, show a ≤ b by linarith, show b < c by linarith, show a < c by linarith]
 
 theorem BoundedInterval.join_Ico_Icc' {a b c:ℝ} (hab: a ≤ b) (hbc: b ≤ c) : (Icc a c).joins' (Ico a b) (Icc b c) := by
-  refine' ⟨ join_Ico_Icc hab hbc, _ ⟩
+  refine ⟨ join_Ico_Icc hab hbc, ?_ ⟩
   simp [α_length, show a ≤ b by linarith, show b ≤ c by linarith, show a ≤ c by linarith]
 
 theorem BoundedInterval.join_Ico_Ico' {a b c:ℝ} (hab: a ≤ b) (hbc: b ≤ c) : (Ico a c).joins' (Ico a b) (Ico b c) := by
-  refine' ⟨ join_Ico_Ico hab hbc, _ ⟩
+  refine ⟨ join_Ico_Ico hab hbc, ?_ ⟩
   simp [α_length, show a ≤ b by linarith, show b ≤ c by linarith, show a ≤ c by linarith]
 
 theorem BoundedInterval.join_Ioo_Icc' {a b c:ℝ} (hab: a < b) (hbc: b ≤ c) : (Ioc a c).joins' (Ioo a b) (Icc b c) := by
-  refine' ⟨ join_Ioo_Icc hab hbc, _ ⟩
+  refine ⟨ join_Ioo_Icc hab hbc, ?_ ⟩
   simp [α_length, show a < b by linarith, show b ≤ c by linarith, show a ≤ c by linarith]
 
 theorem BoundedInterval.join_Ioo_Ico' {a b c:ℝ} (hab: a < b) (hbc: b ≤ c) : (Ioo a c).joins' (Ioo a b) (Ico b c) := by
-  refine' ⟨ join_Ioo_Ico hab hbc, _ ⟩
+  refine ⟨ join_Ioo_Ico hab hbc, ?_ ⟩
   simp [α_length, show a < b by linarith, show b ≤ c by linarith, show a < c by linarith]
 
 /-- Theorem 11.8.4 / Exercise 11.8.1 -/
@@ -351,14 +351,14 @@ noncomputable abbrev lower_RS_integral (f:ℝ → ℝ) (I: BoundedInterval) (α:
 lemma RS_integral_bound_upper_of_bounded {f:ℝ → ℝ} {M:ℝ} {I: BoundedInterval}
   (h: ∀ x ∈ (I:Set ℝ), |f x| ≤ M) {α:ℝ → ℝ} (hα:Monotone α)
   : M * α[I]ₗ ∈ (PiecewiseConstantOn.RS_integ · I α) '' {g | MajorizesOn g f I ∧ PiecewiseConstantOn g I} := by
-  simp; refine' ⟨ fun _ ↦ M, ⟨ ⟨ _, _ ⟩, PiecewiseConstantOn.RS_integ_const M I hα ⟩ ⟩
+  simp; refine ⟨ fun _ ↦ M, ⟨ ⟨ ?_, ?_ ⟩, PiecewiseConstantOn.RS_integ_const M I hα ⟩ ⟩
   . peel h with _ _ _; simp_all [abs_le']
   exact (ConstantOn.of_const (c := M) (by simp)).piecewiseConstantOn
 
 
 lemma RS_integral_bound_lower_of_bounded {f:ℝ → ℝ} {M:ℝ} {I: BoundedInterval} (h: ∀ x ∈ (I:Set ℝ), |f x| ≤ M) {α:ℝ → ℝ} (hα:Monotone α)
   : -M * α[I]ₗ ∈ (PiecewiseConstantOn.RS_integ · I α) '' {g | MinorizesOn g f I ∧ PiecewiseConstantOn g I} := by
-  simp; refine' ⟨ fun _ ↦ -M, ⟨ ⟨ _, _ ⟩, by convert PiecewiseConstantOn.RS_integ_const _ _ hα using 1; simp ⟩ ⟩
+  simp; refine ⟨ fun _ ↦ -M, ⟨ ⟨ ?_, ?_ ⟩, by convert PiecewiseConstantOn.RS_integ_const _ _ hα using 1; simp ⟩ ⟩
   . peel h with _ _ _; simp [abs_le'] at *; linarith
   exact (ConstantOn.of_const (c := -M) (by simp)).piecewiseConstantOn
 
