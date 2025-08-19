@@ -465,7 +465,7 @@ theorem SetTheory.Set.powerset_axiom' (X Y:Set) :
     ∃! S:Set, ∀(F:Object), F ∈ S ↔ ∃ f: Y → X, f = F := sorry
 
 /-- Exercise 3.5.12, with errata from web site incorporated -/
-theorem SetTheory.Set.recursion (X: Type) (f: nat → X → X) (c:X) :
+theorem SetTheory.Set.recursion (X: Set) (f: nat → X → X) (c:X) :
     ∃! a: nat → X, a 0 = c ∧ ∀ n, a (n + 1:ℕ) = f n (a n) := by sorry
 
 /-- Exercise 3.5.13 -/
@@ -473,7 +473,21 @@ theorem SetTheory.Set.nat_unique (nat':Set) (zero:nat') (succ:nat' → nat')
   (succ_ne: ∀ n:nat', succ n ≠ zero) (succ_of_ne: ∀ n m:nat', n ≠ m → succ n ≠ succ m)
   (ind: ∀ P: nat' → Prop, P zero → (∀ n, P n → P (succ n)) → ∀ n, P n) :
     ∃! f : nat → nat', Function.Bijective f ∧ f 0 = zero
-    ∧ ∀ (n:nat) (n':nat'), f n = n' ↔ f (n+1:ℕ) = succ n' := by sorry
+    ∧ ∀ (n:nat) (n':nat'), f n = n' ↔ f (n+1:ℕ) = succ n' := by
+  have nat_coe_eq {m:nat} {n} : (m:ℕ) = n → m = n := by aesop
+  have nat_coe_eq_zero {m:nat} : (m:ℕ) = 0 → m = 0 := nat_coe_eq
+  obtain ⟨f, hf⟩ := recursion nat' sorry sorry
+  apply existsUnique_of_exists_of_unique
+  · use f
+    constructor
+    · constructor
+      · intro x1 x2 heq
+        induction' hx1: (x1:ℕ) with i ih generalizing x1 x2
+        · sorry
+        sorry
+      sorry
+    sorry
+  sorry
 
 
 end Chapter3
