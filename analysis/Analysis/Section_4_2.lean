@@ -216,7 +216,7 @@ instance Rat.instField : Field Rat where
     have hden : (den:ℤ) ≠ 0 := by simp [den, q.den_nz]
     rw [← Rat.num_div_den q]
     convert coe_Rat_eq _ hden
-    rw [coe_Int_eq, coe_Nat_eq, div_eq, inv_eq, mul_eq, eq] <;> simp [num, hden, den, q.den_nz]
+    rw [coe_Int_eq, coe_Nat_eq, div_eq, inv_eq, mul_eq, eq] <;> simp [num, den, q.den_nz]
   qsmul := _
   nnqsmul := _
 
@@ -329,7 +329,7 @@ instance Rat.decidableRel : DecidableRel (· ≤ · : Rat → Rat → Prop) := b
 instance Rat.instLinearOrder : LinearOrder Rat where
   le_refl := sorry
   le_trans := sorry
-  lt_iff_le_not_le := sorry
+  lt_iff_le_not_ge := sorry
   le_antisymm := sorry
   le_total := sorry
   toDecidableLE := decidableRel

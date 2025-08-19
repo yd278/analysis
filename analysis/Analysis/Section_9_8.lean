@@ -80,7 +80,7 @@ example {R :ℝ} (hR: R > 0) {n:ℕ} (hn: n > 0) : ∃ g : ℝ → ℝ, ∀ x �
     intro _ hx _ _ hxy; simp_all [f]
     exact pow_lt_pow_left₀ hxy (by contrapose! hn; linarith) (by linarith)
   obtain ⟨ g, ⟨ _, _, _, _, hg⟩ ⟩ := (MonotoneOn.exist_inverse (by positivity) f hcont hmono).2
-  simp only [and_imp, f, zero_pow (by positivity)] at hg; use g
+  simp only [f, zero_pow (by positivity)] at hg; use g
 
 /-- Exercise 9.8.1 -/
 theorem IsMaxOn.of_monotone_on_compact {a b:ℝ} (h:a < b) {f:ℝ → ℝ} (hf: MonotoneOn f (.Icc a b)) :

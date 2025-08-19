@@ -142,13 +142,15 @@ theorem Uncountable.real : Uncountable ℝ := by
         calc
           _ = ∑' j:ℕ, (10:ℝ)^(-1-n₀:ℝ) * (1/(10:ℝ))^j := by
             apply tsum_congr; intro j
-            rw [Real.rpow_add, Real.rpow_neg, ←Real.inv_rpow, Real.rpow_natCast] <;> try positivity
-            congr; norm_num
+            rw [npow_add, npow_add, Real.rpow_sub, Real.rpow_neg,
+              Real.rpow_one, Real.rpow_natCast] <;> try positivity
+            simp
+            congr
           _ = (10:ℝ)^(-1-n₀:ℝ) * ∑' j:ℕ, (1/(10:ℝ))^j := tsum_mul_left
           _ = _ := by
             rw [tsum_geometric_of_lt_one (by norm_num) (by norm_num),
                 show -1 - (n₀:ℝ) = (-n₀:ℝ) + (-1:ℝ) by ring,
-                Real.rpow_add (by positivity)]
+                Real.rpow_add, Real.rpow_neg, Real.rpow_natCast] <;> try positivity
             ring
       _ = (8 / (9:ℝ)) * (10:ℝ)^(-(n₀:ℝ)) := by ring
       _ > 0 := by positivity
@@ -195,7 +197,7 @@ abbrev CardOrder : Preorder Type := {
     sorry
   le_trans := by
     sorry
-  lt_iff_le_not_le := by
+  lt_iff_le_not_ge := by
     sorry
 }
 

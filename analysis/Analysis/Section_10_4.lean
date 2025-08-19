@@ -85,7 +85,7 @@ theorem inverse_function_theorem {X Y: Set ℝ} {f: ℝ → ℝ} {g:ℝ → ℝ}
     rw [hgy₀] at hconv
     rw [HasDerivWithinAt.iff, ←Convergesto.iff, Convergesto.iff_conv _ _ had'] at hf
     convert (hf x hx hconv).inv₀ hne using 2 with n
-    . simp [hgy₀, x, ←hfx₀, hfg _ (hy' n), hgf _ hx₀]
+    . simp [x, ←hfx₀, hfg _ (hy' n), hgf _ hx₀]
     simp
 
 /-- Exercise 10.4.1(a) -/

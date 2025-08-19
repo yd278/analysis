@@ -182,7 +182,7 @@ theorem integ_eq_antideriv_sub {a b:ℝ} (h:a ≤ b) {f F: ℝ → ℝ}
                   gcongr; apply le_csSup
                   . rw [bddAbove_def]
                     choose M hM using hf.1; use M
-                    simp [abs_le', F', -Set.mem_Icc] at hM ⊢
+                    simp [abs_le', -Set.mem_Icc] at hM ⊢
                     intro x hx; rw [subset_iff] at hJ; specialize hM x (hJ hx); tauto
                   simp; use e; simp; exact ((subset_iff _ _).mp (Ioo_subset J)) he
             rw [←mem_closure_iff_clusterPt]
@@ -194,7 +194,7 @@ theorem integ_eq_antideriv_sub {a b:ℝ} (h:a ≤ b) {f F: ℝ → ℝ}
           apply (hF.1.mono _).congr
           . intro x hx
             have : x ∈ Set.Icc a b := by specialize hJ _ hx; simpa using hJ
-            simp only [ite_eq_left_iff, F']; tauto
+            simp only [F']; tauto
           simpa [subset_iff] using hJ
         _ = F'[Icc a b]ₗ := P.sum_of_α_length F'
         _ = F' b - F' a := by

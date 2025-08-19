@@ -830,7 +830,7 @@ theorem SetTheory.Set.coe_inj' (X Y:Set) :
 
 /-- Compatibility of the membership operation ∈ -/
 theorem SetTheory.Set.mem_coe (X:Set) (x:Object) : x ∈ (X : _root_.Set Object) ↔ x ∈ X := by
-  simp [Coe.coe]
+  simp
 
 /-- Compatibility of the emptyset -/
 theorem SetTheory.Set.coe_empty : ((∅:Set) : _root_.Set Object) = ∅ := by sorry

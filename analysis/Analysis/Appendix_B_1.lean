@@ -136,10 +136,10 @@ example : (PosintDecimal.mk' 3 [1, 4] (by decide):ℕ) = 314 := by decide
 /-- Remark B.1.3 -/
 @[simp]
 theorem PosintDecimal.ten_eq_ten : (mk' 1 [0] (by decide):ℕ) = 10 := by
-  simp [toNat, mk', Digit.toNat, List.reverse]
+  simp [toNat, mk', Digit.toNat]
 
 theorem PosintDecimal.digit_eq {d:Digit} (h: d ≠ 0) : (mk' d [] h:ℕ) = d := by
-  simp [toNat, mk', List.reverse]
+  simp [toNat, mk']
 
 theorem PosintDecimal.pos (p:PosintDecimal) : 0 < (p:ℕ) := by
   simp [toNat]
@@ -182,7 +182,7 @@ theorem PosintDecimal.eq_append {p:PosintDecimal} (h: 2 ≤ p.digits.length) : �
   use mk' p.head (p.digits.tail.dropLast) p.head_ne_zero
   set a := p.digits.getLast p.nonempty; use a
   apply congr'
-  simp [mk', List.cons_append]
+  simp [mk']
   rw [←p.digits.head_cons_tail p.nonempty]
   congr 1
   convert (List.dropLast_append_getLast _).symm using 2; swap

@@ -209,7 +209,7 @@ theorem integ_of_mul_nonneg {I: BoundedInterval} {f g:ℝ → ℝ} (hf: Integrab
         simp [hf''maj _ hx, hM₁.1]
       . exact hf''const.min hM₁_piece
       . apply lt_of_le_of_lt ((hf''const.min hM₁_piece).integ_mono _ hf''const) hf''int
-        simp [hf''maj, hM₁_piece]
+        simp
       intro _; simp
     choose f'' hf''maj hf''const hf''int hf''bound using this
     have : ∃ g'', MajorizesOn g'' g I ∧ PiecewiseConstantOn g'' I ∧ PiecewiseConstantOn.integ g'' I < integ g I + ε ∧ MinorizesOn g'' (fun _ ↦ M₂) I := by
@@ -221,7 +221,7 @@ theorem integ_of_mul_nonneg {I: BoundedInterval} {f g:ℝ → ℝ} (hf: Integrab
         simp [hg''maj _ hx, hM₂.1]
       . exact hg''const.min hM₂_piece
       . apply lt_of_le_of_lt ((hg''const.min hM₂_piece).integ_mono _ hg''const) hg''int
-        simp [hg''maj, hM₂_piece]
+        simp
       intro _ _; simp
     choose g'' hg''maj hg''const hg''int hg''bound using this
     have hf'g'_const := hf'const.mul hg'const

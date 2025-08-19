@@ -159,11 +159,11 @@ theorem integ_of_bdd_cts {I: BoundedInterval} {f:ℝ → ℝ} (hbound: BddOn f I
     classical
     set h' : ℝ → ℝ := fun x ↦ if x ∈ I' then h x else M
     have h'const_left (x:ℝ) (hx: x ∈ Ileft) : h' x = M := by
-      simp [h', hx, mem_iff]; intro hx'
+      simp [h', mem_iff]; intro hx'
       replace hjoin1 := Set.eq_empty_iff_forall_notMem.mp hjoin1.1 x
       simp at hjoin1; tauto
     have h'const_right (x:ℝ) (hx: x ∈ Iright) : h' x = M := by
-      simp [h', hx, mem_iff]; intro hx'
+      simp [h', mem_iff]; intro hx'
       replace hjoin2 := Set.eq_empty_iff_forall_notMem.mp hjoin2.1 x
       replace hjoin1 := congrArg (fun A ↦ x ∈ A) hjoin1.2.1
       simp at hjoin1 hjoin2; tauto
@@ -191,11 +191,11 @@ theorem integ_of_bdd_cts {I: BoundedInterval} {f:ℝ → ℝ} (hbound: BddOn f I
     choose g hgmin hgconst hgint using gt_of_lt_lower_integral hf'.1 (show integ f I' - ε < lower_integral f I' by linarith [hf'.2])
     set g' : ℝ → ℝ := fun x ↦ if x ∈ I' then g x else -M
     have g'const_left (x:ℝ) (hx: x ∈ Ileft) : g' x = -M := by
-      simp [g', hx, mem_iff]; intro hx'
+      simp [g', mem_iff]; intro hx'
       replace hjoin1 := Set.eq_empty_iff_forall_notMem.mp hjoin1.1 x
       simp at hjoin1; tauto
     have g'const_right (x:ℝ) (hx: x ∈ Iright) : g' x = -M := by
-      simp [g', hx, mem_iff]; intro hx'
+      simp [g', mem_iff]; intro hx'
       replace hjoin2 := Set.eq_empty_iff_forall_notMem.mp hjoin2.1 x
       replace hjoin1 := congrArg (fun A ↦ x ∈ A) hjoin1.2.1
       simp at hjoin1 hjoin2; tauto

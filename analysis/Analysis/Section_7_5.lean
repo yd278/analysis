@@ -63,7 +63,7 @@ theorem Series.root_test_pos {s : Series}
     have : (s.from N).absConverges := by
       apply (converges_of_le _ _ hgeom).1
       . simp; omega
-      intro n hn; simp [Series.from] at hn
+      intro n hn; simp at hn
       have hn' : n ≥ 0 := by omega
       simp [hn.1, hn.2, hn']
       convert this n hn.2; symm; convert zpow_natCast _ _; omega

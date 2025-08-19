@@ -65,10 +65,10 @@ abbrev Sequence.mk' (m:ℤ) (a: { n // n ≥ m } → ℝ) : Sequence where
   vanish := by simp_all
 
 lemma Sequence.eval_mk {n m:ℤ} (a: { n // n ≥ m } → ℝ) (h: n ≥ m) :
-    (Sequence.mk' m a) n = a ⟨ n, h ⟩ := by simp [seq, h]
+    (Sequence.mk' m a) n = a ⟨ n, h ⟩ := by simp [h]
 
 @[simp]
-lemma Sequence.eval_coe (n:ℕ) (a: ℕ → ℝ) : (a:Sequence) n = a n := by simp [seq]
+lemma Sequence.eval_coe (n:ℕ) (a: ℕ → ℝ) : (a:Sequence) n = a n := by simp
 
 /--
   a.from n₁ starts `a:Sequence` from `n₁`.  It is intended for use when `n₁ ≥ n₀`, but returns
@@ -78,7 +78,7 @@ abbrev Sequence.from (a:Sequence) (m₁:ℤ) : Sequence := mk' (max a.m m₁) (a
 
 lemma Sequence.from_eval (a:Sequence) {m₁ n:ℤ} (hn: n ≥ m₁) :
   (a.from m₁) n = a n := by
-  simp [Sequence.from, seq, hn]; intros; symm; solve_by_elim [a.vanish]
+  simp [hn]; intros; symm; solve_by_elim [a.vanish]
 
 end Chapter6
 
@@ -147,7 +147,7 @@ lemma Sequence.IsCauchy.mk {n₀:ℤ} (a: {n // n ≥ n₀} → ℝ) :
     intro j hj k hk
     simp only [Real.Steady, show max n₀ N = N by omega] at h'
     specialize h' j ?_ k ?_ <;> try omega
-    simp_all [show n₀ ≤ j by omega, hj, show n₀ ≤ k by omega]
+    simp_all [show n₀ ≤ j by omega, show n₀ ≤ k by omega]
   rintro ⟨ N, _, _ ⟩; exact ⟨ max n₀ N, by simp, by intro _ _ _ _; aesop ⟩
 
 @[coe]
@@ -250,7 +250,7 @@ example : (0.1:ℝ).CloseSeq seq_6_1_6 1 := by
 
 /-- Examples 6.1.6 -/
 example : ¬ (0.01:ℝ).CloseSeq seq_6_1_6 1 := by
-  intro h; specialize h 0 (by positivity); simp [seq_6_1_6, Real.dist_eq] at h; norm_num at h
+  intro h; specialize h 0 (by positivity); simp [seq_6_1_6] at h; norm_num at h
 
 /-- Examples 6.1.6 -/
 example : (0.01:ℝ).EventuallyClose seq_6_1_6 1 := by sorry

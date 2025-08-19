@@ -97,7 +97,7 @@ lemma ratPow_lim_uniq {x α:ℝ} (hx: x > 0) {q q': ℕ → ℚ}
   have h2 := tendsTo_inv h1 (by norm_num)
   choose K1 hK1 h3 using h1 ε hε
   choose K2 hK2 h4 using h2 ε hε
-  simp [Inv.inv, inv_coe] at hK1 hK2
+  simp [Inv.inv] at hK1 hK2
   lift K1 to ℕ using hK1
   lift K2 to ℕ using hK2
   simp [inv_coe] at h4

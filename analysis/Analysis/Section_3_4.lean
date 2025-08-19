@@ -174,10 +174,10 @@ theorem SetTheory.Set.example_3_4_9 (F:Object) :
   unfold f_3_4_9_a f_3_4_9_b f_3_4_9_c f_3_4_9_d
   have h1 := (f ⟨4, by simp⟩).property
   have h2 := (f ⟨7, by simp⟩).property
-  simp [coe_of_fun_inj, mem_pair] at *
+  simp [coe_of_fun_inj] at *
   obtain _ | _ := h1 <;> obtain _ | _ := h2
   map_tacs [left; (right;left); (right;right;left); (right;right;right)]
-  all_goals ext ⟨_, hx⟩; simp [mem_pair] at hx; aesop
+  all_goals ext ⟨_, hx⟩; simp at hx; aesop
 
 /-- Exercise 3.4.6 (i). One needs to provide a suitable definition of the power set here. -/
 def SetTheory.Set.powerset (X:Set) : Set :=

@@ -103,7 +103,7 @@ theorem finite_series_of_rearrange {n:ℕ} {X':Type*} (X: Finset X') (hcard: X.c
   -- This proof is written to broadly follow the structure of the original text.
   revert X n; intro n
   induction' n with n hn
-  . simp [sum_of_empty (show 0 < 1 by norm_num) (fun _ ↦ 0)]
+  . simp
   intro X hX g h hg hh
   -- A technical step: we extend g, h to the entire integers using a slightly artificial map π
   set π : ℤ → Icc (1:ℤ) (n+1) :=

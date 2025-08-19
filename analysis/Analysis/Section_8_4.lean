@@ -140,7 +140,7 @@ theorem exist_tendsTo_sup_of_closed {E: Set ℝ} (hnon: E.Nonempty) (hbound: Bdd
   . convert tendsto_const_nhds.sub (a := sSup E) (b := 0) _; simp
     exact tendsto_one_div_add_atTop_nhds_zero_nat
   . exact tendsto_const_nhds
-  all_goals intro n; simp_all [X, ha n]
+  all_goals intro n; simp_all [X]
 
 /-- Proposition 8.4.7 / Exercise 8.4.1 -/
 theorem exists_function {X Y : Type} {P : X → Y → Prop} (h: ∀ x, ∃ y, P x y) :
