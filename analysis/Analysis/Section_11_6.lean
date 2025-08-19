@@ -113,7 +113,7 @@ theorem integ_of_monotone {a b:ℝ} {f:ℝ → ℝ} (hf: MonotoneOn f (Icc a b))
         have hδj1 : 0 ≤ δ*(j+1) := by positivity
         apply_rules [hf]
         . simp [I, hδj]; linarith
-        simp [I, hδj]; constructor <;> linarith
+        simp [I]; constructor <;> linarith
     calc
       _ ≤ ∑ j ∈ .range N, f (a + δ*(j+1)) * δ - ∑ j ∈ .range N, f (a + δ*j) * δ := by linarith
       _ = (f b - f a) * δ := by

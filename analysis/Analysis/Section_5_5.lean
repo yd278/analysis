@@ -103,7 +103,7 @@ lemma Real.LUB_claim1 (n : ℕ) {E: Set Real} (hE: Set.Nonempty E) (hbound: BddA
   observe hx₀ : x₀ ∈ E
 
   set ε := ((1/(n+1):ℚ):Real)
-  have hpos : ε.IsPos := by simp [isPos_iff, ε, ←lt_of_coe]; positivity
+  have hpos : ε.IsPos := by simp [isPos_iff, ε]; positivity
   apply existsUnique_of_exists_of_unique
   . rw [bddAbove_def] at hbound; obtain ⟨ M, hbound ⟩ := hbound
     choose K _ hK using le_mul hpos M
@@ -123,9 +123,9 @@ lemma Real.LUB_claim1 (n : ℕ) {E: Set Real} (hE: Set.Nonempty E) (hbound: BddA
       . qify; rwa [←gt_iff_lt, gt_of_coe]
       simp [ε] at hK ⊢; exact upperBound_upper (by order) hbound
     choose m _ _ hm hm' using claim1_4; use m
-    have : (m/(n+1):ℚ) = m*ε := by simp [ε,ratCast_mul]; field_simp
+    have : (m/(n+1):ℚ) = m*ε := by simp [ε]; field_simp
     refine ⟨ by convert hm, ?_ ⟩
-    convert hm'; simp [ratCast_sub, this, sub_mul, ε]
+    convert hm'; simp [this, sub_mul, ε]
   intro _ _ ⟨ _, _ ⟩ ⟨ _, _ ⟩; solve_by_elim [upperBound_discrete_unique]
 
 lemma Real.LUB_claim2 {E : Set Real} (N:ℕ) {a b: ℕ → ℚ}
@@ -209,7 +209,7 @@ abbrev ExtendedReal.IsFinite (X : ExtendedReal) : Prop := match X with
 theorem ExtendedReal.finite_eq_coe {X: ExtendedReal} (hX: X.IsFinite) :
     X = ((X:Real):ExtendedReal) := by
   cases X <;> try simp [IsFinite] at hX
-  simp [coe_real, real_coe]
+  simp
 
 open Classical in
 /-- Definition 5.5.10 (Supremum)-/

@@ -167,7 +167,7 @@ noncomputable abbrev PiecewiseConstantWith.integ (f:ℝ → ℝ) {I: BoundedInte
 
 theorem PiecewiseConstantWith.integ_congr {f g:ℝ → ℝ} {I: BoundedInterval} {P: Partition I}
   (h: ∀ x ∈ (I:Set ℝ), f x = g x) : integ f P = integ g P := by
-  simp only [integ, Subtype.forall]
+  simp only [integ]
   apply Finset.sum_congr rfl; intro J hJ; congr 1; apply constant_value_on_congr; intros
   have := P.contains _ hJ; rw [subset_iff] at this
   aesop

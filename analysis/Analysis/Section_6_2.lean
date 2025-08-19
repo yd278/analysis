@@ -59,17 +59,17 @@ example : (3:EReal) ≤ (5:EReal) := by rw [le_iff]; left; use (3:ℝ), (5:ℝ);
 
 
 /-- Examples 6.2.4 -/
-example : (3:EReal) < ⊤ := by simp [lt_iff, le_iff]; exact real_neq_infty 3
+example : (3:EReal) < ⊤ := by simp [lt_iff]; exact real_neq_infty 3
 
 
 /-- Examples 6.2.4 -/
-example : (⊥:EReal) < ⊤ := by simp [lt_iff, le_iff]
+example : (⊥:EReal) < ⊤ := by simp
 
 
 /-- Examples 6.2.4 -/
 example : ¬ (3:EReal) ≤ ⊥ := by
   by_contra h
-  simp [le_iff] at h
+  simp at h
   exact real_neq_neg_infty 3 h
 
 #check instCompleteLinearOrderEReal

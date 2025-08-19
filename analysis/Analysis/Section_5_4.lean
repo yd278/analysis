@@ -207,7 +207,7 @@ theorem Real.inv_of_pos {x:Real} (hx: x.IsPos) : x⁻¹.IsPos := by
     intro h
     observe : (x * x⁻¹).IsNeg
     have id : -(1:Real) = (-1:ℚ) := by simp
-    simp only [hident, neg_iff_pos_of_neg, id, pos_of_coe, self_mul_inv hnon] at this
+    simp only [neg_iff_pos_of_neg, id, pos_of_coe, self_mul_inv hnon] at this
     linarith
   have trich := trichotomous x⁻¹
   simpa [hinv_non, hnonneg] using trich
@@ -299,7 +299,7 @@ theorem Real.exists_rat_le_and_nat_ge {x:Real} (hx: x.IsPos) :
       convert LIM_mono hcauchy (Sequence.IsCauchy.const r) _
       intro n; specialize this n; simp at this
       exact (le_abs_self _).trans this
-    _ < ((N:ℚ):Real) := by simp [←Real.lt_of_coe,hN]
+    _ < ((N:ℚ):Real) := by simp [hN]
     _ = N := rfl
 
 /-- Corollary 5.4.13 (Archimedean property ) -/
@@ -313,7 +313,7 @@ theorem Real.le_mul {ε:Real} (hε: ε.IsPos) (x:Real) : ∃ M:ℕ, M > 0 ∧ M 
     simp
     convert mul_lt_mul_right hN hε
     rw [isPos_iff] at hε; field_simp
-  use 1; simp_all [isPos_iff, isNeg_iff]; linarith
+  use 1; simp_all [isPos_iff]; linarith
 
 /-- Proposition 5.4.14 / Exercise 5.4.5 -/
 theorem Real.rat_between {x y:Real} (hxy: x < y) : ∃ q:ℚ, x < (q:Real) ∧ (q:Real) < y := by sorry

@@ -455,7 +455,7 @@ theorem Scalar.in_smul {d:Dimensions} (c:ℝ) (unit q:Scalar d) : unit.in (c •
 
 theorem Scalar.in_inj {d:Dimensions} (unit q₁ q₂:Scalar d) [h: NeZero unit] : unit.in q₁ = unit.in q₂ ↔ q₁ = q₂ := by
   simp [neZero_iff] at h
-  simp [←val_inj, in_def, h]
+  simp [←val_inj]
   field_simp
 
 

@@ -160,7 +160,7 @@ theorem Sequence.lt_limsup_bounds {a:Sequence} {x:EReal} (h: x < a.limsup) {N:�
     apply lt_of_lt_of_le h (sInf_le _)
     simp; use N
   choose n hn hxn _ using exists_between_lt_sup hx
-  simp [Sequence.from, hN] at hn; use n, hn
+  simp [hN] at hn; use n, hn
   convert gt_iff_lt.mpr hxn using 1
   simp [hn, hN.trans hn]
 
@@ -292,8 +292,8 @@ theorem Sequence.Cauchy_iff_convergent (a:Sequence) :
     specialize h ε hε
     choose N hN hsteady using h
     unfold Real.Steady Real.Close at hsteady
-    have hN0 : N ≥ (a.from N).m := by simp [Sequence.from, hN]
-    have hN1 : (a.from N).seq N = a.seq N := by simp [Sequence.from, hN]
+    have hN0 : N ≥ (a.from N).m := by simp [hN]
+    have hN1 : (a.from N).seq N = a.seq N := by simp [hN]
     have h1 : (a N - ε:ℝ) ≤ (a.from N).inf := by
       apply inf_ge_lower
       intro n hn; specialize hsteady n hn N hN0

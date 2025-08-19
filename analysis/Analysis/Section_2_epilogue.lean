@@ -39,7 +39,7 @@ abbrev Chapter2.Nat.equivNat : Chapter2.Nat ≃ ℕ where
   invFun n := (n:Chapter2.Nat)
   left_inv n := by
     induction' n with n hn; rfl
-    simp [succ_toNat, hn]
+    simp [hn]
     rw [succ_eq_add_one]
   right_inv n := by
     induction' n with n hn; rfl
