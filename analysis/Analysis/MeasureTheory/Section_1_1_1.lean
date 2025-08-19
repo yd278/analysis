@@ -71,12 +71,14 @@ theorem BoundedInterval.inter_eq (I J: BoundedInterval) : (I ∩ J : BoundedInte
 instance BoundedInterval.instMembership : Membership ℝ BoundedInterval where
   mem I x := x ∈ (I:Set ℝ)
 
+@[simp]
 theorem BoundedInterval.mem_iff (I: BoundedInterval) (x:ℝ) :
   x ∈ I ↔ x ∈ (I:Set ℝ) := by rfl
 
 instance BoundedInterval.instSubset : HasSubset BoundedInterval where
   Subset I J := ∀ x, x ∈ I → x ∈ J
 
+@[simp]
 theorem BoundedInterval.subset_iff (I J: BoundedInterval) :
   I ⊆ J ↔ (I:Set ℝ) ⊆ (J:Set ℝ) := by rfl
 
@@ -91,6 +93,18 @@ abbrev BoundedInterval.b (I: BoundedInterval) : ℝ := match I with
   | Icc _ b => b
   | Ioc _ b => b
   | Ico _ b => b
+
+theorem BoundedInterval.subset_Icc (I: BoundedInterval) : I ⊆ Icc I.a I.b := match I with
+  | Ioo _ _ => by simp [Ioo, Icc, a, b, subset_iff, Set.Ioo_subset_Icc_self]
+  | Icc _ _ => by simp [Icc, a, b, subset_iff]
+  | Ioc _ _ => by simp [Ioc, Icc, a, b, subset_iff, Set.Ioc_subset_Icc_self]
+  | Ico _ _ => by simp [Ico, Icc, a, b, subset_iff, Set.Ico_subset_Icc_self]
+
+theorem BoundedInterval.Ioo_subset (I: BoundedInterval) : Ioo I.a I.b ⊆ I := match I with
+  | Ioo _ _ => by simp [Ioo, a, b, subset_iff]
+  | Icc _ _ => by simp [Icc, a, b, subset_iff, Set.Ioo_subset_Icc_self]
+  | Ioc _ _ => by simp [Ioc, Ioo, a, b, subset_iff, Set.Ioo_subset_Ioc_self]
+  | Ico _ _ => by simp [Ico, Ioo, a, b, subset_iff, Set.Ioo_subset_Ico_self]
 
 /-- Definition 1.1.1 (boxes) -/
 abbrev BoundedInterval.length (I: BoundedInterval) : ℝ := max (I.b - I.a) 0
@@ -145,6 +159,7 @@ theorem IsElementary.translate {d:ℕ} {E: Set (EuclideanSpace' d)}
   (hE: IsElementary E) (x: EuclideanSpace' d) : IsElementary (E + {x}) := by
   sorry
 
+/-- A sublemma for proving Lemma 1.1.2(i).  It is a geometrically obvious fact but surprisingly annoying to prove formally. -/
 theorem BoundedInterval.partition (S: Finset BoundedInterval) : ∃ T: Finset BoundedInterval, T.toSet.PairwiseDisjoint BoundedInterval.toSet ∧ ∀ I ∈ S, ∃ U : Set T, I = ⋃ J ∈ U, J.val.toSet := by
   let endpoints : Finset ℝ := S.image BoundedInterval.a ∪ S.image BoundedInterval.b
   have ha_mem {I:BoundedInterval} (hI: I ∈ S) : I.a ∈ endpoints := by
@@ -184,6 +199,83 @@ theorem BoundedInterval.partition (S: Finset BoundedInterval) : ∃ T: Finset Bo
     rw [show n=m by omega]
   intro I hI
   use {J | J.val ⊆ I }
-  ext x; constructor
-  . sorry
-  sorry
+  ext x; simp; constructor
+  . intro hx
+    by_cases hend : x ∈ endpoints
+    . use BoundedInterval.Icc x x
+      simp [T, hx, hend]
+    let n := sorted.symm ⟨ I.a, ha_mem hI ⟩
+    let m := sorted.symm ⟨ I.b, hb_mem hI ⟩
+    have hnI : I.a = sorted n := by simp [n]
+    have hmI : I.b = sorted m := by simp [m]
+    obtain ⟨ m, hm ⟩ := m; obtain ⟨ n, hn ⟩ := n
+    apply I.subset_Icc at hx
+    simp [hnI, hmI] at hx
+    obtain ⟨ hx1, hx2 ⟩ := hx
+    have H : ∃ m, x ≤ a m := by use m; simp [a, hm, hx2]
+    let r := Nat.find H
+    have hrm : r ≤ m := by convert Nat.find_min' H _; simp [a, hm, hx2]
+    have hr : r < k := by linarith
+    have hxr : x ≤ sorted ⟨ r, hr ⟩ := by convert Nat.find_spec H; simp [r,a,hr]
+    have hnr : n < r := by
+      by_contra!
+      replace : (sorted ⟨r, hr⟩).val ≤ (sorted ⟨n, hn⟩).val := by simp [this]
+      simp [show x = sorted ⟨ n, hn ⟩ by order] at hend
+    refine' ⟨ BoundedInterval.Ioo (sorted ⟨ r-1, by omega ⟩) (sorted ⟨ r, hr ⟩), _ , _, _ ⟩
+    . apply Set.Subset.trans _ I.Ioo_subset
+      simp [hnI, hmI]
+      apply Set.Ioo_subset_Ioo <;> simp <;> omega
+    . simp [T]; refine' ⟨ r-1, by omega, _ ⟩
+      simp [a, show r-1 < k by omega, show r < k by omega, show r-1+1=r by omega]
+    simp
+    have h1 : x ≠ sorted ⟨ r, hr ⟩ := by by_contra!; simp [this] at hend
+    have h3 : sorted ⟨ r-1, by omega ⟩ < x := by
+      by_contra!
+      convert Nat.find_min H (show r-1 < r by omega) _
+      simp [a, show r-1 < k by omega, this]
+    split_ands <;> order
+  rintro ⟨ J, hJI, _, hxJ ⟩; exact hJI hxJ
+
+/-- Lemma 1.1.2(i) -/
+theorem Box.partition {d:ℕ} (S: Finset (Box d)) : ∃ T: Finset (Box d), T.toSet.PairwiseDisjoint Box.toSet ∧ ∀ I ∈ S, ∃ U : Set T, I = ⋃ J ∈ U, J.val.toSet := by
+  choose T hTdisj hT using BoundedInterval.partition
+  let J : Fin d → Finset BoundedInterval := fun i ↦ T (S.image (fun B ↦ B.side i))
+  have hJdisj (i:Fin d) : (J i).toSet.PairwiseDisjoint BoundedInterval.toSet :=
+    hTdisj (S.image (fun B ↦ B.side i))
+  have hJ (i:Fin d) {B: Box d} (hB: B ∈ S) : ∃ U : Set (J i), B.side i = ⋃ K ∈ U, K.val.toSet := by
+    apply hT (S.image (fun B ↦ B.side i)) (B.side i); simp; use B
+  classical
+  refine' ⟨ (Finset.univ.pi J).image (fun I ↦ ⟨ fun i ↦ I i (by simp) ⟩ ) , _, _ ⟩
+  . rw [Set.pairwiseDisjoint_iff]
+    intro B₁ hB₁ B₂ hB₂ hB₁B₂; simp at hB₁ hB₂
+    obtain ⟨ J₁, hJ₁, rfl ⟩ := hB₁
+    obtain ⟨ J₂, hJ₂, rfl ⟩ := hB₂
+    ext i; simp
+    have := hB₁B₂.some_mem
+    simp [Box.toSet] at this
+    rw [Set.mem_pi, Set.mem_pi] at this
+    obtain ⟨ h₁, h₂ ⟩ := this; specialize h₁ i (by simp); specialize h₂ i (by simp)
+    specialize hJdisj i; rw [Set.pairwiseDisjoint_iff] at hJdisj
+    apply_rules [hJdisj, Set.nonempty_of_mem (x := (hB₁B₂.some i))]
+    aesop
+  intro B hB
+  choose U hU using hJ
+  use {B' | ∀ i, ∃ hi : B'.val.side i ∈ J i, ⟨ _, hi ⟩ ∈ U i hB}
+  ext x
+  simp [Box.toSet]; rw [Set.mem_pi]
+  conv => lhs; intro i _; rw [hU i hB]
+  conv => rhs; congr; intro a; rhs; rw [Set.mem_pi]
+  simp; constructor
+  . intro h; choose I hI using h
+    use ⟨ I ⟩; simp; and_intros
+    . refine' ⟨ _, _ ⟩
+      . use fun i _ ↦ I i
+        simp
+        peel hI with i hi
+        have ⟨ hIJ, hIJ' ⟩ := hi.1
+        assumption
+      peel hI with i hi
+      tauto
+    aesop
+  rintro ⟨ B', ⟨ h1, h2 ⟩, h3 ⟩ i; use B'.side i
+  aesop
