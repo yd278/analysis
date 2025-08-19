@@ -329,7 +329,7 @@ instance Rat.decidableRel : DecidableRel (· ≤ · : Rat → Rat → Prop) := b
 instance Rat.instLinearOrder : LinearOrder Rat where
   le_refl := sorry
   le_trans := sorry
-  lt_iff_le_not_le := sorry
+  lt_iff_le_not_ge := sorry
   le_antisymm := sorry
   le_total := sorry
   toDecidableLE := decidableRel

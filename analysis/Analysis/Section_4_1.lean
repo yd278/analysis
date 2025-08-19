@@ -286,7 +286,7 @@ lemma Int.is_additive_identity_iff_eq_0 (b : Int) : (∀ a, a = a + b) ↔ b = 0
 instance Int.instLinearOrder : LinearOrder Int where
   le_refl := sorry
   le_trans := sorry
-  lt_iff_le_not_le := sorry
+  lt_iff_le_not_ge := sorry
   le_antisymm := sorry
   le_total := sorry
   toDecidableLE := decidableRel
