@@ -8,7 +8,7 @@
    "rev": "05a43fcf9c484d69252bbc3556ca0fdb2417048a",
    "name": "«doc-gen4»",
    "manifestFile": "lake-manifest.json",
-   "inputRev": "main",
+   "inputRev": "v4.21.0",
    "inherited": false,
    "configFile": "lakefile.lean"},
   {"url": "https://github.com/leanprover/subverso",
