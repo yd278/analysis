@@ -279,3 +279,118 @@ theorem Box.partition {d:ℕ} (S: Finset (Box d)) : ∃ T: Finset (Box d), T.toS
     aesop
   rintro ⟨ B', ⟨ h1, h2 ⟩, h3 ⟩ i; use B'.side i
   aesop
+
+-- abbrev IsElementary {d:ℕ} (E: Set (EuclideanSpace' d)) : Prop := ∃ S : Finset (Box d), E = ⋃ B ∈ S, ↑B
+theorem IsElementary.partition {d:ℕ} {E: Set (EuclideanSpace' d)}
+(hE: IsElementary E) : ∃ T: Finset (Box d), T.toSet.PairwiseDisjoint Box.toSet ∧ E = ⋃ J ∈ T, J.toSet := by
+  sorry
+
+
+/-- Helper lemma for Lemma 1.1.2(ii) -/
+theorem BoundedInterval.sample_finite (I : BoundedInterval) {N:ℕ} (hN: N ≠ 0):
+  Finite ↥(I.toSet ∩ (Set.range (fun n:ℤ ↦ (N:ℝ)⁻¹*n))) := by
+  sorry
+
+/-- Exercise for Lemma 1.1.2(ii) -/
+theorem BoundedInterval.length_eq (I : BoundedInterval) :
+  Filter.atTop.Tendsto (fun N:ℕ ↦ (N:ℝ)⁻¹ * Nat.card ↥(I.toSet ∩ (Set.range (fun n:ℤ ↦ (N:ℝ)⁻¹*n))))
+  (nhds |I|ₗ) := by
+  sorry
+
+def Box.sample_congr {d:ℕ} (B:Box d) (N:ℕ) :
+↥(B.toSet ∩ (Set.range (fun (n:Fin d → ℤ) i ↦ (N:ℝ)⁻¹*(n i)))) ≃ ((i : Fin d) → ↑(↑(B.side i) ∩ Set.range fun n:ℤ ↦ (N:ℝ)⁻¹ * ↑n)) := {
+    toFun x i := by
+      obtain ⟨ x, hx ⟩ := x
+      refine ⟨ x i, ?_ ⟩
+      simp [Box.toSet] at hx; rw [Set.mem_pi] at hx
+      obtain ⟨ hx, y, rfl ⟩ := hx
+      simp at hx ⊢; exact hx i
+    invFun x := by
+      refine ⟨ fun i ↦ x i, ?_ ⟩
+      simp [Box.toSet]; rw [Set.mem_pi]; split_ands
+      . intro i _; obtain ⟨ x, hx ⟩ := x i
+        aesop
+      have h (i:Fin d) : ∃ y:ℤ, (N:ℝ)⁻¹ * y = x i := by
+        obtain ⟨ x, hx ⟩ := x i
+        simp at hx
+        convert hx.2
+      choose y hy using h; use y; simp [hy]
+    left_inv x := by obtain ⟨ x, hx ⟩ := x; simp
+    right_inv x := by aesop
+  }
+
+/-- Helper lemma for Lemma 1.1.2(ii) -/
+theorem Box.sample_finite {d:ℕ} (B: Box d) {N:ℕ} (hN: N ≠ 0):
+  Finite ↥(B.toSet ∩ (Set.range (fun (n:Fin d → ℤ) i ↦ (N:ℝ)⁻¹*(n i)))) := by
+    rw [Equiv.finite_iff (B.sample_congr N)]
+    apply @Pi.finite _ _ _ (fun i ↦ (B.side i).sample_finite hN)
+
+/-- Helper lemma for Lemma 1.1.2(ii) -/
+theorem Box.vol_eq {d:ℕ} (B: Box d):
+  Filter.atTop.Tendsto (fun N:ℕ ↦ (N:ℝ)^(-d:ℝ) * Nat.card ↥(B.toSet ∩ (Set.range (fun (n:Fin d → ℤ) i ↦ (N:ℝ)⁻¹*(n i)))))
+  (nhds |B|ᵥ) := by
+  simp [Box.volume]
+  have : ∀ i ∈ Finset.univ, Filter.atTop.Tendsto (fun N:ℕ ↦ (N:ℝ)⁻¹ * Nat.card ↥((B.side i).toSet ∩ Set.range ((fun n:ℤ ↦ (N:ℝ)⁻¹*n)))) (nhds |B.side i|ₗ) := fun i _ ↦ (B.side i).length_eq
+  convert tendsto_finset_prod Finset.univ this with N
+  simp [Finset.prod_mul_distrib]; left
+  norm_cast; rw [←Nat.card_pi]
+  apply Nat.card_congr (B.sample_congr N)
+
+
+/-- Lemma 1.1.2(ii), helper lemma -/
+theorem Box.sum_vol_eq {d:ℕ} {T: Finset (Box d)}
+ (hT: T.toSet.PairwiseDisjoint Box.toSet) :
+  Filter.atTop.Tendsto (fun N:ℕ ↦ (N:ℝ)^(-d:ℝ) * Nat.card ↥((⋃ B ∈ T, B.toSet) ∩ (Set.range (fun (n:Fin d → ℤ) i ↦ (N:ℝ)⁻¹*(n i)))))
+  (nhds (∑ B ∈ T, |B|ᵥ)) := by
+  apply (tendsto_finset_sum T (fun B _ ↦ B.vol_eq)).congr'
+  rw [Filter.EventuallyEq, Filter.eventually_atTop]; use 1; intro N hN
+  symm; convert Finset.mul_sum _ _ _
+  convert Nat.cast_sum _ _
+  rw [←Finset.sum_coe_sort, ←@Nat.card_sigma _ _ _ ?_]
+  . exact Nat.card_congr {
+      toFun x := by
+        obtain ⟨ x, hx ⟩ := x
+        simp at hx
+        have hB := hx.1.choose_spec
+        set B := hx.1.choose
+        refine ⟨ ⟨ B, hB.1 ⟩, ⟨ x, ?_⟩ ⟩
+        simp [hB, hx]
+      invFun x := by
+        obtain ⟨ ⟨ B, hB ⟩, ⟨ x, hx ⟩ ⟩ := x
+        refine ⟨ x, ?_ ⟩
+        simp_all; aesop
+      left_inv x := by
+        obtain ⟨ x, hx ⟩ := x
+        simp at hx ⊢
+      right_inv x := by
+        obtain ⟨ ⟨ B, hB ⟩, ⟨ x, hxB⟩ ⟩ := x
+        simp at hxB
+        have : ∃ B ∈ T, x ∈ B.toSet := by use B; tauto
+        have h : this.choose = B := by
+          have h := this.choose_spec
+          apply hT.elim h.1 hB
+          rw [Set.not_disjoint_iff]; use x; tauto
+        simp [h, ←eq_cast_iff_heq]
+    }
+  intro ⟨ B, _ ⟩; convert B.sample_finite ?_
+  omega
+
+/-- Lemma 1.1.2(ii) -/
+theorem Box.measure_uniq {d:ℕ} {T₁ T₂: Finset (Box d)}
+ (hT₁: T₁.toSet.PairwiseDisjoint Box.toSet)
+ (hT₂: T₂.toSet.PairwiseDisjoint Box.toSet)
+ (heq: ⋃ B ∈ T₁, B.toSet = ⋃ B ∈ T₂, B.toSet) :
+ ∑ B ∈ T₁, |B|ᵥ = ∑ B ∈ T₂, |B|ᵥ := by
+  apply tendsto_nhds_unique _ (Box.sum_vol_eq hT₂)
+  rw [←heq]
+  exact Box.sum_vol_eq hT₁
+
+noncomputable abbrev IsElementary.measure {d:ℕ} {E: Set (EuclideanSpace' d)} (hE: IsElementary E) : ℝ
+  := ∑ B ∈ hE.partition.choose, |B|ᵥ
+
+theorem IsElementary.measure_eq {d:ℕ} {E: Set (EuclideanSpace' d)} (hE: IsElementary E)
+  {T: Finset (Box d)} (hT: T.toSet.PairwiseDisjoint Box.toSet)
+  (heq : E = ⋃ B ∈ T, B.toSet):
+  hE.measure = ∑ B ∈ T, |B|ᵥ := by
+  apply Box.measure_uniq hE.partition.choose_spec.1 hT _
+  rw [←heq, ←hE.partition.choose_spec.2]
