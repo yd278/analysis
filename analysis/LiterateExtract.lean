@@ -6,7 +6,6 @@ Author: David Thrane Christiansen
 import SubVerso.Compat
 import SubVerso.Examples.Env
 import SubVerso.Module
-import Lean.Util.Paths
 import MD4Lean
 
 open Lean Elab Frontend
@@ -129,7 +128,8 @@ unsafe def go (suppressedNamespaces : Array Name) (mod : String) (out : IO.FS.St
     let env ← Compat.importModules imports {}
     let pctx : Context := {inputCtx := ictx}
 
-    let commandState := {env, maxRecDepth := defaultMaxRecDepth, messages := msgs}
+    let scopes := [{header := "", opts := maxHeartbeats.set {} 10000000 }]
+    let commandState := { env, maxRecDepth := defaultMaxRecDepth, messages := msgs, scopes }
     let cmdPos := parserState.pos
     let cmdSt ← IO.mkRef {commandState, parserState, cmdPos}
 
