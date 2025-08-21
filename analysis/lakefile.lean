@@ -14,7 +14,7 @@ package «Analysis» where
 
 -- Require Mathlib (the comprehensive library of mathematics in Lean)
 require mathlib from git
-  "https://github.com/leanprover-community/mathlib4.git" @ "v4.22.0"
+  "https://github.com/leanprover-community/mathlib4.git" @ "v4.23.0-rc2"
 
 -- This library is needed to build the online version.
 -- If ../book/lakefile.lean requires verso @ "v4.X.Y", then this line should require
@@ -22,6 +22,9 @@ require mathlib from git
 -- Right now, it's set to `main` instead to get newer improvements; next time Verso is
 -- updated in `../book/`, this should be set to the corresponding tag again.
 require subverso from git "https://github.com/leanprover/subverso" @ "main"
+
+-- This library is needed to build the online version.
+require MD4Lean from git "https://github.com/acmepjz/md4lean" @ "main"
 
 @[default_target]
 lean_lib «Analysis» where
@@ -33,15 +36,13 @@ lean_exe "literate-extract" where
 
 meta if get_config? env = some "dev" then
 require «doc-gen4» from git
-  "https://github.com/leanprover/doc-gen4" @ "v4.22.0"
+  "https://github.com/leanprover/doc-gen4" @ "v4.23.0-rc2"
 
 
 module_facet literate mod : System.FilePath := do
   let ws ← getWorkspace
-  let some extract ← findLeanExe? `«literate-extract»
-    | error "The `literate-extract` executable was not found"
 
-  let exeJob ← extract.exe.fetch
+  let exeJob ← «literate-extract».fetch
   let modJob ← mod.olean.fetch
 
   let buildDir := ws.root.buildDir
