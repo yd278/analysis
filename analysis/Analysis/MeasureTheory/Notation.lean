@@ -24,6 +24,16 @@ theorem Set.indicator'_of_notMem {X: Type*} {E:Set X} {x:X} (h: x ∉ E) : indic
 /-- A version of `EuclideanSpace` suitable for this text. -/
 noncomputable abbrev EuclideanSpace' (n: ℕ) := EuclideanSpace ℝ (Fin n)
 
+abbrev EuclideanSpace'.equiv_Real : EuclideanSpace' 1 ≃ ℝ where
+  toFun x := x ⟨ 0, by simp ⟩
+  invFun x := (fun _ ↦ x)
+  left_inv x := by
+    ext ⟨ i, hi ⟩; have : i=0 := by omega
+    subst this; simp
+  right_inv x := by aesop
+
+instance EuclideanSpace'.inst_coeReal : Coe ℝ (EuclideanSpace' 1) := ⟨equiv_Real.symm⟩
+
 theorem EuclideanSpace'.norm_eq {n:ℕ} (x: EuclideanSpace' n) : ‖x‖ = √(∑ i, (x i)^2) := by
   convert EuclideanSpace.norm_eq x using 3 with i
   simp
@@ -185,5 +195,3 @@ noncomputable def Set.choose {A: Type*} {E: A → Type*} (hE: ∀ n, Nonempty (E
 /-- Corollary 0.0.5 (Axiom of countable choice) -/
 noncomputable def Countable.choose {E: ℕ → Type*} (hE: ∀ n, Nonempty (E n)) :
 ∀ n, E n := Set.choose hE
-
-

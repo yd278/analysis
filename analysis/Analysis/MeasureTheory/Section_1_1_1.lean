@@ -123,24 +123,59 @@ abbrev Box.toSet {d:ℕ} (B: Box d) : Set (EuclideanSpace' d) :=
 instance Box.inst_coeSet {d:ℕ} : Coe (Box d) (Set (EuclideanSpace' d)) where
   coe := toSet
 
+@[coe]
+abbrev BoundedInterval.toBox (I: BoundedInterval) : Box 1 where
+  side := fun _ ↦ I
+
+instance BoundedInterval.inst_coeBox : Coe (BoundedInterval) (Box 1) where
+  coe := toBox
+
+@[simp]
+theorem BoundedInterval.toBox_inj {I J: BoundedInterval} : (I:Box 1) = (J:Box 1) ↔ I = J := by
+  refine' ⟨fun h => _, fun h => h ▸ rfl⟩
+  have : (I:Box 1).side 0 = (J:Box 1).side 0 := by rw [h]
+  exact this
+
+@[simp]
+theorem BoundedInterval.coe_of_box (I:BoundedInterval) : (I:Box 1).toSet = EuclideanSpace'.equiv_Real.symm '' I.toSet := by
+  ext x
+  simp [Box.toSet]; rw [Set.mem_pi]; constructor
+  . intro h; use x 0; simp [h 0]
+    ext ⟨ i, hi ⟩; have : i=0 := by omega
+    subst this; simp
+  rintro ⟨ y, hy, rfl ⟩ ⟨ i, hi ⟩ _
+  have : i=0 := by omega
+  subst this; simp [hy]
+
 /-- Definition 1.1.1 (boxes)-/
 abbrev Box.volume {d:ℕ} (B: Box d) : ℝ := ∏ i, |B.side i|ₗ
 
 /-- Using ||ᵥ subscript here to not override || -/
 macro:max atomic("|" noWs) a:term noWs "|ᵥ" : term => `(Box.volume $a)
 
+@[simp]
+theorem Box.volume_of_interval (I:BoundedInterval) : |(I:Box 1)|ᵥ = |I|ₗ := by
+  simp [Box.volume]
+
 abbrev IsElementary {d:ℕ} (E: Set (EuclideanSpace' d)) : Prop := ∃ S : Finset (Box d), E = ⋃ B ∈ S, ↑B
+
+theorem IsElementary.box {d:ℕ} (B: Box d) : IsElementary B.toSet := by sorry
 
 /-- Exercise 1.1.1 (Boolean closure) -/
 theorem IsElementary.union {d:ℕ} {E F: Set (EuclideanSpace' d)}
   (hE: IsElementary E) (hF: IsElementary F) : IsElementary (E ∪ F) := by
   sorry
 
+lemma IsElementary.union' {d:ℕ} {S: Finset (Set (EuclideanSpace' d))}
+(hE: ∀ E ∈ S, IsElementary E) : IsElementary (⋃ E ∈ S, E) := by sorry
+
 /-- Exercise 1.1.1 (Boolean closure) -/
 theorem IsElementary.inter {d:ℕ} {E F: Set (EuclideanSpace' d)}
   (hE: IsElementary E) (hF: IsElementary F) : IsElementary (E ∩ F) := by
   sorry
 
+theorem IsElementary.empty (d:ℕ) : IsElementary (∅: Set (EuclideanSpace' d)) := by
+  sorry
 
 /-- Exercise 1.1.1 (Boolean closure) -/
 theorem IsElementary.sdiff {d:ℕ} {E F: Set (EuclideanSpace' d)}
@@ -279,3 +314,257 @@ theorem Box.partition {d:ℕ} (S: Finset (Box d)) : ∃ T: Finset (Box d), T.toS
     aesop
   rintro ⟨ B', ⟨ h1, h2 ⟩, h3 ⟩ i; use B'.side i
   aesop
+
+theorem IsElementary.partition {d:ℕ} {E: Set (EuclideanSpace' d)}
+(hE: IsElementary E) : ∃ T: Finset (Box d), T.toSet.PairwiseDisjoint Box.toSet ∧ E = ⋃ J ∈ T, J.toSet := by
+  obtain ⟨ S, rfl ⟩ := hE
+  obtain ⟨ T', hT', hST' ⟩ := Box.partition S
+  choose U hU using hST'
+  conv =>
+    rhs; ext T; rhs; lhs; rhs; ext B; rhs; ext h; rw [hU B h]
+  classical
+  use T'.filter (fun J ↦ ∃ B, ∃ h:B ∈ S, J ∈ Subtype.val '' (U B h))
+  simp; split_ands
+  . apply hT'.subset
+    intro x; simp; tauto
+  ext x; simp
+  constructor
+  . rintro ⟨ B, h, B', ⟨ ⟨ hB'T', hB'U ⟩ , hxB'⟩ ⟩
+    use B'; simp_all; use B; simp_all
+  rintro ⟨ B, ⟨ hBT', ⟨ B', hB'S, hBT', h1 ⟩ ⟩, hxB ⟩
+  refine ⟨ B', hB'S, B, ⟨ ⟨ hBT', h1 ⟩, hxB ⟩ ⟩
+
+/-- Helper lemma for Lemma 1.1.2(ii) -/
+theorem BoundedInterval.sample_finite (I : BoundedInterval) {N:ℕ} (hN: N ≠ 0):
+  Finite ↥(I.toSet ∩ (Set.range (fun n:ℤ ↦ (N:ℝ)⁻¹*n))) := by
+  sorry
+
+/-- Exercise for Lemma 1.1.2(ii) -/
+theorem BoundedInterval.length_eq (I : BoundedInterval) :
+  Filter.atTop.Tendsto (fun N:ℕ ↦ (N:ℝ)⁻¹ * Nat.card ↥(I.toSet ∩ (Set.range (fun n:ℤ ↦ (N:ℝ)⁻¹*n))))
+  (nhds |I|ₗ) := by
+  sorry
+
+def Box.sample_congr {d:ℕ} (B:Box d) (N:ℕ) :
+↥(B.toSet ∩ (Set.range (fun (n:Fin d → ℤ) i ↦ (N:ℝ)⁻¹*(n i)))) ≃ ((i : Fin d) → ↑(↑(B.side i) ∩ Set.range fun n:ℤ ↦ (N:ℝ)⁻¹ * ↑n)) := {
+    toFun x i := by
+      obtain ⟨ x, hx ⟩ := x
+      refine ⟨ x i, ?_ ⟩
+      simp [Box.toSet] at hx; rw [Set.mem_pi] at hx
+      obtain ⟨ hx, y, rfl ⟩ := hx
+      simp at hx ⊢; exact hx i
+    invFun x := by
+      refine ⟨ fun i ↦ x i, ?_ ⟩
+      simp [Box.toSet]; rw [Set.mem_pi]; split_ands
+      . intro i _; obtain ⟨ x, hx ⟩ := x i
+        aesop
+      have h (i:Fin d) : ∃ y:ℤ, (N:ℝ)⁻¹ * y = x i := by
+        obtain ⟨ x, hx ⟩ := x i
+        simp at hx
+        convert hx.2
+      choose y hy using h; use y; simp [hy]
+    left_inv x := by obtain ⟨ x, hx ⟩ := x; simp
+    right_inv x := by aesop
+  }
+
+/-- Helper lemma for Lemma 1.1.2(ii) -/
+theorem Box.sample_finite {d:ℕ} (B: Box d) {N:ℕ} (hN: N ≠ 0):
+  Finite ↥(B.toSet ∩ (Set.range (fun (n:Fin d → ℤ) i ↦ (N:ℝ)⁻¹*(n i)))) := by
+    rw [Equiv.finite_iff (B.sample_congr N)]
+    apply @Pi.finite _ _ _ (fun i ↦ (B.side i).sample_finite hN)
+
+/-- Helper lemma for Lemma 1.1.2(ii) -/
+theorem Box.vol_eq {d:ℕ} (B: Box d):
+  Filter.atTop.Tendsto (fun N:ℕ ↦ (N:ℝ)^(-d:ℝ) * Nat.card ↥(B.toSet ∩ (Set.range (fun (n:Fin d → ℤ) i ↦ (N:ℝ)⁻¹*(n i)))))
+  (nhds |B|ᵥ) := by
+  simp [Box.volume]
+  have : ∀ i ∈ Finset.univ, Filter.atTop.Tendsto (fun N:ℕ ↦ (N:ℝ)⁻¹ * Nat.card ↥((B.side i).toSet ∩ Set.range ((fun n:ℤ ↦ (N:ℝ)⁻¹*n)))) (nhds |B.side i|ₗ) := fun i _ ↦ (B.side i).length_eq
+  convert tendsto_finset_prod Finset.univ this with N
+  simp [Finset.prod_mul_distrib]; left
+  norm_cast; rw [←Nat.card_pi]
+  apply Nat.card_congr (B.sample_congr N)
+
+
+/-- Lemma 1.1.2(ii), helper lemma -/
+theorem Box.sum_vol_eq {d:ℕ} {T: Finset (Box d)}
+ (hT: T.toSet.PairwiseDisjoint Box.toSet) :
+  Filter.atTop.Tendsto (fun N:ℕ ↦ (N:ℝ)^(-d:ℝ) * Nat.card ↥((⋃ B ∈ T, B.toSet) ∩ (Set.range (fun (n:Fin d → ℤ) i ↦ (N:ℝ)⁻¹*(n i)))))
+  (nhds (∑ B ∈ T, |B|ᵥ)) := by
+  apply (tendsto_finset_sum T (fun B _ ↦ B.vol_eq)).congr'
+  rw [Filter.EventuallyEq, Filter.eventually_atTop]; use 1; intro N hN
+  symm; convert Finset.mul_sum _ _ _
+  convert Nat.cast_sum _ _
+  rw [←Finset.sum_coe_sort, ←@Nat.card_sigma _ _ _ ?_]
+  . exact Nat.card_congr {
+      toFun x := by
+        obtain ⟨ x, hx ⟩ := x
+        simp at hx
+        have hB := hx.1.choose_spec
+        set B := hx.1.choose
+        refine ⟨ ⟨ B, hB.1 ⟩, ⟨ x, ?_⟩ ⟩
+        simp [hB, hx]
+      invFun x := by
+        obtain ⟨ ⟨ B, hB ⟩, ⟨ x, hx ⟩ ⟩ := x
+        refine ⟨ x, ?_ ⟩
+        simp_all; aesop
+      left_inv x := by
+        obtain ⟨ x, hx ⟩ := x
+        simp at hx ⊢
+      right_inv x := by
+        obtain ⟨ ⟨ B, hB ⟩, ⟨ x, hxB⟩ ⟩ := x
+        simp at hxB
+        have : ∃ B ∈ T, x ∈ B.toSet := by use B; tauto
+        have h : this.choose = B := by
+          have h := this.choose_spec
+          apply hT.elim h.1 hB
+          rw [Set.not_disjoint_iff]; use x; tauto
+        simp [h, ←eq_cast_iff_heq]
+    }
+  intro ⟨ B, _ ⟩; convert B.sample_finite ?_
+  omega
+
+/-- Lemma 1.1.2(ii) -/
+theorem Box.measure_uniq {d:ℕ} {T₁ T₂: Finset (Box d)}
+ (hT₁: T₁.toSet.PairwiseDisjoint Box.toSet)
+ (hT₂: T₂.toSet.PairwiseDisjoint Box.toSet)
+ (heq: ⋃ B ∈ T₁, B.toSet = ⋃ B ∈ T₂, B.toSet) :
+ ∑ B ∈ T₁, |B|ᵥ = ∑ B ∈ T₂, |B|ᵥ := by
+  apply tendsto_nhds_unique _ (Box.sum_vol_eq hT₂)
+  rw [←heq]
+  exact Box.sum_vol_eq hT₁
+
+noncomputable abbrev IsElementary.measure {d:ℕ} {E: Set (EuclideanSpace' d)} (hE: IsElementary E) : ℝ
+  := ∑ B ∈ hE.partition.choose, |B|ᵥ
+
+theorem IsElementary.measure_eq {d:ℕ} {E: Set (EuclideanSpace' d)} (hE: IsElementary E)
+  {T: Finset (Box d)} (hT: T.toSet.PairwiseDisjoint Box.toSet)
+  (heq : E = ⋃ B ∈ T, B.toSet):
+  hE.measure = ∑ B ∈ T, |B|ᵥ := by
+  apply Box.measure_uniq hE.partition.choose_spec.1 hT _
+  rw [←heq, ←hE.partition.choose_spec.2]
+
+/-- Exercise 1.1.2: give an alternate proof of this proposition by showing that
+the two partitions `T₁`, `T₂` admit a mutual refinement into boxes arising from
+taking Cartesian products of elements from finite collections of disjoint intervals. -/
+theorem Box.measure_uniq' {d:ℕ} {T₁ T₂: Finset (Box d)}
+ (hT₁: T₁.toSet.PairwiseDisjoint Box.toSet)
+ (hT₂: T₂.toSet.PairwiseDisjoint Box.toSet)
+ (heq: ⋃ B ∈ T₁, B.toSet = ⋃ B ∈ T₂, B.toSet) :
+ ∑ B ∈ T₁, |B|ᵥ = ∑ B ∈ T₂, |B|ᵥ := by
+ sorry
+
+example :
+  let E : Set (EuclideanSpace' 1) := EuclideanSpace'.equiv_Real.symm '' ((Set.Ioo 1 2) ∪ (Set.Icc 3 6))
+  ∃ hE : IsElementary E, hE.measure = 4 := by
+  extract_lets E
+  classical
+  let T : Finset (Box 1) := {(BoundedInterval.Ioo 1 2:Box 1), (BoundedInterval.Icc 3 6:Box 1)}
+  have hET : E = ⋃ B ∈ T, B.toSet := by
+    simp [E, T, Set.image_union]
+  let hE : IsElementary E := ⟨ T, hET⟩
+  use hE
+  rw [hE.measure_eq _ hET]
+  . rw [Finset.sum_pair]
+    . simp [BoundedInterval.length, BoundedInterval.a, BoundedInterval.b]
+      norm_num
+    by_contra!; simp [-Box.mk.injEq] at this
+  rw [Set.pairwiseDisjoint_iff]
+  simp [T]; split_ands
+  all_goals {
+    rintro ⟨ x, hx ⟩
+    simp at hx
+    obtain ⟨ hx, y, hy, hxy ⟩ := hx
+    replace hxy := congr($hxy ⟨ 0, by simp ⟩)
+    simp at hxy; linarith
+  }
+
+lemma IsElementary.measure_nonneg {d:ℕ} {E: Set (EuclideanSpace' d)} (hE: IsElementary E) :
+  0 ≤ hE.measure := by
+  sorry
+
+lemma IsElementary.measure_of_disjUnion {d:ℕ} {E F: Set (EuclideanSpace' d)}
+(hE: IsElementary E) (hF: IsElementary F) (hdisj: Disjoint E F):
+  (hE.union hF).measure = hE.measure + hF.measure := by
+  sorry
+
+lemma IsElementary.measure_of_disjUnion' {d:ℕ} {S: Finset (Set (EuclideanSpace' d))}
+(hE: ∀ E ∈ S, IsElementary E) (hdisj: S.toSet.PairwiseDisjoint id):
+  (IsElementary.union' hE).measure = ∑ E:S, (hE E.val E.property).measure := by
+  sorry
+
+@[simp]
+lemma IsElementary.measure_of_empty (d:ℕ) : (IsElementary.empty d).measure = 0 := by
+  sorry
+
+@[simp]
+lemma IsElementary.measure_of_box {d:ℕ} (B: Box d) : (IsElementary.box B).measure = |B|ᵥ := by
+  sorry
+
+lemma IsElementary.measure_mono  {d:ℕ} {E F: Set (EuclideanSpace' d)}
+(hE: IsElementary E) (hF: IsElementary F) (hcont: E ⊆ F):
+  hE.measure ≤ hF.measure := by
+  sorry
+
+lemma IsElementary.measure_of_union {d:ℕ} {E F: Set (EuclideanSpace' d)}
+(hE: IsElementary E) (hF: IsElementary F):
+  (hE.union hF).measure ≤ hE.measure + hF.measure := by
+  sorry
+
+lemma IsElementary.measure_of_union' {d:ℕ} {S: Finset (Set (EuclideanSpace' d))}
+(hE: ∀ E ∈ S, IsElementary E) :
+  (IsElementary.union' hE).measure ≤ ∑ E:S, (hE E.val E.property).measure := by
+  sorry
+
+lemma IsElementary.measure_of_translate {d:ℕ} {E: Set (EuclideanSpace' d)}
+(hE: IsElementary E) (x: EuclideanSpace' d):
+  (hE.translate x).measure ≤ hE.measure := by
+  sorry
+
+/-- Exercise 1.1.3 (uniqueness of elementary measure) -/
+theorem IsElementary.measure_uniq {d:ℕ} {m': (E: Set (EuclideanSpace' d)) → (IsElementary E) → ℝ}
+  (hnonneg: ∀ E: Set (EuclideanSpace' d), ∀ hE: IsElementary E, m' E hE ≥ 0)
+  (hadd: ∀ E F: Set (EuclideanSpace' d), ∀ (hE: IsElementary E) (hF: IsElementary F),
+   Disjoint E F → m' (E ∪ F) (hE.union hF) = m' E hE + m' F hF)
+  (htrans: ∀ E: Set (EuclideanSpace' d), ∀ (hE: IsElementary E) (x: EuclideanSpace' d), m' (E + {x}) (hE.translate x) = m' E hE) : ∃ c, c ≥ 0 ∧ ∀ E: Set (EuclideanSpace' d), ∀ hE: IsElementary E, m' E hE = c * hE.measure := by
+    sorry
+
+abbrev Box.unit_cube (d:ℕ) : Box d := { side := fun _ ↦ BoundedInterval.Ioc 0 1}
+
+theorem IsElementary.measure_uniq' {d:ℕ} {m': (E: Set (EuclideanSpace' d)) → (IsElementary E) → ℝ}
+  (hnonneg: ∀ E: Set (EuclideanSpace' d), ∀ hE: IsElementary E, m' E hE ≥ 0)
+  (hadd: ∀ E F: Set (EuclideanSpace' d), ∀ (hE: IsElementary E) (hF: IsElementary F),
+   Disjoint E F → m' (E ∪ F) (hE.union hF) = m' E hE + m' F hF)
+  (htrans: ∀ E: Set (EuclideanSpace' d), ∀ (hE: IsElementary E) (x: EuclideanSpace' d), m' (E + {x}) (hE.translate x) = m' E hE)
+  (hcube : m' (Box.unit_cube d) (IsElementary.box _) = 1) :
+  ∀ E: Set (EuclideanSpace' d), ∀ hE: IsElementary E, m' E hE = hE.measure := by
+    sorry
+
+abbrev Box.prod {d₁ d₂:ℕ} (B₁: Box d₁) (B₂: Box d₂) : Box (d₁ + d₂) where
+  side i := by
+    obtain ⟨ i, hi ⟩ := i
+    exact if h : i < d₁ then B₁.side ⟨i, h⟩ else (B₂.side ⟨i - d₁, by omega⟩)
+
+def EuclideanSpace'.prod_equiv (d₁ d₂:ℕ) : EuclideanSpace' (d₁ + d₂) ≃ EuclideanSpace' d₁ × EuclideanSpace' d₂ where
+  toFun x := by
+    constructor
+    . intro ⟨ i, hi ⟩; exact x ⟨ i, by omega ⟩
+    intro ⟨ i, hi⟩; exact x ⟨ i+d₁, by omega ⟩
+  invFun x i := by
+    obtain ⟨ i, hi ⟩ := i
+    exact if h:i < d₁ then x.1 ⟨ i, h ⟩ else x.2 ⟨ i-d₁, by omega ⟩
+  left_inv x := by
+    ext ⟨ i, hi ⟩; by_cases h : i < d₁ <;> simp [h]
+    congr; omega
+  right_inv x := by
+    ext ⟨ i, hi ⟩ <;> simp [hi]
+    congr!; omega
+
+def EuclideanSpace'.prod {d₁ d₂:ℕ} (E₁: Set (EuclideanSpace' d₁)) (E₂: Set (EuclideanSpace' d₂)) : Set (EuclideanSpace' (d₁+d₂)) := (EuclideanSpace'.prod_equiv d₁ d₂).symm '' (E₁ ×ˢ E₂)
+
+/-- Exercise 1.1.4 -/
+theorem IsElementary.prod {d₁ d₂:ℕ} {E₁: Set (EuclideanSpace' d₁)} {E₂: Set (EuclideanSpace' d₂)}
+  (hE₁: IsElementary E₁) (hE₂: IsElementary E₂) : IsElementary (EuclideanSpace'.prod E₁ E₂) := by sorry
+
+theorem IsElementary.measure_of_prod {d₁ d₂:ℕ} {E₁: Set (EuclideanSpace' d₁)} {E₂: Set (EuclideanSpace' d₂)}
+  (hE₁: IsElementary E₁) (hE₂: IsElementary E₂)
+  : (hE₁.prod hE₂).measure = hE₁.measure * hE₂.measure := by sorry
