@@ -60,8 +60,7 @@ theorem NNRealDecimal.surj (x:NNReal) : ∃ d:NNRealDecimal, x = d := by
       _ = s n * (10:NNReal)^(-n:ℝ) + a n * 10^(-n-1:ℝ) := by
         simp [add_mul]; congr 1 <;> ring_nf
         rw [mul_assoc, ←NNReal.rpow_add_one (by norm_num)]; congr; ring
-      _ = s 0 + (∑ i ∈ .range n, a i * (10:NNReal)^(-i-1:ℝ) + a n * 10^(-n-1:ℝ)) := by
-        rw [hn]; abel
+      _ = s 0 + (∑ i ∈ .range n, a i * (10:NNReal)^(-i-1:ℝ) + a n * 10^(-n-1:ℝ)) := by grind
       _ = _ := by congr; symm; apply Finset.sum_range_succ
   have := (d.toNNReal_conv.tendsto_sum_tsum_nat).const_add (s 0:NNReal)
   convert_to Filter.atTop.Tendsto (fun n ↦ s n * (10:NNReal)^(-n:ℝ)) (nhds (d:NNReal)) at this
@@ -81,7 +80,7 @@ theorem NNRealDecimal.surj (x:NNReal) : ∃ d:NNRealDecimal, x = d := by
     _ = _ := by ring
   intro n; simp; calc
     _ ≤ (x * 10^n) * (10:NNReal)^(-n:ℝ) := by gcongr; exact hs n
-    _ = x := by rw [mul_assoc, ←NNReal.rpow_natCast, ←NNReal.rpow_add (by norm_num)]; simp
+    _ = x := by rw [mul_assoc, ←NNReal.rpow_natCast, ←NNReal.rpow_add]; simp; norm_num
 
 /-- Proposition B.2.2 -/
 theorem NNRealDecimal.not_inj : (1:NNReal) = (mk 1 fun _ ↦ 0) ∧ (1:NNReal) = (mk 0 fun _ ↦ 9) := by
@@ -97,7 +96,7 @@ theorem NNRealDecimal.not_inj : (1:NNReal) = (mk 1 fun _ ↦ 0) ∧ (1:NNReal) =
     have : (10:NNReal)^(-n:ℝ) = 10^(-n-1:ℝ) * 10 := by
       rw [←NNReal.rpow_add_one (by norm_num)]; simp
     have hnine : ((9:Digit):ℕ) = 9 := rfl
-    simp [this, hnine, ←NNReal.coe_inj]
+    simp [this, ←NNReal.coe_inj]
     rw [NNReal.coe_sub, NNReal.coe_sub]
     . simp; linarith
     . apply NNReal.rpow_le_one_of_one_le_of_nonpos (by norm_num) (by linarith)
