@@ -67,7 +67,7 @@ theorem right_lim_of_continuous {X:Set ℝ} {f: ℝ → ℝ} {x₀:ℝ}
   convert hf using 1
   have h1 : .Ioo x₀ (x₀ + ε) ∈ nhdsWithin x₀ (.Ioi x₀) := by
     convert inter_mem_nhdsWithin (t := .Ioo (x₀-ε) (x₀+ε)) _ _
-    . ext; simp; intros; linarith
+    . grind
     apply Ioo_mem_nhds <;> linarith
   rw [←nhdsWithin_inter_of_mem h1]; congr 1; simp [Set.Ioo_subset_Ioi_self]
 
@@ -84,7 +84,7 @@ theorem left_lim_of_continuous {X:Set ℝ} {f: ℝ → ℝ} {x₀:ℝ}
   convert hf using 1
   have h1 : .Ioo (x₀-ε) x₀ ∈ nhdsWithin x₀ (.Iio x₀) := by
     convert inter_mem_nhdsWithin (t := .Ioo (x₀-ε) (x₀+ε)) _ _
-    . ext; simp; exact ⟨ by intro ⟨ h1, h2 ⟩; simp [h1, h2]; linarith, by aesop ⟩
+    . grind
     apply Ioo_mem_nhds <;> linarith
   rw [←nhdsWithin_inter_of_mem h1]
   congr 1; simp [Set.Ioo_subset_Iio_self]
@@ -96,9 +96,9 @@ theorem jump_of_continuous {X:Set ℝ} {f: ℝ → ℝ} {x₀:ℝ}
   rw [mem_nhds_iff_exists_Ioo_subset] at h
   choose l u hx₀ hX using h; simp at hx₀
   have hl : ∃ ε>0, .Ioc (x₀-ε) x₀ ⊆ X :=
-    ⟨ x₀-l, by linarith, Set.Subset.trans (by intro _ _; simp_all; linarith) hX ⟩
+    ⟨ x₀-l, by grind, Set.Subset.trans (by grind) hX ⟩
   have hu : ∃ ε>0, .Ico x₀ (x₀+ε) ⊆ X :=
-    ⟨ u-x₀, by linarith, Set.Subset.trans (by intro _ _; simp_all; linarith) hX ⟩
+    ⟨ u-x₀, by grind, Set.Subset.trans (by grind) hX ⟩
   simp [jump, left_lim_of_continuous hl hf, right_lim_of_continuous hu hf]
 
 /-- Right limits exist for monotone functions -/
@@ -106,7 +106,7 @@ theorem right_lim_of_monotone {f: ℝ → ℝ} (x₀:ℝ) (hf: Monotone f) :
   Convergesto (.Ioi x₀) f (sInf (f '' .Ioi x₀)) x₀ := by
   rw [Convergesto.iff, ←nhdsWithin.eq_1]
   apply (hf.monotoneOn _).tendsto_nhdsGT
-  rw [bddBelow_def]; use f x₀; intro y hy; simp at hy; obtain ⟨ x, hx, rfl ⟩ := hy; apply hf; linarith
+  rw [bddBelow_def]; use f x₀; intro y hy; simp at hy; obtain ⟨ x, hx, rfl ⟩ := hy; apply hf; grind
 
 theorem right_lim_of_monotone' {f: ℝ → ℝ} (x₀:ℝ) (hf: Monotone f) :
   right_lim f x₀ = sInf (f '' .Ioi x₀) := right_lim_def (right_lim_of_monotone x₀ hf)
@@ -116,7 +116,7 @@ theorem left_lim_of_monotone {f: ℝ → ℝ} (x₀:ℝ) (hf: Monotone f) :
   Convergesto (.Iio x₀) f (sSup (f '' .Iio x₀)) x₀ := by
   rw [Convergesto.iff, ←nhdsWithin.eq_1]
   apply (hf.monotoneOn _).tendsto_nhdsLT
-  rw [bddAbove_def]; use f x₀; intro y hy; simp at hy; obtain ⟨ x, hx, rfl ⟩ := hy; apply hf; linarith
+  rw [bddAbove_def]; use f x₀; intro y hy; simp at hy; obtain ⟨ x, hx, rfl ⟩ := hy; apply hf; grind
 
 theorem left_lim_of_monotone' {f: ℝ → ℝ} (x₀:ℝ) (hf: Monotone f) :
   left_lim f x₀ = sSup (f '' .Iio x₀) := left_lim_def (left_lim_of_monotone x₀ hf)
@@ -127,7 +127,7 @@ theorem jump_of_monotone {f: ℝ → ℝ} (x₀:ℝ) (hf: Monotone f) :
   apply csSup_le (by simp); intro a ha
   apply le_csInf (by simp); intro b hb; simp at ha hb
   obtain ⟨ x, hx, rfl ⟩ := ha; obtain ⟨ y, hy, rfl ⟩ := hb
-  apply hf; linarith
+  apply hf; grind
 
 theorem right_lim_le_left_lim_of_monotone {f:ℝ → ℝ} {a b:ℝ} (hab: a < b)
   (hf: Monotone f) :
@@ -136,11 +136,11 @@ theorem right_lim_le_left_lim_of_monotone {f:ℝ → ℝ} {a b:ℝ} (hab: a < b)
   calc
     _ ≤ f ((a+b)/2) := by
       apply ConditionallyCompleteLattice.csInf_le
-      . rw [bddBelow_def]; use f a; intro y hy; simp at hy; obtain ⟨ x, hx, rfl ⟩ := hy; apply hf; linarith
+      . rw [bddBelow_def]; use f a; intro y hy; simp at hy; obtain ⟨ x, hx, rfl ⟩ := hy; apply hf; grind
       simp; use (a+b)/2; simp; linarith
     _ ≤ _ := by
       apply ConditionallyCompleteLattice.le_csSup
-      . rw [bddAbove_def]; use f b; intro y hy; simp at hy; obtain ⟨ x, hx, rfl ⟩ := hy; apply hf; linarith
+      . rw [bddAbove_def]; use f b; intro y hy; simp at hy; obtain ⟨ x, hx, rfl ⟩ := hy; apply hf; grind
       simp; use (a+b)/2; simp; linarith
 
 /-- Definition 11.8.1 -/
@@ -154,10 +154,10 @@ notation3:max α"["I"]ₗ" => α_length α I
 
 theorem α_length_of_empty (α: ℝ → ℝ) {I: BoundedInterval} (hI: (I:Set ℝ) = ∅) : α[I]ₗ = 0 :=
   match I with
-  | Icc _ _ => by simp [Set.Icc_eq_empty_iff] at *; intros; linarith
-  | Ico a b => by simp [Set.Ico_eq_empty_iff] at *; intros; simp [show a=b by linarith]
-  | Ioc a b => by simp [Set.Ioc_eq_empty_iff] at *; intros; simp [show a=b by linarith]
-  | Ioo _ _ => by simp [Set.Ioo_eq_empty_iff] at *; intros; linarith
+  | Icc _ _ => by simp [Set.Icc_eq_empty_iff] at *; grind
+  | Ico a b => by simp [Set.Ico_eq_empty_iff] at *; grind
+  | Ioc a b => by simp [Set.Ioc_eq_empty_iff] at *; grind
+  | Ioo _ _ => by simp [Set.Ioo_eq_empty_iff] at *; grind
 
 @[simp]
 theorem α_length_of_pt {α: ℝ → ℝ} (a:ℝ) : α[Icc a a]ₗ = jump α a := by simp [α_length, jump]
@@ -167,22 +167,22 @@ theorem α_length_of_cts {α:ℝ → ℝ} {I: BoundedInterval} {a b: ℝ}
   (hI : I ⊆ Ioo a b) (hα: ContinuousOn α (Ioo a b)) :
   α[I]ₗ = α I.b - α I.a := by
   have ha_left : left_lim α I.a = α I.a := by
-    apply left_lim_of_continuous _ (hα.continuousWithinAt (by simp [haa]; linarith))
-    exact ⟨ I.a - a, by linarith, by intro _; simp; intro _ _; split_ands <;> linarith ⟩
+    apply left_lim_of_continuous _ (hα.continuousWithinAt (by simp; grind))
+    exact ⟨ I.a - a, by grind, by intro _; simp; grind ⟩
   have ha_right : right_lim α I.a = α I.a := by
-    apply right_lim_of_continuous _ (hα.continuousWithinAt (by simp [haa]; linarith))
-    exact ⟨ b - I.a, by linarith, by intro _; simp; intro _ _; split_ands <;> linarith ⟩
+    apply right_lim_of_continuous _ (hα.continuousWithinAt (by simp; grind))
+    exact ⟨ b - I.a, by grind, by intro _; simp; grind ⟩
   have hb_left : left_lim α I.b = α I.b := by
-    apply left_lim_of_continuous _ (hα.continuousWithinAt (by simp [hbb]; linarith))
-    exact ⟨ I.b - a, by linarith, by intro _; simp; intro _ _; split_ands <;> linarith ⟩
+    apply left_lim_of_continuous _ (hα.continuousWithinAt (by simp; grind))
+    exact ⟨ I.b - a, by grind, by intro _; simp; grind ⟩
   have hb_right : right_lim α I.b = α I.b := by
-    apply right_lim_of_continuous _ (hα.continuousWithinAt (by simp [hbb]; linarith))
-    exact ⟨ b - I.b, by linarith, by intro _; simp; intro _ _; split_ands <;> linarith ⟩
+    apply right_lim_of_continuous _ (hα.continuousWithinAt (by simp; grind))
+    exact ⟨ b - I.b, by grind, by intro _; simp; grind ⟩
   cases I with
-  | Icc _ _ => simp [α_length, hb_right, ha_left, hab]
-  | Ico _ _ => simp [α_length, hb_left, ha_left, hab]
-  | Ioc _ _ => simp [α_length, hb_right, ha_right, hab]
-  | Ioo a' b' => simp [α_length, hb_left, ha_right]; intros; simp [show a' = b' by linarith]
+  | Icc _ _ => grind
+  | Ico _ _ => grind
+  | Ioc _ _ => grind
+  | Ioo _ _ => grind
 
 /-- Example 11.8.2-/
 example : (fun x ↦ x^2)[Icc 2 3]ₗ = 5 := by
@@ -204,35 +204,35 @@ abbrev BoundedInterval.joins' (K I J: BoundedInterval) : Prop :=  K.joins I J �
 
 theorem BoundedInterval.join_Icc_Ioc' {a b c:ℝ} (hab: a ≤ b) (hbc: b ≤ c) : (Icc a c).joins' (Icc a b) (Ioc b c) := by
   refine ⟨ join_Icc_Ioc hab hbc, ?_ ⟩
-  simp [α_length, show a ≤ b by linarith, show b ≤ c by linarith, show a ≤ c by linarith]
+  simp [α_length, show a ≤ b by grind, show b ≤ c by grind, show a ≤ c by grind]
 
 theorem BoundedInterval.join_Icc_Ioo' {a b c:ℝ} (hab: a ≤ b) (hbc: b < c) : (Ico a c).joins' (Icc a b) (Ioo b c) := by
   refine ⟨ join_Icc_Ioo hab hbc, ?_ ⟩
-  simp [α_length, show a ≤ b by linarith, show b < c by linarith, show a ≤ c by linarith]
+  simp [α_length, show a ≤ b by grind, show b < c by grind, show a ≤ c by grind]
 
 theorem BoundedInterval.join_Ioc_Ioc' {a b c:ℝ} (hab: a ≤ b) (hbc: b ≤ c) : (Ioc a c).joins' (Ioc a b) (Ioc b c) := by
   refine ⟨ join_Ioc_Ioc hab hbc, ?_ ⟩
-  simp [α_length, show a ≤ b by linarith, show b ≤ c by linarith, show a ≤ c by linarith]
+  simp [α_length, show a ≤ b by grind, show b ≤ c by grind, show a ≤ c by grind]
 
 theorem BoundedInterval.join_Ioc_Ioo' {a b c:ℝ} (hab: a ≤ b) (hbc: b < c) : (Ioo a c).joins' (Ioc a b) (Ioo b c) := by
   refine ⟨ join_Ioc_Ioo hab hbc, ?_ ⟩
-  simp [α_length, show a ≤ b by linarith, show b < c by linarith, show a < c by linarith]
+  simp [α_length, show a ≤ b by grind, show b < c by grind, show a < c by grind]
 
 theorem BoundedInterval.join_Ico_Icc' {a b c:ℝ} (hab: a ≤ b) (hbc: b ≤ c) : (Icc a c).joins' (Ico a b) (Icc b c) := by
   refine ⟨ join_Ico_Icc hab hbc, ?_ ⟩
-  simp [α_length, show a ≤ b by linarith, show b ≤ c by linarith, show a ≤ c by linarith]
+  simp [α_length, show a ≤ b by grind, show b ≤ c by grind, show a ≤ c by grind]
 
 theorem BoundedInterval.join_Ico_Ico' {a b c:ℝ} (hab: a ≤ b) (hbc: b ≤ c) : (Ico a c).joins' (Ico a b) (Ico b c) := by
   refine ⟨ join_Ico_Ico hab hbc, ?_ ⟩
-  simp [α_length, show a ≤ b by linarith, show b ≤ c by linarith, show a ≤ c by linarith]
+  simp [α_length, show a ≤ b by grind, show b ≤ c by grind, show a ≤ c by grind]
 
 theorem BoundedInterval.join_Ioo_Icc' {a b c:ℝ} (hab: a < b) (hbc: b ≤ c) : (Ioc a c).joins' (Ioo a b) (Icc b c) := by
   refine ⟨ join_Ioo_Icc hab hbc, ?_ ⟩
-  simp [α_length, show a < b by linarith, show b ≤ c by linarith, show a ≤ c by linarith]
+  simp [α_length, show a < b by grind, show b ≤ c by grind, show a ≤ c by grind]
 
 theorem BoundedInterval.join_Ioo_Ico' {a b c:ℝ} (hab: a < b) (hbc: b ≤ c) : (Ioo a c).joins' (Ioo a b) (Ico b c) := by
   refine ⟨ join_Ioo_Ico hab hbc, ?_ ⟩
-  simp [α_length, show a < b by linarith, show b ≤ c by linarith, show a < c by linarith]
+  simp [α_length, show a < b by grind, show b ≤ c by grind, show a < c by grind]
 
 /-- Theorem 11.8.4 / Exercise 11.8.1 -/
 theorem Partition.sum_of_α_length  {I: BoundedInterval} (P: Partition I) (α: ℝ → ℝ) :
@@ -359,7 +359,7 @@ lemma RS_integral_bound_upper_of_bounded {f:ℝ → ℝ} {M:ℝ} {I: BoundedInte
 lemma RS_integral_bound_lower_of_bounded {f:ℝ → ℝ} {M:ℝ} {I: BoundedInterval} (h: ∀ x ∈ (I:Set ℝ), |f x| ≤ M) {α:ℝ → ℝ} (hα:Monotone α)
   : -M * α[I]ₗ ∈ (PiecewiseConstantOn.RS_integ · I α) '' {g | MinorizesOn g f I ∧ PiecewiseConstantOn g I} := by
   simp; refine ⟨ fun _ ↦ -M, ⟨ ⟨ ?_, ?_ ⟩, by convert PiecewiseConstantOn.RS_integ_const _ _ hα using 1; simp ⟩ ⟩
-  . peel h with _ _ _; simp [abs_le'] at *; linarith
+  . grind [abs_le']
   exact (ConstantOn.of_const (c := -M) (by simp)).piecewiseConstantOn
 
 

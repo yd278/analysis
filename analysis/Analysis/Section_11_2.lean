@@ -50,7 +50,7 @@ theorem ConstantOn.eq {f: ℝ → ℝ} {X: Set ℝ} (h: ConstantOn f X) {x:ℝ} 
   convert Constant.eq h ⟨ _, hx ⟩
 
 theorem ConstantOn.of_const {f:ℝ → ℝ} {X: Set ℝ} {c:ℝ} (h: ∀ x ∈ X, f x = c) :
-  ConstantOn f X := by use c; rintro ⟨ x, hx ⟩; simp [h x hx]
+  ConstantOn f X := by use c; grind
 
 theorem ConstantOn.of_const' (c:ℝ) (X:Set ℝ): ConstantOn (fun _ ↦ c) X := by
   apply of_const (c := c); simp
@@ -60,7 +60,7 @@ theorem ConstantOn.const_eq {f:ℝ → ℝ} {X: Set ℝ} (hX: X.Nonempty) {c:ℝ
     rw [←eq (of_const h) hX.some_mem, h _ hX.some_mem]
 
 theorem ConstantOn.congr {f g: ℝ → ℝ} {X: Set ℝ} (h: ∀ x ∈ X, f x = g x) : ConstantOn f X ↔ ConstantOn g X := by
-  simp [ConstantOn]; rw [iff_iff_eq]; congr; ext ⟨ _, hx ⟩; simp [h _ hx]
+  simp_rw [ConstantOn, iff_iff_eq]; congr; grind
 
 theorem ConstantOn.congr' {f g: ℝ → ℝ} {X: Set ℝ} (hf: ConstantOn f X) (h: ∀ x ∈ X, f x = g x) : ConstantOn g X := (congr h).mp hf
 
@@ -69,7 +69,7 @@ theorem ConstantOn.of_subsingleton {f: ℝ → ℝ} {X: Set ℝ} [Subsingleton X
 
 theorem constant_value_on_congr {f g: ℝ → ℝ} {X: Set ℝ} (h: ∀ x ∈ X, f x = g x) :
   constant_value_on f X = constant_value_on g X := by
-  simp [constant_value_on]; congr; ext ⟨ _, hx ⟩; simp [h _ hx]
+  simp [constant_value_on]; congr; grind
 
 /-- Definition 11.2.3 (Piecewise constant functions I) -/
 abbrev PiecewiseConstantWith (f:ℝ → ℝ) {I: BoundedInterval} (P: Partition I) : Prop := ∀ J ∈ P, ConstantOn f (J:Set ℝ)
@@ -82,7 +82,7 @@ theorem PiecewiseConstantWith.congr {f g:ℝ → ℝ} {I: BoundedInterval} {P: P
   (h: ∀ x ∈ (I:Set ℝ), f x = g x) :
   PiecewiseConstantWith f P ↔ PiecewiseConstantWith g P := by
   simp [PiecewiseConstantWith]; peel with J hJ
-  apply ConstantOn.congr; intros; have := P.contains _ hJ; rw [subset_iff] at this; solve_by_elim
+  apply ConstantOn.congr; have := P.contains _ hJ; grind [subset_iff]
 
 /-- Definition 11.2.5 (Piecewise constant functions I) -/
 abbrev PiecewiseConstantOn (f:ℝ → ℝ) (I: BoundedInterval) : Prop := ∃ P : Partition I, PiecewiseConstantWith f P
@@ -168,9 +168,8 @@ noncomputable abbrev PiecewiseConstantWith.integ (f:ℝ → ℝ) {I: BoundedInte
 theorem PiecewiseConstantWith.integ_congr {f g:ℝ → ℝ} {I: BoundedInterval} {P: Partition I}
   (h: ∀ x ∈ (I:Set ℝ), f x = g x) : integ f P = integ g P := by
   simp only [integ]
-  apply Finset.sum_congr rfl; intro J hJ; congr 1; apply constant_value_on_congr; intros
-  have := P.contains _ hJ; rw [subset_iff] at this
-  aesop
+  apply Finset.sum_congr rfl; intro J hJ; congr 1; apply constant_value_on_congr
+  have := P.contains _ hJ; grind [subset_iff]
 
 /-- Example 11.2.12 -/
 noncomputable abbrev f_11_2_12 : ℝ → ℝ := fun x ↦

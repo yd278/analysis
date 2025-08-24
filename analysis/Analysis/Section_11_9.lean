@@ -33,23 +33,22 @@ theorem cts_of_integ {a b:ℝ} {f:ℝ → ℝ} (hf: IntegrableOn f (Icc a b)) :
   choose M hM using hf.1
   have {x y:ℝ} (hxy: x < y) (hx: x ∈ Set.Icc a b) (hy: y ∈ Set.Icc a b) : |F y - F x| ≤ M * (y - x) := by
     simp at hx hy
-    have := (hf.join (join_Icc_Ioc hy.1 hy.2)).1
-    replace := (this.join (join_Icc_Ioc hx.1 (le_of_lt hxy))).2
+    have := ((hf.join (join_Icc_Ioc hy.1 hy.2)).1.join (join_Icc_Ioc hx.1 (le_of_lt hxy))).2
     simp [F, this.2, abs_le']
     constructor
     . convert this.1.mono (g := fun _ ↦ M) (IntegrableOn.const _ _).1 _
       . simp [IntegrableOn.const, le_of_lt hxy]
       intro z hz
       specialize hM z ?_
-      . simp at hz ⊢; constructor <;> linarith
-      rw [abs_le'] at hM; simp [hM]
+      . simp at *; grind
+      grind [abs_le']
     rw [neg_le]
     convert (IntegrableOn.const _ _).1.mono (f := fun _ ↦ -M) this.1 _
     . simp [IntegrableOn.const, le_of_lt hxy]
     intro z hz
     specialize hM z ?_
-    . simp at hz ⊢; constructor <;> linarith
-    rw [abs_le'] at hM; simp; linarith
+    . simp at *; grind
+    grind [abs_le']
   replace {x y:ℝ} (hx: x ∈ Set.Icc a b) (hy: y ∈ Set.Icc a b) :
     |F y - F x| ≤ M * |x-y| := by
     obtain h | rfl | h := lt_trichotomy x y
@@ -163,14 +162,14 @@ theorem integ_eq_antideriv_sub {a b:ℝ} (h:a ≤ b) {f F: ℝ → ℝ}
           rw [Set.Ioo_subset_Ioo_iff hJab] at hJ'
           have hJ'' : Icc a b ⊆ Ioo (a-1) (b+1) := by apply Set.Icc_subset_Ioo <;> linarith
           apply hJ.trans at hJ''
-          rw [α_length_of_cts (by linarith) (le_of_lt hJab) (by linarith) hJ'' hF'_cts]
+          rw [α_length_of_cts _ (le_of_lt hJab) _ hJ'' hF'_cts] <;> try linarith
           have := HasDerivWithinAt.mean_value hJab (hF'_cts.mono ?_) ?_
           . choose e he hmean using this
             have : HasDerivWithinAt F' (f e) (.Ioo c d) e := by
               apply (Ioo_subset J).trans at hJ
               simp [subset_iff] at hJ
               apply ((hF.2 e (hJ he)).mono hJ).congr (f := F)
-              all_goals intros; solve_by_elim
+              all_goals grind
             replace := derivative_unique ?_ this hmean
             . calc
                 _ = F' d - F' c := rfl
@@ -189,27 +188,26 @@ theorem integ_eq_antideriv_sub {a b:ℝ} (h:a ≤ b) {f F: ℝ → ℝ}
             apply closure_mono (s := .Ioo e d)
             . intro _ _; simp at *; refine ⟨ ⟨ ?_, ?_ ⟩, ?_ ⟩ <;> linarith
             simp at he; rw [closure_Ioo (by linarith)]; simp; linarith
-          . simp; rw [Set.Icc_subset_Ioo_iff (le_of_lt hJab)]; constructor <;> linarith
+          . simp; rw [Set.Icc_subset_Ioo_iff (le_of_lt hJab)]; grind
           apply (Ioo_subset J).trans at hJ
           apply (hF.1.mono _).congr
           . intro x hx
             have : x ∈ Set.Icc a b := by specialize hJ _ hx; simpa using hJ
-            simp only [F']; tauto
-          simpa [subset_iff] using hJ
+            grind
+          grind [subset_iff]
         _ = F'[Icc a b]ₗ := P.sum_of_α_length F'
         _ = F' b - F' a := by
-          apply α_length_of_cts (by linarith) _ (by linarith) _ hF'_cts
-          . simp [le_of_lt h]
-          intro _ _; simp [mem_iff] at *; split_ands <;> linarith
-        _ = _ := by congr 1 <;> apply hFF' <;> simp [le_of_lt h]
+          apply α_length_of_cts _ _ _ _ hF'_cts <;> try linarith
+          intro _ _; simp [mem_iff] at *; grind
+        _ = _ := by congr 1 <;> apply hFF' <;> grind
     have hlower (P: Partition (Icc a b)) : lower_riemann_sum f P ≤ F b - F a := by
       sorry
     replace hupper : upper_integral f (Icc a b) ≥ F b - F a := by
       rw [upper_integ_eq_inf_upper_sum hf.1]; apply le_csInf <;> simp [Set.range_nonempty]
-      intro P; linarith [hupper P]
+      grind
     replace hlower : lower_integral f (Icc a b) ≤ F b - F a := by
       rw [lower_integ_eq_sup_lower_sum hf.1]; apply csSup_le <;> simp [Set.range_nonempty]
-      intro P; linarith [hlower P]
+      grind
     linarith [hf.2]
   simp [h]; exact (integ_on_subsingleton (by simp [length])).2
 
