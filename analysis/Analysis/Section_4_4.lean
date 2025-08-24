@@ -15,6 +15,13 @@ Main constructions and results of this section:
 
 Many of the results here can be established more quickly by relying more heavily on the Mathlib
 API; one can set oneself the exercise of doing so.
+
+## Tips from past users
+
+Users of the companion who have completed the exercises in this section are welcome to send their tips for future users in this section as PRs.
+
+- (Add tip here)
+
 -/
 
 /-- Proposition 4.4.1 (Interspersing of integers by rationals) / Exercise 4.4.1 -/

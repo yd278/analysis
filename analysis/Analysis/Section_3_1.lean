@@ -59,6 +59,12 @@ Some technical notes:
   and type theory, we will not attempt to create a full equivalence between these two
   notions of sets. (As such, this makes this entire chapter optional from the point of view of
   the rest of the book, though we retain it for pedagogical purposes.)
+
+## Tips from past users
+
+Users of the companion who have completed the exercises in this section are welcome to send their tips for future users in this section as PRs.
+
+- (Add tip here)
 -/
 
 namespace Chapter3
