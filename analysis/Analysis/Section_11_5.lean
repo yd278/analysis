@@ -41,7 +41,7 @@ theorem integ_of_uniform_cts {I: BoundedInterval} {f:ℝ → ℝ} (hf: UniformCo
     have hNpos : 0 < N := by
       have : 0 < (b-a)/δ := by positivity
       rify; order
-    have hN' : (b-a)/N < δ := by rwa [div_lt_comm₀ (by positivity) (by positivity)]
+    have hN' : (b-a)/N < δ := by rwa [div_lt_comm₀] <;> positivity
     have : ∃ P: Partition I, P.intervals.card = N ∧ ∀ J ∈ P.intervals, |J|ₗ = (b-a) / N := by
       sorry
     choose P hcard hlength using this
@@ -58,8 +58,8 @@ theorem integ_of_uniform_cts {I: BoundedInterval} {f:ℝ → ℝ} (hf: UniformCo
           have : |f x - f y| ≤ ε := by
             apply hf y _ x _ _ <;> try solve_by_elim
             apply (BoundedInterval.dist_le_length hx hy).trans
-            simp [hlength _ hJ]; order
-          rw [abs_le'] at this; linarith
+            grind
+          grind [abs_le']
         have hJnon : (f '' J).Nonempty := by
           simp; by_contra! h
           replace h : Subsingleton (J:Set ℝ) := by simp [h]
@@ -72,16 +72,15 @@ theorem integ_of_uniform_cts {I: BoundedInterval} {f:ℝ → ℝ} (hf: UniformCo
         replace : sSup (f '' J) - ε ≤ sInf (f '' J) := by
           apply le_csInf hJnon
           intro a ha; simp at ha; obtain ⟨ y, hy, rfl ⟩ := ha
-          simp_rw [mem_iff] at this; specialize this _ hy; linarith
+          simp_rw [mem_iff] at this; grind
         linarith
-      _ = ∑ J ∈ P.intervals, ε * (b-a)/N := by apply Finset.sum_congr rfl; intro J hJ; simp [hlength _ hJ]; ring
+      _ = ∑ J ∈ P.intervals, ε * (b-a)/N := by apply Finset.sum_congr rfl; grind
       _ = _ := by simp [hcard]; field_simp
   have lower_le_upper : 0 ≤ upper_integral f I - lower_integral f I := by linarith [lower_integral_le_upper hfbound]
   obtain h | h := le_iff_lt_or_eq.mp lower_le_upper
   . set ε := (upper_integral f I - lower_integral f I)/(2*(b-a))
-    specialize this ε (by positivity); simp only [ε] at this
     replace : upper_integral f I - lower_integral f I ≤ (upper_integral f I - lower_integral f I)/2 := by
-      convert this using 1; field_simp; ring
+      convert this ε (by positivity) using 1; grind
     linarith
   linarith
 
@@ -110,8 +109,8 @@ theorem integ_of_bdd_cts {I: BoundedInterval} {f:ℝ → ℝ} (hbound: BddOn f I
   have (ε:ℝ) (hε: ε > 0) : upper_integral f I - lower_integral f I ≤ (4*M+2) * ε := by
     wlog hε' : ε < (b-a)/2
     . simp at hε'
-      specialize this hbound hf hI hsing lower_le_upper _ hM hMpos ((b-a)/3) (by linarith) (by linarith)
-      apply this.trans; gcongr; linarith
+      specialize this ?_ ?_ ?_ ?_ ?_ _ hM ?_ ((b-a)/3) ?_ ?_
+        <;> first | assumption | linarith | apply this.trans; gcongr; linarith
     set I' := Icc (a+ε) (b-ε)
     set Ileft : BoundedInterval := match I with
     | Icc _ _ => Ico a (a + ε)
@@ -154,7 +153,7 @@ theorem integ_of_bdd_cts {I: BoundedInterval} {f:ℝ → ℝ} (hbound: BddOn f I
       case Ioo _ _ => apply join_Ioc_Ioo <;> linarith
     have hf' : IntegrableOn f I' := by
       apply integ_of_cts $ ContinuousOn.mono hf $ subset_trans _ $ (subset_iff _ _).mp $ Ioo_subset I
-      intro _; simp; intros; split_ands <;> linarith
+      intro _; simp; grind
     choose h hhmin hhconst hhint using lt_of_gt_upper_integral hf'.1 (show upper_integral f I' < integ f I' + ε by linarith [hf'.2])
     classical
     set h' : ℝ → ℝ := fun x ↦ if x ∈ I' then h x else M
@@ -171,13 +170,10 @@ theorem integ_of_bdd_cts {I: BoundedInterval} {f:ℝ → ℝ} (hbound: BddOn f I
       rw [of_join hjoin2 _]; split_ands
       . rw [of_join hjoin1 _]; split_ands
         . apply_rules [piecewiseConstantOn, of_const]
-        apply hhconst.congr'
-        intro x hx; simp [h', hx, mem_iff]
+        apply hhconst.congr'; grind [mem_iff]
       apply_rules [piecewiseConstantOn, of_const]
     have h'maj : MajorizesOn h' f I := by
-      intro x hx; by_cases hxI': x ∈ I' <;> simp [h', hxI']
-      . solve_by_elim
-      specialize hM _ hx; rw [abs_le'] at hM; tauto
+      intro x _; by_cases hxI': x ∈ I' <;> simp [h', hxI']; solve_by_elim; grind [abs_le']
     replace h'maj := upper_integral_le_integ hbound h'maj h'const
     have h'integ1 := h'const.integ_of_join hjoin2
     have h'integ2 := ((of_join hjoin2 _).mp h'const).1.integ_of_join hjoin1
@@ -209,9 +205,7 @@ theorem integ_of_bdd_cts {I: BoundedInterval} {f:ℝ → ℝ} (hbound: BddOn f I
         intro x hx; simp [g', hx, mem_iff]
       apply_rules [piecewiseConstantOn, of_const]
     have g'maj : MinorizesOn g' f I := by
-      intro x hx; by_cases hxI': x ∈ I' <;> simp [g', hxI']
-      . solve_by_elim
-      specialize hM _ hx; rw [abs_le'] at hM; linarith
+      intro x _; by_cases hxI': x ∈ I' <;> simp [g', hxI']; solve_by_elim; grind [abs_le']
     replace g'maj := integ_le_lower_integral hbound g'maj g'const
     have g'integ1 := g'const.integ_of_join hjoin2
     have g'integ2 := ((of_join hjoin2 _).mp g'const).1.integ_of_join hjoin1
@@ -220,9 +214,8 @@ theorem integ_of_bdd_cts {I: BoundedInterval} {f:ℝ → ℝ} (hbound: BddOn f I
     have g'integ4 : PiecewiseConstantOn.integ g' Iright = -M * ε := by
       rw [PiecewiseConstantOn.integ_congr g'const_right, integ_const, Irightlen]
     have g'integ5 : PiecewiseConstantOn.integ g' I' = PiecewiseConstantOn.integ g I' := by
-      apply PiecewiseConstantOn.integ_congr
-      intro _ hx; simp [g', hx, mem_iff]
-    ring_nf; linarith
+      apply PiecewiseConstantOn.integ_congr; grind [mem_iff]
+    grind
   exact ⟨ hbound, by linarith [nonneg_of_le_const_mul_eps this] ⟩
 
 /-- Definition 11.5.4 -/

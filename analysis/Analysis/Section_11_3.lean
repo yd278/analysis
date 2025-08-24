@@ -36,22 +36,22 @@ noncomputable abbrev lower_integral (f:ℝ → ℝ) (I: BoundedInterval) : ℝ :
 
 theorem upper_integral_congr {f g:ℝ → ℝ} {I: BoundedInterval} (h: Set.EqOn f g I) :
   upper_integral f I = upper_integral g I := by
-  simp [upper_integral]; congr! 2; ext; simp; intros; peel 1; aesop
+  simp [upper_integral]; congr! 2; ext; simp; grind
 
 theorem lower_integral_congr {f g:ℝ → ℝ} {I: BoundedInterval} (h: Set.EqOn f g I) :
   lower_integral f I = lower_integral g I := by
-  simp [lower_integral]; congr! 2; ext; simp; intros; peel 1; aesop
+  simp [lower_integral]; congr! 2; ext; simp; grind
 
 lemma integral_bound_upper_of_bounded {f:ℝ → ℝ} {M:ℝ} {I: BoundedInterval} (h: ∀ x ∈ (I:Set ℝ), |f x| ≤ M) : M * |I|ₗ ∈ (PiecewiseConstantOn.integ · I) '' {g | MajorizesOn g f I ∧ PiecewiseConstantOn g I} := by
   simp
   refine ⟨ fun _ ↦ M , ⟨ ⟨ ?_, ?_, ⟩, PiecewiseConstantOn.integ_const _ _ ⟩ ⟩
-  . peel h with _ _ _; simp_all [abs_le']
+  . grind [abs_le']
   exact (ConstantOn.of_const (c := M) (by simp)).piecewiseConstantOn
 
 lemma integral_bound_lower_of_bounded {f:ℝ → ℝ} {M:ℝ} {I: BoundedInterval} (h: ∀ x ∈ (I:Set ℝ), |f x| ≤ M) : -M * |I|ₗ ∈ (PiecewiseConstantOn.integ · I) '' {g | MinorizesOn g f I ∧ PiecewiseConstantOn g I} := by
   simp
   refine ⟨ fun _ ↦ -M , ⟨ ⟨ ?_, ?_, ⟩, by convert PiecewiseConstantOn.integ_const _ _ using 1; simp ⟩ ⟩
-  . peel h with _ _ _; simp [abs_le'] at *; linarith
+  . grind [abs_le']
   exact (ConstantOn.of_const (c := -M) (by simp)).piecewiseConstantOn
 
 lemma integral_bound_upper_nonempty {f:ℝ → ℝ} {I: BoundedInterval} (h: BddOn f I) : ((PiecewiseConstantOn.integ · I) '' {g | MajorizesOn g f I ∧ PiecewiseConstantOn g I}).Nonempty :=
@@ -88,10 +88,10 @@ lemma le_lower_integral {f:ℝ → ℝ} {I: BoundedInterval} {M:ℝ} (h: ∀ x �
 lemma lower_integral_le_upper {f:ℝ → ℝ} {I: BoundedInterval} (h: BddOn f I) :
   lower_integral f I ≤ upper_integral f I := by
   apply ConditionallyCompleteLattice.csSup_le _ _ (integral_bound_lower_nonempty h) _
-  rw [mem_upperBounds]; intro b hb
+  rw [mem_upperBounds]; intros
   apply ConditionallyCompleteLattice.le_csInf _ _ (integral_bound_upper_nonempty h) _
-  rw [mem_lowerBounds]; intro a ha
-  exact integral_bound_lower_le_upper ha hb
+  rw [mem_lowerBounds]
+  solve_by_elim [integral_bound_lower_le_upper]
 
 lemma upper_integral_le {f:ℝ → ℝ} {I: BoundedInterval} {M:ℝ} (h: ∀ x ∈ (I:Set ℝ), |f x| ≤ M) :
   upper_integral f I ≤ M * |I|ₗ :=

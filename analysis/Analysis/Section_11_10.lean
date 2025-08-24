@@ -61,9 +61,7 @@ theorem PiecewiseConstantOn.RS_integ_eq_integ_of_mul_deriv
       . rw [(integ_on_subsingleton hJab.symm).2]
         simp [le_iff_lt_or_eq] at hJab; obtain hJab | hJab := hJab
         . rw [α_length_of_empty _ (empty_of_lt hJab)]
-        rw [α_length_of_cts ?_ ?_ ?_ (hJsub ?_) hαcont.continuousOn]
-        simp [show J.a = J.b by linarith]
-        all_goals linarith
+        rw [α_length_of_cts _ _ _ (hJsub _) hαcont.continuousOn] <;> grind
       simp [length] at hJab
       rw [α_length_of_cts ?_ ?_ ?_ (hJsub ?_) hαcont.continuousOn ]
       . have : Icc J.a J.b ⊆ Icc a b := by
@@ -99,7 +97,7 @@ theorem RS_integ_eq_integ_of_mul_deriv
     obtain h | h := le_iff_lt_or_eq.mp hx.1
     . apply closure_mono (s := .Ico a x) _
       . simp [closure_Ico (show a ≠ x by linarith), hx.1]
-      intro _ _; simp_all; constructor <;> linarith
+      intro _ _; simp_all; grind
     apply closure_mono (s := .Ioc x b) _
     . simp [closure_Ioc (show x ≠ b by linarith), hx.2]
     intro _ _; simp_all
@@ -190,7 +188,7 @@ theorem RS_integ_of_comp {a b:ℝ} (hab: a < b) {φ f: ℝ → ℝ}
   have hupper : upper_RS_integral (f ∘ φ) (Icc a b) φ ≤ upper_integral f (Icc (φ a) (φ b)) := by
     apply le_of_forall_pos_le_add
     intro ε hε
-    choose f_up hf_upmajor hf_upconst hf_up using lt_of_gt_upper_integral hf.1 (show upper_integral f (Icc (φ a) (φ b)) + ε > integ f (Icc (φ a) (φ b)) by linarith)
+    choose f_up hf_upmajor hf_upconst hf_up using lt_of_gt_upper_integral hf.1 (show upper_integral f (Icc (φ a) (φ b)) + ε > integ f (Icc (φ a) (φ b)) by grind)
     have hpc := PiecewiseConstantOn.RS_integ_of_comp hab hφ_cont hφ_mono hf_upconst
     rw [←hpc.2] at hf_up
     have : MajorizesOn (f_up ∘ φ) (f ∘ φ) (Icc a b) := by intro _ _; simp at *; apply hf_upmajor; aesop
@@ -198,7 +196,7 @@ theorem RS_integ_of_comp {a b:ℝ} (hab: a < b) {φ f: ℝ → ℝ}
   have hlower : lower_integral f (Icc (φ a) (φ b)) ≤ lower_RS_integral (f ∘ φ) (Icc a b) φ := by
     apply le_of_forall_sub_le
     intro ε hε
-    choose f_low hf_lowminor hf_lowconst hf_low using gt_of_lt_lower_integral hf.1 (show lower_integral f (Icc (φ a) (φ b)) - ε < lower_integral f (Icc (φ a) (φ b)) by linarith)
+    choose f_low hf_lowminor hf_lowconst hf_low using gt_of_lt_lower_integral hf.1 (show lower_integral f (Icc (φ a) (φ b)) - ε < lower_integral f (Icc (φ a) (φ b)) by grind)
     have hpc := PiecewiseConstantOn.RS_integ_of_comp hab hφ_cont hφ_mono hf_lowconst
     rw [←hpc.2] at hf_low
     have : MinorizesOn (f_low ∘ φ) (f ∘ φ) (Icc a b) := by intro _ _; simp at *; apply hf_lowminor; aesop

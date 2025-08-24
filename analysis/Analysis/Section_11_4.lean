@@ -94,9 +94,9 @@ theorem IntegrableOn.eq {I J: BoundedInterval} (hIJ: J ⊆ I)
 lemma nonneg_of_le_const_mul_eps {x C:ℝ} (h: ∀ ε>0, x ≤ C * ε) : x ≤ 0 := by
   by_cases hC: C > 0
   . by_contra!
-    specialize h (x/(2*C)) (by positivity); convert_to x ≤ x/2 at h; field_simp; ring
+    specialize h (x/(2*C)) (by positivity); convert_to x ≤ x/2 at h; grind
     linarith
-  specialize h 1 (by norm_num); simp_all; linarith
+  specialize h 1 ?_ <;> grind
 
 /-- Theorem 11.4.3 (Max and min preserve integrability)-/
 theorem IntegrableOn.max {I: BoundedInterval} {f g:ℝ → ℝ} (hf: IntegrableOn f I) (hg: IntegrableOn g I) :
@@ -111,10 +111,10 @@ theorem IntegrableOn.max {I: BoundedInterval} {f g:ℝ → ℝ} (hf: IntegrableO
   have lower_le_upper : 0 ≤ upper_integral (f ⊔ g) I - lower_integral (f ⊔ g) I := by linarith [lower_integral_le_upper hmax_bound]
   have (ε:ℝ) (hε: 0 < ε) : upper_integral (f ⊔ g) I - lower_integral (f ⊔ g) I ≤ 4*ε := by
     choose f' hf'min hf'const hf'int using gt_of_lt_lower_integral hf.1 (show integ f I - ε < lower_integral f I
-    by linarith)
-    choose g' hg'min hg'const hg'int using gt_of_lt_lower_integral hg.1 (show integ g I - ε < lower_integral g I by linarith)
-    choose f'' hf''max hf''const hf''int using lt_of_gt_upper_integral hf.1 (show upper_integral f I < integ f I + ε by linarith)
-    choose g'' hg''max hg''const hg''int using lt_of_gt_upper_integral hg.1 (show upper_integral g I < integ g I + ε by linarith)
+    by grind)
+    choose g' hg'min hg'const hg'int using gt_of_lt_lower_integral hg.1 (show integ g I - ε < lower_integral g I by grind)
+    choose f'' hf''max hf''const hf''int using lt_of_gt_upper_integral hf.1 (show upper_integral f I < integ f I + ε by grind)
+    choose g'' hg''max hg''const hg''int using lt_of_gt_upper_integral hg.1 (show upper_integral g I < integ g I + ε by grind)
     set h := (f'' - f') + (g'' - g')
     have hf'_integ := integ_of_piecewise_const hf'const
     have hg'_integ := integ_of_piecewise_const hg'const
@@ -154,9 +154,8 @@ theorem IntegrableOn.abs {I: BoundedInterval} {f:ℝ → ℝ} (hf: IntegrableOn 
   IntegrableOn (abs f) I := by
   have := (IntegrableOn.const 0 I).1
   convert ((hf.max this).sub (hf.min this)).1 using 1
-  ext x; obtain h | h := le_or_gt (f x) 0
-  . simp [h]
-  simp [le_of_lt h]
+  ext x; have : f x ≤ 0 ∨ f x ≥ 0 := by grind
+  obtain h | h := this <;> simp [h]
 
 /-- Theorem 11.4.5 (Products preserve Riemann integrability).
 It is convenient to first establish the non-negative case.-/
@@ -227,12 +226,12 @@ theorem integ_of_mul_nonneg {I: BoundedInterval} {f g:ℝ → ℝ} (hf: Integrab
     have hf'g'_const := hf'const.mul hg'const
     have hf'g'_maj : MinorizesOn (f' * g') (f * g) I := by
       peel hf'min with x hx hf'min; specialize hg'min _ hx; specialize hf'_nonneg _ hx; specialize hg'_nonneg _ hx
-      simp at *; apply mul_le_mul hf'min hg'min <;> linarith
+      simp at *; apply mul_le_mul hf'min hg'min <;> grind
     have hf''g''_const := hf''const.mul hg''const
     have hf''g''_maj : MajorizesOn (f'' * g'') (f * g) I := by
       peel hf''maj with x hx hf''maj; specialize hg''maj _ hx; specialize hf''bound _ hx
       specialize hg_nonneg _ hx; specialize hf_nonneg _ hx
-      simp at *; apply mul_le_mul hf''maj hg''maj <;> linarith
+      simp at *; apply mul_le_mul hf''maj hg''maj <;> grind
     have hupper_le := upper_integral_le_integ hmul_bound hf''g''_maj hf''g''_const
     have hlower_ge := integ_le_lower_integral hmul_bound hf'g'_maj hf'g'_const
     have hh_const := hf''g''_const.sub hf'g'_const
@@ -284,9 +283,8 @@ theorem integ_of_mul {I: BoundedInterval} {f g:ℝ → ℝ} (hf: IntegrableOn f 
   have hfplusgminus := integ_of_mul_nonneg hfplus_integ hgminus_integ hfplus_nonneg hgminus_nonneg
   have hfminusgplus := integ_of_mul_nonneg hfminus_integ hgplus_integ hfminus_nonneg hgplus_nonneg
   have hfminusgminus := integ_of_mul_nonneg hfminus_integ hgminus_integ hfminus_nonneg hgminus_nonneg
-  have hf : f = fplus - fminus := by ext; simp [fplus, fminus]
-  have hg : g = gplus - gminus := by ext; simp [gplus, gminus]
-  rw [hf, hg]
+  rw [show f = fplus - fminus by ext; simp [fplus, fminus],
+      show g = gplus - gminus by ext; simp [gplus, gminus]]
   ring_nf
   exact ((hfplusgplus.add (hfplusgminus.neg.1.sub hfminusgplus).1).1.add hfminusgminus).1
 open BoundedInterval

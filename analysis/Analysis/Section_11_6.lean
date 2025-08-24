@@ -19,6 +19,7 @@ Main constructions and results of this section:
 namespace Chapter11
 open Chapter9 BoundedInterval
 
+set_option maxHeartbeats 300000 in
 /-- Proposition 11.6.1 -/
 theorem integ_of_monotone {a b:ℝ} {f:ℝ → ℝ} (hf: MonotoneOn f (Icc a b)) :
   IntegrableOn f (Icc a b) := by
@@ -40,7 +41,7 @@ theorem integ_of_monotone {a b:ℝ} {f:ℝ → ℝ} (hf: MonotoneOn f (Icc a b))
       inj' j k hjk := by simp at hjk; obtain _ | _ := hjk <;> linarith
     }
     set P : Partition I := {
-      intervals := insert (Icc b b) (Finset.map e (Finset.range N))
+      intervals := insert (Icc b b) (.map e (.range N))
       exists_unique := by
         intro x hx; simp; by_cases hb: x = b
         . apply ExistsUnique.intro (Icc b b)
@@ -54,19 +55,19 @@ theorem integ_of_monotone {a b:ℝ} {f:ℝ → ℝ} (hf: MonotoneOn f (Icc a b))
         set j := ⌊ (x-a)/δ ⌋₊
         have hxa : 0 ≤ x-a := by linarith
         have hxaδ : 0 ≤ (x-a)/δ := by positivity
-        have hxb : x < b := by contrapose! hb; linarith
+        have hxb : x < b := by grind
         have hxj : x ∈ e j := by
-          simp [e, mem_iff, j]; constructor
+          simp [e, mem_iff, j]; split_ands
           . calc
-              _ ≤ a + δ * ((x-a)/δ) := by gcongr; exact Nat.floor_le hxaδ
-              _ = x := by field_simp
+              _ ≤ a + δ * ((x-a)/δ) := by gcongr; grind [Nat.floor_le]
+              _ = x := by grind
           calc
             _ = a + δ * ((x-a)/δ) := by field_simp
-            _ < _ := by gcongr; exact Nat.lt_floor_add_one _
+            _ < _ := by gcongr; apply Nat.lt_floor_add_one
         apply ExistsUnique.intro (e j)
         . refine ⟨ ?_, hxj ⟩; right; use j; simp [j, Nat.floor_lt hxaδ, div_lt_iff₀' hδpos]; linarith
         rintro J ⟨ rfl | ⟨ k, hk, rfl ⟩, hxJ ⟩
-        . simp [mem_iff] at hxJ; linarith
+        . simp [mem_iff] at hxJ; grind
         simp [mem_iff, e] at hxJ hxj
         obtain hjk | rfl | hjk := lt_trichotomy j k
         . replace hjk : δ*((j:ℝ)+1) ≤ δ*(k:ℝ) := by rw [mul_le_mul_iff_of_pos_left hδpos]; norm_cast
@@ -87,16 +88,15 @@ theorem integ_of_monotone {a b:ℝ} {f:ℝ → ℝ} (hf: MonotoneOn f (Icc a b))
       _ ≤ ∑ j ∈ .range N, f (a + δ*(j+1)) * δ := by
         apply Finset.sum_le_sum; intro j hj
         convert (mul_le_mul_right hδpos).mpr ?_
-        . simp [length]; ring_nf
-          simp [le_of_lt hδpos]
+        . simp [length]; ring_nf; simp [le_of_lt hδpos]
         apply csSup_le
-        . simp; ring_nf; linarith
+        . simp; grind
         intro y hy; simp at hy; obtain ⟨ x, ⟨ hx1, hx2 ⟩, rfl ⟩ := hy
-        have : a + δ*(j+1) ≤ b := by simp [hbeq]; gcongr; norm_cast; simp at hj; linarith
+        have : a + δ*(j+1) ≤ b := by simp [hbeq]; gcongr; norm_cast; grind
         have hδj : 0 ≤ δ*j := by positivity
         have hδj1 : 0 ≤ δ*(j+1) := by positivity
         apply hf _ _ (by order) <;> simp [I, hδj1, this]
-        constructor <;> linarith
+        grind
     have hdown := calc
       lower_integral f I ≥ ∑ J ∈ P.intervals, (sInf (f '' (J:Set ℝ))) * |J|ₗ :=
         lower_integ_ge_lower_sum hbound P
@@ -106,14 +106,14 @@ theorem integ_of_monotone {a b:ℝ} {f:ℝ → ℝ} (hf: MonotoneOn f (Icc a b))
         convert (mul_le_mul_right hδpos).mpr ?_
         . simp [length]; ring_nf; simp [le_of_lt hδpos]
         apply le_csInf
-        . simp; ring_nf; linarith
+        . simp; grind
         intro y hy; simp at hy; obtain ⟨ x, ⟨ hx1, hx2 ⟩, rfl ⟩ := hy
-        have hajb': a + δ*(j+1) ≤ b := by simp [hbeq]; gcongr; norm_cast; simp at hj; linarith
+        have hajb': a + δ*(j+1) ≤ b := by simp [hbeq]; gcongr; norm_cast; grind
         have hδj : 0 ≤ δ*j := by positivity
         have hδj1 : 0 ≤ δ*(j+1) := by positivity
         apply_rules [hf]
         . simp [I, hδj]; linarith
-        simp [I]; constructor <;> linarith
+        simp [I]; grind
     calc
       _ ≤ ∑ j ∈ .range N, f (a + δ*(j+1)) * δ - ∑ j ∈ .range N, f (a + δ*j) * δ := by linarith
       _ = (f b - f a) * δ := by
@@ -124,20 +124,19 @@ theorem integ_of_monotone {a b:ℝ} {f:ℝ → ℝ} (hf: MonotoneOn f (Icc a b))
       _ ≤ _ := by
         have : 0 ≤ f b - f a := by simp; apply hf <;> simp [I, hab']
         simp [mul_assoc, δ]; gcongr
-        rw [div_le_iff₀' (by positivity), mul_comm, mul_assoc]
+        rw [div_le_iff₀', mul_comm, mul_assoc]
         nth_rewrite 1 [←mul_one (b-a)]
-        gcongr; rw [←div_le_iff₀' (by positivity)]; linarith
+        gcongr; rw [←div_le_iff₀']; linarith
+        all_goals positivity
   refine ⟨ hbound, ?_ ⟩
-  have low_le_up : lower_integral f I ≤ upper_integral f I := lower_integral_le_upper hbound
+  observe low_le_up : lower_integral f I ≤ upper_integral f I
   linarith [nonneg_of_le_const_mul_eps this]
 
 
 /-- Proposition 11.6.1 -/
 theorem integ_of_antitone {a b:ℝ} {f:ℝ → ℝ} (hf: AntitoneOn f (Icc a b)) :
   IntegrableOn f (Icc a b) := by
-  rw [←neg_neg f]
-  apply (integ_of_monotone _).neg.1
-  convert hf.neg using 1
+  rw [←neg_neg f]; apply (integ_of_monotone _).neg.1; convert hf.neg using 1
 
 /-- Corollary 11.6.3 / Exercise 11.6.1 -/
 theorem integ_of_bdd_monotone {I:BoundedInterval} {f:ℝ → ℝ} (hbound: BddOn f I)
