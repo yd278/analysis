@@ -141,11 +141,11 @@ theorem Sequence.gt_limsup_bounds {a:Sequence} {x:EReal} (h: x > a.limsup) :
   -- This proof is written to follow the structure of the original text.
   unfold limsup at h
   simp [sInf_lt_iff] at h
-  obtain ⟨aN, ⟨ N, ⟨ hN, haN ⟩ ⟩, ha ⟩ := h; use N
-  simp [hN]; simp [haN, upperseq] at ha; intro n hn
-  have hn' : n ≥ (a.from N).m := by simp [hN, hn]
+  obtain ⟨_, ⟨ N, ⟨ hN, rfl ⟩ ⟩, ha ⟩ := h; use N
+  simp [hN, upperseq] at ha ⊢; intro n _
+  have hn' : n ≥ (a.from N).m := by grind
   convert lt_of_le_of_lt ((a.from N).le_sup hn') ha using 1
-  simp [hn, hN.trans hn]
+  grind
 
 /-- Proposition 6.4.12(a) -/
 theorem Sequence.lt_liminf_bounds {a:Sequence} {y:EReal} (h: y < a.liminf) :
@@ -160,9 +160,7 @@ theorem Sequence.lt_limsup_bounds {a:Sequence} {x:EReal} (h: x < a.limsup) {N:�
     apply lt_of_lt_of_le h (sInf_le _)
     simp; use N
   choose n hn hxn _ using exists_between_lt_sup hx
-  simp [hN] at hn; use n, hn
-  convert gt_iff_lt.mpr hxn using 1
-  simp [hn, hN.trans hn]
+  simp [hN] at hn; use n, hn; grind
 
 /-- Proposition 6.4.12(b) -/
 theorem Sequence.gt_liminf_bounds {a:Sequence} {x:EReal} (h: x > a.liminf) {N:ℤ} (hN: N ≥ a.m) :
@@ -262,7 +260,7 @@ theorem Sequence.finite_limsup_liminf_of_bounded {a:Sequence} (hbound: a.IsBound
     apply (inf_ge_lower _).trans a.inf_le_liminf
     intro n hN; simp [←EReal.coe_neg]; rw [neg_le]
     exact (neg_le_abs _).trans (hbound n)
-  constructor
+  split_ands
   . use a.limsup.toReal
     symm; apply EReal.coe_toReal
     . contrapose! hlimsup_bound; simp [hlimsup_bound]
@@ -286,8 +284,7 @@ theorem Sequence.Cauchy_iff_convergent (a:Sequence) :
   simp [tendsTo_iff_eq_limsup_liminf, hL_minus, hL_plus]
   have hlow : 0 ≤ L_plus - L_minus := by
     have := a.liminf_le_limsup
-    simp [hL_minus, hL_plus] at this
-    linarith
+    simp [hL_minus, hL_plus] at this; grind
   have hup (ε:ℝ) (hε: ε>0) : L_plus - L_minus ≤ 2*ε := by
     specialize h ε hε
     choose N hN hsteady using h
@@ -296,27 +293,20 @@ theorem Sequence.Cauchy_iff_convergent (a:Sequence) :
     have hN1 : (a.from N).seq N = a.seq N := by simp [hN]
     have h1 : (a N - ε:ℝ) ≤ (a.from N).inf := by
       apply inf_ge_lower
-      intro n hn; specialize hsteady n hn N hN0
-      rw [ge_iff_le, EReal.coe_le_coe_iff]
-      rw [Real.dist_eq, hN1, abs_le'] at hsteady
-      linarith
+      grind [Real.dist_eq, abs_le',EReal.coe_le_coe_iff]
     have h2 : (a.from N).inf ≤ L_minus := by
       simp_rw [←hL_minus, Sequence.liminf, Sequence.lowerseq]
       apply le_sSup
       simp; use N
     have h3 : (a.from N).sup ≤ (a N + ε:ℝ) := by
       apply sup_le_upper
-      intro n hn; specialize hsteady n hn N hN0
-      rw [EReal.coe_le_coe_iff]
-      rw [Real.dist_eq, hN1, abs_le'] at hsteady
-      linarith
+      grind [EReal.coe_le_coe_iff, Real.dist_eq, abs_le']
     have h4 : L_plus ≤ (a.from N).sup := by
       simp_rw [←hL_plus, Sequence.limsup, Sequence.upperseq]
       apply sInf_le; simp; use N
     replace h1 := h1.trans h2
     replace h4 := h4.trans h3
-    rw [EReal.coe_le_coe_iff] at h1 h4
-    linarith
+    grind [EReal.coe_le_coe_iff]
   obtain hlow | hlow := le_iff_lt_or_eq.mp hlow
   . specialize hup ((L_plus - L_minus)/3) (by positivity)
     linarith

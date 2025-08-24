@@ -21,8 +21,8 @@ theorem Chapter6.Sequence.isCauchy_iff_isCauSeq (a: ℕ → ℝ) :
   . intro n hn; linarith [h n hn N (by rfl)]
   intro n hn m hm
   calc
-    _ ≤ |a n - a N| + |a m - a N| := by simp [abs_sub_comm (a m) (a N), abs_sub_le]
-    _ ≤ ε/2 + ε/2 := by apply le_of_lt; gcongr <;> solve_by_elim
+    _ ≤ |a n - a N| + |a m - a N| := by grind [abs_sub_comm, abs_sub_le]
+    _ ≤ ε/2 + ε/2 := by grind
     _ = _ := by linarith
 
 /-- Identification with the Cauchy sequence support in Mathlib/Topology/UniformSpace/Cauchy -/
@@ -40,7 +40,7 @@ theorem Chapter6.Sequence.tendsto_iff_Tendsto (a: ℕ → ℝ) (L:ℝ) :
     specialize hN n (Int.toNat_le.mp hn); simp at hN
     rw [Real.dist_eq]; linarith
   have ⟨ N, hN ⟩ := h ε hε; use N; intro n hn
-  have hpos : n ≥ 0 := LE.le.trans (by positivity) hn
+  have hpos : n ≥ 0 := by grind
   rw [ge_iff_le, ←Int.le_toNat hpos] at hn
   simp [hpos, ←Real.dist_eq, le_of_lt (hN n.toNat hn)]
 
@@ -65,8 +65,7 @@ theorem Chapter6.Sequence.lim_eq_CauSeq_lim (a:ℕ → ℝ) (ha: (a:Sequence).Is
   have h1 := CauSeq.tendsto_limit ⟨ a, (isCauchy_iff_isCauSeq a).mp ha⟩
   have h2 := lim_def ((a:Sequence).Cauchy_iff_convergent.mp ha)
   rw [←tendsto_iff_Tendsto] at h1
-  by_contra! h; replace h := (a:Sequence).tendsTo_unique h
-  tauto
+  by_contra! h; apply (a:Sequence).tendsTo_unique at h; tauto
 
 /-- Identification with `Bornology.IsBounded` -/
 theorem Chapter6.Sequence.isBounded_iff_isBounded_range (a:ℕ → ℝ):
@@ -84,10 +83,7 @@ theorem Chapter6.Sequence.isBounded_iff_isBounded_range (a:ℕ → ℝ):
   refine ⟨ C + |a 0|, by positivity, ?_ ⟩
   intro n; by_cases hn: n ≥ 0 <;> simp [hn]
   . calc
-      _ ≤ |a n.toNat - a 0| + |a 0| := by
-        convert abs_add_le _ _
-        . abel
-        infer_instance
+      _ ≤ |a n.toNat - a 0| + |a 0| := by convert abs_add_le _ _; abel; infer_instance
       _ ≤ C + |a 0| := by gcongr; rw [←Real.dist_eq]; convert h n.toNat 0
   positivity
 
@@ -114,11 +110,11 @@ theorem Chapter6.Sequence.limit_point_iff (a:ℕ → ℝ) (L:ℝ) :
   constructor
   . intro h s ⟨ ε, hε, hεs ⟩ N
     have ⟨ n, hn1, hn2 ⟩ := h _ (half_pos hε) N (by positivity)
-    have hn : n ≥ 0 := LE.le.trans (by positivity) hn1
+    have hn : n ≥ 0 := by grind
     refine ⟨ n.toNat, by rwa [ge_iff_le, Int.le_toNat hn], ?_ ⟩
     apply hεs; simp [Real.dist_eq, hn] at *; linarith
-  intro h ε hε N hN
-  have ⟨ n, hn1, hn2 ⟩ := h (Metric.ball L ε) ⟨ ε, hε, by aesop ⟩ N.toNat
+  intro h ε hε N _
+  have ⟨ n, hn1, hn2 ⟩ := h (Metric.ball L ε) ⟨ _, hε, by aesop ⟩ N.toNat
   have hn : n ≥ 0 := by positivity
   refine ⟨ n, by rwa [ge_iff_le, ←Int.toNat_le], ?_ ⟩
   simp [Real.dist_eq, hn] at *; linarith

@@ -28,10 +28,7 @@ lemma Real.pow_zero (x: Real) : x ^ 0 = 1 := rfl
 
 lemma Real.pow_succ (x: Real) (n:ℕ) : x ^ (n+1) = (x ^ n) * x := rfl
 
-lemma Real.pow_of_coe (q: ℚ) (n:ℕ) : (q:Real) ^ n = (q ^ n:ℚ) := by
-  induction' n with n hn; simp
-  simp
-
+lemma Real.pow_of_coe (q: ℚ) (n:ℕ) : (q:Real) ^ n = (q ^ n:ℚ) := by induction' n with n hn <;> simp
 
 /- The claims below can be handled easily by existing Mathlib API (as `Real` already is known
 to be a `Field`), but the spirit of the exercises is to adapt the proofs of
@@ -63,7 +60,6 @@ theorem Real.pow_gt_pow (x y:Real) (n:ℕ) (hxy: x > y) (hy: y ≥ 0) (hn: n > 0
 
 /-- Analogue of Proposition 4.3.10(d) -/
 theorem Real.pow_abs (x:Real) (n:ℕ) : |x|^n = |x^n| := by sorry
-
 
 /-- Definition 5.6.2 (Exponentiating a real by an integer). Here we use the Mathlib definition coming from `DivInvMonoid`. -/
 lemma Real.pow_eq_pow (x: Real) (n:ℕ): x ^ (n:ℤ) = x ^ n := by rfl
@@ -190,15 +186,14 @@ theorem Real.pow_root_eq_pow_root {a a':ℤ} {b b':ℕ} (hb: b > 0) (hb' : b' > 
     simp [ha, this]
   have : a' > 0 := by sorry
   field_simp at hq
-  lift a to ℕ using le_of_lt ha
-  lift a' to ℕ using le_of_lt this
-  norm_cast at hq this ha ⊢
+  lift a to ℕ using by order
+  lift a' to ℕ using by order
+  norm_cast at *
   set y := x.root (a*b')
   have h1 : y = (x.root b').root a := by rw [root_root, mul_comm] <;> linarith
   have h2 : y = (x.root b).root a' := by rw [root_root, mul_comm, ←hq] <;> linarith
   have h3 : y^a = x.root b' := by rw [h1]; apply pow_of_root (root_nonneg _ _) <;> linarith
   have h4 : y^a' = x.root b := by rw [h2]; apply pow_of_root (root_nonneg _ _) <;> linarith
-
   calc
     _ = (y^a)^a' := by rw [h3]
     _ = y^(a*a') := pow_mul _ _ _
