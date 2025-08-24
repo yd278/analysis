@@ -78,7 +78,7 @@ example {R :ℝ} (hR: R > 0) {n:ℕ} (hn: n > 0) : ∃ g : ℝ → ℝ, ∀ x �
   have hcont : ContinuousOn f (.Icc 0 R) := by fun_prop
   have hmono : StrictMonoOn f (.Icc 0 R) := by
     intro _ hx _ _ hxy; simp_all [f]
-    exact pow_lt_pow_left₀ hxy (by contrapose! hn; linarith) (by linarith)
+    apply pow_lt_pow_left₀ hxy <;> grind
   obtain ⟨ g, ⟨ _, _, _, _, hg⟩ ⟩ := (MonotoneOn.exist_inverse (by positivity) f hcont hmono).2
   simp only [f, zero_pow (by positivity)] at hg; use g
 

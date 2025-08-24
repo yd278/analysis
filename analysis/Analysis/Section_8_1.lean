@@ -28,8 +28,7 @@ abbrev EqualCard (X Y : Type) : Prop := ∃ f : X → Y, Function.Bijective f
 
 /-- Relation with Mathlib's `Equiv` concept -/
 theorem EqualCard.iff {X Y : Type} : EqualCard X Y ↔ Nonempty (X ≃ Y) := by
-  simp [EqualCard]
-  constructor
+  simp [EqualCard]; constructor
   . intro ⟨ f, hf ⟩; exact ⟨ .ofBijective f hf ⟩
   intro ⟨ e ⟩; exact ⟨ e.toFun, e.bijective ⟩
 
@@ -67,8 +66,7 @@ theorem AtMostCountable.equiv {X Y: Type} (hXY : EqualCard X Y) :
 
 /-- Equivalence with Mathlib's `Denumerable` concept (cf. Remark 8.1.2) -/
 theorem CountablyInfinite.iff (X : Type) : CountablyInfinite X ↔ Nonempty (Denumerable X) := by
-  simp [CountablyInfinite, EqualCard.iff]
-  constructor
+  simp [CountablyInfinite, EqualCard.iff]; constructor
   . intro ⟨ e ⟩; exact ⟨ Denumerable.mk' e ⟩
   intro ⟨ h ⟩; exact ⟨ h.eqv X ⟩
 
@@ -99,12 +97,9 @@ theorem CountablyInfinite.iff_image_inj {A:Type} (X: Set A) : CountablyInfinite 
     rintro ⟨ _, rfl ⟩; aesop
   intro ⟨ f, hf ⟩
   have := Function.leftInverse_invFun (Function.Embedding.injective f)
-  use (Function.invFun f) ∘ Subtype.val
-  constructor
-  . rintro ⟨ x, hx ⟩ ⟨ y, hy ⟩ h; simp [hf] at h ⊢ hx hy
-    obtain ⟨ n, rfl ⟩ := hx; obtain ⟨ m, rfl ⟩ := hy
-    simp [this n, this m] at h; aesop
-  intro n; use ⟨ f n, by aesop ⟩; simp [this n]
+  use (Function.invFun f) ∘ Subtype.val; split_ands
+  . rintro ⟨ x, hx ⟩ ⟨ y, hy ⟩ h; grind
+  intro n; use ⟨ f n, by aesop ⟩; grind
 
 /-- Examples 8.1.3 -/
 example : CountablyInfinite ℕ := by sorry
@@ -148,14 +143,13 @@ theorem Nat.min_eq_sInf {X : Set ℕ} (hX : X.Nonempty) : min X = sInf X := by
 open Classical in
 /-- Equivalence with Mathlib's `Nat.find` method -/
 theorem Nat.min_eq_find {X : Set ℕ} (hX : X.Nonempty) : min X = Nat.find hX := by
-  symm; rw [Nat.find_eq_iff]
-  have := min_spec hX; simp [this]; intro n hn; contrapose! hn; exact this.2 n hn
+  symm; rw [Nat.find_eq_iff]; have := min_spec hX; grind
 
 /-- Proposition 8.1.5 -/
 theorem Nat.monotone_enum_of_infinite (X : Set ℕ) [Infinite X] : ∃! f : ℕ → X, Function.Bijective f ∧ StrictMono f := by
   -- This proof is written to follow the structure of the original text.
   let a : ℕ → ℕ := Nat.strongRec (fun n a ↦ min { x ∈ X | ∀ (m:ℕ) (h:m < n), x ≠ a m h })
-  have ha (n:ℕ) : a n = min { x ∈ X | ∀ (m:ℕ) (h:m < n), x ≠ a m } := Nat.strongRec.eq_def _ n
+  have ha : ∀ n, a n = min { x ∈ X | ∀ (m:ℕ) (h:m < n), x ≠ a m } := Nat.strongRec.eq_def _
   have ha_infinite (n:ℕ) : Infinite { x ∈ X | ∀ (m:ℕ) (h:m < n), x ≠ a m } := by
     sorry
   have ha_nonempty (n:ℕ) : { x ∈ X | ∀ (m:ℕ) (h:m < n), x ≠ a m }.Nonempty := Set.Nonempty.of_subtype
@@ -276,7 +270,7 @@ theorem CountablyInfinite.lower_diag : CountablyInfinite { n : ℕ × ℕ | n.2 
     . intro p q hpq; simp [f'] at hpq; solve_by_elim
     intro ⟨ l, hl ⟩; simp at hl
     obtain ⟨ n, m, q, rfl ⟩ := hl; use ⟨ (n, m), q ⟩
-  have : AtMostCountable A := by rw [AtMostCountable.equiv ⟨ f', hf' ⟩]; apply Nat.atMostCountable_subset
+  have : AtMostCountable A := by rw [AtMostCountable.equiv ⟨ _, hf' ⟩]; apply Nat.atMostCountable_subset
   have hfin : ¬ Finite A := by
     sorry
   simp [AtMostCountable] at this; tauto
@@ -301,7 +295,7 @@ theorem Rat.countablyInfinite : CountablyInfinite ℚ := by
   -- This proof is written to follow the structure of the original text.
   have : CountablyInfinite { n:ℤ | n ≠ 0 } := by
     sorry
-  replace :  CountablyInfinite (ℤ × { n:ℤ | n ≠ 0 }) := Int.countablyInfinite.prod this
+  apply Int.countablyInfinite.prod at this
   let f : ℤ × { n:ℤ | n ≠ 0 } → ℚ := fun (a,b) ↦ (a/b:ℚ)
   replace := AtMostCountable.image this f
   have h : f '' .univ = .univ := by

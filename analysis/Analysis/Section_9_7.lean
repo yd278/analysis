@@ -23,25 +23,22 @@ theorem intermediate_value {a b:ℝ} (hab: a < b) {f:ℝ → ℝ} (hf: Continuou
   ∃ c ∈ Set.Icc a b, f c = y := by
   -- This proof is written to follow the structure of the original text.
   obtain hy_left | hy_right := hy
-  . by_cases hya : y = f a
-    . use a; simp [hya, le_of_lt hab]
-    by_cases hyb : y = f b
-    . use b; simp [hyb, le_of_lt hab]
+  . by_cases hya : y = f a; use a; grind
+    by_cases hyb : y = f b; use b; grind
     simp at hy_left
-    replace hya : f a < y := by contrapose! hya; linarith
-    replace hyb : y < f b := by contrapose! hyb; linarith
+    replace hya : f a < y := by grind
+    replace hyb : y < f b := by grind
     set E := {x | x ∈ Set.Icc a b ∧ f x < y}
-    have hE : E ⊆ .Icc a b := by intro x ⟨hx₁, hx₂⟩; exact hx₁
-    have hE_bdd : BddAbove E := BddAbove.mono hE bddAbove_Icc
+    have hE : E ⊆ .Icc a b := fun x ⟨hx₁, hx₂⟩ ↦ hx₁
+    have hE_bdd : BddAbove E := bddAbove_Icc.mono hE
     have hEa : a ∈ E := by simp [E, hya, le_of_lt hab]
     have hE_nonempty : E.Nonempty := by use a
     set c := sSup E
     have hc : c ∈ Set.Icc a b := by
-      simp
-      constructor
-      . exact ConditionallyCompleteLattice.le_csSup _ _ hE_bdd hEa
+      simp; split_ands
+      . solve_by_elim [ConditionallyCompleteLattice.le_csSup]
       convert csSup_le_csSup bddAbove_Icc hE_nonempty hE
-      exact (csSup_Icc (le_of_lt hab)).symm
+      grind [csSup_Icc]
     use c, hc
     have hfc_upper : f c ≤ y := by
       have hxe (n:ℕ) : ∃ x ∈ E, c - 1/(n+1:ℝ) < x := by
@@ -58,10 +55,9 @@ theorem intermediate_value {a b:ℝ} (hab: a < b) {f:ℝ → ℝ} (hf: Continuou
         . exact fun n ↦ le_of_lt (hx2 n)
         exact fun n ↦ ConditionallyCompleteLattice.le_csSup _ _ hE_bdd (hx1 n)
       replace := this.comp_of_continuous hc (hf.continuousWithinAt hc) (fun n ↦ hE (hx1 n))
-      have hfxny (n:ℕ) : f (x n) ≤ y := by specialize hx1 n; simp [E] at hx1; exact le_of_lt hx1.2
+      have hfxny (n:ℕ) : f (x n) ≤ y := by specialize hx1 n; simp [E] at hx1; grind
       exact le_of_tendsto' this hfxny
-    have hne : c ≠ b := by contrapose! hfc_upper; rwa [hfc_upper]
-    replace hne : c < b := by contrapose! hne; simp at hc; linarith
+    have hne : c < b := by grind
     have hfc_lower : y ≤ f c := by
       have : ∃ N:ℕ, ∀ n ≥ N, (c+1/(n+1:ℝ)) < b := by
         choose N hN using exists_nat_gt (1/(b-c))
@@ -72,10 +68,10 @@ theorem intermediate_value {a b:ℝ} (hab: a < b) {f:ℝ → ℝ} (hf: Continuou
       choose N hN using this
       have hmem : ∀ n ≥ N, (c + 1/(n+1:ℝ)) ∈ Set.Icc a b := by
         intro n hn
-        simp only [Set.mem_Icc, le_of_lt (hN n hn), and_true]
+        simp [-one_div, le_of_lt (hN n hn)]
         have : 1/(n+1:ℝ) > 0 := by positivity
         replace : c + 1/(n+1:ℝ) > c := by linarith
-        simp at hc; linarith
+        grind
       have : ∀ n ≥ N, c + 1/(n+1:ℝ) ∉ E := by
         intro n _
         have : 1/(n+1:ℝ) > 0 := by positivity
@@ -85,16 +81,16 @@ theorem intermediate_value {a b:ℝ} (hab: a < b) {f:ℝ → ℝ} (hf: Continuou
         intro n hn; specialize this n hn; contrapose! this
         simp [E]
         have := hmem n hn
-        simp_all [Set.mem_Icc]
+        simp_all
       have hconv : Filter.atTop.Tendsto (fun n:ℕ ↦ c + 1/(n+1:ℝ)) (nhds c) := by
         convert tendsto_one_div_add_atTop_nhds_zero_nat.const_add c; simp
       replace hf := (hf.continuousWithinAt hc).tendsto
       rw [nhdsWithin.eq_1] at hf
       have hconv' : Filter.atTop.Tendsto (fun n:ℕ ↦ c + 1/(n+1:ℝ)) (.principal (.Icc a b)) := by
-        simp only [Filter.tendsto_principal, Filter.eventually_atTop]; use N
+        simp [-one_div, -Set.mem_Icc]; use N
       replace hconv' := Filter.tendsto_inf.mpr ⟨ hconv, hconv' ⟩
       apply ge_of_tendsto (hf.comp hconv') _
-      simp only [Function.comp_apply, Filter.eventually_atTop]; use N
+      simp [-one_div]; use N
     linarith
   sorry
 

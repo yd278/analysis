@@ -74,7 +74,7 @@ theorem Sum.of_comp {X Y:Type} {f:X → ℝ} (h: AbsConvergent f) {g: Y → X} (
   refine ⟨ ⟨ g_inv ∘ g', ⟨ hbij_g_inv_g', by convert hconv' ⟩ ⟩, ?_ ⟩
   have h := eq (f := f ∘ g) hbij_g_inv_g' (by convert hconv')
   rw [hident] at h
-  exact convergesTo_uniq (eq hbij' hconv') h
+  solve_by_elim [convergesTo_uniq, eq]
 
 @[simp]
 theorem Finset.Icc_eq_cast (N:ℕ) : Icc 0 (N:ℤ) = map Nat.castEmbedding (.Icc 0 N) := by
@@ -92,7 +92,7 @@ theorem sum_of_sum_of_AbsConvergent_nonneg {f:ℕ × ℕ → ℝ} (hf:AbsConverg
   set L := Sum f
   set a : ℕ → Series := fun n ↦ ((fun m ↦ f (n, m)):Series)
   have hLpos : 0 ≤ L := by
-    simp [L, Sum, hf]; apply sum_of_nonneg; intro n; by_cases h: n ≥ 0 <;> simp [h]; apply hpos
+    simp [L, Sum, hf]; apply sum_of_nonneg; intro n; by_cases h: n ≥ 0 <;> simp [h]; grind
   have hfinsum (X: Finset (ℕ × ℕ)) : ∑ p ∈ X, f p ≤ L := by sorry
   have hfinsum' (n M:ℕ) : (a n).partial M ≤ L := by
     simp [a, Series.partial, Finset.Icc_eq_cast]
@@ -120,7 +120,7 @@ theorem sum_of_sum_of_AbsConvergent_nonneg {f:ℕ × ℕ → ℝ} (hf:AbsConverg
     solve_by_elim
   replace (N:ℤ) : ∑ n ∈ Icc 0 N, (a n.toNat).sum ≤ L := by
     apply le_of_tendsto' (x := .atTop) (tendsto_finset_sum _ _) (this N)
-    intro n _; exact convergesTo_sum (by solve_by_elim)
+    solve_by_elim [convergesTo_sum]
   replace (N:ℤ) : (fun n ↦ (a n).sum:Series).partial N ≤ L := by
     convert this N with n hn; simp_all
   have hnon' : (fun n ↦ (a n).sum:Series).nonneg := by
@@ -222,15 +222,14 @@ theorem AbsConvergent'.of_countable {X:Type} (hX:CountablyInfinite X) {f:X → �
   constructor
   . intro hf; simp [bddAbove_def] at hf; choose L hL using hf
     have ⟨ g, hg ⟩ := hX.symm; refine ⟨ g, hg, ?_ ⟩
-    unfold absConverges
-    rw [converges_of_nonneg_iff]
+    unfold absConverges; rw [converges_of_nonneg_iff]
     . use L; intro N; by_cases hN: N ≥ 0
       . lift N to ℕ using hN
         set g':= Embedding.mk g hg.1
         convert hL (map g' (Icc 0 N))
         simp [Series.partial]; rfl
       convert hL ∅
-      simp; apply partial_of_lt; simp; contrapose! hN; assumption
+      simp; apply partial_of_lt; grind
     simp [nonneg]
     intro n; by_cases h: n ≥ 0 <;> simp [h]
   intro hf; rwa [AbsConvergent.iff hX f] at hf
@@ -244,7 +243,7 @@ theorem AbsConvergent'.countable_supp {X:Type} {f:X → ℝ} (hf: AbsConvergent'
 theorem AbsConvergent'.subtype {X:Type} {f:X → ℝ} (hf: AbsConvergent' f) (A: Set X) :
   AbsConvergent' (fun x:A ↦ f x) := by
   apply BddAbove.mono _ hf
-  intro z hz; simp at hz ⊢; choose A hA using hz
+  intro z hz; simp at *; choose A hA using hz
   use A.map (Embedding.subtype _); simp [hA]
 
 /-- A generalized sum.  Note that this will give junk values if `f` is not `AbsConvergent'`. -/
@@ -255,7 +254,7 @@ to establish without this) -/
 theorem Sum'.of_finsupp {X:Type} {f:X → ℝ} {A: Finset X} (h: ∀ x ∉ A, f x = 0) : Sum' f = ∑ x ∈ A, f x := by
   unfold Sum'
   set E := { x | f x ≠ 0 }
-  have hE : E ⊆ A := by intro x; simp [E]; by_contra!; aesop
+  have hE : E ⊆ A := by intro _; simp [E]; grind
   have hfin : Finite E := Finite.Set.subset _ hE
   set E' := E.toFinite.toFinset
   rw [Sum.of_finite (fun x:E ↦ f x), ←E'.sum_subtype (by simp [E'])]
@@ -272,7 +271,6 @@ theorem Sum'.of_countable_supp {X:Type} {f:X → ℝ} {A: Set X} (hA: CountablyI
     (AbsConvergent'.of_countable hA).mp (hconv.subtype A)
   rw [AbsConvergent'.of_countable hA]
   refine ⟨ hconv', ?_ ⟩
-  unfold Sum'
   set E := { x | f x ≠ 0 }
   -- The main challenge here is to relate a sum on E with a sum on A.  First, we show containment.
   have hE : E ⊆ A := by intro _; simp [E]; by_contra!; aesop
@@ -282,9 +280,9 @@ theorem Sum'.of_countable_supp {X:Type} {f:X → ℝ} {A: Set X} (hA: CountablyI
   set E' := { n | ↑(g n) ∈ E }
   set ι : E' → E := fun ⟨ n, hn ⟩ ↦ ⟨ g n, by aesop ⟩
   have hι: Bijective ι := by
-    constructor
+    split_ands
     . intro ⟨ _, _ ⟩ ⟨ _, _ ⟩ h; simp [ι, E', Subtype.val_inj] at *; exact hg.1 h
-    . intro ⟨ x, hx ⟩; choose n hn using hg.2 ⟨ x, hE hx ⟩; use ⟨ n, by aesop ⟩; simp [ι, hn]
+    . intro ⟨ x, hx ⟩; choose n hn using hg.2 ⟨ _, hE hx ⟩; use ⟨ n, by aesop ⟩; grind
   -- The cases of infinite and finite E' are handled separately.
   obtain hE' | hE' := Nat.atMostCountable_subset E'
   . --   use Nat.monotone_enum_of_infinite to enumerate E'
@@ -335,7 +333,7 @@ theorem Sum'.of_countable_supp {X:Type} {f:X → ℝ} {A: Set X} (hA: CountablyI
       . intro x hx; simp at *; linarith [hN _ hx]
       intro _ _ hx'; simpa [E',E] using hx'
     _ = ∑ n:E', f (g n) := by convert (sum_set_coe _).symm
-    _ = ∑ n, f (ι n) := sum_congr rfl (by intros; simp [ι])
+    _ = ∑ n, f (ι n) := sum_congr rfl (by grind)
     _ = _ := hι.sum_comp (g := fun x ↦ f x)
 
 /-- Connection with Mathlib's `Summable` property. Some version of this might be suitable
@@ -403,14 +401,14 @@ theorem Sum'.eq_tsum {X:Type} (f:X → ℝ) (h: AbsConvergent' f) :
         convert (tsum_setElem_eq_tsum_setElem_diff _ {x | f x = 0} (by aesop))
       _ = _ := (Equiv.tsum_eq (Equiv.ofBijective _ hg) _).symm
     rw [this]
-    unfold convergesTo
-    rw [Filter.Tendsto.int_natCast_atTop]
+    unfold convergesTo; rw [Filter.Tendsto.int_natCast_atTop]
     convert (Summable.tendsto_sum_tsum_nat ?_).comp (tendsto_add_atTop_nat 1) with n
     . ext N; simp [Series.partial, Nat.range_succ_eq_Icc_zero]
     rw [AbsConvergent'.iff_Summable] at h
     exact h.comp_injective (i := Subtype.val ∘ g) (Subtype.val_injective.comp hg.1)
-  rw [of_finsupp (A := E.toFinite.toFinset) (by simp [E])]
-  exact (tsum_eq_sum (by simp [E])).symm
+  rw [of_finsupp (A := E.toFinite.toFinset)]; symm; apply tsum_eq_sum
+  all_goals simp [E]
+
 
 /-- Proposition 8.2.6 (a) (Absolutely convergent series laws) / Exercise 8.2.3 -/
 theorem Sum'.add {X:Type} {f g:X → ℝ} (hf: AbsConvergent' f) (hg: AbsConvergent' g) :
@@ -466,7 +464,7 @@ theorem permute_convergesTo_of_divergent {a: ℕ → ℝ} (ha: (a:Series).conver
   have hdisj : Disjoint A_plus A_minus := by
     rw [Set.disjoint_iff_inter_eq_empty]; ext; simp [A_plus, A_minus]
   have hunion : A_plus ∪ A_minus = .univ := by
-    ext; simp [A_plus, A_minus]; apply le_or_lt
+    ext; simp [A_plus, A_minus]; grind
   have hA_plus_inf : Infinite A_plus := sorry
   have hA_minus_inf : Infinite A_minus := sorry
   obtain ⟨ a_plus, ha_plus_bij, ha_plus_mono ⟩ := (Nat.monotone_enum_of_infinite A_plus).exists

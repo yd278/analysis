@@ -69,16 +69,16 @@ theorem Convergesto.iff (X:Set ℝ) (f: ℝ → ℝ) (L:ℝ) (x₀:ℝ) :
   rw [Filter.eventually_inf_principal]
   simp [Filter.Eventually, mem_nhds_iff_exists_Ioo_subset]
   constructor
-  . intro ⟨ δ, hpos, hδ ⟩; use (x₀-δ), (x₀+δ), ⟨by linarith, by linarith⟩
-    intro _; simp; intros; solve_by_elim
-  intro ⟨ l, u, ⟨ h1, h2 ⟩, h ⟩
-  have h1' : 0 < x₀ - l := by linarith
-  have h2' : 0 < u - x₀ := by linarith
+  . intro ⟨ δ, _, _ ⟩; use x₀-δ, x₀+δ, by grind
+    intro _; simp; grind
+  intro ⟨ l, u, ⟨ _, _ ⟩, h ⟩
+  have h1 : 0 < x₀ - l := by linarith
+  have h2 : 0 < u - x₀ := by linarith
   set δ := min (x₀ - l) (u - x₀)
-  have hδ1 : δ ≤ x₀ - l := min_le_left _ _
-  have hδ2 : δ ≤ u - x₀ := min_le_right _ _
+  observe hδ1 : δ ≤ x₀ - l
+  observe hδ2 : δ ≤ u - x₀
   use δ, (by positivity); intro x hxX _ _
-  specialize h (show x ∈ .Ioo l u by simp; constructor <;> linarith)
+  specialize h (show x ∈ .Ioo l u by simp; grind)
   simpa [hxX] using h
 
 /-- Example 9.3.8 -/
@@ -111,7 +111,8 @@ theorem Convergesto.add {E:Set ℝ} {f g: ℝ → ℝ} {L M:ℝ} {x₀:ℝ} (h: 
   Convergesto E (f + g) (L + M) x₀ := by
     -- This proof is written to follow the structure of the original text.
     rw [iff_conv _ _ h] at hf hg ⊢
-    intro a ha hconv; specialize hf a ha hconv; specialize hg a ha hconv; convert hf.add hg using 1
+    intro a ha hconv; specialize hf a ha hconv; specialize hg a ha hconv
+    convert hf.add hg using 1
 
 /-- Proposition 9.3.14 (Limit laws for functions) / Exercise 9.3.2 -/
 theorem Convergesto.sub {E:Set ℝ} {f g: ℝ → ℝ} {L M:ℝ} {x₀:ℝ} (h: AdherentPt x₀ E)

@@ -31,7 +31,7 @@ theorem _root_.HasDerivWithinAt.of_inverse {X Y: Set ℝ} {f: ℝ → ℝ} {g:�
   have h1 : HasDerivWithinAt (fun x ↦ x) (g'y₀ * f'x₀) X x₀ := by
     apply (hf.of_comp hfx₀ hfXY hg).congr _ (hgf x₀ hx₀).symm
     intro x hx; simp [hgf x hx]
-  have h2 : HasDerivWithinAt (fun x ↦ x) 1 X x₀ := hasDerivWithinAt_id _ _
+  observe h2 : HasDerivWithinAt (fun x ↦ x) 1 X x₀
   solve_by_elim [derivative_unique]
 
 theorem _root_.HasDerivWithinAt.of_inverse' {X Y: Set ℝ} {f: ℝ → ℝ} {g:ℝ → ℝ}
@@ -63,7 +63,7 @@ theorem inverse_function_theorem {X Y: Set ℝ} {f: ℝ → ℝ} {g:ℝ → ℝ}
     HasDerivWithinAt g (1/f'x₀) Y y₀ := by
     -- This proof is written to follow the structure of the original text.
     have had : AdherentPt y₀ (Y \ {y₀}) := by
-      simp [←AdherentPt_def, limit_of_AdherentPt] at hcluster ⊢
+      simp [←AdherentPt_def, limit_of_AdherentPt] at *
       choose x hx hconv using hcluster; use f ∘ x
       constructor
       . intro n; refine ⟨ by aesop, ?_ ⟩

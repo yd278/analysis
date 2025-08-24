@@ -72,7 +72,7 @@ theorem _root_.Filter.Tendsto.comp_of_continuous {X:Set ℝ} {f: ℝ → ℝ} {x
   (hconv: Filter.atTop.Tendsto a (nhds x₀)):
   Filter.atTop.Tendsto (fun n ↦ f (a n)) (nhds (f x₀)) := by
   have := (ContinuousWithinAt.tfae X f h).out 0 1
-  rw [this] at h_cont; solve_by_elim
+  grind
 
 /- Proposition 9.4.9 -/
 theorem ContinuousWithinAt.add {X:Set ℝ} (f g: ℝ → ℝ) {x₀:ℝ} (h : x₀ ∈ X)

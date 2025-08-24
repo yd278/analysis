@@ -36,7 +36,7 @@ instance Series.instCoe : Coe (ℕ → ℝ) Series where
   coe := fun a ↦ {
     m := 0
     seq n := if n ≥ 0 then a n.toNat else 0
-    vanish n hn := by simp [hn]
+    vanish := by grind
   }
 
 @[simp]
@@ -45,7 +45,7 @@ theorem Series.eval_coe (a: ℕ → ℝ) (n: ℕ) : (a: Series).seq n = a n := b
 abbrev Series.mk' {m:ℤ} (a: { n // n ≥ m } → ℝ) : Series where
   m := m
   seq n := if h : n ≥ m then a ⟨n, h⟩ else 0
-  vanish n hn := by simp [hn]
+  vanish := by grind
 
 theorem Series.eval_mk' {m:ℤ} (a : { n // n ≥ m } → ℝ) {n : ℤ} (h:n ≥ m) :
     (Series.mk' a).seq n = a ⟨ n, h ⟩ := by simp [h]
@@ -62,7 +62,7 @@ theorem Series.partial_succ (s : Series) {N:ℤ} (h: N ≥ s.m-1) : s.partial (N
 theorem Series.partial_of_lt {s : Series} {N:ℤ} (h: N < s.m) : s.partial N = 0 := by
   unfold Series.partial
   rw [Finset.sum_eq_zero]
-  intro n hn; simp at hn; linarith
+  intro n hn; simp at hn; grind
 
 abbrev Series.convergesTo (s : Series) (L:ℝ) : Prop := Filter.atTop.Tendsto (s.partial) (nhds L)
 
@@ -156,24 +156,24 @@ theorem Series.converges_of_alternating {m:ℤ} {a: { n // n ≥ m} → ℝ} (ha
   unfold converges convergesTo
   set b := mk' fun n ↦ (-1) ^ (n:ℤ) * a n
   set S := b.partial
-  have claim0 {N:ℤ} (hN: N ≥ m) : S (N+1) = S N + (-1)^(N+1) * a ⟨ N+1, by linarith ⟩ := by
-    convert b.partial_succ ?_; simp [b, show N+1 ≥ m by linarith]; linarith
-  have claim1 {N:ℤ} (hN: N ≥ m) : S (N+2) = S N + (-1)^(N+1) * (a ⟨ N+1, by linarith ⟩ - a ⟨ N+2, by linarith ⟩) := calc
-      S (N+2) = S N + (-1)^(N+1) * a ⟨ N+1, by linarith ⟩ + (-1)^(N+2) * a ⟨ N+2, by linarith ⟩ := by
+  have claim0 {N:ℤ} (hN: N ≥ m) : S (N+1) = S N + (-1)^(N+1) * a ⟨ N+1, by grind ⟩ := by
+    convert b.partial_succ ?_; simp [b, show N+1 ≥ m by grind]; linarith
+  have claim1 {N:ℤ} (hN: N ≥ m) : S (N+2) = S N + (-1)^(N+1) * (a ⟨ N+1, by grind ⟩ - a ⟨ N+2, by grind ⟩) := calc
+      S (N+2) = S N + (-1)^(N+1) * a ⟨ N+1, by grind ⟩ + (-1)^(N+2) * a ⟨ N+2, by grind ⟩ := by
         simp_rw [←claim0 hN, show N+2=N+1+1 by abel]; apply claim0; linarith
-      _ = S N + (-1)^(N+1) * a ⟨ N+1, by linarith ⟩ + (-1) * (-1)^(N+1) * a ⟨ N+2, by linarith ⟩ := by
-        congr; rw [←zpow_one_add₀ (by norm_num)]; congr 1; abel
+      _ = S N + (-1)^(N+1) * a ⟨ N+1, by grind ⟩ + (-1) * (-1)^(N+1) * a ⟨ N+2, by grind ⟩ := by
+        congr; rw [←zpow_one_add₀] <;> grind
       _ = _ := by ring
   have claim2 {N:ℤ} (hN: N ≥ m) (h': Odd N) : S (N+2) ≥ S N := by
     simp [claim1 hN, h'.add_one.neg_one_zpow]; apply ha'; simp
   have claim3 {N:ℤ} (hN: N ≥ m) (h': Even N) : S (N+2) ≤ S N := by
     simp [claim1 hN, h'.add_one.neg_one_zpow]; apply ha'; simp
   have why1 {N:ℤ} (hN: N ≥ m) (h': Even N) (k:ℕ) : S (N+2*k) ≤ S N := by sorry
-  have why2 {N:ℤ} (hN: N ≥ m) (h': Even N) (k:ℕ) : S (N+2*k+1) ≥ S N - a ⟨ N+1, by linarith ⟩ := by sorry
+  have why2 {N:ℤ} (hN: N ≥ m) (h': Even N) (k:ℕ) : S (N+2*k+1) ≥ S N - a ⟨ N+1, by grind ⟩ := by sorry
   have why3 {N:ℤ} (hN: N ≥ m) (h': Even N) (k:ℕ) : S (N+2*k+1) ≤ S (N+2*k) := by sorry
   have claim4 {N:ℤ} (hN: N ≥ m) (h': Even N) (k:ℕ) : S N -
- a ⟨ N+1, by linarith ⟩ ≤ S (N + 2*k + 1) ∧ S (N + 2*k + 1) ≤ S (N + 2*k) ∧ S (N + 2*k) ≤ S N := ⟨ ge_iff_le.mp (why2 hN h' k), why3 hN h' k, why1 hN h' k ⟩
-  have why4 {N n:ℤ} (hN: N ≥ m) (h': Even N) (hn: n ≥ N) : S N - a ⟨ N+1, by linarith ⟩ ≤ S n ∧ S n ≤ S N := by
+ a ⟨ N+1, by grind ⟩ ≤ S (N + 2*k + 1) ∧ S (N + 2*k + 1) ≤ S (N + 2*k) ∧ S (N + 2*k) ≤ S N := ⟨ ge_iff_le.mp (why2 hN h' k), why3 hN h' k, why1 hN h' k ⟩
+  have why4 {N n:ℤ} (hN: N ≥ m) (h': Even N) (hn: n ≥ N) : S N - a ⟨ N+1, by grind ⟩ ≤ S n ∧ S n ≤ S N := by
     sorry
   have why5 {ε:ℝ} (hε: ε > 0) : ∃ N, ∀ n ≥ N, ∀ m ≥ N, |S n - S m| ≤ ε := by sorry
   have : CauchySeq S := by
@@ -217,7 +217,7 @@ instance Series.inst.smul : SMul ℝ Series where
   smul c s := {
     m := s.m
     seq n := if n ≥ s.m then c * s.seq n else 0
-    vanish n hn := by rw [lt_iff_not_ge] at hn; simp [hn]
+    vanish := by grind
   }
 
 theorem Series.smul_coe (a: ℕ → ℝ) (c: ℝ) : (c • a:Series) = (fun n ↦ c * a n) := by
@@ -237,7 +237,7 @@ instance Series.inst_sub : Sub Series where
   sub a b := {
     m := max a.m b.m
     seq n := if n ≥ max a.m b.m then a.seq n - b.seq n else 0
-    vanish n hn := by rw [lt_iff_not_ge] at hn; simp [hn]
+    vanish := by grind
   }
 
 theorem Series.sub_coe (a b: ℕ → ℝ) : (a:Series) - (b:Series) = (fun n ↦ a n - b n) := by

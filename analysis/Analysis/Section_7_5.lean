@@ -71,7 +71,7 @@ theorem Series.root_test_pos {s : Series}
     rw [converges_from _ k]; convert this; simp; refine ⟨ by omega, ?_ ⟩
     ext n
     by_cases hnm : n ≥ s.m <;> simp [hnm]
-    by_cases hn: n ≥ N <;> simp [hn] <;> intros <;> omega
+    by_cases hn: n ≥ N <;> simp [hn] <;> grind
 
 
 /-- Theorem 7.5.1(b) (Root test) -/
@@ -82,7 +82,7 @@ theorem Series.root_test_neg {s : Series}
     apply diverges_of_nodecay
     by_contra this; rw [LinearOrderedAddCommGroup.tendsto_nhds] at this; specialize this 1 (by positivity)
     choose n hn hs hs' using (h.and_eventually this).forall_exists_of_atTop 1
-    simp at hs'; replace hs' := rpow_lt_one (by positivity) hs' (show 0 < 1/(n:ℝ) by positivity)
+    simp at hs'; replace hs' := rpow_lt_one ?_ hs' (?_:0 < 1/(n:ℝ)) <;> try positivity
     rw [show (1:EReal) = (1:ℝ) by simp, EReal.coe_lt_coe_iff] at hs
     linarith
 
@@ -106,7 +106,7 @@ theorem Series.ratio_ineq {c:ℤ → ℝ} (m:ℤ) (hpos: ∀ n ≥ m, c n > 0) :
     atTop.limsup (fun n ↦ ↑(c (n+1) / c n:ℝ))
     := by
   -- This proof is written to follow the structure of the original text.
-  refine ⟨ ?_, liminf_le_limsup (by isBoundedDefault) (by isBoundedDefault), ?_ ⟩
+  refine ⟨ ?_, liminf_le_limsup ?_ ?_, ?_ ⟩ <;> try isBoundedDefault
   . sorry
   set L' := limsup (fun n ↦ ((c (n+1) / c n:ℝ):EReal)) .atTop
   by_cases hL : L' = ⊤; simp [hL]
@@ -127,7 +127,7 @@ theorem Series.ratio_ineq {c:ℤ → ℝ} (m:ℤ) (hpos: ∀ n ≥ m, c n > 0) :
   have : y = y.toReal := by symm; apply coe_toReal hy'; contrapose! hy; simp [hy]
   rw [this, hL', EReal.coe_lt_coe_iff] at hy
   set ε := y.toReal - L
-  have hε : 0 < ε := by simp [ε]; linarith
+  have hε : 0 < ε := by grind
   replace this : y = (L+ε:ℝ) := by convert this; simp [ε]
   rw [this]
   have hε' : L' < (L+ε:ℝ) := by rw [hL', EReal.coe_lt_coe_iff]; linarith
@@ -165,7 +165,7 @@ theorem Series.ratio_ineq {c:ℤ → ℝ} (m:ℤ) (hpos: ∀ n ≥ m, c n > 0) :
       . apply Frequently.of_forall; intros; positivity
       . apply Eventually.of_forall; simp; positivity
       . simp [-coe_add]
-      simp [-coe_add]; right; positivity
+      simp [-coe_add]; grind
     _ = (L+ε:ℝ) := by
       simp; convert one_mul _
       apply Tendsto.limsup_eq

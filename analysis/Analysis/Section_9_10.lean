@@ -24,7 +24,7 @@ theorem BddAbove.unbounded_iff' (X:Set ℝ) : ¬ BddAbove X ↔ sSup ((fun x:ℝ
   constructor
   . intro h M hM; choose x hx hxM using h M.toReal
     use x, hx; revert M; simp [EReal.forall]
-  intro h M; specialize h (M:EReal) (by simp); simp_all
+  intro h M; specialize h (M:EReal) ?_ <;> simp_all
 
 theorem BddBelow.unbounded_iff (X:Set ℝ) : ¬ BddBelow X ↔ ∀ M, ∃ x ∈ X, x < M := by
   simp [bddBelow_def]
@@ -34,13 +34,13 @@ theorem BddBelow.unbounded_iff' (X:Set ℝ) : ¬ BddBelow X ↔ sInf ((fun x:ℝ
   constructor
   . intro h M hM; choose x hx hxM using h M.toReal
     use x, hx; revert M; simp [EReal.forall]
-  intro h M; specialize h (M:EReal) (by simp); simp_all
+  intro h M; specialize h (M:EReal) ?_ <;>simp_all
 
 /-- Definition 9.10.13 (Limit at infinity) -/
 theorem Filter.Tendsto.AtTop.iff {X: Set ℝ} (f:ℝ → ℝ) (L:ℝ) : Filter.Tendsto f (.atTop ⊓ .principal X) (nhds L) ↔ ∀ ε > (0:ℝ), ∃ M, ∀ x ∈ X ∩ .Ici M, |f x - L| < ε := by
   rw [LinearOrderedAddCommGroup.tendsto_nhds]
   peel with ε hε
-  simp [Filter.eventually_inf_principal, Filter.eventually_atTop]
+  simp [Filter.eventually_inf_principal]
   aesop
 
 /-- Exercise 9.10.4 -/

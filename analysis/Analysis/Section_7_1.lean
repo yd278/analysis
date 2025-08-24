@@ -40,7 +40,7 @@ namespace Finset
 
 /-- Definition 7.1.1 -/
 theorem sum_of_empty {n m:ℤ} (h: n < m) (a: ℤ → ℝ) : ∑ i ∈ Icc m n, a i = 0 := by
-  rw [sum_eq_zero]; intro x hx; rw [mem_Icc] at hx; linarith
+  rw [sum_eq_zero]; intro _; rw [mem_Icc]; grind
 
 /--
   Definition 7.1.1. This is similar to Mathlib's `Finset.sum_Icc_succ_top` except that the
@@ -121,7 +121,7 @@ theorem finite_series_of_rearrange {n:ℕ} {X':Type*} (X: Finset X') (hcard: X.c
   set h' : ℤ → X := fun i ↦ if (i:ℤ) < j then h (π i) else h (π (i+1))
   have : ∑ i ∈ Icc (1:ℤ) (n + 1), f (h (π i)) = ∑ i ∈ Icc (1:ℤ) n, f (h' i) + f x := calc
     _ = ∑ i ∈ Icc (1:ℤ) j, f (h (π i)) + ∑ i ∈ Icc (j+1:ℤ) (n + 1), f (h (π i)) := by
-      convert (concat_finite_series _ _ _).symm <;> linarith
+      symm; apply concat_finite_series <;> linarith
     _ = ∑ i ∈ Icc (1:ℤ) (j-1), f (h (π i)) + f ( h (π j) )
         + ∑ i ∈ Icc (j+1:ℤ) (n + 1), f (h (π i)) := by
       congr; convert sum_of_nonempty _ _ <;> simp [hj1]
@@ -189,7 +189,7 @@ theorem finite_series_eq {n:ℕ} {Y:Type*} (X: Finset Y) (f: Y → ℝ) (g: Icc 
     simpa [Subtype.val_inj, hg.injective.eq_iff] using h
   . intro b hb
     have ⟨⟨i, hi⟩, h⟩ := hg.surjective ⟨ b, hb ⟩
-    use i, hi; simp [h]
+    grind
   intros; simp_all
 
 /-- Proposition 7.1.11(a) / Exercise 7.1.2 -/
@@ -241,11 +241,11 @@ theorem finite_series_of_finite_series {XX YY:Type*} (X: Finset XX) (Y: Finset Y
   revert X; induction' n with n hn
   . sorry
   intro X hX
-  have hnon : X.Nonempty := by rw [←card_ne_zero]; linarith
+  have hnon : X.Nonempty := by grind [card_ne_zero]
   choose x₀ hx₀ using hnon.exists_mem
   set X' := X.erase x₀
   have hcard : X'.card = n := by simp [X', card_erase_of_mem hx₀, hX]
-  have hunion : X = X' ∪ {x₀} := by ext x; by_cases h:x = x₀ <;> simp [h,X', hx₀]
+  have hunion : X = X' ∪ {x₀} := by ext x; by_cases x = x₀ <;> grind
   have hdisj : Disjoint X' {x₀} := by simp [X']
   calc
     _ = ∑ x ∈ X', ∑ y ∈ Y, f (x, y) + ∑ x ∈ {x₀}, ∑ y ∈ Y, f (x, y) := by
@@ -257,12 +257,10 @@ theorem finite_series_of_finite_series {XX YY:Type*} (X: Finset XX) (Y: Finset Y
       congr 1
       rw [finite_series_of_fintype, finite_series_of_fintype f]
       set π : Finset.product {x₀} Y → Y :=
-        fun z ↦ ⟨ z.val.2, by obtain ⟨ z, hz ⟩ := z; simp at hz ⊢; obtain ⟨ a, ⟨ ha, rfl ⟩ ⟩ := hz; simp [ha] ⟩
+        fun z ↦ ⟨ z.val.2, by obtain ⟨ z, hz ⟩ := z; simp at hz ⊢; grind ⟩
       have hπ : Function.Bijective π := by
         constructor
-        . intro ⟨ ⟨ x, y ⟩, hz ⟩ ⟨ ⟨ x', y' ⟩, hz' ⟩ hzz'
-          simp [π] at hz hz' hzz' ⊢
-          grind
+        . intro ⟨ ⟨ x, y ⟩, hz ⟩ ⟨ ⟨ x', y' ⟩, hz' ⟩ hzz'; simp [π] at hz hz' hzz' ⊢; grind
         intro ⟨ y, hy ⟩; use ⟨ (x₀, y), by simp [hy] ⟩
       convert map_finite_series _ hπ with z
       obtain ⟨⟨x, y⟩, hz ⟩ := z
