@@ -294,6 +294,25 @@ theorem SetTheory.Set.Fin.coe_toNat {n:ℕ} (i: Fin n) : ((i:ℕ):Object) = (i:O
   set j := (i:ℕ); obtain ⟨ h, h':i = Fin_mk n j h ⟩ := toNat_spec i; rw [h']
 
 @[simp]
+lemma SetTheory.Set.Fin.coe_inj {n:ℕ} {i j: Fin n} : i = j ↔ (i:ℕ) = (j:ℕ) := by
+  constructor
+  · simp_all
+  intro h
+  obtain ⟨_, hi⟩ := toNat_spec i
+  obtain ⟨_, hj⟩ := toNat_spec j
+  rw [hi, hj]
+  congr
+
+@[simp]
+theorem SetTheory.Set.Fin.coe_eq_iff {n:ℕ} (i: Fin n) {j:ℕ} : (i:Object) = (j:Object) ↔ i = j := by
+  constructor
+  · intro h
+    rw [Subtype.coe_eq_iff] at h
+    obtain ⟨_, rfl⟩ := h
+    simp [←Object.natCast_inj]
+  aesop
+
+@[simp]
 theorem SetTheory.Set.Fin.toNat_mk {n:ℕ} (m:ℕ) (h: m < n) : (Fin_mk n m h : ℕ) = m := by
   have := coe_toNat (Fin_mk n m h)
   rwa [Object.natCast_inj] at this
