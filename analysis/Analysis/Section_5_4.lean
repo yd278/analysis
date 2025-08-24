@@ -14,6 +14,13 @@ doing so.
 Main constructions and results of this section:
 
 - Ordering on the real line
+
+## Tips from past users
+
+Users of the companion who have completed the exercises in this section are welcome to send their tips for future users in this section as PRs.
+
+- (Add tip here)
+
 -/
 
 namespace Chapter5

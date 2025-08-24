@@ -17,6 +17,13 @@ Main constructions and results of this section:
 
 - Russell's paradox (ruling out the axiom of universal specification).
 - The axiom of regularity (foundation) - an axiom designed to avoid Russell's paradox.
+
+## Tips from past users
+
+Users of the companion who have completed the exercises in this section are welcome to send their tips for future users in this section as PRs.
+
+- (Add tip here)
+
 --/
 
 namespace Chapter3

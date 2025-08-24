@@ -20,6 +20,12 @@ easily using the Mathlib API for these operations.  However, the spirit of the e
 solve these instead using the API provided in this section, as well as more basic Mathlib API for
 the rational numbers that does not reference either absolute value or exponentiation.
 
+## Tips from past users
+
+Users of the companion who have completed the exercises in this section are welcome to send their tips for future users in this section as PRs.
+
+- (Add tip here)
+
 -/
 
 

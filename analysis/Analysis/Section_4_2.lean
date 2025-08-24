@@ -25,6 +25,13 @@ Main constructions and results of this section:
 
 Note: here (and in the sequel) we use Mathlib's natural numbers `ℕ` and integers `ℤ` rather than
 the Chapter 2 natural numbers and Section 4.1 integers.
+
+## Tips from past users
+
+Users of the companion who have completed the exercises in this section are welcome to send their tips for future users in this section as PRs.
+
+- (Add tip here)
+
 -/
 
 namespace Section_4_2

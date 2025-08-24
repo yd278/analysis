@@ -21,6 +21,13 @@ because we used a specific construction `Chapter2.Nat` of the natural numbers th
 type, and used that inductive type to construct a recursor.  Here, we give some exercises to show
 how one can accomplish the same tasks directly from the Peano axioms, without knowing the specific
 implementation of the natural numbers.
+
+## Tips from past users
+
+Users of the companion who have completed the exercises in this section are welcome to send their tips for future users in this section as PRs.
+
+- (Add tip here)
+
 -/
 
 /-- Converting a Chapter 2 natural number to a Mathlib natural number. -/

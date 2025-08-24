@@ -153,7 +153,7 @@ theorem Nat.eq_recurse (f: Nat → Nat → Nat) (c: Nat) (a: Nat → Nat) :
     rw [hsucc n, recurse_succ, hn]
   intro h
   rw [h]
-  constructor
+  constructor -- could also use `split_ands` or `and_intros` here
   . exact recurse_zero _ _
   exact recurse_succ _ _
 
@@ -162,7 +162,7 @@ theorem Nat.eq_recurse (f: Nat → Nat → Nat) (c: Nat) (a: Nat → Nat) :
 theorem Nat.recurse_uniq (f: Nat → Nat → Nat) (c: Nat) :
     ∃! (a: Nat → Nat), a 0 = c ∧ ∀ n, a (n++) = f n (a n) := by
   apply ExistsUnique.intro (recurse f c)
-  . constructor
+  . constructor -- could also use `split_ands` or `and_intros` here
     . exact recurse_zero _ _
     . exact recurse_succ _ _
   intro a

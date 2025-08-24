@@ -28,6 +28,13 @@ implemented in the Chapter 3 framework.
 We will work here with the version `Nat` of the natural numbers internal to the Chapter 3 set
 theory, though usually we will use coercions to then immediately translate to the Mathlib
 natural numbers `ℕ`.
+
+## Tips from past users
+
+Users of the companion who have completed the exercises in this section are welcome to send their tips for future users in this section as PRs.
+
+- (Add tip here)
+
 -/
 
 
