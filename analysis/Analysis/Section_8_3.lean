@@ -68,14 +68,13 @@ theorem Uncountable.real : Uncountable ℝ := by
   set f : Set ℕ → ℝ := fun A ↦ ∑' n:A, a n
   have hsummable (A: Set ℕ) : Summable (fun n:A ↦ a n) := by
     apply Summable.subtype (f := a)
-    convert summable_geometric_of_lt_one (show 0 ≤ (1/10:ℝ) by norm_num) (by norm_num) using 2 with n
+    convert summable_geometric_of_lt_one (?_:0 ≤ (1/10:ℝ)) ?_ using 2 with n <;> try norm_num
     unfold a
-    rw [one_div_pow, Real.rpow_neg (by norm_num), one_div]; simp
+    rw [one_div_pow, Real.rpow_neg, one_div]; simp; norm_num
   have h_decomp {A B C: Set ℕ} (hC : C = A ∪ B) (hAB: ∀ n, n ∉ A ∩ B) :  ∑' n:C, a n = ∑' n:A, a n + ∑' n:B, a n := by
-    convert Summable.tsum_union_disjoint ?_ ?_ ?_ <;> try infer_instance
+    convert Summable.tsum_union_disjoint ?_ ?_ ?_ <;> try first | infer_instance | apply hsummable
     . rw [hC]
-    . rw [Set.disjoint_iff_inter_eq_empty]; ext n; simp [hAB n]
-    all_goals apply hsummable
+    rw [Set.disjoint_iff_inter_eq_empty]; grind
   have h_nonneg (A:Set ℕ) : ∑' n:A, a n ≥ 0 := by simp [a]; positivity
   have h_congr {A B: Set ℕ} (hAB: A = B) : ∑' n:A, a n = ∑' n:B, a n  := by rw [hAB]
   have : Function.Injective f := by
@@ -86,11 +85,8 @@ theorem Uncountable.real : Uncountable ℝ := by
     simp [symmDiff] at this; choose h1 h2 using this
     wlog h : n₀ ∈ A ∧ n₀ ∉ B generalizing A B
     . simp [h] at h1
-      exact this hAB.symm
-        (by simp [symmDiff_comm]; tauto)
-        (by intro n hn; specialize h2 n (by tauto); simp [symmDiff_comm, n₀, h2])
-        (by simpa [symmDiff_comm])
-    replace h2 {n:ℕ} (hn: n < n₀) : n ∈ A ↔ n ∈ B := by contrapose! hn; exact h2 n (by tauto)
+      apply this hAB.symm <;> simp [symmDiff_comm] <;> grind
+    replace h2 {n:ℕ} (hn: n < n₀) : n ∈ A ↔ n ∈ B := by grind
     have : (0:ℝ) > 0 := calc
       _ = f A - f B := by linarith
       _ = ∑' n:A, a n - ∑' n:B, a n := rfl
@@ -112,10 +108,10 @@ theorem Uncountable.real : Uncountable ℝ := by
           ((∑' n:{n ∈ B|n < n₀}, a n + 0) + ∑' n:{n ∈ B|n > n₀}, a n) := by
         congr 3
         . calc
-            _ = ∑' n:({n₀}:Set ℕ), a n := by apply h_congr; ext n; simp; rintro rfl; tauto
+            _ = ∑' n:({n₀}:Set ℕ), a n := by apply h_congr; ext n; simp; grind
             _ = _ := by simp
         . calc
-            _ = ∑' n:(∅:Set ℕ), a n := by apply h_congr; ext n; simp; contrapose! h; simp [←h.2, h.1]
+            _ = ∑' n:(∅:Set ℕ), a n := by apply h_congr; ext n; simp; grind
             _ = _ := by simp
       _ = (∑' n:{n ∈ A|n < n₀}, a n - ∑' n:{n ∈ B|n < n₀}, a n) + a n₀ +
           ∑' n:{n ∈ A|n > n₀}, a n - ∑' n:{n ∈ B|n > n₀}, a n := by abel
@@ -134,7 +130,7 @@ theorem Uncountable.real : Uncountable ℝ := by
         congr
         set ι : ℕ → {n | n > n₀} := fun j ↦ ⟨ j+(n₀+1), by simp; linarith ⟩
         have hι : Function.Bijective ι := by
-          constructor
+          split_ands
           . intro j k hjk; simpa [ι] using hjk
           intro ⟨ n, hn ⟩; simp [ι] at hn ⊢; use n - n₀ - 1; omega
         rw [←(Equiv.ofBijective ι hι).tsum_eq]
@@ -144,13 +140,13 @@ theorem Uncountable.real : Uncountable ℝ := by
             apply tsum_congr; intro j
             rw [pow_add, pow_add, Real.rpow_sub, Real.rpow_neg,
               Real.rpow_one, Real.rpow_natCast] <;> try positivity
-            simp
-            congr
+            simp; congr
           _ = (10:ℝ)^(-1-n₀:ℝ) * ∑' j:ℕ, (1/(10:ℝ))^j := tsum_mul_left
           _ = _ := by
-            rw [tsum_geometric_of_lt_one (by norm_num) (by norm_num),
+            rw [tsum_geometric_of_lt_one,
                 show -1 - (n₀:ℝ) = (-n₀:ℝ) + (-1:ℝ) by ring,
-                Real.rpow_add, Real.rpow_neg, Real.rpow_natCast] <;> try positivity
+                Real.rpow_add, Real.rpow_neg, Real.rpow_natCast]
+                <;> try (first | positivity | norm_num)
             ring
       _ = (8 / (9:ℝ)) * (10:ℝ)^(-(n₀:ℝ)) := by ring
       _ > 0 := by positivity

@@ -79,10 +79,10 @@ example : ¬ IsTotal X_8_5_4 := by sorry
 
 /-- Definition 8.5.5 (Maximal and minimal elements).  Here we use Mathlib's `IsMax` and `IsMin`. -/
 theorem IsMax.iff {X:Type} [PartialOrder X] (x:X) :
-  IsMax x ↔ ¬ ∃ y, x < y := by rw [isMax_iff_forall_not_lt]; push_neg; rfl
+  IsMax x ↔ ¬ ∃ y, x < y := by rw [isMax_iff_forall_not_lt]; grind
 
 theorem IsMin.iff {X:Type} [PartialOrder X] (x:X) :
-  IsMin x ↔ ¬ ∃ y, x > y := by rw [isMin_iff_forall_not_lt]; push_neg; rfl
+  IsMin x ↔ ¬ ∃ y, x > y := by rw [isMin_iff_forall_not_lt]; grind
 
 /-- Examples 8.5.6 -/
 example : IsMin (⟨ {2}, by aesop ⟩ : X_8_5_4) := by sorry
@@ -114,8 +114,7 @@ theorem WellFoundedLT.iff' {X:Type} [PartialOrder X] (h: IsTotal X) :
 example : WellFoundedLT ℕ := by
   rw [WellFoundedLT.iff]
   intro A hA; use ⟨ _, (Nat.min_spec hA).1 ⟩
-  simp [IsMin]
-  intro a ha _; exact (Nat.min_spec hA).2 _ ha
+  simp [IsMin]; grind [Nat.min_spec]
 
 /-- Exercise 8.1.2 -/
 example : ¬ WellFoundedLT ℤ := by sorry
@@ -138,7 +137,7 @@ theorem WellFoundedLT.subset {X:Type} [PartialOrder X] {A B: Set X} (hA: IsTotal
   rw [iff] at hwell ⊢; intro C hC
   have ⟨ ⟨ ⟨ x, hx ⟩, hx' ⟩, hmin ⟩ := hwell ((B.embeddingOfSubset _ hAB) '' C) (by aesop)
   simp at hx'; choose y hy hyC this using hx'; use ⟨ _, hyC ⟩
-  simp_all [IsMin, Set.embeddingOfSubset]; subst this; intros; aesop
+  simp_all [IsMin, Set.embeddingOfSubset]; grind
 
 /-- Proposition 8.5.10 / Exercise 8.5.10 -/
 theorem WellFoundedLT.strong_induction {X:Type} [LinearOrder X] [WellFoundedLT X] {P:X → Prop}
@@ -235,12 +234,12 @@ theorem WellFoundedLT.partialOrder {X:Type} [PartialOrder X] (x₀ : X) : ∃ Y 
     unfold IsTotal; by_contra!; obtain ⟨ ⟨ ⟨ Y, hY1 ⟩, hY2 ⟩, ⟨ ⟨ Y', hY'1⟩, hY'2 ⟩, h1, h2 ⟩ := this
     simp_all [Set.not_subset]
     choose x₁ hx₁ hx₁' using h1; choose x₂ hx₂ hx₂' using h2
-    have h1 : IsStrictUpperBound Y x₂ := by solve_by_elim
-    have h2 : IsStrictUpperBound Y' x₁ := by solve_by_elim
+    observe h1 : IsStrictUpperBound Y x₂
+    observe h2 : IsStrictUpperBound Y' x₁
     simp [IsStrictUpperBound.iff] at h1 h2
     specialize h1 _ hx₁; specialize h2 _ hx₂; order
   set Y_infty : Set X := ⋃ Y:Ω, Y
-  have hmem : x₀ ∈ Y_infty := by simp [Y_infty]; use pt; simp [pt, hpt, hΩ]
+  have hmem : x₀ ∈ Y_infty := by simp [Y_infty]; use pt; grind
   have hmin {x:X} (hx: x ∈ Y_infty) : x₀ ≤ x := by
     sorry
   have htotal : IsTotal Y_infty := by
@@ -270,7 +269,7 @@ theorem WellFoundedLT.partialOrder {X:Type} [PartialOrder X] (x₀ : X) : ∃ Y 
   have hYs_mem : x₀ ∈ Y_infty ∪ {sY_infty} := by sorry
   have hYs_min : ∀ x ∈ Y_infty ∪ {sY_infty}, x₀ ≤ x := by sorry
   have hYs_Ω₀ : (Y_infty ∪ {sY_infty}) ∈ Ω₀ := by
-    simpa only [Ω₀, Set.mem_setOf_eq, hYs_total, hYs_well, hYs_mem, true_and]
+    simpa [-Set.union_singleton, Ω₀, hYs_total, hYs_well, hYs_mem]
   specialize hs ⟨ _, hY_inftyΩ₀ ⟩
   simp [IsStrictUpperBound.iff] at hs
   have hYs_Ω : ⟨ _, hYs_Ω₀ ⟩ ∈ Ω := by
@@ -279,7 +278,7 @@ theorem WellFoundedLT.partialOrder {X:Type} [PartialOrder X] (x₀ : X) : ∃ Y 
     . unfold sY_infty; congr 1
       symm; apply Subtype.val_injective; convert hF _
       . ext; simp; constructor
-        . intro h; simp [h]; solve_by_elim
+        . grind
         rintro ⟨ _ | _, _ ⟩
         . order
         assumption
@@ -293,10 +292,10 @@ theorem WellFoundedLT.partialOrder {X:Type} [PartialOrder X] (x₀ : X) : ∃ Y 
       . rintro (rfl | ⟨ Y', ⟨hY'Ω₀, hY'Ω⟩, hyY' ⟩)
         . specialize hs _ hx; order
         by_contra!
-        specialize ex_8_5_13 (Y := ⟨_, hYΩ'⟩) (Y' := ⟨_, hY'Ω⟩) y (by simp [hyY', this])
+        specialize ex_8_5_13 (Y := ⟨_, hYΩ'⟩) (Y' := ⟨_, hY'Ω⟩) y (by grind)
         rw [IsStrictUpperBound.iff] at ex_8_5_13
         specialize ex_8_5_13 x (by simp [hxY]); order
-      intro hyY; right; exact ⟨ _, ⟨hYΩ₀, hYΩ'⟩, hyY ⟩
+      grind
     all_goals simp [hxY, hx, hxx₀]
   have hs_mem : sY_infty ∈ Y_infty := Set.mem_iUnion_of_mem ⟨ _, hYs_Ω ⟩ (by simp)
   specialize hs _ hs_mem; order

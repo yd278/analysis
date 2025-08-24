@@ -68,8 +68,7 @@ example (x₀ x : ℝ) :
 theorem UniformContinuousOn.iff (f: ℝ → ℝ) (X:Set ℝ) : UniformContinuousOn f X  ↔
   ∀ ε > (0:ℝ), ∃ δ > (0:ℝ), ∀ x₀ ∈ X, ∀ x ∈ X, δ.Close x x₀ → ε.Close (f x) (f x₀) := by
   simp_rw [Metric.uniformContinuousOn_iff_le, Real.Close]
-  peel with ε hε δ hδ
-  constructor <;> intros <;> solve_by_elim
+  grind
 
 theorem ContinuousOn.ofUniformContinuousOn {X:Set ℝ} (f: ℝ → ℝ) (hf: UniformContinuousOn f X) :
   ContinuousOn f X := by
@@ -193,12 +192,12 @@ theorem UniformContinuousOn.of_continuousOn {a b:ℝ} {f:ℝ → ℝ}
   set n : ℕ → ℕ := Nat.nth E
   rw [Set.infinite_coe_iff] at hE
   have hmono : StrictMono n := by apply_rules [Nat.nth_strictMono]
-  have hmem (j:ℕ) : n j ∈ E := Nat.nth_mem_of_infinite hE j
+  have hmem (j:ℕ) : n j ∈ E := j.nth_mem_of_infinite hE
   have hsep (j:ℕ) : |f (x (n j)) - f (y (n j))| > ε := by
     specialize hmem j
     simpa [E, Real.Close, Real.dist_eq] using hmem
-  have hxmem (j:ℕ) : x (n j) ∈ Set.Icc a b := hx (n j)
-  have hymem (j:ℕ) : y (n j) ∈ Set.Icc a b := hy (n j)
+  observe hxmem : ∀ j, x (n j) ∈ Set.Icc a b
+  observe hymem : ∀ j, y (n j) ∈ Set.Icc a b
   observe hclosed : IsClosed (.Icc a b)
   observe hbounded : Bornology.IsBounded (.Icc a b)
   have ⟨ j, hj, ⟨ L, hL, hconv⟩ ⟩ := (Heine_Borel (.Icc a b)).mp ⟨ hclosed, hbounded ⟩ _ hxmem

@@ -47,9 +47,9 @@ example : f_9_2_2 - g_9_2_2 = fun x ↦ x^2 - 2*x := rfl
 
 example : 6 • f_9_2_2 = fun x ↦ 6 * (x^2) := by ext; simp
 
-example : f_9_2_2 ∘ g_9_2_2 = fun x ↦ 4*x^2 := by ext; simp; ring
+example : f_9_2_2 ∘ g_9_2_2 = fun x ↦ 4*x^2 := by grind
 
-example : g_9_2_2 ∘ f_9_2_2 = fun x ↦ 2*x^2 := by ext; simp
+example : g_9_2_2 ∘ f_9_2_2 = fun x ↦ 2*x^2 := by grind
 
 /- Exercise 9.2.1.  -/
 

@@ -108,9 +108,7 @@ theorem exist_tendsTo_sup {E: Set ℝ} (hnon: E.Nonempty) (hbound: BddAbove E) :
     use s; simp_all [X]
     refine ⟨ by linarith, ConditionallyCompleteLattice.le_csSup _ _ hbound hs.1 ⟩
   have ⟨ a ⟩ := axiom_of_countable_choice hX
-  use fun n ↦ ↑(a n)
-  constructor
-  . intro n; have := (a n).property; simp_all [X]
+  use fun n ↦ ↑(a n); constructor; swap
   apply Filter.Tendsto.squeeze (g := fun n:ℕ ↦ sSup E - 1/(n+1:ℝ)) (h := fun _:ℕ ↦ sSup E)
   . convert tendsto_const_nhds.sub (a := sSup E) (b := 0) _; simp
     exact tendsto_one_div_add_atTop_nhds_zero_nat
@@ -133,14 +131,12 @@ theorem exist_tendsTo_sup_of_closed {E: Set ℝ} (hnon: E.Nonempty) (hbound: Bdd
     . rw [bddBelow_def]; use sSup E - 1 / (n+1:ℝ); aesop
     . rw [show X n = E ∩ .Icc (sSup E - 1 / (n+1:ℝ)) (sSup E) by ext; aesop]
       exact hclosed.inter isClosed_Icc
-  use a
-  constructor
-  . simp [X] at ha; aesop
+  use a; constructor; swap
   apply Filter.Tendsto.squeeze (g := fun n:ℕ ↦ sSup E - 1/(n+1:ℝ)) (h := fun _:ℕ ↦ sSup E)
   . convert tendsto_const_nhds.sub (a := sSup E) (b := 0) _; simp
     exact tendsto_one_div_add_atTop_nhds_zero_nat
   . exact tendsto_const_nhds
-  all_goals intro n; simp_all [X]
+  all_goals intro _; simp_all [X]
 
 /-- Proposition 8.4.7 / Exercise 8.4.1 -/
 theorem exists_function {X Y : Type} {P : X → Y → Prop} (h: ∀ x, ∃ y, P x y) :

@@ -17,7 +17,7 @@ theorem Series.sum_eq_sum (b:ℕ → ℝ) {N:ℤ} (hN: N ≥ 0) : ∑ n ∈ .Icc
       convert Finset.sum_image (g := Int.ofNat) (by simp)
       ext x; simp; constructor
       . intro ⟨ _, _ ⟩; use x.toNat; omega
-      rintro ⟨ _, ⟨ _, rfl ⟩ ⟩; simp; omega
+      grind
 
 /-- Proposition 7.4.1 -/
 theorem Series.converges_of_permute_nonneg {a:ℕ → ℝ} (ha: (a:Series).nonneg) (hconv: (a:Series).converges)
@@ -27,7 +27,7 @@ theorem Series.converges_of_permute_nonneg {a:ℕ → ℝ} (ha: (a:Series).nonne
   set af : ℕ → ℝ := fun n ↦ a (f n)
   have haf : (af:Series).nonneg := by
     intro n; by_cases h : n ≥ 0 <;> simp [h, af]
-    specialize ha (f n.toNat); aesop
+    specialize ha (f n.toNat); grind
   set S := (a:Series).partial
   set T := (af:Series).partial
   have hSmono : Monotone S := Series.partial_of_nonneg ha
@@ -58,7 +58,7 @@ theorem Series.converges_of_permute_nonneg {a:ℕ → ℝ} (ha: (a:Series).nonne
     set Y := Finset.Iic M.toNat
     have hN : ∃ N, ∀ m ∈ Y, f m ≤ N := by
       use (Y.image f).sup id; intro m hm
-      apply Finset.le_sup (f := id); simp; use m
+      apply Finset.le_sup (f := id); grind
     choose N hN using hN
     calc
       _ = ∑ m ∈ Y, af m := by simp [T, Series.partial, af]; exact sum_eq_sum af hM
@@ -91,7 +91,7 @@ theorem Series.converges_of_permute_nonneg {a:ℕ → ℝ} (ha: (a:Series).nonne
       convert Finset.sum_image (g := Int.ofNat) (by simp)
       ext x; simp; constructor
       . intro ⟨ _, _ ⟩; use x.toNat; omega
-      rintro ⟨ _, ⟨ _, rfl ⟩ ⟩; omega
+      grind
     calc
       _ = ∑ n ∈ X, a n := by simp [S, sum_eq_sum, hN, X]
       _ = ∑ n ∈ ((Finset.Iic M).filter (f · ∈ X)).image f, a n := by
@@ -128,14 +128,14 @@ theorem Series.absConverges_of_permute {a:ℕ → ℝ} (ha : (a:Series).absConve
   unfold absConverges at ha
   have habs : (fun n ↦ |a (f n)| : Series).converges ∧ L = (fun n ↦ |a (f n)| : Series).sum := by
     convert converges_of_permute_nonneg (a := fun n ↦ |a n|) _ _ hf using 3
-    . simp; ext n; by_cases h: n ≥ 0 <;> simp [h]
+    . simp; ext n; by_cases n ≥ 0 <;> grind
     . intro n; by_cases h: n ≥ 0 <;> simp [h]
-    convert ha with n; by_cases h: n ≥ 0 <;> simp [h]
+    convert ha with n; by_cases n ≥ 0 <;> grind
   set L' := (a:Series).sum
   set af : ℕ → ℝ := fun n ↦ a (f n)
   suffices : (af:Series).convergesTo L'
   . simp [sum_of_converges this, absConverges]
-    convert habs.1 with n; by_cases h: n ≥ 0 <;> simp [h, af]
+    convert habs.1 with n; by_cases n ≥ 0 <;> grind
   simp [convergesTo, LinearOrderedAddCommGroup.tendsto_nhds]
   intro ε hε
   rw [converges_iff_tail_decay] at ha
@@ -144,7 +144,7 @@ theorem Series.absConverges_of_permute {a:ℕ → ℝ} (ha : (a:Series).absConve
     apply convergesTo_sum at hconv
     simp [convergesTo, LinearOrderedAddCommGroup.tendsto_nhds] at hconv
     choose N hN using hconv _ (half_pos hε)
-    use max N N₁, (by omega); convert hN _ (le_max_left _ _)
+    use max N N₁, (by grind); apply hN; grind
   choose N hN hN2 using this
   have hNpos : N ≥ 0 := by linarith
   let finv : ℕ → ℕ := Function.invFun f
@@ -178,13 +178,13 @@ theorem Series.absConverges_of_permute {a:ℕ → ℝ} (ha : (a:Series).absConve
       convert Finset.sum_image (g := fun (n:ℕ) ↦ (n:ℤ)) (by simp) using 2
       ext x; simp; constructor
       . intro ⟨ _, _ ⟩; use x.toNat; omega
-      rintro ⟨ _, ⟨ _, rfl ⟩ ⟩; simp; omega
+      grind
   calc
     _ ≤ |(af:Series).partial M' - (a:Series).partial N| + |(a:Series).partial N - L'| := abs_sub_le _ _ _
     _ < |(af:Series).partial M' - (a:Series).partial N| + ε/2 := by gcongr
     _ ≤ ε/2 + ε/2 := by
       gcongr; convert claim2
-      simp [Series.partial, sum_eq_sum _ hM'_pos, sum_eq_sum _ hNpos]; rw [claim]; abel
+      simp [Series.partial, sum_eq_sum _ hM'_pos, sum_eq_sum _ hNpos]; grind
     _ = ε := by ring
 
 

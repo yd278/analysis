@@ -123,7 +123,7 @@ theorem closure_of_Ioo {a b:ℝ} (h:a < b) : closure (.Ioo a b) = .Icc a b := by
   by_cases hb : x = b
   . sorry
   intro ε hε
-  use x, ⟨ by contrapose! ha; linarith, by contrapose! hb; linarith ⟩; simp; order
+  use x, ⟨ by grind, by grind ⟩; simp; order
 
 theorem closure_of_Ioc {a b:ℝ} (h:a < b) : closure (.Ioc a b) = .Icc a b := by
   sorry
@@ -220,7 +220,7 @@ theorem isClosed_iff_limits_mem (X: Set ℝ) :
   rw [isClosed_def']
   constructor
   . intro h _ L _ _; apply h L; rw [limit_of_AdherentPt]; solve_by_elim
-  intro _ _ hx; rw [limit_of_AdherentPt] at hx; obtain ⟨ _, _, _ ⟩ := hx; solve_by_elim
+  intro _ _ hx; rw [limit_of_AdherentPt] at hx; grind
 
 /-- Definition 9.1.18 (Limit points) -/
 abbrev LimitPt (x:ℝ) (X: Set ℝ) := AdherentPt x (X \ {x})
@@ -269,15 +269,12 @@ theorem mem_Icc_isLimit {a b x:ℝ} (h: a < b) (hx: x ∈ Set.Icc a b) : LimitPt
       have : n + (b - x)⁻¹ > 0 := by linarith
       have : (n+(b - x)⁻¹)⁻¹ > 0 := by positivity
       have : (b-x)⁻¹ ≤ n + (b - x)⁻¹ := by linarith
-      have : (n + (b - x)⁻¹)⁻¹ ≤ b-x := by rwa [inv_le_comm₀ (by positivity) (by positivity)]
-      refine ⟨ ⟨ ?_, ?_⟩, ?_ ⟩ <;> linarith
+      have : (n + (b - x)⁻¹)⁻¹ ≤ b-x := by rwa [inv_le_comm₀ ?_ ?_] <;> positivity
+      grind
     convert Filter.Tendsto.const_add x (c := 0) _; simp
     convert Filter.Tendsto.comp (f := fun (k:ℕ) ↦ (k:ℝ)) (g := fun k ↦ 1/(k+(b-x)⁻¹)) _ tendsto_natCast_atTop_atTop
     convert tendsto_mul_add_inv_atTop_nhds_zero 1 (b - x)⁻¹ (by norm_num) using 2 with n; simp
   sorry
-
-
-
 
 theorem mem_Ico_isLimit {a b x:ℝ} (hx: x ∈ Set.Ico a b) : LimitPt x (.Ico a b) := by
   sorry
