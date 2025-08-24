@@ -46,11 +46,11 @@ example : BoundedAwayNeg (fun n ↦ -1 - 10^(-(n:ℤ)-1)) := ⟨ 1, by norm_num,
 
 /-- Examples 5.4.2 -/
 example : ¬ BoundedAwayPos (fun n ↦ (-1)^n) := by
-  intro ⟨ c, h1, h2 ⟩; specialize h2 1; simp at h2; linarith
+  intro ⟨ c, h1, h2 ⟩; specialize h2 1; grind
 
 /-- Examples 5.4.2 -/
 example : ¬ BoundedAwayNeg (fun n ↦ (-1)^n) := by
-  intro ⟨ c, h1, h2 ⟩; specialize h2 0; simp at h2; linarith
+  intro ⟨ c, h1, h2 ⟩; specialize h2 0; grind
 
 /-- Examples 5.4.2 -/
 example : BoundedAwayZero (fun n ↦ (-1)^n) := ⟨ 1, by norm_num, by intros; simp ⟩
@@ -250,15 +250,9 @@ theorem Real.LIM_of_nonneg {a: ℕ → ℚ} (ha: ∀ n, a n ≥ 0) (hcauchy: (a:
       _ < c := by linarith
       _ ≤ a n - b n := by linarith
       _ ≤ _ := le_abs_self _
-  have claim2 : ¬ (c/2).EventuallyClose (a:Sequence) (b:Sequence) := by
-    contrapose! claim1
-    rw [Rat.eventuallyClose_iff] at claim1
-    peel claim1 with N claim1; specialize claim1 N (by rfl)
-    rwa [Section_4_3.close_iff]
-  have claim3 : ¬ Sequence.Equiv a b := by
-    contrapose! claim2
-    rw [Sequence.equiv_def] at claim2
-    solve_by_elim [half_pos]
+  have claim2 : ¬(c/2).EventuallyClose (a:Sequence) (b:Sequence) := by
+    contrapose! claim1; rw [Rat.eventuallyClose_iff] at claim1; peel claim1 with N claim1; grind [Section_4_3.close_iff]
+  have claim3 : ¬Sequence.Equiv a b := by contrapose! claim2; rw [Sequence.equiv_def] at claim2; solve_by_elim [half_pos]
   simp_rw [x, LIM_eq_LIM hcauchy hb_cauchy] at hlim
   contradiction
 

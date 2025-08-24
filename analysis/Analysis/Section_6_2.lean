@@ -102,11 +102,10 @@ theorem EReal.sup_of_bounded_nonempty {E: Set ℝ} (hbound: BddAbove E) (hnon: E
       ((fun (x:WithTop ℝ) ↦ (x:WithBot (WithTop ℝ))) '' ((fun (x:ℝ) ↦ (x:WithTop ℝ)) '' E)) := by
     rw [←Set.image_comp]; congr
   _ = sSup ((fun (x:ℝ) ↦ (x:WithTop ℝ)) '' E) := by
-    symm; convert WithBot.coe_sSup' _ _
+    symm; apply WithBot.coe_sSup'
     . simp [hnon]
     exact WithTop.coe_mono.map_bddAbove hbound
-  _ = ((sSup E : ℝ) : WithTop ℝ) := by
-    congr; symm; exact WithTop.coe_sSup' hbound
+  _ = ((sSup E : ℝ) : WithTop ℝ) := by congr; symm; exact WithTop.coe_sSup' hbound
   _ = _ := rfl
 
 /-- Definition 6.2.6 -/
@@ -133,8 +132,8 @@ theorem EReal.inf_eq_neg_sup (E: Set EReal) : sInf E = - sSup (-E) := by
   intro b
   simp [lowerBounds]
   constructor
-  . intro h a ha; specialize h (-a) (by simp [ha]); exact neg_le_neg_iff.mp h
-  intros; solve_by_elim [EReal.le_neg_of_le_neg]
+  . intro h a ha; specialize h (-a) (by simp [ha]); grind [neg_le_neg_iff]
+  grind [EReal.le_neg_of_le_neg]
 
 /-- Example 6.2.7 -/
 abbrev Example_6_2_7 : Set EReal := { x | ∃ n:ℕ, x = -((n+1):EReal)} ∪ {⊥}

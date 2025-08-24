@@ -44,13 +44,13 @@ lemma ratPow_continuous {x α:ℝ} (hx: x > 0) {q: ℕ → ℚ}
   lift N to ℕ using hN
   lift K to ℕ using hK
   specialize hclose K (by simp) (by simp); simp at hclose
-  use N, (by simp)
+  use N, by simp
   intro n hn m hm; simp at hn hm
   specialize hq n (by simp [hn]) m (by simp [hm])
   simp [Close, hn, hm, dist_eq] at hq ⊢
   have : 0 ≤ (N:ℤ) := by simp
-  lift n to ℕ using (by linarith)
-  lift m to ℕ using (by linarith)
+  lift n to ℕ using by linarith
+  lift m to ℕ using by linarith
   simp at hn hm hq ⊢
   obtain hqq | hqq := le_or_gt (q m) (q n)
   . replace : x^(q m:ℝ) ≤ x^(q n:ℝ) := by rw [rpow_le_rpow_left_iff h]; norm_cast
@@ -61,9 +61,9 @@ lemma ratPow_continuous {x α:ℝ} (hx: x > 0) {q: ℕ → ℚ}
         gcongr <;> try exact h'
         . rw [sub_nonneg]; apply one_le_rpow h'; norm_cast; linarith
         . specialize hbound m; simp_all [abs_le']
-        rw [abs_le'] at hq; convert hq.1 using 1; field_simp
-      _ ≤ x^M * (ε * x^(-M)) := by gcongr; simp_all [abs_le']
-      _ = ε := by rw [mul_comm, mul_assoc, ←rpow_add (by linarith)]; simp
+        grind [abs_le']
+      _ ≤ x^M * (ε * x^(-M)) := by gcongr; grind [abs_le']
+      _ = ε := by rw [mul_comm, mul_assoc, ←rpow_add]; simp; linarith
   replace : x^(q n:ℝ) ≤ x^(q m:ℝ) := by rw [rpow_le_rpow_left_iff h]; norm_cast; linarith
   rw [abs_of_nonpos (by linarith)]
   calc
@@ -72,7 +72,7 @@ lemma ratPow_continuous {x α:ℝ} (hx: x > 0) {q: ℕ → ℚ}
       gcongr <;> try exact h'
       . rw [sub_nonneg]; apply one_le_rpow h'; norm_cast; linarith
       . specialize hbound n; simp_all [abs_le']
-      rw [abs_le'] at hq; convert hq.2 using 1 <;> simp
+      grind [abs_le']
     _ ≤ x^M * (ε * x^(-M)) := by gcongr; simp_all [abs_le']
     _ = ε := by rw [mul_comm, mul_assoc, ←rpow_add]; simp; positivity
 
@@ -91,15 +91,14 @@ lemma ratPow_lim_uniq {x α:ℝ} (hx: x > 0) {q q': ℕ → ℚ}
       rcongr _ n
       rw [←rpow_add (by linarith)]
       simp [r]
-    rw [this.2]
+    grind
   intro ε hε
   have h1 := lim_of_roots hx
   have h2 := tendsTo_inv h1 (by norm_num)
   choose K1 hK1 h3 using h1 ε hε
   choose K2 hK2 h4 using h2 ε hε
   simp [Inv.inv] at hK1 hK2
-  lift K1 to ℕ using hK1
-  lift K2 to ℕ using hK2
+  lift K1 to ℕ using hK1; lift K2 to ℕ using hK2
   simp [inv_coe] at h4
   set K := max K1 K2
   have hr := tendsTo_sub hq hq'
@@ -107,8 +106,7 @@ lemma ratPow_lim_uniq {x α:ℝ} (hx: x > 0) {q q': ℕ → ℚ}
   choose N hN hr using hr (1 / (K + 1:ℝ)) (by positivity)
   refine ⟨ N, by simp_all, ?_ ⟩
   intro n hn; simp at hn
-  specialize h3 K (by simp [K])
-  specialize h4 K (by simp [K])
+  specialize h3 K (by simp [K]); specialize h4 K (by simp [K])
   simp [hn, dist_eq, abs_le', K, -Nat.cast_max] at h3 h4 ⊢
   specialize hr n (by simp [hn])
   simp [Close, hn, abs_le'] at hr

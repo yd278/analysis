@@ -100,12 +100,12 @@ lemma Real.eventuallySteady_def (ε: ℝ) (a: Chapter6.Sequence) :
 
 /-- For fixed s, the function ε ↦ ε.Steady s is monotone -/
 theorem Real.Steady.mono {a: Chapter6.Sequence} {ε₁ ε₂: ℝ} (hε: ε₁ ≤ ε₂) (hsteady: ε₁.Steady a) :
-    ε₂.Steady a := by peel 4 hsteady; linarith
+    ε₂.Steady a := by grind
 
 /-- For fixed s, the function ε ↦ ε.EventuallySteady s is monotone -/
 theorem Real.EventuallySteady.mono {a: Chapter6.Sequence} {ε₁ ε₂: ℝ} (hε: ε₁ ≤ ε₂)
   (hsteady: ε₁.EventuallySteady a) :
-    ε₂.EventuallySteady a := by peel 2 hsteady; solve_by_elim [Steady.mono]
+    ε₂.EventuallySteady a := by peel 2 hsteady; grind [Steady.mono]
 
 namespace Chapter6
 
@@ -134,8 +134,7 @@ lemma Sequence.IsCauchy.coe (a:ℕ → ℝ) :
   simp [hn, hm, npos, mpos]
   lift n to ℕ using npos
   lift m to ℕ using mpos
-  specialize h' n ?_ m ?_ <;> try omega
-  norm_cast
+  specialize h' n ?_ m ?_ <;> try grind
 
 lemma Sequence.IsCauchy.mk {n₀:ℤ} (a: {n // n ≥ n₀} → ℝ) :
     (mk' n₀ a).IsCauchy
@@ -148,7 +147,7 @@ lemma Sequence.IsCauchy.mk {n₀:ℤ} (a: {n // n ≥ n₀} → ℝ) :
     simp only [Real.Steady, show max n₀ N = N by omega] at h'
     specialize h' j ?_ k ?_ <;> try omega
     simp_all [show n₀ ≤ j by omega, show n₀ ≤ k by omega]
-  rintro ⟨ N, _, _ ⟩; exact ⟨ max n₀ N, by simp, by intro _ _ _ _; aesop ⟩
+  rintro ⟨ N, _, _ ⟩; use max n₀ N; grind
 
 @[coe]
 abbrev Sequence.ofChapter5Sequence (a: Chapter5.Sequence) : Sequence :=
@@ -209,8 +208,8 @@ theorem Real.eventuallyClose_def (ε: ℝ) (a: Chapter6.Sequence) (L:ℝ) :
 theorem Real.CloseSeq.coe (ε : ℝ) (a : ℕ → ℝ) (L : ℝ):
   (ε.CloseSeq a L) ↔ ∀ n, dist (a n) L ≤ ε := by
   constructor
-  . intro h n; specialize h n; simp_all
-  . intro h n hn; lift n to ℕ using (by omega); specialize h n; simp_all
+  . intro h n; specialize h n; grind
+  . intro h n hn; lift n to ℕ using (by omega); specialize h n; grind
 
 theorem Real.CloseSeq.mono {a: Chapter6.Sequence} {ε₁ ε₂ L: ℝ} (hε: ε₁ ≤ ε₂)
   (hclose: ε₁.CloseSeq a L) :
@@ -218,7 +217,7 @@ theorem Real.CloseSeq.mono {a: Chapter6.Sequence} {ε₁ ε₂ L: ℝ} (hε: ε�
 
 theorem Real.EventuallyClose.mono {a: Chapter6.Sequence} {ε₁ ε₂ L: ℝ} (hε: ε₁ ≤ ε₂)
   (hclose: ε₁.EventuallyClose a L) :
-    ε₂.EventuallyClose a L := by peel 2 hclose; solve_by_elim [CloseSeq.mono]
+    ε₂.EventuallyClose a L := by peel 2 hclose; grind [CloseSeq.mono]
 namespace Chapter6
 
 abbrev Sequence.TendsTo (a:Sequence) (L:ℝ) : Prop :=
@@ -243,9 +242,7 @@ example : (0.1:ℝ).CloseSeq seq_6_1_6 1 := by
     gcongr
     positivity
   ), sub_sub_cancel, show (0.1:ℝ) = (10:ℝ)^(-1:ℤ) by norm_num]
-  gcongr
-  . norm_num
-  . omega
+  gcongr <;> grind
 
 
 /-- Examples 6.1.6 -/
@@ -264,7 +261,7 @@ theorem Sequence.tendsTo_unique (a:Sequence) {L L':ℝ} (h:L ≠ L') :
   -- This proof is written to follow the structure of the original text.
   by_contra this
   choose hL hL' using this
-  replace h : L - L' ≠ 0 := by contrapose! h; linarith
+  replace h : L - L' ≠ 0 := by grind
   replace h : |L-L'| > 0 := by positivity
   set ε := |L-L'| / 3
   have hε : ε > 0 := by positivity
@@ -278,7 +275,7 @@ theorem Sequence.tendsTo_unique (a:Sequence) {L L':ℝ} (h:L ≠ L') :
     _ = dist L L' := by rw [Real.dist_eq]
     _ ≤ dist L (a.seq n) + dist (a.seq n) L' := dist_triangle _ _ _
     _ ≤ ε + ε := by rw [←Real.dist_eq] at hN hM; rw [dist_comm] at hN; gcongr
-    _ = 2 * |L-L'|/3 := by simp [ε]; ring
+    _ = 2 * |L-L'|/3 := by grind
   linarith
 
 /-- Definition 6.1.8 -/
@@ -310,8 +307,7 @@ a.TendsTo L ↔ a.Convergent ∧ lim a = L := by
   . intro h; by_contra! eq
     have : a.Convergent := by rw [convergent_def]; use L
     replace eq := a.tendsTo_unique (eq this)
-    apply lim_def at this
-    tauto
+    apply lim_def at this; tauto
   intro ⟨ h, rfl ⟩; convert lim_def h
 
 
@@ -409,7 +405,7 @@ instance Sequence.inst_mul : Mul Sequence where
   mul a b := {
     m := max a.m b.m
     seq n := if n ≥ max a.m b.m then a n * b n else 0
-    vanish n hn := by rw [lt_iff_not_ge] at hn; simp [hn]
+    vanish := by grind
   }
 
 theorem Sequence.mul_coe (a b: ℕ → ℝ) : (a:Sequence) * (b:Sequence) = (fun n ↦ a n * b n) := by
@@ -452,7 +448,7 @@ instance Sequence.inst_sub : Sub Sequence where
   sub a b := {
     m := max a.m b.m
     seq n := if n ≥ max a.m b.m then a n - b n else 0
-    vanish n hn := by rw [lt_iff_not_ge] at hn; simp [hn]
+    vanish := by grind
   }
 
 theorem Sequence.sub_coe (a b: ℕ → ℝ) : (a:Sequence) - (b:Sequence) = (fun n ↦ a n - b n) := by
@@ -495,7 +491,7 @@ noncomputable instance Sequence.inst_div : Div Sequence where
   div a b := {
     m := max a.m b.m
     seq n := if n ≥ max a.m b.m then a n / b n else 0
-    vanish n hn := by rw [lt_iff_not_ge] at hn; simp [hn]
+    vanish := by grind
   }
 
 theorem Sequence.div_coe (a b: ℕ → ℝ) : (a:Sequence) / (b:Sequence) = (fun n ↦ a n / b n) := by
@@ -516,7 +512,7 @@ instance Sequence.inst_max : Max Sequence where
   max a b := {
     m := max a.m b.m
     seq n := if n ≥ max a.m b.m then max (a n) (b n) else 0
-    vanish n hn := by rw [lt_iff_not_ge] at hn; simp [hn]
+    vanish := by grind
   }
 
 theorem Sequence.max_coe (a b: ℕ → ℝ) : (a:Sequence) ⊔ (b:Sequence) = (fun n ↦ max (a n) (b n)) := by
@@ -537,7 +533,7 @@ instance Sequence.inst_min : Min Sequence where
   min a b := {
     m := max a.m b.m
     seq n := if n ≥ max a.m b.m then min (a n) (b n) else 0
-    vanish n hn := by rw [lt_iff_not_ge] at hn; simp [hn]
+    vanish := by grind
   }
 
 theorem Sequence.min_coe (a b: ℕ → ℝ) : (a:Sequence) ⊓ (b:Sequence) = (fun n ↦ min (a n) (b n)) := by

@@ -109,7 +109,7 @@ theorem integ_of_bdd_cts {I: BoundedInterval} {f:ℝ → ℝ} (hbound: BddOn f I
   have (ε:ℝ) (hε: ε > 0) : upper_integral f I - lower_integral f I ≤ (4*M+2) * ε := by
     wlog hε' : ε < (b-a)/2
     . simp at hε'
-      specialize this ?_ ?_ ?_ ?_ ?_ _ hM ?_ ((b-a)/3) ?_ ?_
+      specialize this _ _ _ _ _ _ hM _ ((b-a)/3) _ _
         <;> first | assumption | linarith | apply this.trans; gcongr; linarith
     set I' := Icc (a+ε) (b-ε)
     set Ileft : BoundedInterval := match I with

@@ -160,9 +160,7 @@ example : (0.1:ℚ).Steady ((fun n:ℕ ↦ (10:ℚ) ^ (-(n:ℤ)-1) ):Sequence) :
   rw [abs_sub_comm, abs_of_nonneg (by
     linarith [show (10:ℚ) ^ (-(n:ℤ)-1) ≤ (10:ℚ) ^ (-(m:ℤ)-1) by gcongr; norm_num])]
   rw [show (0.1:ℚ) = (10:ℚ)^(-1:ℤ) - 0 by norm_num]
-  gcongr
-  . norm_num
-  . linarith
+  gcongr <;> try grind
   positivity
 
 /--
@@ -177,7 +175,7 @@ example (ε:ℚ) : ¬ ε.Steady ((fun n:ℕ ↦ (2 ^ (n+1):ℚ) ):Sequence) := b
 /-- Example 5.1.5:The sequence 2, 2, 2, ... is ε-steady for any ε > 0.
 -/
 example (ε:ℚ) (hε: ε>0) : ε.Steady ((fun _:ℕ ↦ (2:ℚ) ):Sequence) := by
-  rw [Rat.Steady.coe]; intro n m; simp [Rat.Close]; positivity
+  rw [Rat.Steady.coe]; simp [Rat.Close]; positivity
 
 /--
 The sequence 10, 0, 0, ... is 10-steady.
@@ -202,9 +200,7 @@ abbrev Sequence.from (a:Sequence) (n₁:ℤ) : Sequence :=
   mk' (max a.n₀ n₁) (fun n ↦ a (n:ℤ))
 
 lemma Sequence.from_eval (a:Sequence) {n₁ n:ℤ} (hn: n ≥ n₁) :
-  (a.from n₁) n = a n := by
-  simp [hn]
-  intro h; exact (a.vanish _ h).symm
+  (a.from n₁) n = a n := by simp [hn]; intro h; exact (a.vanish _ h).symm
 
 end Chapter5
 
@@ -222,10 +218,8 @@ Example 5.1.7: The sequence 1, 1/2, 1/3, ... is not 0.1-steady
 -/
 lemma Sequence.ex_5_1_7_a : ¬ (0.1:ℚ).Steady ((fun n:ℕ ↦ (n+1:ℚ)⁻¹ ):Sequence) := by
   intro h; rw [Rat.Steady.coe] at h
-  specialize h 0 2; simp [Rat.Close] at h
-  norm_num at h
-  rw [abs_of_nonneg (by positivity)] at h
-  norm_num at h
+  specialize h 0 2; simp [Rat.Close] at h; norm_num at h
+  rw [abs_of_nonneg] at h <;> grind
 
 /--
 Example 5.1.7: The sequence a_10, a_11, a_12, ... is 0.1-steady
@@ -237,7 +231,7 @@ lemma Sequence.ex_5_1_7_b : (0.1:ℚ).Steady (((fun n:ℕ ↦ (n+1:ℚ)⁻¹ ):S
   lift m to ℕ using (by omega)
   simp_all [Rat.Close]
   wlog h : m ≤ n
-  · specialize this m n (by omega) (by omega) (by omega)
+  · specialize this m n _ _ _ <;> try omega
     rwa [abs_sub_comm] at this
   rw [abs_sub_comm]
   have : ((n:ℚ) + 1)⁻¹ ≤ ((m:ℚ) + 1)⁻¹ := by gcongr
@@ -274,17 +268,18 @@ lemma Sequence.IsCauchy.coe (a:ℕ → ℚ) :
     lift N to ℕ using hN; use N
     intro j hj k hk
     simp [Rat.steady_def] at h'
-    specialize h' j (by omega) k (by omega)
+    specialize h' j _ k _ <;> try omega
     simp_all; exact h'
   choose N h' using h ε hε
   refine ⟨ max N 0, by simp, ?_ ⟩
   intro n hn m hm; simp at hn hm
-  have npos : 0 ≤ n := by omega
-  have mpos : 0 ≤ m := by omega
-  simp [hn, hm, npos, mpos]
+  have npos : 0 ≤ n := ?_
+  have mpos : 0 ≤ m := ?_
   lift n to ℕ using npos
   lift m to ℕ using mpos
-  specialize h' n (by omega) m (by omega); norm_cast
+  simp [hn, hm]; specialize h' n _ m _
+  all_goals try omega
+  norm_cast
 
 lemma Sequence.IsCauchy.mk {n₀:ℤ} (a: {n // n ≥ n₀} → ℚ) :
     (mk' n₀ a).IsCauchy ↔ ∀ ε > (0:ℚ), ∃ N ≥ n₀, ∀ j ≥ N, ∀ k ≥ N,
@@ -344,7 +339,7 @@ theorem Sequence.IsCauchy.harmonic : (mk' 1 (fun n ↦ (1:ℚ)/n)).IsCauchy := b
     observe hj''' : (0:ℚ) ≤ 1/j
     have hk'' : 1/k ≤ (1:ℚ)/N := by gcongr
     observe hk''' : (0:ℚ) ≤ 1/k
-    constructor <;> linarith
+    grind
   simp at *; apply hdist.trans
   rw [inv_le_comm₀] <;> try positivity
   order
@@ -406,7 +401,7 @@ lemma IsBounded.finite {n:ℕ} (a: Fin n → ℚ) : ∃ M ≥ 0,  BoundedBy a M 
   have h2 : |a (Fin.ofNat _ n)| ≤ M + |a (Fin.ofNat _ n)| := by simp [hpos]
   refine ⟨ M + |a (Fin.ofNat _ n)|, by positivity, ?_ ⟩
   intro m; obtain ⟨ j, rfl ⟩ | rfl := Fin.eq_castSucc_or_eq_last m
-  . exact h1 j
+  . grind
   convert h2; simp
 
 /-- Lemma 5.1.15 (Cauchy sequences are bounded) / Exercise 5.1.1 -/

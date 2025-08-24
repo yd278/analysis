@@ -24,23 +24,15 @@ instance Sequence.inst_pow: Pow Sequence ℕ where
   pow a k := {
     m := a.m
     seq n := if n ≥ a.m then a n ^ k else 0
-    vanish n hn := by rw [lt_iff_not_ge] at hn; simp [hn]
+    vanish := by grind
   }
 
 @[simp]
 lemma Sequence.pow_one (a:Sequence) : a^1 = a := by
-  ext n; rfl
-  simp only [HPow.hPow, Pow.pow]
-  by_cases h: n ≥ a.m <;> simp [h]
-  simp [a.vanish n (by linarith)]
+  ext n; rfl; simp only [HPow.hPow, Pow.pow]; by_cases h: n ≥ a.m <;> simp [h]; simp [a.vanish n (by linarith)]
 
 lemma Sequence.pow_succ (a:Sequence) (k:ℕ) : a^(k+1) = a^k * a := by
-  ext n
-  . simp only [HPow.hPow, Pow.pow, HMul.hMul, Mul.mul]; simp
-  simp only [HPow.hPow, Pow.pow, HMul.hMul, Mul.mul]
-  by_cases h: n ≥ a.m
-  . simp [h]; rfl
-  simp [h]
+  ext n <;> simp only [HPow.hPow, Pow.pow, HMul.hMul, Mul.mul]; simp; by_cases h: n ≥ a.m <;> simp [h]; rfl
 
 /-- Corollary 6.5.1 -/
 theorem Sequence.lim_of_power_decay {k:ℕ} :
@@ -58,9 +50,7 @@ theorem Sequence.lim_of_power_decay {k:ℕ} :
   have hpow (n:ℕ): (a^(n+1)).Convergent ∧ lim (a^(n+1)) = (lim a)^(n+1) := by
     induction' n with n ih
     . simp [ha', -dite_pow]
-    rw [pow_succ]
-    convert lim_mul ih.1 ha'
-    rw [ih.2]; rfl
+    rw [pow_succ]; convert lim_mul ih.1 ha'; grind
   have hlim : (lim a)^(k+1) = 0 := by
     rw [←(hpow k).2]
     convert lim_harmonic.2

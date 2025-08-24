@@ -62,9 +62,7 @@ example : IsLUB (.Icc 0 1) 1 := by sorry
 example : ¬∃ M, IsLUB (∅: Set Real) M := by sorry
 
 /-- Proposition 5.5.8 (Uniqueness of least upper bound)-/
-theorem Real.LUB_unique {E: Set Real} {M M': Real} (h1: IsLUB E M) (h2: IsLUB E M') : M = M' := by
-  -- This proof is written to follow the structure of the original text.
-  rw [Real.isLUB_def] at h1 h2; linarith [h1.2 _ h2.1, h2.2 _ h1.1]
+theorem Real.LUB_unique {E: Set Real} {M M': Real} (h1: IsLUB E M) (h2: IsLUB E M') : M = M' := by grind [Real.isLUB_def]
 
 /-- definition of "bounded above", using Mathlib notation -/
 theorem Real.bddAbove_def (E: Set Real) : BddAbove E ↔ ∃ M, M ∈  upperBounds E := Set.nonempty_def
@@ -110,23 +108,22 @@ lemma Real.LUB_claim1 (n : ℕ) {E: Set Real} (hE: Set.Nonempty E) (hbound: BddA
     choose L' _ hL using le_mul hpos (-x₀)
     set L := -(L':ℤ)
     have claim1_1 : L * ε < x₀ := by simp [L]; linarith
-    have claim1_2 : L * ε ∉ upperBounds E := by
-      contrapose! claim1_1; rw [upperBound_def] at claim1_1; solve_by_elim
+    have claim1_2 : L * ε ∉ upperBounds E := by grind [upperBound_def]
     have claim1_3 : (K:Real) > (L:Real) := by
       contrapose! claim1_2
       replace claim1_2 := mul_le_mul_left claim1_2 hpos
       simp_rw [mul_comm] at claim1_2
       replace claim1_2 : M ≤ L * ε := by order
-      solve_by_elim [upperBound_upper]
+      grind [upperBound_upper]
     have claim1_4 : ∃ m:ℤ, L < m ∧ m ≤ K ∧ m*ε ∈ upperBounds E ∧ (m-1)*ε ∉ upperBounds E := by
       convert Real.upperBound_between (n := n) _ _ claim1_2
       . qify; rwa [←gt_iff_lt, gt_of_coe]
-      simp [ε] at hK ⊢; exact upperBound_upper (by order) hbound
+      simp [ε] at *; exact upperBound_upper (by order) hbound
     choose m _ _ hm hm' using claim1_4; use m
     have : (m/(n+1):ℚ) = m*ε := by simp [ε]; field_simp
     refine ⟨ by convert hm, ?_ ⟩
     convert hm'; simp [this, sub_mul, ε]
-  intro _ _ ⟨ _, _ ⟩ ⟨ _, _ ⟩; solve_by_elim [upperBound_discrete_unique]
+  grind [upperBound_discrete_unique]
 
 lemma Real.LUB_claim2 {E : Set Real} (N:ℕ) {a b: ℕ → ℚ}
   (hb : ∀ n, b n = 1 / (↑n + 1))
@@ -137,13 +134,11 @@ lemma Real.LUB_claim2 {E : Set Real} (N:ℕ) {a b: ℕ → ℚ}
     rw [abs_le]
     split_ands
     . specialize hm1 n; specialize hm2 n'
-      have bound1 : ((a-b) n') < a n := by rw [lt_of_coe]; contrapose! hm2; solve_by_elim [upperBound_upper]
+      have bound1 : ((a-b) n') < a n := by rw [lt_of_coe]; contrapose! hm2; grind [upperBound_upper]
       have bound3 : 1/((n':ℚ)+1) ≤ 1/(N+1) := by gcongr
-      rw [←neg_le_neg_iff] at bound3
-      rw [Pi.sub_apply] at bound1
-      linarith [hb n']
+      rw [←neg_le_neg_iff] at bound3; rw [Pi.sub_apply] at bound1; grind
     specialize hm1 n'; specialize hm2 n
-    have bound1 : ((a-b) n) < a n' := by rw [lt_of_coe]; contrapose! hm2; exact upperBound_upper hm2 hm1
+    have bound1 : ((a-b) n) < a n' := by rw [lt_of_coe]; contrapose! hm2; grind [upperBound_upper]
     have bound2 : ((a-b) n) = a n - 1 / (n+1) := by simp [hb n]
     have bound3 : 1/((n+1):ℚ) ≤ 1/(N+1) := by gcongr
     linarith
@@ -168,13 +163,9 @@ theorem Real.LUB_exist {E: Set Real} (hE: Set.Nonempty E) (hbound: BddAbove E): 
     simp [←LIM_sub claim3 hb, S, this]
   rw [isLUB_def, upperBound_def]
   split_ands
-  . intros; apply LIM_of_ge claim3
-    peel hm1 with n hm1
-    rw [upperBound_def] at hm1; solve_by_elim
+  . intros; apply LIM_of_ge claim3; grind [upperBound_def]
   intro y hy
-  have claim5 (n:ℕ) : y ≥ (a-b) n := by
-    contrapose! hm2; use n
-    exact upperBound_upper (by order) hy
+  have claim5 (n:ℕ) : y ≥ (a-b) n := by contrapose! hm2; use n; exact upperBound_upper (by order) hy
   rw [claim4]; exact LIM_of_le (by solve_by_elim [Sequence.IsCauchy.sub]) claim5
 
 
@@ -248,9 +239,9 @@ theorem Real.exist_sqrt_two : ∃ x:Real, x^2 = 2 := by
   have claim2: 1 ∈ E := by simp [E]
   observe claim2': E.Nonempty
   set x := ((ExtendedReal.sup E):Real)
-  have claim3 : IsLUB E x := by solve_by_elim [ExtendedReal.sup_of_bounded]
-  have claim4 : x ≥ 1 := by rw [isLUB_def, upperBound_def] at claim3; solve_by_elim [claim3.1]
-  have claim5 : x ≤ 2 := by rw [isLUB_def] at claim3; solve_by_elim [claim3.2]
+  have claim3 : IsLUB E x := by grind [ExtendedReal.sup_of_bounded]
+  have claim4 : x ≥ 1 := by grind [isLUB_def, upperBound_def]
+  have claim5 : x ≤ 2 := by grind [isLUB_def]
   have claim6 : x.IsPos := by rw [isPos_iff]; linarith
   use x
   obtain h | h | h := trichotomous' (x^2) 2
@@ -260,7 +251,7 @@ theorem Real.exist_sqrt_two : ∃ x:Real, x^2 = 2 := by
       have hε : 0 < ε := by positivity
       observe hε1: ε ≤ 1/2
       observe hε2: ε ≤ (x^2-2)/8
-      exact ⟨ ε, hε, (by linarith), (by linarith) ⟩
+      refine' ⟨ ε, hε, _, _ ⟩ <;> linarith
     choose ε hε1 hε2 hε3 using claim11
     have claim12: (x-ε)^2 > 2 := calc
       _ = x^2 - 2 * ε * x + ε * ε := by ring
@@ -269,7 +260,7 @@ theorem Real.exist_sqrt_two : ∃ x:Real, x^2 = 2 := by
       _ > 2 := hε3
     have why (y:Real) (hy: y ∈ E) : x - ε ≥ y := by sorry
     have claim13: x-ε ∈ upperBounds E := by rwa [upperBound_def]
-    have claim14: x ≤ x-ε := by rw [isLUB_def] at claim3; solve_by_elim [claim3.2]
+    have claim14: x ≤ x-ε := by grind [isLUB_def]
     linarith
   . have claim7 : ∃ ε, 0 < ε ∧ ε < 1 ∧ x^2 + 5*ε < 2 := by
       set ε := min (1/2) ((2-x^2)/10)
@@ -285,7 +276,7 @@ theorem Real.exist_sqrt_two : ∃ x:Real, x^2 = 2 := by
       _ = x^2 + 5*ε := by ring
       _ < 2 := hε3
     have claim9 : x + ε ∈ E := by simp [E, claim8]; linarith
-    have claim10 : x + ε ≤ x := by rw [isLUB_def, upperBound_def] at claim3; solve_by_elim [claim3.1]
+    have claim10 : x + ε ≤ x := by grind [isLUB_def, upperBound_def]
     linarith
   assumption
 
