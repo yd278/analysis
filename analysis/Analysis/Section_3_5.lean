@@ -67,7 +67,7 @@ instance OrderedPair.inst_coeObject : Coe OrderedPair Object where
   the full Cartesian product
 -/
 abbrev SetTheory.Set.slice (x:Object) (Y:Set) : Set :=
-  Y.replace (P := fun y z ↦ z = (⟨x, y⟩:OrderedPair)) (by intros; simp_all)
+  Y.replace (P := fun y z ↦ z = (⟨x, y⟩:OrderedPair)) (by grind)
 
 @[simp]
 theorem SetTheory.Set.mem_slice (x z:Object) (Y:Set) :
@@ -75,7 +75,7 @@ theorem SetTheory.Set.mem_slice (x z:Object) (Y:Set) :
 
 /-- Definition 3.5.4 (Cartesian product) -/
 abbrev SetTheory.Set.cartesian (X Y:Set) : Set :=
-  union (X.replace (P := fun x z ↦ z = slice x Y) (by intros; simp_all))
+  union (X.replace (P := fun x z ↦ z = slice x Y) (by grind))
 
 /-- This instance enables the ×ˢ notation for Cartesian product. -/
 instance SetTheory.Set.inst_SProd : SProd Set Set Set where
@@ -114,14 +114,14 @@ theorem SetTheory.Set.fst_of_mk_cartesian {X Y:Set} (x:X) (y:Y) :
     fst (mk_cartesian x y) = x := by
   let z := mk_cartesian x y; have := (mem_cartesian _ _ _).mp z.property
   obtain ⟨ y', hy: z.val = (⟨ fst z, y' ⟩:OrderedPair) ⟩ := this.choose_spec
-  simp [z, mk_cartesian, Subtype.val_inj] at hy ⊢; rw [←hy.1]
+  simp [z, mk_cartesian, Subtype.val_inj] at *; rw [←hy.1]
 
 @[simp]
 theorem SetTheory.Set.snd_of_mk_cartesian {X Y:Set} (x:X) (y:Y) :
     snd (mk_cartesian x y) = y := by
   let z := mk_cartesian x y; have := (mem_cartesian _ _ _).mp z.property
   obtain ⟨ x', hx: z.val = (⟨ x', snd z ⟩:OrderedPair) ⟩ := (exists_comm.mp this).choose_spec
-  simp [z, mk_cartesian, Subtype.val_inj] at hx ⊢; rw [←hx.2]
+  simp [z, mk_cartesian, Subtype.val_inj] at *; rw [←hx.2]
 
 @[simp]
 theorem SetTheory.Set.mk_cartesian_fst_snd_eq {X Y: Set} (z: X ×ˢ Y) :
@@ -135,10 +135,10 @@ theorem SetTheory.Set.mk_cartesian_fst_snd_eq {X Y: Set} (z: X ×ˢ Y) :
 -/
 noncomputable abbrev SetTheory.Set.prod_equiv_prod (X Y:Set) :
     ((X ×ˢ Y):_root_.Set Object) ≃ (X:_root_.Set Object) ×ˢ (Y:_root_.Set Object) where
-  toFun := fun z ↦ ⟨(fst z, snd z), by simp⟩
-  invFun := fun z ↦ mk_cartesian ⟨z.val.1, z.prop.1⟩ ⟨z.val.2, z.prop.2⟩
-  left_inv := by intro; simp
-  right_inv := by intro; simp
+  toFun z := ⟨(fst z, snd z), by simp⟩
+  invFun z := mk_cartesian ⟨z.val.1, z.prop.1⟩ ⟨z.val.2, z.prop.2⟩
+  left_inv _ := by simp
+  right_inv _ := by simp
 
 /-- Example 3.5.5 -/
 example : ({1, 2}: Set) ×ˢ ({3, 4, 5}: Set) = ({
@@ -249,9 +249,7 @@ noncomputable abbrev SetTheory.Set.iProd_equiv_pi (I:Set) (X: I → Set) :
   right_inv x := by
     ext; dsimp
     generalize_proofs _ h
-    have ht := h.choose_spec
-    rw [tuple_inj] at ht
-    rw [←ht]
+    rw [←(tuple_inj _ _).mp h.choose_spec]
 
 
 /-
@@ -270,7 +268,7 @@ theorem SetTheory.Set.mem_Fin (n:ℕ) (x:Object) : x ∈ Fin n ↔ ∃ m, m < n 
   . intro ⟨ h1, h2 ⟩; use ↑(⟨ x, h1 ⟩:nat); simp [h2]
   intro ⟨ m, hm, h ⟩
   use (by rw [h, ←Object.ofnat_eq]; exact (m:nat).property)
-  convert hm; simp [h]
+  grind [Object.ofnat_eq''']
 
 abbrev SetTheory.Set.Fin_mk (n m:ℕ) (h: m < n): Fin n := ⟨ m, by rw [mem_Fin]; use m ⟩
 
@@ -297,11 +295,9 @@ theorem SetTheory.Set.Fin.coe_toNat {n:ℕ} (i: Fin n) : ((i:ℕ):Object) = (i:O
 lemma SetTheory.Set.Fin.coe_inj {n:ℕ} {i j: Fin n} : i = j ↔ (i:ℕ) = (j:ℕ) := by
   constructor
   · simp_all
-  intro h
   obtain ⟨_, hi⟩ := toNat_spec i
   obtain ⟨_, hj⟩ := toNat_spec j
-  rw [hi, hj]
-  congr
+  grind
 
 @[simp]
 theorem SetTheory.Set.Fin.coe_eq_iff {n:ℕ} (i: Fin n) {j:ℕ} : (i:Object) = (j:Object) ↔ i = j := by
@@ -318,8 +314,7 @@ theorem SetTheory.Set.Fin.toNat_mk {n:ℕ} (m:ℕ) (h: m < n) : (Fin_mk n m h : 
   rwa [Object.natCast_inj] at this
 
 abbrev SetTheory.Set.Fin_embed (n N:ℕ) (h: n ≤ N) (i: Fin n) : Fin N := ⟨ i.val, by
-  have := i.property; rw [mem_Fin] at this ⊢
-  choose m hm im using this; use m, by linarith
+  have := i.property; rw [mem_Fin] at *; grind
 ⟩
 
 /-- Connections with Mathlib's `Fin n` -/
@@ -335,7 +330,8 @@ theorem SetTheory.Set.finite_choice {n:ℕ} {X: Fin n → Set} (h: ∀ i, X i �
   -- (although it is more convenient to induct from 0 rather than 1)
   induction' n with n hn
   . have : Fin 0 = ∅ := by
-      rw [eq_empty_iff_forall_notMem]; intros; by_contra! h; simp at h
+      rw [eq_empty_iff_forall_notMem]
+      grind [specification_axiom'']
     have empty (i:Fin 0) : X i := False.elim (by rw [this] at i; exact not_mem_empty i i.property)
     apply nonempty_of_inhabited (x := tuple empty); rw [mem_iProd]; use empty
   set X' : Fin n → Set := fun i ↦ X (Fin_embed n (n+1) (by linarith) i)
@@ -347,12 +343,12 @@ theorem SetTheory.Set.finite_choice {n:ℕ} {X: Fin n → Set} (h: ∀ i, X i �
   have x : ∀ i, X i := fun i =>
     if h : i = n then
       have : i = last := by ext; simpa [←Fin.coe_toNat, last]
-      ⟨a, by rwa [this]⟩
+      ⟨a, by grind⟩
     else
       have : i < n := lt_of_le_of_ne (Nat.lt_succ_iff.mp (Fin.toNat_lt i)) h
       let i' := Fin_mk n i this
       have : X i = X' i' := by simp [X', i', Fin_embed]
-      ⟨x' i', by rw [this]; exact (x' i').property⟩
+      ⟨x' i', by grind⟩
   exact nonempty_of_inhabited (tuple_mem_iProd x)
 
 /-- Exercise 3.5.1, second part (requires axiom of regularity) -/
@@ -376,7 +372,7 @@ lemma SetTheory.Set.Tuple.ext {n:ℕ} {t t':Tuple n}
     (hX : t.X = t'.X)
     (hx : ∀ n : Fin n, ((t.x n):Object) = ((t'.x n):Object)) :
     t = t' := by
-  have ⟨_, _, _⟩ := t; have ⟨_, _, _⟩ := t'; subst hX; congr; ext; apply hx
+  have ⟨_, _, _⟩ := t; have ⟨_, _, _⟩ := t'; subst hX; congr; ext; grind
 
 /-- Exercise 3.5.2 -/
 theorem SetTheory.Set.Tuple.eq {n:ℕ} (t t':Tuple n) :
