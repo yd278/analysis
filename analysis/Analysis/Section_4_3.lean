@@ -40,10 +40,10 @@ namespace Section_4_3
 /-- Definition 4.3.1 (Absolute value) -/
 abbrev abs (x:ℚ) : ℚ := if x > 0 then x else (if x < 0 then -x else 0)
 
-theorem abs_of_pos {x: ℚ} (hx: 0 < x) : abs x = x := by simp [hx]
+theorem abs_of_pos {x: ℚ} (hx: 0 < x) : abs x = x := by grind
 
 /-- Definition 4.3.1 (Absolute value) -/
-theorem abs_of_neg {x: ℚ} (hx: x < 0) : abs x = -x := by simp [abs, hx]; intros; linarith
+theorem abs_of_neg {x: ℚ} (hx: x < 0) : abs x = -x := by grind
 
 /-- Definition 4.3.1 (Absolute value) -/
 theorem abs_of_zero : abs 0 = 0 := rfl
@@ -156,13 +156,13 @@ theorem close_mul_mul {ε δ x y z w:ℚ} (hε: ε ≥ 0) (hxy: ε.Close x y) (h
   set b := w-z
   have hb : w = z + b := by simp [b]
   have hbδ: |b| ≤ δ := by rwa [close_symm, close_iff] at hzw
-  have : y*w = x * z + a * z + x * b + a * b := by rw [ha, hb]; ring
+  have : y*w = x * z + a * z + x * b + a * b := by grind
   rw [close_symm, close_iff]
   calc
-    _ = |a * z + b * x + a * b| := by rw [this]; congr; ring
+    _ = |a * z + b * x + a * b| := by grind
     _ ≤ |a * z + b * x| + |a * b| := abs_add _ _
-    _ ≤ |a * z| + |b * x| + |a * b| := by gcongr; apply abs_add
-    _ = |a| * |z| + |b| * |x| + |a| * |b| := by simp_rw [abs_mul]
+    _ ≤ |a * z| + |b * x| + |a * b| := by grind [abs_add]
+    _ = |a| * |z| + |b| * |x| + |a| * |b| := by grind [abs_mul]
     _ ≤ _ := by gcongr
 
 /-- This variant of Proposition 4.3.7(h) was not in the textbook, but can be useful
