@@ -622,7 +622,11 @@ lemma SetTheory.Object.ofnat_eq' {n:ℕ} : (ofNat(n):Object) = (n:Object) := rfl
 
 @[simp]
 lemma SetTheory.Object.ofnat_eq'' {n:Nat} : ((n:ℕ):Object) = (n: Object) := by
-  unfold instNatCast Nat.cast Set.instNatCast; simp
+  simp [instNatCast, Nat.cast, Set.instNatCast]
+
+@[simp]
+lemma SetTheory.Object.ofnat_eq''' {n:ℕ} {hn} : ((⟨(n:Object), hn⟩: nat): ℕ) = n := by
+  simp [instNatCast, Nat.cast, Set.instNatCast]
 
 lemma SetTheory.Set.nat_coe_eq {n:ℕ} : (n:Nat) = OfNat.ofNat n := rfl
 
