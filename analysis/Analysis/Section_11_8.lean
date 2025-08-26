@@ -45,11 +45,11 @@ noncomputable abbrev left_lim (f: ℝ → ℝ) (x₀:ℝ) : ℝ := lim ((nhdsWit
 
 theorem right_lim_def {f: ℝ → ℝ} {x₀ L:ℝ} (h: Convergesto (.Ioi x₀) f L x₀) :
   right_lim f x₀ = L := by
-  apply lim_eq; rwa [Convergesto.iff, ←nhdsWithin.eq_1, Filter.Tendsto.eq_1] at h
+  apply lim_eq; rwa [Convergesto.iff, Filter.Tendsto.eq_1] at h
 
 theorem left_lim_def {f: ℝ → ℝ} {x₀ L:ℝ} (h: Convergesto (.Iio x₀) f L x₀) :
   left_lim f x₀ = L := by
-  apply lim_eq; rwa [Convergesto.iff, ←nhdsWithin.eq_1, Filter.Tendsto.eq_1] at h
+  apply lim_eq; rwa [Convergesto.iff, Filter.Tendsto.eq_1] at h
 
 noncomputable abbrev jump (f: ℝ → ℝ) (x₀:ℝ) : ℝ :=
   right_lim f x₀ - left_lim f x₀
@@ -63,7 +63,7 @@ theorem right_lim_of_continuous {X:Set ℝ} {f: ℝ → ℝ} {x₀:ℝ}
   rw [ContinuousWithinAt.eq_1] at hf
   replace hf : (nhdsWithin x₀ (.Ioo x₀ (x₀ + ε))).Tendsto f  (nhds (f x₀)) :=
     tendsto_nhdsWithin_mono_left (Set.Ioo_subset_Ico_self.trans hX) hf
-  rw [Convergesto.iff, ←nhdsWithin.eq_1]
+  rw [Convergesto.iff]
   convert hf using 1
   have h1 : .Ioo x₀ (x₀ + ε) ∈ nhdsWithin x₀ (.Ioi x₀) := by
     convert inter_mem_nhdsWithin (t := .Ioo (x₀-ε) (x₀+ε)) _ _
@@ -80,7 +80,7 @@ theorem left_lim_of_continuous {X:Set ℝ} {f: ℝ → ℝ} {x₀:ℝ}
   rw [ContinuousWithinAt.eq_1] at hf
   replace hf : (nhdsWithin x₀ (.Ioo (x₀ - ε) x₀)).Tendsto f (nhds (f x₀)) :=
     tendsto_nhdsWithin_mono_left (Set.Ioo_subset_Ioc_self.trans hX) hf
-  rw [Convergesto.iff, ←nhdsWithin.eq_1]
+  rw [Convergesto.iff]
   convert hf using 1
   have h1 : .Ioo (x₀-ε) x₀ ∈ nhdsWithin x₀ (.Iio x₀) := by
     convert inter_mem_nhdsWithin (t := .Ioo (x₀-ε) (x₀+ε)) _ _
@@ -104,7 +104,7 @@ theorem jump_of_continuous {X:Set ℝ} {f: ℝ → ℝ} {x₀:ℝ}
 /-- Right limits exist for monotone functions -/
 theorem right_lim_of_monotone {f: ℝ → ℝ} (x₀:ℝ) (hf: Monotone f) :
   Convergesto (.Ioi x₀) f (sInf (f '' .Ioi x₀)) x₀ := by
-  rw [Convergesto.iff, ←nhdsWithin.eq_1]
+  rw [Convergesto.iff]
   apply (hf.monotoneOn _).tendsto_nhdsGT
   rw [bddBelow_def]; use f x₀; intro y hy; simp at hy; obtain ⟨ x, hx, rfl ⟩ := hy; apply hf; grind
 
@@ -114,7 +114,7 @@ theorem right_lim_of_monotone' {f: ℝ → ℝ} (x₀:ℝ) (hf: Monotone f) :
 /-- Left limits exist for monotone functions -/
 theorem left_lim_of_monotone {f: ℝ → ℝ} (x₀:ℝ) (hf: Monotone f) :
   Convergesto (.Iio x₀) f (sSup (f '' .Iio x₀)) x₀ := by
-  rw [Convergesto.iff, ←nhdsWithin.eq_1]
+  rw [Convergesto.iff]
   apply (hf.monotoneOn _).tendsto_nhdsLT
   rw [bddAbove_def]; use f x₀; intro y hy; simp at hy; obtain ⟨ x, hx, rfl ⟩ := hy; apply hf; grind
 
