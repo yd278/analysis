@@ -95,16 +95,16 @@ abbrev BoundedInterval.b (I: BoundedInterval) : ℝ := match I with
   | Ico _ b => b
 
 theorem BoundedInterval.subset_Icc (I: BoundedInterval) : I ⊆ Icc I.a I.b := match I with
-  | Ioo _ _ => by simp [Ioo, Icc, a, b, subset_iff, Set.Ioo_subset_Icc_self]
-  | Icc _ _ => by simp [Icc, a, b, subset_iff]
-  | Ioc _ _ => by simp [Ioc, Icc, a, b, subset_iff, Set.Ioc_subset_Icc_self]
-  | Ico _ _ => by simp [Ico, Icc, a, b, subset_iff, Set.Ico_subset_Icc_self]
+  | Ioo _ _ => by simp [subset_iff, Set.Ioo_subset_Icc_self]
+  | Icc _ _ => by simp [subset_iff]
+  | Ioc _ _ => by simp [subset_iff, Set.Ioc_subset_Icc_self]
+  | Ico _ _ => by simp [subset_iff, Set.Ico_subset_Icc_self]
 
 theorem BoundedInterval.Ioo_subset (I: BoundedInterval) : Ioo I.a I.b ⊆ I := match I with
-  | Ioo _ _ => by simp [Ioo, a, b, subset_iff]
-  | Icc _ _ => by simp [Icc, a, b, subset_iff, Set.Ioo_subset_Icc_self]
-  | Ioc _ _ => by simp [Ioc, Ioo, a, b, subset_iff, Set.Ioo_subset_Ioc_self]
-  | Ico _ _ => by simp [Ico, Ioo, a, b, subset_iff, Set.Ioo_subset_Ico_self]
+  | Ioo _ _ => by simp [subset_iff]
+  | Icc _ _ => by simp [subset_iff, Set.Ioo_subset_Icc_self]
+  | Ioc _ _ => by simp [subset_iff, Set.Ioo_subset_Ioc_self]
+  | Ico _ _ => by simp [subset_iff, Set.Ioo_subset_Ico_self]
 
 /-- Definition 1.1.1 (boxes) -/
 abbrev BoundedInterval.length (I: BoundedInterval) : ℝ := max (I.b - I.a) 0
@@ -145,7 +145,7 @@ theorem BoundedInterval.coe_of_box (I:BoundedInterval) : (I:Box 1).toSet = Eucli
     subst this; simp
   rintro ⟨ y, hy, rfl ⟩ ⟨ i, hi ⟩ _
   have : i=0 := by omega
-  subst this; simp [hy]
+  grind
 
 /-- Definition 1.1.1 (boxes)-/
 abbrev Box.volume {d:ℕ} (B: Box d) : ℝ := ∏ i, |B.side i|ₗ
@@ -197,15 +197,13 @@ theorem IsElementary.translate {d:ℕ} {E: Set (EuclideanSpace' d)}
 /-- A sublemma for proving Lemma 1.1.2(i).  It is a geometrically obvious fact but surprisingly annoying to prove formally. -/
 theorem BoundedInterval.partition (S: Finset BoundedInterval) : ∃ T: Finset BoundedInterval, T.toSet.PairwiseDisjoint BoundedInterval.toSet ∧ ∀ I ∈ S, ∃ U : Set T, I = ⋃ J ∈ U, J.val.toSet := by
   let endpoints : Finset ℝ := S.image BoundedInterval.a ∪ S.image BoundedInterval.b
-  have ha_mem {I:BoundedInterval} (hI: I ∈ S) : I.a ∈ endpoints := by
-    simp [endpoints]; left; exact ⟨ I, hI, rfl ⟩
-  have hb_mem {I:BoundedInterval} (hI: I ∈ S) : I.b ∈ endpoints := by
-    simp [endpoints]; right; exact ⟨ I, hI, rfl ⟩
+  have ha_mem {I:BoundedInterval} (hI: I ∈ S) : I.a ∈ endpoints := by grind
+  have hb_mem {I:BoundedInterval} (hI: I ∈ S) : I.b ∈ endpoints := by grind
   let k := endpoints.card
   let sorted : Fin k ≃o endpoints := endpoints.orderIsoOfFin (by rfl)
   let a : ℕ → ℝ := fun n ↦ if h:n < k then sorted ⟨n,h⟩ else 0  -- 0 is a junk value
-  let T := Finset.univ.image (fun x:endpoints ↦ BoundedInterval.Icc x x)
-    ∪ (Finset.range (k-1)).image (fun n ↦ BoundedInterval.Ioo (a n) (a (n+1)))
+  let T := Finset.univ.image (fun x:endpoints ↦ Icc x x)
+    ∪ (Finset.range (k-1)).image (fun n ↦ Ioo (a n) (a (n+1)))
   refine' ⟨T,_,_⟩
   . rw [Set.pairwiseDisjoint_iff]
     intro I hI J hJ hIJ
@@ -214,7 +212,7 @@ theorem BoundedInterval.partition (S: Finset BoundedInterval) : ∃ T: Finset Bo
     obtain ⟨ x, hx, rfl ⟩ | ⟨ n, hn, rfl ⟩ := hI
       <;> obtain ⟨ y, hy, rfl ⟩ | ⟨ m, hm, rfl ⟩ := hJ
       <;> simp at this
-    . rw [show x=y by cc]
+    . rw [show x=y by grind]
     . rw [this.1] at this
       set n := sorted.symm ⟨ x, hx ⟩
       have hax : x = sorted n := by simp [n]
@@ -237,8 +235,7 @@ theorem BoundedInterval.partition (S: Finset BoundedInterval) : ∃ T: Finset Bo
   ext x; simp; constructor
   . intro hx
     by_cases hend : x ∈ endpoints
-    . use BoundedInterval.Icc x x
-      simp [T, hx, hend]
+    . use Icc x x; simp [T, hx, hend]
     let n := sorted.symm ⟨ I.a, ha_mem hI ⟩
     let m := sorted.symm ⟨ I.b, hb_mem hI ⟩
     have hnI : I.a = sorted n := by simp [n]
@@ -247,16 +244,16 @@ theorem BoundedInterval.partition (S: Finset BoundedInterval) : ∃ T: Finset Bo
     apply I.subset_Icc at hx
     simp [hnI, hmI] at hx
     obtain ⟨ hx1, hx2 ⟩ := hx
-    have H : ∃ m, x ≤ a m := by use m; simp [a, hm, hx2]
+    have H : ∃ m, x ≤ a m := by use m; grind
     let r := Nat.find H
-    have hrm : r ≤ m := by convert Nat.find_min' H _; simp [a, hm, hx2]
+    have hrm : r ≤ m := by convert Nat.find_min' H _; grind
     have hr : r < k := by linarith
-    have hxr : x ≤ sorted ⟨ r, hr ⟩ := by convert Nat.find_spec H; simp [r,a,hr]
+    have hxr : x ≤ sorted ⟨ r, hr ⟩ := by convert Nat.find_spec H; grind
     have hnr : n < r := by
       by_contra!
       replace : (sorted ⟨r, hr⟩).val ≤ (sorted ⟨n, hn⟩).val := by simp [this]
       simp [show x = sorted ⟨ n, hn ⟩ by order] at hend
-    refine' ⟨ BoundedInterval.Ioo (sorted ⟨ r-1, by omega ⟩) (sorted ⟨ r, hr ⟩), _ , _, _ ⟩
+    refine' ⟨ Ioo (sorted ⟨ r-1, by omega ⟩) (sorted ⟨ r, hr ⟩), _ , _, _ ⟩
     . apply Set.Subset.trans _ I.Ioo_subset
       simp [hnI, hmI]
       apply Set.Ioo_subset_Ioo <;> simp <;> omega
@@ -268,8 +265,8 @@ theorem BoundedInterval.partition (S: Finset BoundedInterval) : ∃ T: Finset Bo
       by_contra!
       convert Nat.find_min H (show r-1 < r by omega) _
       simp [a, show r-1 < k by omega, this]
-    split_ands <;> order
-  rintro ⟨ J, hJI, _, hxJ ⟩; exact hJI hxJ
+    grind
+  grind
 
 /-- Lemma 1.1.2(i) -/
 theorem Box.partition {d:ℕ} (S: Finset (Box d)) : ∃ T: Finset (Box d), T.toSet.PairwiseDisjoint Box.toSet ∧ ∀ I ∈ S, ∃ U : Set T, I = ⋃ J ∈ U, J.val.toSet := by
@@ -289,50 +286,33 @@ theorem Box.partition {d:ℕ} (S: Finset (Box d)) : ∃ T: Finset (Box d), T.toS
     have := hB₁B₂.some_mem
     simp [Box.toSet] at this
     rw [Set.mem_pi, Set.mem_pi] at this
-    obtain ⟨ h₁, h₂ ⟩ := this; specialize h₁ i (by simp); specialize h₂ i (by simp)
+    obtain ⟨ h₁, h₂ ⟩ := this
     specialize hJdisj i; rw [Set.pairwiseDisjoint_iff] at hJdisj
     apply_rules [hJdisj, Set.nonempty_of_mem (x := (hB₁B₂.some i))]
-    aesop
+    grind
   intro B hB
   choose U hU using hJ
   use {B' | ∀ i, ∃ hi : B'.val.side i ∈ J i, ⟨ _, hi ⟩ ∈ U i hB}
-  ext x
-  simp [Box.toSet]; rw [Set.mem_pi]
+  ext; simp [Box.toSet]; rw [Set.mem_pi]
   conv => lhs; intro i _; rw [hU i hB]
   conv => rhs; congr; intro a; rhs; rw [Set.mem_pi]
   simp; constructor
   . intro h; choose I hI using h
-    use ⟨ I ⟩; simp; and_intros
-    . refine' ⟨ _, _ ⟩
-      . use fun i _ ↦ I i
-        simp
-        peel hI with i hi
-        have ⟨ hIJ, hIJ' ⟩ := hi.1
-        assumption
-      peel hI with i hi
-      tauto
-    aesop
+    refine' ⟨ ⟨ I ⟩, ⟨ ⟨ fun i _ ↦ I i, _⟩, _ ⟩, _ ⟩ <;> grind
   rintro ⟨ B', ⟨ h1, h2 ⟩, h3 ⟩ i; use B'.side i
   aesop
 
 theorem IsElementary.partition {d:ℕ} {E: Set (EuclideanSpace' d)}
 (hE: IsElementary E) : ∃ T: Finset (Box d), T.toSet.PairwiseDisjoint Box.toSet ∧ E = ⋃ J ∈ T, J.toSet := by
   obtain ⟨ S, rfl ⟩ := hE
-  obtain ⟨ T', hT', hST' ⟩ := Box.partition S
+  have ⟨ T', hT', hST' ⟩ := Box.partition S
   choose U hU using hST'
-  conv =>
-    rhs; ext T; rhs; lhs; rhs; ext B; rhs; ext h; rw [hU B h]
+  conv => rhs; ext T; rhs; lhs; rhs; ext B; rhs; ext h; rw [hU B h]
   classical
   use T'.filter (fun J ↦ ∃ B, ∃ h:B ∈ S, J ∈ Subtype.val '' (U B h))
   simp; split_ands
-  . apply hT'.subset
-    intro x; simp; tauto
-  ext x; simp
-  constructor
-  . rintro ⟨ B, h, B', ⟨ ⟨ hB'T', hB'U ⟩ , hxB'⟩ ⟩
-    use B'; simp_all; use B; simp_all
-  rintro ⟨ B, ⟨ hBT', ⟨ B', hB'S, hBT', h1 ⟩ ⟩, hxB ⟩
-  refine ⟨ B', hB'S, B, ⟨ ⟨ hBT', h1 ⟩, hxB ⟩ ⟩
+  . apply hT'.subset; intro _; simp; tauto
+  ext; simp; grind
 
 /-- Helper lemma for Lemma 1.1.2(ii) -/
 theorem BoundedInterval.sample_finite (I : BoundedInterval) {N:ℕ} (hN: N ≠ 0):
@@ -348,22 +328,17 @@ theorem BoundedInterval.length_eq (I : BoundedInterval) :
 def Box.sample_congr {d:ℕ} (B:Box d) (N:ℕ) :
 ↥(B.toSet ∩ (Set.range (fun (n:Fin d → ℤ) i ↦ (N:ℝ)⁻¹*(n i)))) ≃ ((i : Fin d) → ↑(↑(B.side i) ∩ Set.range fun n:ℤ ↦ (N:ℝ)⁻¹ * ↑n)) := {
     toFun x i := by
-      obtain ⟨ x, hx ⟩ := x
-      refine ⟨ x i, ?_ ⟩
+      obtain ⟨ x, hx ⟩ := x; refine ⟨ x i, ?_ ⟩
       simp [Box.toSet] at hx; rw [Set.mem_pi] at hx
-      obtain ⟨ hx, y, rfl ⟩ := hx
-      simp at hx ⊢; exact hx i
+      grind
     invFun x := by
       refine ⟨ fun i ↦ x i, ?_ ⟩
       simp [Box.toSet]; rw [Set.mem_pi]; split_ands
-      . intro i _; obtain ⟨ x, hx ⟩ := x i
-        aesop
+      . grind
       have h (i:Fin d) : ∃ y:ℤ, (N:ℝ)⁻¹ * y = x i := by
-        obtain ⟨ x, hx ⟩ := x i
-        simp at hx
-        convert hx.2
+        obtain ⟨ x, hx ⟩ := x i; simp at hx; grind
       choose y hy using h; use y; simp [hy]
-    left_inv x := by obtain ⟨ x, hx ⟩ := x; simp
+    left_inv x := by grind
     right_inv x := by aesop
   }
 
@@ -381,7 +356,7 @@ theorem Box.vol_eq {d:ℕ} (B: Box d):
   have : ∀ i ∈ Finset.univ, Filter.atTop.Tendsto (fun N:ℕ ↦ (N:ℝ)⁻¹ * Nat.card ↥((B.side i).toSet ∩ Set.range ((fun n:ℤ ↦ (N:ℝ)⁻¹*n)))) (nhds |B.side i|ₗ) := fun i _ ↦ (B.side i).length_eq
   convert tendsto_finset_prod Finset.univ this with N
   simp [Finset.prod_mul_distrib]; left
-  norm_cast; rw [←Nat.card_pi]
+  norm_cast; simp_rw [←Nat.card_coe_set_eq, ←Nat.card_pi]
   apply Nat.card_congr (B.sample_congr N)
 
 
@@ -400,16 +375,13 @@ theorem Box.sum_vol_eq {d:ℕ} {T: Finset (Box d)}
         obtain ⟨ x, hx ⟩ := x
         simp at hx
         have hB := hx.1.choose_spec
-        set B := hx.1.choose
-        refine ⟨ ⟨ B, hB.1 ⟩, ⟨ x, ?_⟩ ⟩
-        simp [hB, hx]
+        refine ⟨ ⟨ hx.1.choose, hB.1 ⟩, ⟨ x, ?_⟩ ⟩
+        simp_all
       invFun x := by
         obtain ⟨ ⟨ B, hB ⟩, ⟨ x, hx ⟩ ⟩ := x
         refine ⟨ x, ?_ ⟩
         simp_all; aesop
-      left_inv x := by
-        obtain ⟨ x, hx ⟩ := x
-        simp at hx ⊢
+      left_inv x := by grind
       right_inv x := by
         obtain ⟨ ⟨ B, hB ⟩, ⟨ x, hxB⟩ ⟩ := x
         simp at hxB
@@ -417,7 +389,7 @@ theorem Box.sum_vol_eq {d:ℕ} {T: Finset (Box d)}
         have h : this.choose = B := by
           have h := this.choose_spec
           apply hT.elim h.1 hB
-          rw [Set.not_disjoint_iff]; use x; tauto
+          rw [Set.not_disjoint_iff]; grind
         simp [h, ←eq_cast_iff_heq]
     }
   intro ⟨ B, _ ⟩; convert B.sample_finite ?_
@@ -465,18 +437,10 @@ example :
   use hE
   rw [hE.measure_eq _ hET]
   . rw [Finset.sum_pair]
-    . simp [BoundedInterval.length, BoundedInterval.a, BoundedInterval.b]
-      norm_num
+    . norm_num
     by_contra!; simp [-Box.mk.injEq] at this
   rw [Set.pairwiseDisjoint_iff]
-  simp [T]; split_ands
-  all_goals {
-    rintro ⟨ x, hx ⟩
-    simp at hx
-    obtain ⟨ hx, y, hy, hxy ⟩ := hx
-    replace hxy := congr($hxy ⟨ 0, by simp ⟩)
-    simp at hxy; linarith
-  }
+  simp [T]; split_ands <;> intro ⟨ x, hx ⟩ <;> grind
 
 lemma IsElementary.measure_nonneg {d:ℕ} {E: Set (EuclideanSpace' d)} (hE: IsElementary E) :
   0 ≤ hE.measure := by
@@ -543,23 +507,6 @@ abbrev Box.prod {d₁ d₂:ℕ} (B₁: Box d₁) (B₂: Box d₂) : Box (d₁ + 
   side i := by
     obtain ⟨ i, hi ⟩ := i
     exact if h : i < d₁ then B₁.side ⟨i, h⟩ else (B₂.side ⟨i - d₁, by omega⟩)
-
-def EuclideanSpace'.prod_equiv (d₁ d₂:ℕ) : EuclideanSpace' (d₁ + d₂) ≃ EuclideanSpace' d₁ × EuclideanSpace' d₂ where
-  toFun x := by
-    constructor
-    . intro ⟨ i, hi ⟩; exact x ⟨ i, by omega ⟩
-    intro ⟨ i, hi⟩; exact x ⟨ i+d₁, by omega ⟩
-  invFun x i := by
-    obtain ⟨ i, hi ⟩ := i
-    exact if h:i < d₁ then x.1 ⟨ i, h ⟩ else x.2 ⟨ i-d₁, by omega ⟩
-  left_inv x := by
-    ext ⟨ i, hi ⟩; by_cases h : i < d₁ <;> simp [h]
-    congr; omega
-  right_inv x := by
-    ext ⟨ i, hi ⟩ <;> simp [hi]
-    congr!; omega
-
-def EuclideanSpace'.prod {d₁ d₂:ℕ} (E₁: Set (EuclideanSpace' d₁)) (E₂: Set (EuclideanSpace' d₂)) : Set (EuclideanSpace' (d₁+d₂)) := (EuclideanSpace'.prod_equiv d₁ d₂).symm '' (E₁ ×ˢ E₂)
 
 /-- Exercise 1.1.4 -/
 theorem IsElementary.prod {d₁ d₂:ℕ} {E₁: Set (EuclideanSpace' d₁)} {E₂: Set (EuclideanSpace' d₂)}

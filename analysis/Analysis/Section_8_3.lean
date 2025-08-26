@@ -61,6 +61,7 @@ theorem Uncountable.power_set_nat : Uncountable (Set ℕ) := by
     contradiction
   tauto
 
+open Real in
 /-- Corollary 8.3.4 -/
 theorem Uncountable.real : Uncountable ℝ := by
   -- This proof is written to follow the structure of the original text.
@@ -70,9 +71,9 @@ theorem Uncountable.real : Uncountable ℝ := by
     apply Summable.subtype (f := a)
     convert summable_geometric_of_lt_one (?_:0 ≤ (1/10:ℝ)) ?_ using 2 with n <;> try norm_num
     unfold a
-    rw [one_div_pow, Real.rpow_neg, one_div]; simp; norm_num
+    rw [one_div_pow, rpow_neg, one_div]; simp; norm_num
   have h_decomp {A B C: Set ℕ} (hC : C = A ∪ B) (hAB: ∀ n, n ∉ A ∩ B) :  ∑' n:C, a n = ∑' n:A, a n + ∑' n:B, a n := by
-    convert Summable.tsum_union_disjoint ?_ ?_ ?_ <;> try first | infer_instance | apply hsummable
+    convert Summable.tsum_union_disjoint ?_ ?_ ?_ <;> first | infer_instance | try apply hsummable
     . rw [hC]
     rw [Set.disjoint_iff_inter_eq_empty]; grind
   have h_nonneg (A:Set ℕ) : ∑' n:A, a n ≥ 0 := by simp [a]; positivity
@@ -94,7 +95,7 @@ theorem Uncountable.real : Uncountable ℝ := by
           (∑' n:{n ∈ B|n ≤ n₀}, a n + ∑' n:{n ∈ B|n > n₀}, a n) := by
         congr; all_goals {
           apply h_decomp
-          . ext n; simp; rw [←not_le]; tauto
+          . ext n; simp; grind
           intro n hn; simp at hn; linarith
         }
       _ = ((∑' n:{n ∈ A|n < n₀}, a n + ∑' n:{n ∈ A|n = n₀}, a n) + ∑' n:{n ∈ A|n > n₀}, a n) -
@@ -116,7 +117,7 @@ theorem Uncountable.real : Uncountable ℝ := by
       _ = (∑' n:{n ∈ A|n < n₀}, a n - ∑' n:{n ∈ B|n < n₀}, a n) + a n₀ +
           ∑' n:{n ∈ A|n > n₀}, a n - ∑' n:{n ∈ B|n > n₀}, a n := by abel
       _ = 0 + a n₀ + ∑' n:{n ∈ A|n > n₀}, a n - ∑' n:{n ∈ B|n > n₀}, a n := by
-        congr; rw [sub_eq_zero]; apply tsum_congr_set_coe; ext; simpa using h2
+        congr; rw [sub_eq_zero]; apply tsum_congr_set_coe; grind
       _ ≥ 0 + a n₀ + 0 - ∑' n:{n|n > n₀}, a n := by
         gcongr; positivity
         calc
@@ -138,16 +139,13 @@ theorem Uncountable.real : Uncountable ℝ := by
         calc
           _ = ∑' j:ℕ, (10:ℝ)^(-1-n₀:ℝ) * (1/(10:ℝ))^j := by
             apply tsum_congr; intro j
-            rw [pow_add, pow_add, Real.rpow_sub, Real.rpow_neg,
-              Real.rpow_one, Real.rpow_natCast] <;> try positivity
+            rw [pow_add, pow_add, rpow_sub, rpow_neg, rpow_one, rpow_natCast] <;> try positivity
             simp; congr
           _ = (10:ℝ)^(-1-n₀:ℝ) * ∑' j:ℕ, (1/(10:ℝ))^j := tsum_mul_left
           _ = _ := by
-            rw [tsum_geometric_of_lt_one,
-                show -1 - (n₀:ℝ) = (-n₀:ℝ) + (-1:ℝ) by ring,
-                Real.rpow_add, Real.rpow_neg, Real.rpow_natCast]
-                <;> try (first | positivity | norm_num)
-            ring
+            rw [tsum_geometric_of_lt_one, (?_:-1 - (n₀:ℝ) = (-n₀:ℝ) + (-1:ℝ)),
+                rpow_add, rpow_neg, rpow_natCast] <;> try positivity
+            ring; abel; norm_num
       _ = (8 / (9:ℝ)) * (10:ℝ)^(-(n₀:ℝ)) := by ring
       _ > 0 := by positivity
     simp at this
@@ -155,7 +153,7 @@ theorem Uncountable.real : Uncountable ℝ := by
   replace := (equiv this).mp power_set_nat
   contrapose this
   rw [not_uncountable_iff] at this ⊢
-  exact SetCoe.countable _
+  apply SetCoe.countable
 
 /-- Exercise 8.3.1 -/
 example {X:Type} [Finite X] : Nat.card (Set X) = 2 ^ Nat.card X := by

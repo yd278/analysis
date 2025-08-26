@@ -163,12 +163,12 @@ instance Rat.addGroup_inst : AddGroup Rat :=
 AddGroup.ofLeftAxioms (by
   -- this proof is written to follow the structure of the original text.
   intro x y z
-  obtain ⟨ a, b, hb , rfl ⟩ := eq_diff x
-  obtain ⟨ c, d, hd , rfl ⟩ := eq_diff y
-  obtain ⟨ e, f, hf , rfl ⟩ := eq_diff z
-  have hbd : b*d ≠ 0 := Int.mul_ne_zero hb hd
-  have hdf : d*f ≠ 0 := Int.mul_ne_zero hd hf
-  have hbdf : b*d*f ≠ 0 := Int.mul_ne_zero hbd hf
+  obtain ⟨ a, b, hb, rfl ⟩ := eq_diff x
+  obtain ⟨ c, d, hd, rfl ⟩ := eq_diff y
+  obtain ⟨ e, f, hf, rfl ⟩ := eq_diff z
+  have hbd : b*d ≠ 0 := Int.mul_ne_zero hb hd     -- can also use `observe hbd : b*d ≠ 0` here
+  have hdf : d*f ≠ 0 := Int.mul_ne_zero hd hf     -- can also use `observe hdf : d*f ≠ 0` here
+  have hbdf : b*d*f ≠ 0 := Int.mul_ne_zero hbd hf -- can also use `observe hbdf : b*d*f ≠ 0` here
   rw [add_eq _ _ hb hd, add_eq _ _ hbd hf, add_eq _ _ hd hf,
       add_eq _ _ hb hdf, ←mul_assoc b, eq _ _ hbdf hbdf]
   ring
@@ -307,7 +307,7 @@ instance Rat.decidableRel : DecidableRel (· ≤ · : Rat → Rat → Prop) := b
       Decidable (Quotient.mk PreRat.instSetoid n ≤ Quotient.mk PreRat.instSetoid m) := by
     intro ⟨ a,b,hb ⟩ ⟨ c,d,hd ⟩
     -- at this point, the goal is morally `Decidable(a//b ≤ c//d)`, but there are technical
-    -- issues due to the junk value of formal divisionwhen the denominator vanishes.
+    -- issues due to the junk value of formal division when the denominator vanishes.
     -- It may be more convenient to avoid formal division and work directly with `Quotient.mk`.
     cases (0:ℤ).decLe (b*d) with
       | isTrue hbd =>
