@@ -28,9 +28,9 @@ variable (x₀ : ℝ)
 hypothesis that `x₀` is a limit point is not needed. -/
 theorem _root_.HasDerivWithinAt.iff (X: Set ℝ) (x₀ : ℝ) (f: ℝ → ℝ)
   (L:ℝ) :
-  HasDerivWithinAt f L X x₀ ↔ (nhds x₀ ⊓ .principal (X \ {x₀})).Tendsto (fun x ↦ (f x - f x₀) / (x - x₀))
+  HasDerivWithinAt f L X x₀ ↔ (nhdsWithin x₀ (X \ {x₀})).Tendsto (fun x ↦ (f x - f x₀) / (x - x₀))
    (nhds L) :=  by
-  rw [hasDerivWithinAt_iff_tendsto_slope, ←nhdsWithin.eq_1, iff_iff_eq, slope_fun_def_field]
+  rw [hasDerivWithinAt_iff_tendsto_slope, iff_iff_eq, slope_fun_def_field]
 
 theorem _root_.DifferentiableWithinAt.iff (X: Set ℝ) (x₀ : ℝ) (f: ℝ → ℝ) :
   DifferentiableWithinAt ℝ f X x₀ ↔ ∃ L, HasDerivWithinAt f L X x₀ := by
@@ -87,13 +87,13 @@ example : ∃ (X: Set ℝ) (x₀ :ℝ) (f g: ℝ → ℝ) (L:ℝ) (hfg: f x₀ =
 
 abbrev f_10_1_6 : ℝ → ℝ := abs
 
-example : (nhds 0 ⊓ .principal (.Ioi 0)).Tendsto (fun x ↦ (f_10_1_6 x - f_10_1_6 0) / (x - 0)) (nhds 1) := by
+example : (nhdsWithin 0 (.Ioi 0)).Tendsto (fun x ↦ (f_10_1_6 x - f_10_1_6 0) / (x - 0)) (nhds 1) := by
   sorry
 
-example : (nhds 0 ⊓ .principal (.Iio 0)).Tendsto (fun x ↦ (f_10_1_6 x - f_10_1_6 0) / (x - 0)) (nhds (-1)) := by
+example : (nhdsWithin 0 (.Iio 0)).Tendsto (fun x ↦ (f_10_1_6 x - f_10_1_6 0) / (x - 0)) (nhds (-1)) := by
   sorry
 
-example : ¬ ∃ L, (nhds 0 ⊓ .principal (.univ \ {0})).Tendsto (fun x ↦ (f_10_1_6 x - f_10_1_6 0) / (x - 0))
+example : ¬ ∃ L, (nhdsWithin 0 (.univ \ {0})).Tendsto (fun x ↦ (f_10_1_6 x - f_10_1_6 0) / (x - 0))
    (nhds L) := by sorry
 
 example : ¬ DifferentiableWithinAt ℝ f_10_1_6 (.univ) 0 := by

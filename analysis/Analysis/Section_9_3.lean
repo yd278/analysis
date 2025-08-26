@@ -42,7 +42,7 @@ example : (5:ℝ).CloseFn (.Icc 1 3) (fun x ↦ x^2) 4 := by sorry
 example : (0.41:ℝ).CloseFn (.Icc 1.9 2.1) (fun x ↦ x^2) 4 := by sorry
 
 /-- Example 9.3.4 -/
-example: ¬ (0.1:ℝ).CloseFn (.Icc 1 3) (fun x ↦ x^2) 4 := by
+example: ¬(0.1:ℝ).CloseFn (.Icc 1 3) (fun x ↦ x^2) 4 := by
   sorry
 
 /-- Example 9.3.4 -/
@@ -50,7 +50,7 @@ example: (0.1:ℝ).CloseNear (.Icc 1 3) (fun x ↦ x^2) 4 2 := by
   sorry
 
 /-- Example 9.3.5 -/
-example: ¬ (0.1:ℝ).CloseFn (.Icc 1 3) (fun x ↦ x^2) 9 := by
+example: ¬(0.1:ℝ).CloseFn (.Icc 1 3) (fun x ↦ x^2) 9 := by
   sorry
 
 /-- Example 9.3.5 -/
@@ -62,8 +62,8 @@ abbrev Convergesto (X:Set ℝ) (f: ℝ → ℝ) (L:ℝ) (x₀:ℝ) : Prop := ∀
 
 /-- Connection with Mathlib filter convergence concepts -/
 theorem Convergesto.iff (X:Set ℝ) (f: ℝ → ℝ) (L:ℝ) (x₀:ℝ) :
-  Convergesto X f L x₀ ↔ ((nhds x₀) ⊓ .principal X).Tendsto f (nhds L) := by
-  unfold Convergesto Real.CloseNear Real.CloseFn
+  Convergesto X f L x₀ ↔ (nhdsWithin x₀ X).Tendsto f (nhds L) := by
+  unfold Convergesto Real.CloseNear Real.CloseFn nhdsWithin
   rw [LinearOrderedAddCommGroup.tendsto_nhds]
   peel with ε hε
   rw [Filter.eventually_inf_principal]
