@@ -60,6 +60,10 @@ instance SetTheory.Set.EqualCard.inst_setoid : Setoid SetTheory.Set := ⟨ Equal
 /-- Definition 3.6.5 -/
 abbrev SetTheory.Set.has_card (X:Set) (n:ℕ) : Prop := X ≈ Fin n
 
+theorem SetTheory.Set.has_card_iff (X:Set) (n:ℕ) :
+    X.has_card n ↔ ∃ f: X → Fin n, Function.Bijective f := by
+  simp [has_card, HasEquiv.Equiv, Setoid.r, EqualCard]
+
 /-- Remark 3.6.6 -/
 theorem SetTheory.Set.Remark_3_6_6 (n:ℕ) :
     (nat.specify (fun x ↦ 1 ≤ (x:ℕ) ∧ (x:ℕ) ≤ n)).has_card n := by sorry
@@ -69,10 +73,6 @@ theorem SetTheory.Set.Example_3_6_7a (a:Object) : ({a}:Set).has_card 1 := by sor
 
 theorem SetTheory.Set.Example_3_6_7b {a b c d:Object} (hab: a ≠ b) (hac: a ≠ c) (had: a ≠ d)
   (hbc: b ≠ c) (hbd: b ≠ d) (hcd: c ≠ d) : ({a,b,c,d}:Set).has_card 4 := by sorry
-
-theorem SetTheory.Set.has_card_iff (X:Set) (n:ℕ) :
-    X.has_card n ↔ ∃ f: X → Fin n, Function.Bijective f := by
-  simp [has_card, HasEquiv.Equiv, Setoid.r, EqualCard]
 
 /-- Lemma 3.6.9 -/
 theorem SetTheory.Set.pos_card_nonempty {n:ℕ} (h: n ≥ 1) {X:Set} (hX: X.has_card n) : X ≠ ∅ := by

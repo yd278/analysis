@@ -40,10 +40,10 @@ namespace Section_4_3
 /-- Definition 4.3.1 (Absolute value) -/
 abbrev abs (x:ℚ) : ℚ := if x > 0 then x else (if x < 0 then -x else 0)
 
-theorem abs_of_pos {x: ℚ} (hx: 0 < x) : abs x = x := by simp [hx]
+theorem abs_of_pos {x: ℚ} (hx: 0 < x) : abs x = x := by grind
 
 /-- Definition 4.3.1 (Absolute value) -/
-theorem abs_of_neg {x: ℚ} (hx: x < 0) : abs x = -x := by simp [abs, hx]; intros; linarith
+theorem abs_of_neg {x: ℚ} (hx: x < 0) : abs x = -x := by grind
 
 /-- Definition 4.3.1 (Absolute value) -/
 theorem abs_of_zero : abs 0 = 0 := rfl
@@ -73,10 +73,10 @@ theorem abs_eq_zero_iff (x: ℚ) : |x| = 0 ↔ x = 0 := by sorry
 theorem abs_add (x y:ℚ) : |x + y| ≤ |x| + |y| := by sorry
 
 /-- Proposition 4.3.3(c) / Exercise 4.3.1 -/
-theorem abs_le_iff (x y:ℚ) : -y ≤ x ∧ x ≤ y ↔ |x| ≤ y  := by sorry
+theorem abs_le_iff (x y:ℚ) : -y ≤ x ∧ x ≤ y ↔ |x| ≤ y := by sorry
 
 /-- Proposition 4.3.3(c) / Exercise 4.3.1 -/
-theorem le_abs (x:ℚ) : -|x| ≤ x ∧ x ≤ |x|  := by sorry
+theorem le_abs (x:ℚ) : -|x| ≤ x ∧ x ≤ |x| := by sorry
 
 /-- Proposition 4.3.3(d) / Exercise 4.3.1 -/
 theorem abs_mul (x y:ℚ) : |x * y| = |x| * |y| := by sorry
@@ -122,7 +122,7 @@ theorem eq_if_close (x y:ℚ) : x = y ↔ ∀ ε:ℚ, ε > 0 → ε.Close x y :=
 theorem close_symm (ε x y:ℚ) : ε.Close x y ↔ ε.Close y x := by sorry
 
 /-- Proposition 4.3.7(c) / Exercise 4.3.2 -/
-theorem close_trans {ε δ x y:ℚ} (hxy: ε.Close x y) (hyz: δ.Close y z) :
+theorem close_trans {ε δ x y z:ℚ} (hxy: ε.Close x y) (hyz: δ.Close y z) :
     (ε + δ).Close x z := by sorry
 
 /-- Proposition 4.3.7(d) / Exercise 4.3.2 -/
@@ -138,11 +138,11 @@ theorem close_mono {ε ε' x y:ℚ} (hxy: ε.Close x y) (hε: ε' ≥  ε) :
     ε'.Close x y := by sorry
 
 /-- Proposition 4.3.7(f) / Exercise 4.3.2 -/
-theorem close_between {ε x y z w:ℚ} (hxy: ε.Close x y) (hyz: ε.Close x z)
+theorem close_between {ε x y z w:ℚ} (hxy: ε.Close x y) (hxz: ε.Close x z)
   (hbetween: (y ≤ w ∧ w ≤ z) ∨ (z ≤ w ∧ w ≤ y)) : ε.Close x w := by sorry
 
 /-- Proposition 4.3.7(g) / Exercise 4.3.2 -/
-theorem close_mul_right {ε x y z:ℚ} (hε: ε ≥ 0) (hxy: ε.Close x y) :
+theorem close_mul_right {ε x y z:ℚ} (hxy: ε.Close x y) :
     (ε*|z|).Close (x * z) (y * z) := by sorry
 
 /-- Proposition 4.3.7(h) / Exercise 4.3.2 -/
@@ -156,18 +156,18 @@ theorem close_mul_mul {ε δ x y z w:ℚ} (hε: ε ≥ 0) (hxy: ε.Close x y) (h
   set b := w-z
   have hb : w = z + b := by simp [b]
   have hbδ: |b| ≤ δ := by rwa [close_symm, close_iff] at hzw
-  have : y*w = x * z + a * z + x * b + a * b := by rw [ha, hb]; ring
+  have : y*w = x * z + a * z + x * b + a * b := by grind
   rw [close_symm, close_iff]
   calc
-    _ = |a * z + b * x + a * b| := by rw [this]; ring_nf
+    _ = |a * z + b * x + a * b| := by grind
     _ ≤ |a * z + b * x| + |a * b| := abs_add _ _
-    _ ≤ |a * z| + |b * x| + |a * b| := by gcongr; apply abs_add
-    _ = |a| * |z| + |b| * |x| + |a| * |b| := by simp_rw [abs_mul]
+    _ ≤ |a * z| + |b * x| + |a * b| := by grind [abs_add]
+    _ = |a| * |z| + |b| * |x| + |a| * |b| := by grind [abs_mul]
     _ ≤ _ := by gcongr
 
 /-- This variant of Proposition 4.3.7(h) was not in the textbook, but can be useful
 in some later exercises. -/
-theorem close_mul_mul' {ε δ x y z w:ℚ} (hε: ε ≥ 0) (hxy: ε.Close x y) (hzw: δ.Close z w) :
+theorem close_mul_mul' {ε δ x y z w:ℚ} (hxy: ε.Close x y) (hzw: δ.Close z w) :
     (ε*|z|+δ*|y|).Close (x * z) (y * w) := by
     sorry
 
@@ -220,7 +220,7 @@ example (x:ℚ): x^(-3:ℤ) = 1/(x*x*x) := by convert zpow_neg x 3; ring
 theorem pow_eq_zpow (x:ℚ) (n:ℕ): x^(n:ℤ) = x^n :=  zpow_natCast x n
 
 /-- Proposition 4.3.12(a) (Properties of exponentiation, II) / Exercise 4.3.4 -/
-theorem zpow_add (x:ℚ) (n m:ℤ) : x^n * x^m = x^(n+m) := by sorry
+theorem zpow_add (x:ℚ) (n m:ℤ) (hx: x ≠ 0): x^n * x^m = x^(n+m) := by sorry
 
 /-- Proposition 4.3.12(a) (Properties of exponentiation, II) / Exercise 4.3.4 -/
 theorem zpow_mul (x:ℚ) (n m:ℤ) : (x^n)^m = x^(n*m) := by sorry
@@ -242,7 +242,7 @@ theorem zpow_inj {x y:ℚ} {n:ℤ} (hx: x > 0) (hy : y > 0) (hn: n ≠ 0) (hxy: 
   sorry
 
 /-- Proposition 4.3.12(d) (Properties of exponentiation, II) / Exercise 4.3.4 -/
-theorem zpow_abs (x:ℚ) (n:ℤ) (hx: x ≠ 0) : |x|^n = |x^n| := by sorry
+theorem zpow_abs (x:ℚ) (n:ℤ) : |x|^n = |x^n| := by sorry
 
 /-- Exercise 4.3.5 -/
 theorem two_pow_geq (N:ℕ) : 2^N ≥ N := by sorry

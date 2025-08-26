@@ -19,22 +19,22 @@ universe u
 lemma PSet.ofNat_mem_ofNat_of_lt (m n : ℕ) : n < m → ofNat n ∈ ofNat m := by
   intro h
   induction h with
-  | refl => rw [ofNat]; exact mem_insert _ _
+  | refl => rw [ofNat]; apply mem_insert
   | step _ ih => rw [ofNat]; exact mem_insert_of_mem _ ih
 
 lemma PSet.mem_ofNat_iff (n m : ℕ) : ofNat n ∈ ofNat m ↔ n < m := by
   refine ⟨ ?_, ofNat_mem_ofNat_of_lt m n ⟩
   contrapose!; rw [le_iff_lt_or_eq]; rintro (h|rfl)
   · exact mem_asymm (ofNat_mem_ofNat_of_lt _ _ h)
-  exact mem_irrefl _
+  apply mem_irrefl
 
 /-- Another preliminary lemma: Natural numbers in `PSet` can only be equivalent
 if they are equal. -/
 lemma PSet.eq_of_ofNat_equiv_ofNat (n m : ℕ): (ofNat.{u} n).Equiv (ofNat.{u} m) → n = m := by
   wlog hmn : m ≤ n generalizing n m
-  · intro heq; rw [this _ _ (by order) heq.symm]
+  · intro heq; rw [this _ _ _ heq.symm]; order
   intro h; rw [Equiv.eq, Set.ext_iff] at h
-  have : n ≤ m := by specialize h (ofNat m); simpa [mem_irrefl _, mem_ofNat_iff] using h
+  have : n ≤ m := by specialize h (ofNat m); simpa [mem_irrefl, mem_ofNat_iff] using h
   order
 
 open PSet in
@@ -43,8 +43,8 @@ the natural numbers. -/
 noncomputable def ZFSet.nat_equiv : ℕ ≃ omega.{u} := Equiv.ofBijective (fun n => ⟨mk (ofNat.{u} n),mk_mem_iff.mpr (Mem.mk _ (ULift.up n))⟩) (by
   constructor
   · intro _ _; simp [eq]; apply eq_of_ofNat_equiv_ofNat
-  · rintro ⟨x,hx⟩; rw [←mk_out x, omega, mk_mem_iff, PSet.omega] at hx; obtain ⟨n,hn⟩ := hx
-    simp [mk_type, mk_func] at n hn ⊢; use n.down; rw [←mk_out x, eq]; cc
+  · intro ⟨x,hx⟩; rw [←mk_out x, omega, mk_mem_iff] at hx; obtain ⟨n,hn⟩ := hx
+    simp [mk_func, PSet.omega] at *; use n.down; rw [←mk_out x, eq]; exact hn.symm
   )
 
 open Classical in
@@ -67,34 +67,32 @@ noncomputable instance ZFSet.inst_SetTheory : Chapter3.SetTheory.{u + 1,u + 1} w
   specify A P := ZFSet.sep (fun s ↦ (h : s ∈ A) → P ⟨s,h⟩) A
   specification_axiom := by simp +contextual
   replace A P hp := @(A.sep (fun s ↦ (hs : s ∈ A) → ∃ z, P ⟨s,hs⟩ z)).image (fun s ↦
-    if h : ∃ (hs : s ∈ A), ∃ z, P ⟨s,hs⟩ z then h.choose_spec.choose else ∅) (Classical.allZFSetDefinable _)
+    if h : ∃ (hs : s ∈ A), ∃ z, P ⟨s,hs⟩ z then h.choose_spec.choose else ∅) (allZFSetDefinable _)
   replacement_axiom A P hp s := by
     simp; constructor
-    · intro ⟨z, ⟨hzA, hz⟩, hz'⟩; use z, hzA; rw [dif_pos (⟨hzA, hz hzA⟩)] at hz'; simp [←hz', Exists.choose_spec]
+    · intro ⟨z, ⟨hzA, hz⟩, hz'⟩; use z, hzA; simp [hzA, hz hzA] at hz'
+      simp [←hz', Exists.choose_spec]
     · intro ⟨z, hzA, hz'⟩; use z, ⟨hzA,fun _ ↦ ⟨s,hz'⟩⟩
       apply hp ⟨z, hzA⟩; rw [dif_pos ⟨hzA, ⟨s, hz'⟩⟩]; use Exists.choose_spec _
   nat := omega
-  nat_equiv := ZFSet.nat_equiv
+  nat_equiv := nat_equiv
   regularity_axiom A := by
-    simp; intro x hx; obtain ⟨y,hy⟩ := regularity A (by rintro rfl; exact notMem_empty _ hx)
-    use y, hy.left; intro z hzA hzy; have : z ∈ A ∩ y := mem_inter.mpr ⟨hzA, hzy⟩; simp_all [hy.right]
+    simp; intro x hx; have ⟨y,hy⟩ := regularity A (by aesop)
+    use y, hy.1; intro z hzA hzy; have : z ∈ A ∩ y := mem_inter.mpr ⟨hzA, hzy⟩; aesop
   pow X Y := funs Y X
   function_to_object X Y := {
-    toFun f := @map (fun s ↦ if h : s ∈ X then f ⟨s,h⟩ else ∅) (Classical.allZFSetDefinable _) X
-    inj' := by
-      intro x _ h; ext ⟨s, hs⟩
-      simp only at h; simp_rw [ZFSet.ext_iff, mem_map] at h; specialize h (s.pair (x ⟨s,hs⟩)); simp_all}
+    toFun f := @map (fun s ↦ if h : s ∈ X then f ⟨s,h⟩ else ∅) (allZFSetDefinable _) X
+    inj' x _ h := by
+      ext ⟨s, hs⟩; simp_rw [ZFSet.ext_iff, mem_map] at h
+      specialize h (s.pair (x ⟨_,hs⟩)); aesop}
   powerset_axiom X Y F := by
     simp [IsFunc]; constructor
     · intro ⟨hsub,huniq⟩
-      use (fun x ↦ ⟨(huniq x x.property).choose,(pair_mem_prod.mp (hsub (huniq x x.property).choose_spec)).right⟩)
+      use (fun x ↦ ⟨(huniq _ x.property).choose,(pair_mem_prod.mp (hsub (huniq _ x.property).choose_spec)).2⟩)
       ext; simp; constructor
-      · rintro ⟨y,hy,rfl⟩; simp_all [(huniq y hy).choose_spec]
-      · intro hf; specialize hsub hf; rw [mem_prod] at hsub; obtain ⟨y,hy,x,hx,rfl⟩ := hsub
-        use y,hy; simp_all [←(huniq y hy).choose_eq hf]
-    · rintro ⟨f,rfl⟩
-      simp; constructor
-      · intro _ hs; simp at hs; obtain ⟨y,hy,rfl⟩ := hs; simp_all
-      · intro _ hy; simp_all
+      · rintro ⟨y,hy,rfl⟩; simp_all [(huniq _ hy).choose_spec]
+      · intro hf; specialize hsub hf; rw [mem_prod] at hsub; obtain ⟨y,hy,x,_,rfl⟩ := hsub
+        use y,hy; simp_all [←(huniq _ hy).choose_eq hf]
+    · rintro ⟨f,rfl⟩; simp; constructor <;> intro _ _ <;> aesop
   union := sUnion
   union_axiom _ _ := by simp [And.comm]
