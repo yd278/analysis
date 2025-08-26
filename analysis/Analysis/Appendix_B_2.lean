@@ -16,7 +16,9 @@ structure NNRealDecimal where
   intPart : ℕ
   fracPart : ℕ → Digit
 
-#check NNRealDecimal.mk
+open NNReal NNRealDecimal
+
+#check mk
 
 @[coe]
 noncomputable def NNRealDecimal.toNNReal (d:NNRealDecimal) : NNReal :=
@@ -39,13 +41,13 @@ theorem NNRealDecimal.surj (x:NNReal) : ∃ d:NNRealDecimal, x = d := by
   have hs' (n:ℕ) : x * 10^n < s n + 1 := Nat.lt_floor_add_one _
   have hdigit (n:ℕ) : ∃ a:Digit, s (n+1) = 10 * s n + (a:ℕ) := by
     have hl : (10:NNReal) * s n < s (n+1) + 1 := calc
-      _ ≤ 10 * (x * 10^n) := by gcongr; exact hs n
+      _ ≤ 10 * (x * 10^n) := by gcongr; grind
       _ = x * 10^(n+1) := by ring_nf
       _ < _ := hs' _
     have hu : s (n+1) < (10:NNReal) * s n + 10 := calc
       _ ≤ x * 10^(n+1) := hs (n+1)
       _ = 10 * (x * 10^n) := by ring_nf
-      _ < 10 * (s n + 1) := by gcongr; exact hs' n
+      _ < 10 * (s n + 1) := by gcongr; grind
       _ = _ := by ring
     norm_cast at hl hu
     set d := s (n+1) - 10 * s n
@@ -58,8 +60,8 @@ theorem NNRealDecimal.surj (x:NNReal) : ∃ d:NNRealDecimal, x = d := by
     induction' n with n hn; simp
     rw [ha n]; calc
       _ = s n * (10:NNReal)^(-n:ℝ) + a n * 10^(-n-1:ℝ) := by
-        simp [add_mul]; congr 1 <;> ring_nf
-        rw [mul_assoc, ←NNReal.rpow_add_one (by norm_num)]; congr; ring
+        simp [add_mul]; ring_nf; congr 1
+        rw [mul_assoc, ←rpow_add_one]; ring_nf; norm_num
       _ = s 0 + (∑ i ∈ .range n, a i * (10:NNReal)^(-i-1:ℝ) + a n * 10^(-n-1:ℝ)) := by grind
       _ = _ := by congr; symm; apply Finset.sum_range_succ
   have := (d.toNNReal_conv.tendsto_sum_tsum_nat).const_add (s 0:NNReal)
@@ -69,18 +71,18 @@ theorem NNRealDecimal.surj (x:NNReal) : ∃ d:NNRealDecimal, x = d := by
   apply Filter.Tendsto.squeeze (g := fun n:ℕ ↦ x - (10:NNReal)^(-n:ℝ)) (h := fun _ ↦ x)
   . convert Filter.Tendsto.const_sub (c := 0) x _
     . simp
-    convert NNReal.tendsto_pow_atTop_nhds_zero_of_lt_one
-      (show (1/10:NNReal) < 1 by apply NNReal.div_lt_one_of_lt; norm_num) with n
-    rw [←NNReal.rpow_natCast, one_div, NNReal.inv_rpow, NNReal.rpow_neg]
+    convert tendsto_pow_atTop_nhds_zero_of_lt_one (?_:(1/10:NNReal) < 1) with n
+    . rw [←rpow_natCast, one_div, inv_rpow, rpow_neg]
+    apply div_lt_one_of_lt; bound
   . exact tendsto_const_nhds
   . intro n; simp; calc
     _ = (x * 10^n) * (10:NNReal)^(-n:ℝ) := by
-      rw [mul_assoc, ←NNReal.rpow_natCast, ←NNReal.rpow_add (by norm_num)]; simp
-    _ ≤ ((s n:NNReal) + 1)*(10:NNReal)^(-n:ℝ) := by gcongr; exact le_of_lt (hs' n)
+      rw [mul_assoc, ←rpow_natCast, ←rpow_add]; simp; norm_num
+    _ ≤ ((s n:NNReal) + 1)*(10:NNReal)^(-n:ℝ) := by gcongr; grind [le_of_lt]
     _ = _ := by ring
   intro n; simp; calc
-    _ ≤ (x * 10^n) * (10:NNReal)^(-n:ℝ) := by gcongr; exact hs n
-    _ = x := by rw [mul_assoc, ←NNReal.rpow_natCast, ←NNReal.rpow_add]; simp; norm_num
+    _ ≤ (x * 10^n) * (10:NNReal)^(-n:ℝ) := by gcongr; grind
+    _ = x := by rw [mul_assoc, ←rpow_natCast, ←rpow_add]; simp; norm_num
 
 /-- Proposition B.2.2 -/
 theorem NNRealDecimal.not_inj : (1:NNReal) = (mk 1 fun _ ↦ 0) ∧ (1:NNReal) = (mk 0 fun _ ↦ 9) := by
@@ -94,18 +96,16 @@ theorem NNRealDecimal.not_inj : (1:NNReal) = (mk 1 fun _ ↦ 0) ∧ (1:NNReal) =
     . simp
     rw [Finset.sum_range_succ, hn, Nat.cast_add, Nat.cast_one, neg_add']
     have : (10:NNReal)^(-n:ℝ) = 10^(-n-1:ℝ) * 10 := by
-      rw [←NNReal.rpow_add_one (by norm_num)]; simp
-    have hnine : ((9:Digit):ℕ) = 9 := rfl
-    simp [this, ←NNReal.coe_inj]
+      rw [←rpow_add_one]; simp; norm_num
+    simp [this, ←coe_inj]
     rw [NNReal.coe_sub, NNReal.coe_sub]
     . simp; linarith
-    . apply NNReal.rpow_le_one_of_one_le_of_nonpos (by norm_num) (by linarith)
-    rw [←NNReal.rpow_add_one (by norm_num)]
-    apply NNReal.rpow_le_one_of_one_le_of_nonpos (by norm_num) (by linarith)
+    . apply rpow_le_one_of_one_le_of_nonpos; norm_num; linarith
+    rw [←rpow_add_one]
+    apply rpow_le_one_of_one_le_of_nonpos; norm_num; linarith; norm_num
   convert Filter.Tendsto.const_sub (f := fun n:ℕ ↦ (10:NNReal)^(-n:ℝ)) (c := 0) 1 _; simp
-  convert NNReal.tendsto_pow_atTop_nhds_zero_of_lt_one
-    (show (1/10:NNReal) < 1 by bound) with n
-  rw [←NNReal.rpow_natCast, one_div, NNReal.inv_rpow, NNReal.rpow_neg]
+  convert tendsto_pow_atTop_nhds_zero_of_lt_one (show (1/10:NNReal) < 1 by bound) with n
+  rw [←rpow_natCast, one_div, inv_rpow, rpow_neg]
 
 inductive RealDecimal where
   | pos : NNRealDecimal → RealDecimal
@@ -119,10 +119,10 @@ noncomputable instance RealDecimal.instCoeReal : Coe RealDecimal ℝ where
 theorem RealDecimal.surj (x:ℝ) : ∃ d:RealDecimal, x = d := by
   obtain h | h := le_or_gt 0 x
   . choose d hd using NNRealDecimal.surj (x.toNNReal); use pos d; simp [←hd, h]
-  . choose d hd using NNRealDecimal.surj ((-x).toNNReal); use neg d; simp [←hd, (show 0 ≤ -x by linarith)]
+  . choose d hd using NNRealDecimal.surj ((-x).toNNReal); use neg d; simp [←hd, show 0 ≤ -x by linarith]
 
 /-- Exercise B.2.2 -/
-theorem RealDecimal.not_inj_one (d: RealDecimal) : (d:ℝ) = 1 ↔ (d = pos (NNRealDecimal.mk 1 fun _ ↦ 0) ∨ d = pos (NNRealDecimal.mk 0 fun _ ↦ 9)) := by
+theorem RealDecimal.not_inj_one (d: RealDecimal) : (d:ℝ) = 1 ↔ (d = pos (mk 1 fun _ ↦ 0) ∨ d = pos (mk 0 fun _ ↦ 9)) := by
   sorry
 
 /-- Exercise B.2.3 -/

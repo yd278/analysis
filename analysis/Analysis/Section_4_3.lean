@@ -159,7 +159,7 @@ theorem close_mul_mul {ε δ x y z w:ℚ} (hε: ε ≥ 0) (hxy: ε.Close x y) (h
   have : y*w = x * z + a * z + x * b + a * b := by rw [ha, hb]; ring
   rw [close_symm, close_iff]
   calc
-    _ = |a * z + b * x + a * b| := by rw [this]; congr; ring
+    _ = |a * z + b * x + a * b| := by rw [this]; ring_nf
     _ ≤ |a * z + b * x| + |a * b| := abs_add _ _
     _ ≤ |a * z| + |b * x| + |a * b| := by gcongr; apply abs_add
     _ = |a| * |z| + |b| * |x| + |a| * |b| := by simp_rw [abs_mul]
