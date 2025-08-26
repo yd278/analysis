@@ -19,38 +19,38 @@ Main constructions and results of this section:
 namespace Chapter9
 
 /-- Definition 9.5.1.  We give left and right limits the "junk" value of 0 if the limit does not exist. -/
-abbrev RightLimitExists (X: Set ℝ) (f: ℝ → ℝ) (x₀:ℝ) : Prop := ∃ L, ((nhds x₀) ⊓ .principal (X ∩ .Ioi x₀)).Tendsto f (nhds L)
+abbrev RightLimitExists (X: Set ℝ) (f: ℝ → ℝ) (x₀:ℝ) : Prop := ∃ L, (nhdsWithin x₀ (X ∩ .Ioi x₀)).Tendsto f (nhds L)
 
 open Classical in
 noncomputable abbrev right_limit (X: Set ℝ) (f: ℝ → ℝ) (x₀:ℝ) : ℝ := if h : RightLimitExists X f x₀ then h.choose else 0
 
-abbrev LeftLimitExists (X: Set ℝ) (f: ℝ → ℝ) (x₀:ℝ) : Prop := ∃ L, ((nhds x₀) ⊓ .principal (X ∩ .Iio x₀)).Tendsto f (nhds L)
+abbrev LeftLimitExists (X: Set ℝ) (f: ℝ → ℝ) (x₀:ℝ) : Prop := ∃ L, (nhdsWithin x₀ (X ∩ .Iio x₀)).Tendsto f (nhds L)
 
 open Classical in
 noncomputable abbrev left_limit (X: Set ℝ) (f: ℝ → ℝ) (x₀:ℝ) : ℝ := if h: LeftLimitExists X f x₀ then h.choose else 0
 
 theorem right_limit.eq {X: Set ℝ} {f: ℝ → ℝ} {x₀:ℝ} {L:ℝ} (had: AdherentPt x₀ (X ∩ .Ioi x₀))
-  (h: ((nhds x₀) ⊓ .principal (X ∩ .Ioi x₀)).Tendsto f (nhds L)) : RightLimitExists X f x₀ ∧ right_limit X f x₀ = L := by
+  (h: (nhdsWithin x₀ (X ∩ .Ioi x₀)).Tendsto f (nhds L)) : RightLimitExists X f x₀ ∧ right_limit X f x₀ = L := by
   have h' : RightLimitExists X f x₀ := by use L
   simp [right_limit, h']
-  have hne : (nhds x₀ ⊓ .principal (X ∩ .Ioi x₀)).NeBot := by
-    rwa [←nhdsWithin.eq_1, ←mem_closure_iff_nhdsWithin_neBot, closure_def']
+  have hne : (nhdsWithin x₀ (X ∩ .Ioi x₀)).NeBot := by
+    rwa [←mem_closure_iff_nhdsWithin_neBot, closure_def']
   exact tendsto_nhds_unique h'.choose_spec h
 
 theorem left_limit.eq {X: Set ℝ} {f: ℝ → ℝ} {x₀:ℝ} {L:ℝ} (had: AdherentPt x₀ (X ∩ .Iio x₀))
-  (h: ((nhds x₀) ⊓ .principal (X ∩ .Iio x₀)).Tendsto f (nhds L)) : LeftLimitExists X f x₀ ∧ left_limit X f x₀ = L := by
+  (h: (nhdsWithin x₀ (X ∩ .Iio x₀)).Tendsto f (nhds L)) : LeftLimitExists X f x₀ ∧ left_limit X f x₀ = L := by
   have h' : LeftLimitExists X f x₀ := by use L
   simp [left_limit, h']
-  have hne : (nhds x₀ ⊓ .principal (X ∩ .Iio x₀)).NeBot := by
-    rwa [←nhdsWithin.eq_1, ←mem_closure_iff_nhdsWithin_neBot, closure_def']
+  have hne : (nhdsWithin x₀ (X ∩ .Iio x₀)).NeBot := by
+    rwa [←mem_closure_iff_nhdsWithin_neBot, closure_def']
   exact tendsto_nhds_unique h'.choose_spec h
 
 theorem right_limit.eq' {X: Set ℝ} {f: ℝ → ℝ} {x₀:ℝ} (h: RightLimitExists X f x₀) :
-  ((nhds x₀) ⊓ .principal (X ∩ .Ioi x₀)).Tendsto f (nhds (right_limit X f x₀)) := by
+  (nhdsWithin x₀ (X ∩ .Ioi x₀)).Tendsto f (nhds (right_limit X f x₀)) := by
   simp [right_limit, h]; exact h.choose_spec
 
 theorem left_limit.eq' {X: Set ℝ} {f: ℝ → ℝ} {x₀:ℝ} (h: LeftLimitExists X f x₀) :
-  ((nhds x₀) ⊓ .principal (X ∩ .Iio x₀)).Tendsto f (nhds (left_limit X f x₀)) := by
+  (nhdsWithin x₀ (X ∩ .Iio x₀)).Tendsto f (nhds (left_limit X f x₀)) := by
   simp [left_limit, h]; exact h.choose_spec
 
 /-- Example 9.5.2.  The second part of this example is no longer operative as we assign "junk" values to our functions instead of leaving them undefined. -/

@@ -55,7 +55,7 @@ power set axiom also requiring some technical manipulation). -/
 noncomputable instance ZFSet.inst_SetTheory : Chapter3.SetTheory.{u + 1,u + 1} where
   Set := ZFSet
   Object := ZFSet
-  set_to_object := { toFun := fun ⦃a₁⦄ => a₁, inj' := fun _ _ h => h}
+  set_to_object := { toFun ⦃a₁⦄ := a₁, inj' _ _ h := h}
   mem o s := o ∈ s
   extensionality _ _ := ext
   emptyset := ∅
@@ -72,13 +72,14 @@ noncomputable instance ZFSet.inst_SetTheory : Chapter3.SetTheory.{u + 1,u + 1} w
     simp; constructor
     · intro ⟨z, ⟨hzA, hz⟩, hz'⟩; use z, hzA; simp [hzA, hz hzA] at hz'
       simp [←hz', Exists.choose_spec]
-    · intro ⟨z, hzA, hz'⟩; use z, ⟨hzA,fun _ ↦ ⟨s,hz'⟩⟩
-      apply hp ⟨z, hzA⟩; rw [dif_pos ⟨hzA, ⟨s, hz'⟩⟩]; use Exists.choose_spec _
+    · intro ⟨z, hzA, hz'⟩; use z, ⟨hzA, by aesop⟩
+      apply hp ⟨_, hzA⟩; rw [dif_pos ⟨hzA, ⟨_, hz'⟩⟩]; use Exists.choose_spec _
   nat := omega
   nat_equiv := nat_equiv
   regularity_axiom A := by
-    simp; intro x hx; have ⟨y,hy⟩ := regularity A (by aesop)
-    use y, hy.1; intro z hzA hzy; have : z ∈ A ∩ y := mem_inter.mpr ⟨hzA, hzy⟩; aesop
+    simp; intro x hx; have ⟨y,hy,_⟩ := regularity A (by aesop)
+    use y, hy; intro z _ _; have : z ∈ A ∩ y := by simp; tauto
+    aesop
   pow X Y := funs Y X
   function_to_object X Y := {
     toFun f := @map (fun s ↦ if h : s ∈ X then f ⟨s,h⟩ else ∅) (allZFSetDefinable _) X

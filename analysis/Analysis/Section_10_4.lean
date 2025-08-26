@@ -101,11 +101,11 @@ example (q:ℚ) {x:ℝ} (hx: x ∈ Set.Ici 0) :
   sorry
 
 /-- Exercise 10.4.2(b) -/
-example (q:ℚ) : (nhds 1 ⊓ .principal (.Ici 0 \ {1})).Tendsto (fun x:ℝ ↦ (x^(q:ℝ)-1)/(x-1)) (nhds q) := by
+example (q:ℚ) : (nhdsWithin 1 (.Ici 0 \ {1})).Tendsto (fun x:ℝ ↦ (x^(q:ℝ)-1)/(x-1)) (nhds q) := by
   sorry
 
 /-- Exercise 10.4.3(a) -/
-example (α:ℝ) : (nhds 1 ⊓ .principal (.Ici 0 \ {1})).Tendsto (fun x:ℝ ↦ (x^α-1^α)/(x-1)) (nhds α) := by
+example (α:ℝ) : (nhdsWithin 1 (.Ici 0 \ {1})).Tendsto (fun x:ℝ ↦ (x^α-1^α)/(x-1)) (nhds α) := by
   sorry
 
 /-- Exercise 10.4.2(b) -/

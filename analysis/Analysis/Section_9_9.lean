@@ -164,7 +164,7 @@ example : ¬ UniformContinuousOn f_9_9_10 (Set.Ioo 0 2) := by
 /-- Corollary 9.9.14 / Exercise 9.9.4 -/
 theorem UniformContinuousOn.limit_at_adherent  {X:Set ℝ} (f: ℝ → ℝ)
   (hf: UniformContinuousOn f X) {x₀:ℝ} (hx₀: AdherentPt x₀ X) :
-  ∃ L:ℝ, (nhds x₀ ⊓ .principal X).Tendsto f (nhds L) := by
+  ∃ L:ℝ, (nhdsWithin x₀ X).Tendsto f (nhds L) := by
   sorry
 
 /-- Proposition 9.9.15 / Exercise 9.9.5 -/
