@@ -113,7 +113,7 @@ theorem SetTheory.Set.card_erase {n:ℕ} (h: n ≥ 1) {X:Set} (hX: X.has_card n)
           simp [hm₀f]
         omega)
   have hg_def (x':X') : if (f (ι x'):ℕ) < m₀ then (g x':ℕ) = f (ι x') else (g x':ℕ) = f (ι x') - 1 := by
-    by_cases h' : f (ι x') < m₀ <;> simp [g, h']
+    split_ifs with h' <;> simp [g,h']
   have hg : Function.Bijective g := by sorry
   use g
 
@@ -122,7 +122,7 @@ theorem SetTheory.Set.card_uniq {X:Set} {n m:ℕ} (h1: X.has_card n) (h2: X.has_
   -- This proof is written to follow the structure of the original text.
   revert X m; induction' n with n hn
   . intro _ _ h1 h2; rw [has_card_zero] at h1; contrapose! h1
-    exact pos_card_nonempty (by omega) h2
+    apply pos_card_nonempty _ h2; omega
   intro X m h1 h2
   have : X ≠ ∅ := pos_card_nonempty (by omega) h1
   choose x hx using nonempty_def this

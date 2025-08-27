@@ -113,7 +113,7 @@ theorem SetTheory.Set.preimage_eq {X Y:Set} (f:X → Y) (U: Set) :
   rintro ⟨x', hy, rfl⟩; simp only [_root_.Set.mem_setOf] at hy; use x'
 
 theorem SetTheory.Set.preimage_in_domain {X Y:Set} (f:X → Y) (U: Set) :
-    (preimage f U) ⊆ X := by intro x h; simp at h; tauto
+    (preimage f U) ⊆ X := by intro _ _; aesop
 
 /-- Example 3.4.6 -/
 theorem SetTheory.Set.preimage_f_3_4_2 : preimage f_3_4_2 {2,4,6} = {1,2,3} := by

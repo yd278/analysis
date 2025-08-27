@@ -345,9 +345,9 @@ theorem Real.LIM_of_le {x:Real} {a:ℕ → ℚ} (hcauchy: (a:Sequence).IsCauchy)
 theorem Real.LIM_of_ge {x:Real} {a:ℕ → ℚ} (hcauchy: (a:Sequence).IsCauchy) (h: ∀ n, a n ≥ x) :
     LIM a ≥ x := by sorry
 
-theorem Real.max_eq (x y:Real) : max x y = (if x ≥ y then x else y) :=  max_def' x y
+theorem Real.max_eq (x y:Real) : max x y = if x ≥ y then x else y := max_def' x y
 
-theorem Real.min_eq (x y:Real) : min x y = (if x ≤ y then x else y) := rfl
+theorem Real.min_eq (x y:Real) : min x y = if x ≤ y then x else y := rfl
 
 /-- Exercise 5.4.9 -/
 theorem Real.neg_max (x y:Real) : max x y = - min (-x) (-y) := by sorry

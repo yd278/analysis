@@ -132,7 +132,7 @@ theorem finite_series_of_rearrange {n:ℕ} {X':Type*} (X: Finset X') (hcard: X.c
     _ = ∑ i ∈ Icc (1:ℤ) (j-1), f (h (π i)) + ∑ i ∈ Icc (j:ℤ) n, f (h (π (i+1))) + f x := by abel
     _ = ∑ i ∈ Icc (1:ℤ) (j-1), f (h' i) + ∑ i ∈ Icc (j:ℤ) n, f (h' i) + f x := by
       congr 2
-      all_goals apply sum_congr rfl _; intro i hi; simp [h'] at hi ⊢
+      all_goals apply sum_congr rfl _; intro i hi; simp [h'] at *
       . simp [show i < j by linarith]
       simp [show ¬ i < j by linarith]
     _ = _ := by congr; convert concat_finite_series _ _ _ <;> linarith
@@ -160,14 +160,11 @@ theorem finite_series_of_rearrange {n:ℕ} {X':Type*} (X: Finset X') (hcard: X.c
   have why2 : Function.Bijective htil := by sorry
   calc
     _ = ∑ i ∈ Icc (1:ℤ) n, if hi: i ∈ Icc (1:ℤ) n then ftil (gtil ⟨ i, hi ⟩ ) else 0 := by
-      apply sum_congr rfl _
-      intro i hi; simp [hi, gtil, ftil]
+      apply sum_congr rfl; grind
     _ = ∑ i ∈ Icc (1:ℤ) n, if hi: i ∈ Icc (1:ℤ) n then ftil (htil ⟨ i, hi ⟩ ) else 0 := by
       convert hn _ _ gtil htil why why2
       rw [Finset.card_erase_of_mem _, hX] <;> simp
-    _ = _ := by
-      apply sum_congr rfl _
-      intro i hi; simp [hi, htil, ftil]
+    _ = _ := by apply sum_congr rfl; grind
 
 /--
   This fact ensures that Definition 7.1.6 would be well-defined even if we did not appeal to the
@@ -185,11 +182,8 @@ theorem finite_series_eq {n:ℕ} {Y:Type*} (X: Finset Y) (f: Y → ℝ) (g: Icc 
   symm
   convert sum_bij (t:=X) (fun i hi ↦ g ⟨ i, hi ⟩ ) _ _ _ _
   . aesop
-  . intro i hi j hj h
-    simpa [Subtype.val_inj, hg.injective.eq_iff] using h
-  . intro b hb
-    have ⟨⟨i, hi⟩, h⟩ := hg.surjective ⟨ b, hb ⟩
-    grind
+  . intro _ _ _ _ h; simpa [Subtype.val_inj, hg.injective.eq_iff] using h
+  . intro b hb; have := hg.surjective ⟨ b, hb ⟩; grind
   intros; simp_all
 
 /-- Proposition 7.1.11(a) / Exercise 7.1.2 -/

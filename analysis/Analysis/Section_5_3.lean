@@ -345,7 +345,7 @@ theorem Real.boundedAwayZero_of_nonzero {x:Real} (hx: x ≠ 0) :
   choose N hb' using (Sequence.IsCauchy.coe _).mp hb _ (half_pos hε)
   choose n₀ hn₀ hx using hx N
   have how : ∀ j ≥ N, |b j| ≥ ε/2 := by sorry
-  set a : ℕ → ℚ := fun n ↦ if n < n₀ then (ε/2) else b n
+  set a : ℕ → ℚ := fun n ↦ if n < n₀ then ε/2 else b n
   have not_hard : Sequence.Equiv a b := by sorry
   have ha : (a:Sequence).IsCauchy := (Sequence.isCauchy_of_equiv not_hard).mpr hb
   refine ⟨ a, ha, ?_, by rw [(LIM_eq_LIM ha hb).mpr not_hard] ⟩
