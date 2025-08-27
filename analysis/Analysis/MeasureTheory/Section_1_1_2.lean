@@ -174,7 +174,11 @@ lemma JordanMeasurable.measure_triangle (T: Affine.Triangle ℝ (EuclideanSpace'
   sorry
 
 /-- Exercise 1.1.9 -/
-lemma JordanMeasurable.polytope {d:ℕ} (V: Finset (EuclideanSpace' d)) : JordanMeasurable (convexHull ℝ (V.toSet)) := by
+
+abbrev IsPolytope {d:ℕ} (P: Set (EuclideanSpace' d)) : Prop :=
+  ∃ (V: Finset (EuclideanSpace' d)), P = convexHull ℝ (V.toSet)
+
+lemma JordanMeasurable.polytope {d:ℕ} {P: Set (EuclideanSpace' d)} (hP: IsPolytope P) : JordanMeasurable P := by
   sorry
 
 /-- Exercise 1.1.10 (1) -/
@@ -229,6 +233,9 @@ lemma JordanMeasurable.measure_linear_det {d:ℕ} (A: Matrix (Fin d) (Fin d) ℝ
 
 abbrev JordanMeasurable.null {d:ℕ} (E: Set (EuclideanSpace' d)) : Prop := ∃ hE: JordanMeasurable E, hE.measure = 0
 
+lemma JordanMeasurable.null_iff {d:ℕ} {E: Set (EuclideanSpace' d)} : null E ↔ Bornology.IsBounded E ∧ Jordan_outer_measure E = 0 := by
+  sorry
+
 /-- Exercise 1.1.12 -/
 lemma JordanMeasurable.null_mono {d:ℕ} {E F: Set (EuclideanSpace' d)} (h: null E) (hEF: E ⊆ F) : null F := by
   sorry
@@ -280,3 +287,47 @@ theorem JordanMeasurable.prod {d₁ d₂:ℕ} {E₁: Set (EuclideanSpace' d₁)}
 theorem JordanMeasurable.measure_of_prod {d₁ d₂:ℕ} {E₁: Set (EuclideanSpace' d₁)} {E₂: Set (EuclideanSpace' d₂)}
   (hE₁: JordanMeasurable E₁) (hE₂: JordanMeasurable E₂)
   : (hE₁.prod hE₂).measure = hE₁.measure * hE₂.measure := by sorry
+
+abbrev Isometric {d:ℕ} (E F: Set (EuclideanSpace' d)) : Prop :=
+ ∃ A ∈ Matrix.orthogonalGroup (Fin d) ℝ, ∃ x₀, F = ((Matrix.toLin' A) '' E: Set (EuclideanSpace' d)) + {x₀}
+
+/-- Exercise 1.1.17 -/
+theorem JordanMeasurable.measure_of_equidecomposable {d n:ℕ} {E F: Set (EuclideanSpace' d)}
+  (hE: JordanMeasurable E) (hF: JordanMeasurable F)
+  {P Q: Fin n → Set (EuclideanSpace' d)} (hPQ: ∀ i, Isometric (P i) (Q i))
+  (hPE: E = ⋃ i, P i) (hQF: F = ⋃ i, Q i) (hPdisj: Set.PairwiseDisjoint .univ P)
+  (hQdisj: Set.PairwiseDisjoint .univ (fun i ↦ (interior (Q i)))) : hE.measure = hF.measure := by
+  sorry
+
+/-- Exercise 1.1.18 (1) -/
+theorem JordanMeasurable.outer_measure_of_closure {d:ℕ} {E: Set (EuclideanSpace' d)} (hE: Bornology.IsBounded E) :
+  Jordan_outer_measure (closure E) = Jordan_outer_measure E := by sorry
+
+/-- Exercise 1.1.18 (2) -/
+theorem JordanMeasurable.inner_measure_of_interior {d:ℕ} {E: Set (EuclideanSpace' d)} (hE: Bornology.IsBounded E) :
+  Jordan_inner_measure (interior E) = Jordan_inner_measure E := by sorry
+
+/-- Exercise 1.1.18 (3) -/
+theorem JordanMeasurable.iff_boundary_null {d:ℕ} {E: Set (EuclideanSpace' d)} (hE: Bornology.IsBounded E) :
+  JordanMeasurable E ↔ JordanMeasurable.null (frontier E) := by sorry
+
+abbrev bullet_riddled_square : Set (EuclideanSpace' 2) := { x | ∀ i, x i ∈ Set.Icc 0 1 ∧ x i ∉ (fun (q:ℚ) ↦ (q:ℝ)) '' .univ}
+
+abbrev bullets : Set (EuclideanSpace' 2) := { x | ∀ i, x i ∈ Set.Icc 0 1 ∧ x i ∈ (fun (q:ℚ) ↦ (q:ℝ)) '' .univ}
+
+theorem bullet_riddled_square.inner : Jordan_inner_measure bullet_riddled_square = 0 := by sorry
+
+theorem bullet_riddled_square.outer : Jordan_outer_measure bullet_riddled_square = 1 := by sorry
+
+theorem bullets.inner : Jordan_inner_measure bullets = 0 := by sorry
+
+theorem bullets.outer : Jordan_outer_measure bullets = 1 := by sorry
+
+theorem bullet_riddled_square.not_jordanMeasurable : ¬ JordanMeasurable bullet_riddled_square := by sorry
+
+theorem bullets.not_jordanMeasurable : ¬ JordanMeasurable bullets := by sorry
+
+/-- Exercise 1.1.19 (Caratheodory property) -/
+theorem JordanMeasurable.caratheodory {d:ℕ} {E F: Set (EuclideanSpace' d)} (hE: Bornology.IsBounded E) (hF: IsElementary F) :
+  Jordan_outer_measure E = Jordan_outer_measure (E ∩ F) + Jordan_outer_measure (E \ F) := by
+  sorry
