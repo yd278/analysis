@@ -205,9 +205,9 @@ theorem AtMostCountable.subset {X: Type} (hX : AtMostCountable X) (Y: Set X) : A
   simp [AtMostCountable, show Finite Y by infer_instance]
 
 theorem AtMostCountable.subset' {A: Type} {X Y: Set A} (hX: AtMostCountable X) (hY: Y ⊆ X) : AtMostCountable Y := by
-  refine (equiv ⟨ fun y ↦ ⟨ ↑↑y, y.property ⟩, ?_, ?_ ⟩).mp (subset hX { x : X | ↑x ∈ Y })
+  refine' (equiv ⟨ fun y ↦ ⟨ ↑↑y, y.property ⟩, _, _ ⟩).mp (subset hX { x : X | ↑x ∈ Y })
   . intro ⟨ ⟨ _, _ ⟩, _ ⟩ ⟨ ⟨ _, _ ⟩, _ ⟩ _; simp_all
-  rintro ⟨ y, hy ⟩; use ⟨ ⟨ y, hY hy ⟩, by aesop ⟩
+  intro ⟨ y, hy ⟩; use ⟨ ⟨ y, hY hy ⟩, by aesop ⟩
 
 /-- Proposition 8.1.8 / Exercise 8.1.4 -/
 theorem AtMostCountable.image_nat (Y: Type) (f: ℕ → Y) : AtMostCountable (f '' .univ) := by

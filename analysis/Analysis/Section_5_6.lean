@@ -185,11 +185,11 @@ theorem Real.pow_root_eq_pow_root {a a':ℤ} {b b':ℕ} (hb: b > 0) (hb' : b' > 
   . simp at ha
     obtain ha | ha := le_iff_lt_or_eq.mp ha
     . replace hq : ((-a:ℤ)/b:ℚ) = ((-a':ℤ)/b':ℚ) := by
-        push_cast at hq ⊢; ring_nf at hq ⊢; simp [hq]
+        push_cast at *; ring_nf at *; simp [hq]
       specialize this hb hb' hq (by linarith)
       simpa [zpow_neg] using this
     have : a' = 0 := by sorry
-    simp [ha, this]
+    simp_all
   have : a' > 0 := by sorry
   field_simp at hq
   lift a to ℕ using by order
@@ -200,16 +200,11 @@ theorem Real.pow_root_eq_pow_root {a a':ℤ} {b b':ℕ} (hb: b > 0) (hb' : b' > 
   have h2 : y = (x.root b).root a' := by rw [root_root, mul_comm, ←hq] <;> linarith
   have h3 : y^a = x.root b' := by rw [h1]; apply pow_of_root (root_nonneg _ _) <;> linarith
   have h4 : y^a' = x.root b := by rw [h2]; apply pow_of_root (root_nonneg _ _) <;> linarith
-  calc
-    _ = (y^a)^a' := by rw [h3]
-    _ = y^(a*a') := pow_mul _ _ _
-    _ = y^(a'*a) := by rw [mul_comm]
-    _ = (y^a')^a := (pow_mul _ _ _).symm
-    _ = _ := by rw [h4]
+  rw [←h3, pow_mul, mul_comm, ←pow_mul, h4]
 
 theorem Real.ratPow_def {x:Real} (hx: x > 0) (a:ℤ) {b:ℕ} (hb: b > 0) : x^(a/b:ℚ) = (x.root b)^a := by
   set q := (a/b:ℚ)
-  convert Real.pow_root_eq_pow_root hb _ _ hx
+  convert pow_root_eq_pow_root hb _ _ hx
   . have := q.den_nz; omega
   rw [Rat.num_div_den q]
 

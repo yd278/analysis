@@ -48,7 +48,7 @@ The `coe` attribute allows the delaborator to print `Sequence.ofNatFun f` as `�
 @[coe]
 def Sequence.ofNatFun (a : ℕ → ℚ) : Sequence where
     n₀ := 0
-    seq := fun n ↦ if n ≥ 0 then a n.toNat else 0
+    seq n := if n ≥ 0 then a n.toNat else 0
     vanish := by grind
 
 -- Notice how the delaborator prints this as `↑fun n ↦ ↑n ^ 2 : Sequence`.
@@ -62,7 +62,7 @@ instance : Coe (ℕ → ℚ) Sequence where
 
 abbrev Sequence.mk' (n₀:ℤ) (a: { n // n ≥ n₀ } → ℚ) : Sequence where
   n₀ := n₀
-  seq := fun n ↦ if h : n ≥ n₀ then a ⟨n, h⟩ else 0
+  seq n := if h : n ≥ n₀ then a ⟨n, h⟩ else 0
   vanish := by grind
 
 lemma Sequence.eval_mk {n n₀:ℤ} (a: { n // n ≥ n₀ } → ℚ) (h: n ≥ n₀) :
