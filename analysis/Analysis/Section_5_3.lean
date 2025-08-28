@@ -51,7 +51,7 @@ theorem CauchySequence.coe_eq {a:ℕ → ℚ} (ha: (a:Sequence).IsCauchy) :
     (mk' ha).toSequence = (a:Sequence) := rfl
 
 instance CauchySequence.instCoeFun : CoeFun CauchySequence (fun _ ↦ ℕ → ℚ) where
-  coe := fun a n ↦ a.toSequence (n:ℤ)
+  coe a n := a.toSequence (n:ℤ)
 
 @[simp]
 theorem CauchySequence.coe_to_sequence (a: CauchySequence) :
@@ -129,8 +129,7 @@ theorem Sequence.IsCauchy.add {a b:ℕ → ℚ}  (ha: (a:Sequence).IsCauchy) (hb
   intro j hj k hk
   have h1 := ha j ?_ k ?_ <;> try omega
   have h2 := hb j ?_ k ?_ <;> try omega
-  simp [Section_4_3.dist] at *
-  rw [←Rat.Close] at *
+  simp [Section_4_3.dist] at *; rw [←Rat.Close] at *
   convert Section_4_3.add_close h1 h2
   linarith
 
@@ -145,7 +144,7 @@ theorem Sequence.add_equiv_left {a a':ℕ → ℚ} (b:ℕ → ℚ) (haa': Equiv 
   choose N haa' using haa'; use N
   simp [Rat.closeSeq_def] at *
   peel 5 haa' with n hn hN _ _ haa'
-  simp [hn, hN] at haa' ⊢
+  simp [hn, hN] at *
   convert Section_4_3.add_close haa' (Section_4_3.close_refl (b n.toNat))
   simp
 
@@ -163,7 +162,7 @@ theorem Sequence.add_equiv {a b a' b':ℕ → ℚ} (haa': Equiv a a')
 noncomputable instance Real.add_inst : Add Real where
   add := fun x y ↦
     Quotient.liftOn₂ x y (fun a b ↦ LIM (a + b)) (by
-      intro a b a' b' haa' hbb'
+      intro a b a' b' _ _
       change LIM ((a:ℕ → ℚ) + (b:ℕ → ℚ)) = LIM ((a':ℕ → ℚ) + (b':ℕ → ℚ))
       rw [LIM_eq_LIM]
       . solve_by_elim [Sequence.add_equiv]
@@ -247,7 +246,7 @@ theorem Real.ratCast_add (a b:ℚ) : (a:Real) + (b:Real) = (a+b:ℚ) := by sorry
 theorem Real.ratCast_mul (a b:ℚ) : (a:Real) * (b:Real) = (a*b:ℚ) := by sorry
 
 noncomputable instance Real.instNeg : Neg Real where
-  neg := fun x ↦ ((-1:ℚ):Real) * x
+  neg x := ((-1:ℚ):Real) * x
 
 /-- ratCast commutes with negation -/
 theorem Real.neg_ratCast (a:ℚ) : -(a:Real) = (-a:ℚ) := by sorry
@@ -347,7 +346,7 @@ theorem Real.boundedAwayZero_of_nonzero {x:Real} (hx: x ≠ 0) :
   have how : ∀ j ≥ N, |b j| ≥ ε/2 := by sorry
   set a : ℕ → ℚ := fun n ↦ if n < n₀ then ε/2 else b n
   have not_hard : Sequence.Equiv a b := by sorry
-  have ha : (a:Sequence).IsCauchy := (Sequence.isCauchy_of_equiv not_hard).mpr hb
+  have ha := (Sequence.isCauchy_of_equiv not_hard).mpr hb
   refine ⟨ a, ha, ?_, by rw [(LIM_eq_LIM ha hb).mpr not_hard] ⟩
   rw [bounded_away_zero_def]
   use ε/2, half_pos hε

@@ -25,15 +25,15 @@ theorem IsLocalMaxOn.iff (X:Set ℝ) (f:ℝ → ℝ) (x₀:ℝ) :
   IsLocalMaxOn f X x₀ ↔
   ∃ δ > 0, IsMaxOn f (X ∩ .Ioo (x₀ - δ) (x₀ + δ)) x₀ := by
   simp [isMaxOn_iff, IsLocalMaxOn, IsMaxFilter, nhdsWithin.eq_1, Filter.eventually_inf_principal,
-        Metric.eventually_nhds_iff, Real.dist_eq, abs_sub_lt_iff ]
-  peel with ε _ x; constructor <;> intro h _ _ _ <;> apply h <;> grind
+        Metric.eventually_nhds_iff, Real.dist_eq, abs_sub_lt_iff]
+  peel 3; constructor <;> intro h _ _ _ <;> apply h <;> grind
 
 theorem IsLocalMinOn.iff (X:Set ℝ) (f:ℝ → ℝ) (x₀:ℝ) :
   IsLocalMinOn f X x₀ ↔
   ∃ δ > 0, IsMinOn f (X ∩ .Ioo (x₀ - δ) (x₀ + δ)) x₀ := by
   simp [isMinOn_iff, IsLocalMinOn, IsMinFilter, nhdsWithin.eq_1, Filter.eventually_inf_principal,
-        Metric.eventually_nhds_iff, Real.dist_eq, abs_sub_lt_iff ]
-  peel with ε _ x; constructor <;> intro h _ _ _ <;> apply h <;> grind
+        Metric.eventually_nhds_iff, Real.dist_eq, abs_sub_lt_iff]
+  peel 3; constructor <;> intro h _ _ _ <;> apply h <;> grind
 
 /-- Example 10.2.3 -/
 abbrev f_10_2_3 : ℝ → ℝ := fun x ↦ x^2 - x^4

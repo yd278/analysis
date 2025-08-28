@@ -27,7 +27,7 @@ theorem integ_of_monotone {a b:ℝ} {f:ℝ → ℝ} (hf: MonotoneOn f (Icc a b))
   by_cases hab : 0 < b-a
   swap
   . apply (integ_on_subsingleton _).1; rw [←BoundedInterval.length_of_subsingleton]; aesop
-  have hbound :=  BddOn.of_monotone hf
+  have hbound := BddOn.of_monotone hf
   set I := Icc a b
   have hab' : a ≤ b := by linarith
   have (ε:ℝ) (hε: 0 < ε) : upper_integral f I - lower_integral f I ≤ ((f b - f a) * (b-a)) *ε := by
@@ -95,8 +95,7 @@ theorem integ_of_monotone {a b:ℝ} {f:ℝ → ℝ} (hf: MonotoneOn f (Icc a b))
         have : a + δ*(j+1) ≤ b := by simp [hbeq]; gcongr; norm_cast; grind
         have hδj : 0 ≤ δ*j := by positivity
         have hδj1 : 0 ≤ δ*(j+1) := by positivity
-        apply hf _ _ (by order) <;> simp [I, hδj1, this]
-        grind
+        apply hf _ _ (by order) <;> simp [I, hδj1, this]; grind
     have hdown := calc
       lower_integral f I ≥ ∑ J ∈ P.intervals, (sInf (f '' (J:Set ℝ))) * |J|ₗ :=
         lower_integ_ge_lower_sum hbound P
@@ -111,9 +110,7 @@ theorem integ_of_monotone {a b:ℝ} {f:ℝ → ℝ} (hf: MonotoneOn f (Icc a b))
         have hajb': a + δ*(j+1) ≤ b := by simp [hbeq]; gcongr; norm_cast; grind
         have hδj : 0 ≤ δ*j := by positivity
         have hδj1 : 0 ≤ δ*(j+1) := by positivity
-        apply_rules [hf]
-        . simp [I, hδj]; linarith
-        simp [I]; grind
+        apply_rules [hf] <;> simp [I, hδj] <;> grind
     calc
       _ ≤ ∑ j ∈ .range N, f (a + δ*(j+1)) * δ - ∑ j ∈ .range N, f (a + δ*j) * δ := by linarith
       _ = (f b - f a) * δ := by

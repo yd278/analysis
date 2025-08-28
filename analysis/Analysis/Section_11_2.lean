@@ -39,7 +39,7 @@ theorem Constant.of_subsingleton {X Y:Type} [hs: Subsingleton X] [hY: Nonempty Y
   Constant f := by
   by_cases h:Nonempty X
   . use f h.some; intros; congr; exact hs.elim _ h.some
-  use hY.some; intro x; simp at h; exact h.elim x
+  simp at h; exact ⟨ hY.some, h.elim ⟩
 
 abbrev ConstantOn (f: ℝ → ℝ) (X: Set ℝ) : Prop := Constant (fun x : X ↦ f ↑x)
 
@@ -50,10 +50,9 @@ theorem ConstantOn.eq {f: ℝ → ℝ} {X: Set ℝ} (h: ConstantOn f X) {x:ℝ} 
   convert Constant.eq h ⟨ _, hx ⟩
 
 theorem ConstantOn.of_const {f:ℝ → ℝ} {X: Set ℝ} {c:ℝ} (h: ∀ x ∈ X, f x = c) :
-  ConstantOn f X := by use c; grind
+  ConstantOn f X := ⟨ c, by grind ⟩
 
-theorem ConstantOn.of_const' (c:ℝ) (X:Set ℝ): ConstantOn (fun _ ↦ c) X := by
-  apply of_const (c := c); simp
+theorem ConstantOn.of_const' (c:ℝ) (X:Set ℝ): ConstantOn (fun _ ↦ c) X := of_const (c := c) (by simp)
 
 theorem ConstantOn.const_eq {f:ℝ → ℝ} {X: Set ℝ} (hX: X.Nonempty) {c:ℝ} (h: ∀ x ∈ X, f x = c) :
   constant_value_on f X = c := by
@@ -167,7 +166,6 @@ noncomputable abbrev PiecewiseConstantWith.integ (f:ℝ → ℝ) {I: BoundedInte
 
 theorem PiecewiseConstantWith.integ_congr {f g:ℝ → ℝ} {I: BoundedInterval} {P: Partition I}
   (h: ∀ x ∈ (I:Set ℝ), f x = g x) : integ f P = integ g P := by
-  simp only [integ]
   apply Finset.sum_congr rfl; intro J hJ; congr 1; apply constant_value_on_congr
   have := P.contains _ hJ; grind [subset_iff]
 
@@ -223,8 +221,8 @@ theorem PiecewiseConstantOn.integ_def {f:ℝ → ℝ} {I: BoundedInterval} {P: P
 theorem PiecewiseConstantOn.integ_congr {f g:ℝ → ℝ} {I: BoundedInterval}
   (h: ∀ x ∈ (I:Set ℝ), f x = g x) : integ f I = integ g I := by
   by_cases hf : PiecewiseConstantOn f I
-  <;> have hg := hf <;> rw [congr h] at hg <;> simp [integ, hf, hg]
-  rw [PiecewiseConstantWith.integ_congr h, ←integ_def hg.choose_spec, ←integ_def ?_]
+  <;> (have hg := hf; rw [congr h] at hg; simp [integ, hf, hg])
+  rw [PiecewiseConstantWith.integ_congr h, ←integ_def hg.choose_spec, ←integ_def]
   rw [←PiecewiseConstantWith.congr h]; exact hf.choose_spec
 
 /-- Example 11.2.15 -/

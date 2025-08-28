@@ -26,6 +26,8 @@ abbrev Real.ContinuallyAdherent (ε:ℝ) (a:Chapter6.Sequence) (x:ℝ) :=
 
 namespace Chapter6
 
+open EReal
+
 abbrev Sequence.LimitPoint (a:Sequence) (x:ℝ) : Prop :=
   ∀ ε > (0:ℝ), ε.ContinuallyAdherent a x
 
@@ -139,8 +141,7 @@ example : Example_6_4_9.liminf = ⊤ := by sorry
 theorem Sequence.gt_limsup_bounds {a:Sequence} {x:EReal} (h: x > a.limsup) :
     ∃ N ≥ a.m, ∀ n ≥ N, a n < x := by
   -- This proof is written to follow the structure of the original text.
-  unfold limsup at h
-  simp [sInf_lt_iff] at h
+  simp [limsup, sInf_lt_iff] at h
   obtain ⟨_, ⟨ N, ⟨ hN, rfl ⟩ ⟩, ha ⟩ := h; use N
   simp [hN, upperseq] at ha ⊢; intro n _
   have hn' : n ≥ (a.from N).m := by grind
@@ -156,11 +157,9 @@ theorem Sequence.lt_liminf_bounds {a:Sequence} {y:EReal} (h: y < a.liminf) :
 theorem Sequence.lt_limsup_bounds {a:Sequence} {x:EReal} (h: x < a.limsup) {N:ℤ} (hN: N ≥ a.m) :
     ∃ n ≥ N, a n > x := by
   -- This proof is written to follow the structure of the original text.
-  have hx : x < a.upperseq N := by
-    apply lt_of_lt_of_le h (sInf_le _)
-    simp; use N
+  have hx : x < a.upperseq N := by apply lt_of_lt_of_le h (sInf_le _); simp; use N
   choose n hn hxn _ using exists_between_lt_sup hx
-  simp [hN] at hn; use n, hn; grind
+  grind
 
 /-- Proposition 6.4.12(b) -/
 theorem Sequence.gt_liminf_bounds {a:Sequence} {x:EReal} (h: x > a.liminf) {N:ℤ} (hN: N ≥ a.m) :
@@ -251,66 +250,53 @@ theorem Sequence.tendsTo_zero_iff (a:Sequence) :
 theorem Sequence.finite_limsup_liminf_of_bounded {a:Sequence} (hbound: a.IsBounded) :
     (∃ L_plus:ℝ, a.limsup = L_plus) ∧ (∃ L_minus:ℝ, a.liminf = L_minus) := by
   choose M hMpos hbound using hbound
-  unfold BoundedBy at hbound
   have hlimsup_bound : a.limsup ≤ M := by
     apply a.limsup_le_sup.trans (sup_le_upper _)
     intro n hN; simp
     exact (le_abs_self _).trans (hbound n)
   have hliminf_bound : -M ≤ a.liminf := by
     apply (inf_ge_lower _).trans a.inf_le_liminf
-    intro n hN; simp [←EReal.coe_neg]; rw [neg_le]
+    intro n hN; simp [←coe_neg]; rw [neg_le]
     exact (neg_le_abs _).trans (hbound n)
   split_ands
   . use a.limsup.toReal
-    symm; apply EReal.coe_toReal
+    symm; apply coe_toReal
     . contrapose! hlimsup_bound; simp [hlimsup_bound]
     replace hliminf_bound := hliminf_bound.trans a.liminf_le_limsup
-    contrapose! hliminf_bound; simp [hliminf_bound, ←EReal.coe_neg]
-  use a.liminf.toReal
-  symm; apply EReal.coe_toReal
+    contrapose! hliminf_bound; simp [hliminf_bound, ←coe_neg]
+  use a.liminf.toReal; symm; apply coe_toReal
   . apply a.liminf_le_limsup.trans at hlimsup_bound
     contrapose! hlimsup_bound; simp [hlimsup_bound]
-  contrapose! hliminf_bound; simp [hliminf_bound, ←EReal.coe_neg]
+  contrapose! hliminf_bound; simp [hliminf_bound, ←coe_neg]
 
 /-- Theorem 6.4.18 (Completeness of the reals) -/
 theorem Sequence.Cauchy_iff_convergent (a:Sequence) :
   a.IsCauchy ↔ a.Convergent := by
   -- This proof is written to follow the structure of the original text.
-  refine ⟨ ?_, IsCauchy.convergent ⟩
-  intro h
+  refine ⟨ ?_, IsCauchy.convergent ⟩; intro h
   have ⟨ ⟨ L_plus, hL_plus ⟩, ⟨ L_minus, hL_minus ⟩ ⟩ :=
     finite_limsup_liminf_of_bounded (bounded_of_cauchy h)
-  use L_minus
-  simp [tendsTo_iff_eq_limsup_liminf, hL_minus, hL_plus]
+  use L_minus; simp [tendsTo_iff_eq_limsup_liminf, hL_minus, hL_plus]
   have hlow : 0 ≤ L_plus - L_minus := by
-    have := a.liminf_le_limsup
-    simp [hL_minus, hL_plus] at this; grind
+    have := a.liminf_le_limsup; simp [hL_minus, hL_plus] at this; grind
   have hup (ε:ℝ) (hε: ε>0) : L_plus - L_minus ≤ 2*ε := by
-    specialize h ε hε
-    choose N hN hsteady using h
-    unfold Real.Steady Real.Close at hsteady
-    have hN0 : N ≥ (a.from N).m := by simp [hN]
-    have hN1 : (a.from N).seq N = a.seq N := by simp [hN]
+    specialize h ε hε; choose N hN hsteady using h
+    have hN0 : N ≥ (a.from N).m := by grind
+    have hN1 : (a.from N).seq N = a.seq N := by grind
     have h1 : (a N - ε:ℝ) ≤ (a.from N).inf := by
-      apply inf_ge_lower
-      grind [Real.dist_eq, abs_le',EReal.coe_le_coe_iff]
+      apply inf_ge_lower; grind [Real.dist_eq, abs_le',EReal.coe_le_coe_iff]
     have h2 : (a.from N).inf ≤ L_minus := by
-      simp_rw [←hL_minus, Sequence.liminf, Sequence.lowerseq]
-      apply le_sSup
-      simp; use N
+      simp_rw [←hL_minus, liminf, lowerseq]; apply le_sSup; simp; use N
     have h3 : (a.from N).sup ≤ (a N + ε:ℝ) := by
-      apply sup_le_upper
-      grind [EReal.coe_le_coe_iff, Real.dist_eq, abs_le']
+      apply sup_le_upper; grind [EReal.coe_le_coe_iff, Real.dist_eq, abs_le']
     have h4 : L_plus ≤ (a.from N).sup := by
-      simp_rw [←hL_plus, Sequence.limsup, Sequence.upperseq]
-      apply sInf_le; simp; use N
+      simp_rw [←hL_plus, limsup, upperseq]; apply sInf_le; simp; use N
     replace h1 := h1.trans h2
     replace h4 := h4.trans h3
     grind [EReal.coe_le_coe_iff]
   obtain hlow | hlow := le_iff_lt_or_eq.mp hlow
-  . specialize hup ((L_plus - L_minus)/3) (by positivity)
-    linarith
-  linarith
+  . specialize hup ((L_plus - L_minus)/3) ?_ <;> linarith
+  grind
 
 /-- Exercise 6.4.6 -/
 theorem Sequence.sup_not_strict_mono : ∃ (a b:ℕ → ℝ), (∀ n, a n < b n) ∧ (a:Sequence).sup ≠ (b:Sequence).sup := by

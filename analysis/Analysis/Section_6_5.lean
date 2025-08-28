@@ -29,21 +29,19 @@ instance Sequence.inst_pow: Pow Sequence ℕ where
 
 @[simp]
 lemma Sequence.pow_one (a:Sequence) : a^1 = a := by
-  ext n; rfl; simp only [HPow.hPow, Pow.pow]; by_cases h: n ≥ a.m <;> simp [h]; simp [a.vanish n (by linarith)]
+  ext n; rfl; simp only [HPow.hPow, Pow.pow]; split_ifs with h; simp; simp [a.vanish n (by grind)]
 
 lemma Sequence.pow_succ (a:Sequence) (k:ℕ) : a^(k+1) = a^k * a := by
-  ext n <;> simp only [HPow.hPow, Pow.pow, HMul.hMul, Mul.mul]; simp; by_cases h: n ≥ a.m <;> simp [h]; rfl
+  ext <;> simp only [HPow.hPow, Pow.pow, HMul.hMul, Mul.mul, max_self]; split_ifs with h <;> rfl
 
 /-- Corollary 6.5.1 -/
 theorem Sequence.lim_of_power_decay {k:ℕ} :
     ((fun (n:ℕ) ↦ 1/((n:ℝ)+1)^(1/(k+1:ℝ))):Sequence).TendsTo 0 := by
   -- This proof is written to follow the structure of the original text.
   set a := ((fun (n:ℕ) ↦ 1/((n:ℝ)+1)^(1/(k+1:ℝ))):Sequence)
-  have ha : a.BddBelow := by use 0; intro n hn; simp [a]; positivity
+  have ha : a.BddBelow := by use 0; intro n _; simp [a]; positivity
   have ha' : a.IsAntitone := by
-    intro n hn; simp [a] at hn ⊢
-    have hn' : 0 ≤ n+1 := by linarith
-    simp [hn,hn']
+    intro n hn; observe hn' : 0 ≤ n+1; simp [a,hn,hn']
     rw [inv_le_inv₀, Real.rpow_le_rpow_iff] <;> try positivity
     simp
   apply convergent_of_antitone ha at ha'
@@ -52,14 +50,10 @@ theorem Sequence.lim_of_power_decay {k:ℕ} :
     . simp [ha', -dite_pow]
     rw [pow_succ]; convert lim_mul ih.1 ha'; grind
   have hlim : (lim a)^(k+1) = 0 := by
-    rw [←(hpow k).2]
-    convert lim_harmonic.2
-    ext n; rfl
-    simp only [HPow.hPow, Pow.pow, a]
-    by_cases h : n ≥ 0 <;> simp [h]
+    rw [←(hpow k).2]; convert lim_harmonic.2; ext; rfl
+    simp only [HPow.hPow, Pow.pow, a]; split_ifs with h <;> simp
     rw [←Real.rpow_natCast,←Real.rpow_mul (by positivity)]
-    convert Real.rpow_one _
-    field_simp
+    convert Real.rpow_one _; field_simp
   simp [lim_eq, ha', pow_eq_zero hlim]
 
 /-- Lemma 6.5.2 / Exercise 6.5.2 -/
@@ -89,7 +83,5 @@ theorem Sequence.lim_of_rat_power_decay {q:ℚ} (hq: q > 0) :
 theorem Sequence.lim_of_rat_power_growth {q:ℚ} (hq: q > 0) :
     (fun (n:ℕ) ↦ ((n+1:ℝ)^(q:ℝ)):Sequence).Divergent := by
   sorry
-
-
 
 end Chapter6

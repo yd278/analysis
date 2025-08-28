@@ -114,16 +114,16 @@ theorem closure_of_Ioo {a b:ℝ} (h:a < b) : closure (.Ioo a b) = .Icc a b := by
     obtain h' | h' := le_or_gt a x
     . specialize h h'
       use x-b, by linarith
-      intro y ⟨ h1, h2 ⟩; observe : x-y ≤ |x-y|; linarith
+      intro y ⟨ _, _ ⟩; observe : x-y ≤ |x-y|; linarith
     use a-x, by linarith
-    intro y ⟨ h1, h2 ⟩; observe : -(x-y) ≤ |x-y|; linarith
+    intro y ⟨ _, _ ⟩; observe : -(x-y) ≤ |x-y|; linarith
   intro ⟨ h1, h2 ⟩
   by_cases ha : x = a
   . sorry
   by_cases hb : x = b
   . sorry
   intro ε hε
-  use x, ⟨ by grind, by grind ⟩; simp; order
+  use x, (by grind); simp; order
 
 theorem closure_of_Ioc {a b:ℝ} (h:a < b) : closure (.Ioc a b) = .Icc a b := by
   sorry

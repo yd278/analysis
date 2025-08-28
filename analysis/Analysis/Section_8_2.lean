@@ -100,7 +100,7 @@ theorem sum_of_sum_of_AbsConvergent_nonneg {f:ℕ × ℕ → ℝ} (hf:AbsConverg
     . simp
     solve_by_elim
   have hnon (n:ℕ) : (a n).nonneg := by
-    simp [a, nonneg]; intro m; by_cases h: m ≥ 0 <;> simp [h, hpos]
+    simp [a, nonneg]; intro m; split_ifs <;> simp [hpos]
   have hconv (n:ℕ) : (a n).converges := by
     rw [converges_of_nonneg_iff (hnon n)]
     use L; intro N; by_cases h: N ≥ 0
@@ -124,8 +124,9 @@ theorem sum_of_sum_of_AbsConvergent_nonneg {f:ℕ × ℕ → ℝ} (hf:AbsConverg
   replace (N:ℤ) : (fun n ↦ (a n).sum:Series).partial N ≤ L := by
     convert this N with n hn; simp_all
   have hnon' : (fun n ↦ (a n).sum:Series).nonneg := by
-    intro n; by_cases h: n ≥ 0 <;> simp [h]
-    exact sum_of_nonneg (hnon n.toNat)
+    intro n; simp; split_ifs
+    . exact sum_of_nonneg (hnon n.toNat)
+    simp
   have hconv' : (fun n ↦ (a n).sum:Series).converges := by
     rw [converges_of_nonneg_iff hnon']; use L
   replace : (fun n ↦ (a n).sum:Series).sum ≤ L := le_of_tendsto' (convergesTo_sum hconv') this
@@ -176,7 +177,7 @@ theorem sum_of_sum_of_AbsConvergent {f:ℕ × ℕ → ℝ} (hf:AbsConvergent f) 
     . convert sub_coe _ _
     rcongr _ n; simp
     convert (sub _ _).2 with m; rfl
-    by_cases h: m ≥ 0 <;> simp [h, HSub.hSub, Sub.sub]
+    split_ifs with h <;> simp [h, HSub.hSub, Sub.sub]
     . solve_by_elim
     convert hfminus_conv' n.toNat
   have ⟨ g, hg, _ ⟩ := hf
@@ -185,7 +186,7 @@ theorem sum_of_sum_of_AbsConvergent {f:ℕ × ℕ → ℝ} (hf:AbsConvergent f) 
   have hminus := Sum.eq hg (hfminus_conv.comp hg)
   apply convergesTo_uniq h1 _
   convert (convergesTo.sub hplus hminus) using 3 with n
-  by_cases h:n ≥ 0 <;> simp [h,hdiff, HSub.hSub, Sub.sub]
+  split_ifs with h <;> simp [h, hdiff, HSub.hSub, Sub.sub]
 
 /-- Theorem 8.2.2, third version -/
 theorem sum_of_sum_of_AbsConvergent' {f:ℕ × ℕ → ℝ} (hf:AbsConvergent f) :
