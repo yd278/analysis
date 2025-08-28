@@ -117,7 +117,7 @@ Definition 5.1.3 - definition of ε-steadiness for a sequence starting at 0
 lemma Rat.Steady.coe (ε : ℚ) (a:ℕ → ℚ) :
     ε.Steady a ↔ ∀ n m : ℕ, ε.Close (a n) (a m) := by
   constructor
-  · intro h n m; specialize h n (by simp) m (by simp); simp_all
+  · intro h n m; specialize h n ?_ m ?_ <;> simp_all
   intro h n hn m hm
   lift n to ℕ using hn
   lift m to ℕ using hm
@@ -145,7 +145,7 @@ example : (1:ℚ).Steady ((fun n:ℕ ↦ if Even n then (1:ℚ) else (0:ℚ)):Se
   intro n m
   -- Split into four cases based on whether n and m are even or odd
   -- In each case, we know the exact value of a n and a m
-  by_cases h: Even n <;> by_cases h': Even m <;> simp [h, h', Rat.Close]
+  split_ifs <;> simp [Rat.Close]
 
 /--
 Example 5.1.5: The sequence `1, 0, 1, 0, ...` is not ½-steady.
@@ -189,7 +189,7 @@ The sequence 10, 0, 0, ... is 10-steady.
 example : (10:ℚ).Steady ((fun n:ℕ ↦ if n = 0 then (10:ℚ) else (0:ℚ)):Sequence) := by
   rw [Rat.Steady.coe]; intro n m
   -- Split into 4 cases based on whether n and m are 0 or not
-  by_cases h:n=0 <;> by_cases h':m=0 <;> simp [h, h',Rat.Close]
+  split_ifs <;> simp [Rat.Close]
 
 /--
 The sequence 10, 0, 0, ... is not ε-steady for any smaller value of ε.

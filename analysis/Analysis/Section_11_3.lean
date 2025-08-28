@@ -44,13 +44,13 @@ theorem lower_integral_congr {f g:ℝ → ℝ} {I: BoundedInterval} (h: Set.EqOn
 
 lemma integral_bound_upper_of_bounded {f:ℝ → ℝ} {M:ℝ} {I: BoundedInterval} (h: ∀ x ∈ (I:Set ℝ), |f x| ≤ M) : M * |I|ₗ ∈ (PiecewiseConstantOn.integ · I) '' {g | MajorizesOn g f I ∧ PiecewiseConstantOn g I} := by
   simp
-  refine ⟨ fun _ ↦ M , ⟨ ⟨ ?_, ?_, ⟩, PiecewiseConstantOn.integ_const _ _ ⟩ ⟩
+  refine' ⟨ fun _ ↦ M , ⟨ ⟨ _, _ ⟩, PiecewiseConstantOn.integ_const _ _ ⟩ ⟩
   . grind [abs_le']
-  exact (ConstantOn.of_const (c := M) (by simp)).piecewiseConstantOn
+  apply (ConstantOn.of_const (c := M) _).piecewiseConstantOn; simp
 
 lemma integral_bound_lower_of_bounded {f:ℝ → ℝ} {M:ℝ} {I: BoundedInterval} (h: ∀ x ∈ (I:Set ℝ), |f x| ≤ M) : -M * |I|ₗ ∈ (PiecewiseConstantOn.integ · I) '' {g | MinorizesOn g f I ∧ PiecewiseConstantOn g I} := by
   simp
-  refine ⟨ fun _ ↦ -M , ⟨ ⟨ ?_, ?_, ⟩, by convert PiecewiseConstantOn.integ_const _ _ using 1; simp ⟩ ⟩
+  refine' ⟨ fun _ ↦ -M , ⟨ ⟨ _, _ ⟩, by convert PiecewiseConstantOn.integ_const _ _ using 1; simp ⟩ ⟩
   . grind [abs_le']
   exact (ConstantOn.of_const (c := -M) (by simp)).piecewiseConstantOn
 
@@ -64,10 +64,9 @@ lemma integral_bound_lower_le_upper {f:ℝ → ℝ} {I: BoundedInterval} {a b:�
   (ha: a ∈ (PiecewiseConstantOn.integ · I) '' {g | MajorizesOn g f I ∧ PiecewiseConstantOn g I})
   (hb: b ∈ (PiecewiseConstantOn.integ · I) '' {g | MinorizesOn g f I ∧ PiecewiseConstantOn g I})
   : b ≤ a:= by
-    obtain ⟨ g, ⟨ ⟨ hmaj, hgp⟩, hgi ⟩ ⟩ := ha
-    obtain ⟨ h, ⟨ ⟨ hmin, hhp⟩, hhi ⟩ ⟩ := hb
-    rw [←hgi, ←hhi]; apply hhp.integ_mono _ hgp
-    intro x hx; linarith [hmin _ hx, hmaj _ hx]
+    obtain ⟨ g, ⟨ ⟨ hmaj, hgp⟩, rfl ⟩ ⟩ := ha
+    obtain ⟨ h, ⟨ ⟨ hmin, hhp⟩, rfl ⟩ ⟩ := hb
+    apply hhp.integ_mono _ hgp; intro x hx; linarith [hmin _ hx, hmaj _ hx]
 
 lemma integral_bound_below {f:ℝ → ℝ} {I: BoundedInterval} (h: BddOn f I) :
   BddBelow ((PiecewiseConstantOn.integ · I) '' {g | MajorizesOn g f I ∧ PiecewiseConstantOn g I}) := by
@@ -140,8 +139,8 @@ theorem integ_of_piecewise_const {f:ℝ → ℝ} {I: BoundedInterval} (hf: Piece
 /-- Remark 11.3.8 -/
 theorem integ_on_subsingleton {f:ℝ → ℝ} {I: BoundedInterval} (hI: |I|ₗ = 0) :
   IntegrableOn f I ∧ integ f I = 0 := by
-  have _ := length_of_subsingleton.mpr hI
-  have hconst : ConstantOn f I := ConstantOn.of_subsingleton
+  observe : Subsingleton I.toSet
+  observe hconst : ConstantOn f I
   convert integ_of_piecewise_const hconst.piecewiseConstantOn
   simp [PiecewiseConstantOn.integ_const' hconst, hI]
 

@@ -154,8 +154,7 @@ theorem IntegrableOn.abs {I: BoundedInterval} {f:ℝ → ℝ} (hf: IntegrableOn 
   IntegrableOn (abs f) I := by
   have := (IntegrableOn.const 0 I).1
   convert ((hf.max this).sub (hf.min this)).1 using 1
-  ext x; have : f x ≤ 0 ∨ f x ≥ 0 := by grind
-  obtain h | h := this <;> simp [h]
+  ext x; obtain h | h := (show f x ≤ 0 ∨ f x ≥ 0 by grind) <;> simp [h]
 
 /-- Theorem 11.4.5 (Products preserve Riemann integrability).
 It is convenient to first establish the non-negative case.-/
@@ -225,11 +224,12 @@ theorem integ_of_mul_nonneg {I: BoundedInterval} {f g:ℝ → ℝ} (hf: Integrab
     choose g'' hg''maj hg''const hg''int hg''bound using this
     have hf'g'_const := hf'const.mul hg'const
     have hf'g'_maj : MinorizesOn (f' * g') (f * g) I := by
-      peel hf'min with x hx hf'min; specialize hg'min _ hx; specialize hf'_nonneg _ hx; specialize hg'_nonneg _ hx
+      peel hf'min with x hx hf'min; specialize hg'min _ hx;
+      specialize hf'_nonneg _ hx; specialize hg'_nonneg _ hx
       simp at *; apply mul_le_mul hf'min hg'min <;> grind
     have hf''g''_const := hf''const.mul hg''const
     have hf''g''_maj : MajorizesOn (f'' * g'') (f * g) I := by
-      peel hf''maj with x hx hf''maj; specialize hg''maj _ hx; specialize hf''bound _ hx
+      peel hf''maj with x hx hf''maj; specialize hg''maj _ hx
       specialize hg_nonneg _ hx; specialize hf_nonneg _ hx
       simp at *; apply mul_le_mul hf''maj hg''maj <;> grind
     have hupper_le := upper_integral_le_integ hmul_bound hf''g''_maj hf''g''_const
@@ -241,10 +241,7 @@ theorem integ_of_mul_nonneg {I: BoundedInterval} {f g:ℝ → ℝ} (hf: Integrab
       simp only [Pi.sub_apply, Pi.mul_apply, Pi.add_apply, Pi.smul_apply, smul_eq_mul]
       calc
         _ = (f'' x) * (g'' x - g' x) + (g' x) * (f'' x - f' x) := by ring
-        _ ≤ _ := by
-          specialize hg'min x hx; specialize hg''maj x hx; specialize hf''bound x hx
-          specialize hf'min x hx; specialize hf''maj x hx; specialize hg''bound x hx
-          simp at hg''bound; gcongr <;> linarith
+        _ ≤ _ := by gcongr <;> grind
     have hg''g'_const := hg''const.sub hg'const
     have hg''g'_integ := hg''const.integ_sub hg'const
     have hM₁g''g'_const := hg''g'_const.smul M₁
@@ -271,9 +268,9 @@ theorem integ_of_mul {I: BoundedInterval} {f g:ℝ → ℝ} (hf: IntegrableOn f 
   set gplus := max g (fun _ ↦ 0)
   set gminus := -min g (fun _ ↦ 0)
   have := (IntegrableOn.const 0 I).1
-  have hfplus_integ : IntegrableOn fplus I := hf.max this
+  observe hfplus_integ : IntegrableOn fplus I
+  observe hgplus_integ : IntegrableOn gplus I
   have hfminus_integ : IntegrableOn fminus I := (hf.min this).neg.1
-  have hgplus_integ : IntegrableOn gplus I := hg.max this
   have hgminus_integ : IntegrableOn gminus I := (hg.min this).neg.1
   have hfplus_nonneg : MajorizesOn fplus 0 I := by intro _; simp [fplus]
   have hfminus_nonneg : MajorizesOn fminus 0 I := by intro _; simp [fminus]
