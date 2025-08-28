@@ -93,17 +93,35 @@ theorem S_ge {n r:ℕ} (hn: 1 < n) (h: ∀ k ∈ Finset.Ico 1 n, ∃ p, p.Prime 
     order
   aesop
 
-theorem key_cor {n p r:ℕ} (hn: n = 2^((p^r).totient))
-  (hp: p.Prime) (hpr: p > 2^(r-1)) (hr: 1 < r) :
-  r ≤ S n := by
+theorem key_cor {p r:ℕ} (hp: p.Prime) (hpr: p > 2^(r-1)) (hr: 1 < r) :
+  r ≤ S (2^((p^r).totient)) := by
   apply S_ge
-  . simp [hn]; intro h; subst h; simp at hpr
+  . simp; grind
   intro k hk; simp at hk
-  have := key_prop hn hk.1 hk.2 hp hpr hr ?_; swap
-  . sorry
+  have := key_prop rfl hk.1 hk.2 hp hpr hr ?_; swap
+  . rw [Nat.totient_prime_pow hp (by omega)]
+    have : r-1 < p^(r-1) := Nat.lt_pow_self hp.one_lt
+    have : p^(r-1) ≤ p^(r-1) * (p-1) := by
+      apply Nat.le_mul_of_pos_right; have := hp.one_lt; omega
+    omega
   rcases this with this | this
   . use 2; simp [this, Nat.prime_two]
-  use p; tauto
+  use p
 
-theorem erdos_379 : Filter.atTop.limsup (fun n ↦ (S n:EReal)) = ⊤ := by
-  sorry
+theorem erdos_379 : Filter.atTop.limsup (fun n ↦ (S n:ENat)) = ⊤ := by
+  rw [Filter.limsup_eq_iInf_iSup_of_nat]
+  simp; intro N; rw [iSup₂_eq_top]; intro r hr
+  lift r to ℕ using (by order)
+  obtain ⟨ p, hp, hp' ⟩ := Nat.exists_infinite_primes (max N (2^(r+1)+1))
+  use 2^((p^(r+2)).totient), ?_
+  . simp
+    have := key_cor hp' ?_ (show 1 < r+2 by omega)
+    . linarith
+    simp at *; linarith
+  suffices : p ≤ 2 ^ (p ^ (r + 2)).totient
+  . order
+  rw [Nat.totient_prime_pow hp' (by omega)]
+  have : p-1 < 2^(p-1) := Nat.lt_two_pow_self
+  have : 2^(p-1) ≤ 2 ^ (p ^ (r + 2 - 1) * (p - 1)) := by
+    gcongr; norm_num; apply Nat.le_mul_of_pos_left; have := hp'.one_lt; positivity
+  omega
