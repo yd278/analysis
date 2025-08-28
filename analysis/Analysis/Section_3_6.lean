@@ -142,8 +142,8 @@ theorem SetTheory.Set.nat_infinite : infinite nat := by
   by_contra this; choose n hn using this
   simp [has_card] at hn; symm at hn; simp [HasEquiv.Equiv, Setoid.r, EqualCard] at hn
   choose f hf using hn; choose M hM using bounded_on_finite f
-  replace hf := hf.surjective (M+1:ℕ); contrapose! hf
-  peel hM with i hi; contrapose! hi
+  replace hf := hf.surjective ↑(M+1); contrapose! hf
+  peel hM with hi; contrapose! hi
   apply_fun nat_equiv.symm at hi; simp_all
 
 open Classical in

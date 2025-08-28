@@ -68,7 +68,7 @@ example : (Set.Icc 1 2 : Set ℝ).OrdConnected := by sorry
 
 example : (Set.Ioo 1 2 : Set ℝ).OrdConnected := by sorry
 
-example : ¬ (Set.Icc 1 2 ∪ Set.Icc 3 4 : Set ℝ).OrdConnected := by sorry
+example : ¬(Set.Icc 1 2 ∪ Set.Icc 3 4 : Set ℝ).OrdConnected := by sorry
 
 example : (∅:Set ℝ).OrdConnected := by sorry
 
@@ -121,16 +121,16 @@ abbrev BoundedInterval.b (I: BoundedInterval) : ℝ := match I with
   | Ico _ b => b
 
 theorem BoundedInterval.subset_Icc (I: BoundedInterval) : I ⊆ Icc I.a I.b := match I with
-  | Ioo _ _ => by simp [a, b, subset_iff, Set.Ioo_subset_Icc_self]
-  | Icc _ _ => by simp [a, b, subset_iff]
-  | Ioc _ _ => by simp [a, b, subset_iff, Set.Ioc_subset_Icc_self]
-  | Ico _ _ => by simp [a, b, subset_iff, Set.Ico_subset_Icc_self]
+  | Ioo _ _ => by simp [subset_iff, Set.Ioo_subset_Icc_self]
+  | Icc _ _ => by simp [subset_iff]
+  | Ioc _ _ => by simp [subset_iff, Set.Ioc_subset_Icc_self]
+  | Ico _ _ => by simp [subset_iff, Set.Ico_subset_Icc_self]
 
 theorem BoundedInterval.Ioo_subset (I: BoundedInterval) : Ioo I.a I.b ⊆ I := match I with
-  | Ioo _ _ => by simp [a, b, subset_iff]
-  | Icc _ _ => by simp [a, b, subset_iff, Set.Ioo_subset_Icc_self]
-  | Ioc _ _ => by simp [a, b, subset_iff, Set.Ioo_subset_Ioc_self]
-  | Ico _ _ => by simp [a, b, subset_iff, Set.Ioo_subset_Ico_self]
+  | Ioo _ _ => by simp [subset_iff]
+  | Icc _ _ => by simp [subset_iff, Set.Ioo_subset_Icc_self]
+  | Ioc _ _ => by simp [subset_iff, Set.Ioo_subset_Ioc_self]
+  | Ico _ _ => by simp [subset_iff, Set.Ioo_subset_Ico_self]
 
 instance BoundedInterval.instTrans : IsTrans BoundedInterval (· ⊆ ·) where
   trans I J K hIJ hJK := by grind [subset_iff]
@@ -170,43 +170,34 @@ theorem BoundedInterval.length_of_subsingleton {I: BoundedInterval} : Subsinglet
   sorry
 
 theorem BoundedInterval.dist_le_length {I:BoundedInterval} {x y:ℝ} (hx: x ∈ I) (hy: y ∈ I) : |x - y| ≤ |I|ₗ := by
-  apply subset_Icc I at hx; apply subset_Icc I at hy
-  simp_all [mem_iff, abs_le']; grind
+  apply subset_Icc I at hx; apply subset_Icc I at hy; simp_all [mem_iff, abs_le']; grind
 
 abbrev BoundedInterval.joins (K I J: BoundedInterval) : Prop := (I:Set ℝ) ∩ (J:Set ℝ) = ∅
   ∧ (K:Set ℝ) = (I:Set ℝ) ∪ (J:Set ℝ) ∧ |K|ₗ = |I|ₗ + |J|ₗ
 
 theorem BoundedInterval.join_Icc_Ioc {a b c:ℝ} (hab: a ≤ b) (hbc: b ≤ c) : (Icc a c).joins (Icc a b) (Ioc b c) := by
-  simp [joins, length, show a ≤ b by grind, show b ≤ c by grind, show a ≤ c by grind,
-    Set.eq_empty_iff_forall_notMem]; grind
+  simp_all [joins]; grind
 
 theorem BoundedInterval.join_Icc_Ioo {a b c:ℝ} (hab: a ≤ b) (hbc: b < c) : (Ico a c).joins (Icc a b) (Ioo b c) := by
-  simp [joins, length, show a ≤ b by grind, show b ≤ c by grind, show a ≤ c by grind,
-    Set.eq_empty_iff_forall_notMem]; grind
+  simp_all [joins, le_of_lt hbc]; grind
 
 theorem BoundedInterval.join_Ioc_Ioc {a b c:ℝ} (hab: a ≤ b) (hbc: b ≤ c) : (Ioc a c).joins (Ioc a b) (Ioc b c) := by
-  simp [joins, length, show a ≤ b by grind, show b ≤ c by grind, show a ≤ c by grind,
-    Set.eq_empty_iff_forall_notMem]; grind
+  simp_all [joins]; grind
 
 theorem BoundedInterval.join_Ioc_Ioo {a b c:ℝ} (hab: a ≤ b) (hbc: b < c) : (Ioo a c).joins (Ioc a b) (Ioo b c) := by
-  simp [joins, length, show a ≤ b by grind, show b ≤ c by grind, show a ≤ c by grind,
-    Set.eq_empty_iff_forall_notMem]; grind
+  simp_all [joins, le_of_lt hbc]; grind
 
 theorem BoundedInterval.join_Ico_Icc {a b c:ℝ} (hab: a ≤ b) (hbc: b ≤ c) : (Icc a c).joins (Ico a b) (Icc b c) := by
-  simp [joins, length, show a ≤ b by grind, show b ≤ c by grind, show a ≤ c by grind,
-    Set.eq_empty_iff_forall_notMem]; grind
+  simp_all [joins]; grind
 
 theorem BoundedInterval.join_Ico_Ico {a b c:ℝ} (hab: a ≤ b) (hbc: b ≤ c) : (Ico a c).joins (Ico a b) (Ico b c) := by
-  simp [joins, length, show a ≤ b by grind, show b ≤ c by grind, show a ≤ c by grind,
-    Set.eq_empty_iff_forall_notMem]; grind
+  simp_all [joins]; grind
 
 theorem BoundedInterval.join_Ioo_Icc {a b c:ℝ} (hab: a < b) (hbc: b ≤ c) : (Ioc a c).joins (Ioo a b) (Icc b c) := by
-  simp [joins, length, show a ≤ b by grind, show b ≤ c by grind, show a ≤ c by grind,
-    Set.eq_empty_iff_forall_notMem]; grind
+  simp_all [joins, le_of_lt hab]; grind
 
 theorem BoundedInterval.join_Ioo_Ico {a b c:ℝ} (hab: a < b) (hbc: b ≤ c) : (Ioo a c).joins (Ioo a b) (Ico b c) := by
-  simp [joins, length, show a ≤ b by grind, show b ≤ c by grind, show a ≤ c by grind,
-    Set.eq_empty_iff_forall_notMem]; grind
+  simp_all [joins, le_of_lt hab]; grind
 
 @[ext]
 structure Partition (I: BoundedInterval) where
@@ -262,9 +253,8 @@ noncomputable abbrev Partition.add_empty {I:BoundedInterval} (P: Partition I) : 
   exists_unique x hx := by
     choose J _ _ using (P.exists_unique _ hx).exists
     apply ExistsUnique.intro J (by aesop)
-    intro K ⟨ hK, hxK ⟩
-    simp at hK; obtain rfl | hK := hK
-    · simp [mem_iff] at hxK
+    intro K ⟨ hK, _ ⟩; simp at hK; obtain rfl | hK := hK
+    · simp_all [mem_iff]
     apply (P.exists_unique _ hx).unique <;> grind
   contains L hL := by
     simp at hL; obtain rfl | hL := hL
@@ -276,11 +266,11 @@ open Classical in
 noncomputable abbrev Partition.remove_empty {I:BoundedInterval} (P: Partition I) : Partition I := {
   intervals := P.intervals.filter (fun J ↦ (J:Set ℝ).Nonempty)
   exists_unique x hx := by
-    choose J _ hxJ using (P.exists_unique _ hx).exists
-    apply ExistsUnique.intro J (by simp_all [mem_iff]; exact Set.nonempty_of_mem hxJ )
+    choose J _ _ using (P.exists_unique _ hx).exists
+    apply ExistsUnique.intro J (by grind [mem_iff, Set.nonempty_of_mem])
     intro K ⟨ hK, _ ⟩; simp at hK
     apply (P.exists_unique _ hx).unique <;> grind
-  contains L hL := by simp at hL; exact P.contains _ hL.1
+  contains _ _ := P.contains _ (by grind)
 }
 
 @[simp]
@@ -294,20 +284,18 @@ example : ∃ P:Partition (Icc 1 8),
   set P3 : Partition (Ico 1 5) := P2.join (⊥:Partition (Ico 3 5)) (join_Ico_Ico (by norm_num) (by norm_num) )
   set P4 : Partition (Icc 1 5) := P3.join (⊥:Partition (Icc 5 5)) (join_Ico_Icc (by norm_num) (by norm_num) )
   set P5 : Partition (Icc 1 8) := P4.join (⊥:Partition (Ioc 5 8)) (join_Icc_Ioc (by norm_num) (by norm_num) )
-  use P5.add_empty
-  simp [P5, P4, P3, P2, P1]
-  aesop
+  use P5.add_empty; simp_all; aesop
 
 example : ∃ P:Partition (Icc 1 8), P.intervals = {Icc 1 1, Ioo 1 3, Ico 3 5, Icc 5 5, Ioc 5 8} := by
   sorry
 
-example : ¬ ∃ P:Partition (Icc 1 5), P.intervals = {Icc 1 4, Icc 3 5} := by
+example : ¬∃ P:Partition (Icc 1 5), P.intervals = {Icc 1 4, Icc 3 5} := by
   sorry
 
-example : ¬ ∃ P:Partition (Ioo 1 5), P.intervals = {Ioo 1 3, Ioo 3 5} := by
+example : ¬∃ P:Partition (Ioo 1 5), P.intervals = {Ioo 1 3, Ioo 3 5} := by
   sorry
 
-example : ¬ ∃ P:Partition (Ioo 1 5), P.intervals = {Ioo 0 3, Ico 3 5} := by
+example : ¬∃ P:Partition (Ioo 1 5), P.intervals = {Ioo 0 3, Ico 3 5} := by
   sorry
 
 
@@ -331,13 +319,13 @@ theorem Partition.sum_of_length  (I: BoundedInterval) (P: Partition I) :
   by_cases h : Subsingleton (I:Set ℝ)
   . have (J: BoundedInterval) (hJ: J ∈ P) : Subsingleton (J:Set ℝ) := by
       sorry
-    simp_rw [length_of_subsingleton] at h this
+    simp_rw [length_of_subsingleton] at *
     convert Finset.sum_eq_zero this
   simp [length_of_subsingleton, length, -Set.subsingleton_coe] at h
   have : ∃ K L : BoundedInterval, K ∈ P ∧ I.joins L K := by
     by_cases hI' : I.b ∈ I
     . choose K hK hbK using (P.exists_unique I.b hI').exists
-      have hKI : K ⊆ I := P.contains K hK
+      observe hKI : K ⊆ I
       by_cases hsub : Subsingleton (K:Set ℝ)
       . simp_all [mem_iff]
         apply hsub.eq_singleton_of_mem at hbK
@@ -356,36 +344,34 @@ theorem Partition.sum_of_length  (I: BoundedInterval) (P: Partition I) :
         rw [le_antisymm_iff]; split_ands
         . apply csSup_le_csSup bddAbove_Icc (by simp [hsub]) at hKI'
           simp_all [csSup_Ioo hsub, csSup_Icc (le_of_lt h)]
-        have := K.subset_Icc _ hbK; simp only [mem_iff] at this; exact this.2
+        have := K.subset_Icc _ hbK; simp [mem_iff] at this; exact this.2
       have hKA : I.a ≤ K.a := by
         apply csInf_le_csInf bddBelow_Icc (by simp [hsub]) at hKI'
         simp_all [csInf_Icc (le_of_lt h), csInf_Ioo]
       cases I with
       | Ioo _ _ => simp [mem_iff] at hI'
       | Icc a₁ b₁ =>
-        cases K with
+        use K; cases K with
         | Ioo _ _ => simp [mem_iff, subset_iff] at *; grind
-        | Icc c₂ b₂ => use Icc c₂ b₂, Ico a₁ c₂, hK; simp_all; apply join_Ico_Icc <;> order
-        | Ioc c₂ b₂ => use Ioc c₂ b₂, Icc a₁ c₂, hK; simp_all; apply join_Icc_Ioc <;> order
+        | Icc c₂ b₂ => use Ico a₁ c₂, hK; simp_all; apply join_Ico_Icc <;> order
+        | Ioc c₂ b₂ => use Icc a₁ c₂, hK; simp_all; apply join_Icc_Ioc <;> order
         | Ico _ _ => simp [mem_iff] at *; grind
       | Ioc a₁ b₁ =>
-        cases K with
+        use K; cases K with
         | Ioo _ _ => simp_all [mem_iff]
         | Icc c₂ b₂ =>
-          use Icc c₂ b₂, Ioo a₁ c₂, hK
-          simp_all [a,b,subset_iff]
+          use Ioo a₁ c₂, hK
+          simp_all [subset_iff]
           have : c₂ ∈ Set.Icc c₂ b₁ := by grind
-          apply hKI at this; simp at this
-          grind [join_Ioo_Icc]
-        | Ioc c₂ b₂ => use Ioc c₂ b₂, Ioc a₁ c₂, hK; simp_all; apply join_Ioc_Ioc <;> order
+          apply hKI at this; grind [join_Ioo_Icc]
+        | Ioc c₂ b₂ => use Ioc a₁ c₂, hK; simp_all; apply join_Ioc_Ioc <;> order
         | Ico _ _ => simp [mem_iff, subset_iff] at *; grind
       | Ico _ _ => simp [mem_iff] at hI'
     choose c hc hK using P.exist_right h hI'
     cases I with
     | Ioo a₁ b₁ =>
-      obtain hK | hK := hK
-      . simp_all [mem_iff]; use Ioo c b₁, hK, Ioc a₁ c; apply join_Ioc_Ioo <;> tauto
-      simp_all [mem_iff]
+      obtain hK | hK := hK <;> simp_all [mem_iff]
+      . use Ioo c b₁, hK, Ioc a₁ c; apply join_Ioc_Ioo <;> tauto
       use Ico c b₁, hK, Ioo a₁ c
       apply P.contains at hK; simp [subset_iff] at hK
       have : c ∈ Set.Ico c b₁ := by grind
@@ -393,9 +379,9 @@ theorem Partition.sum_of_length  (I: BoundedInterval) (P: Partition I) :
     | Icc _ _ => simp [mem_iff] at hI' h; order
     | Ioc _ _ => simp [mem_iff] at hI' h; order
     | Ico a₁ b₁ =>
-      obtain hK | hK := hK
-      . simp_all [mem_iff]; use Ioo c b₁, hK, Icc a₁ c; grind [join_Icc_Ioo]
-      simp_all [mem_iff]; use Ico c b₁, hK, Ico a₁ c; grind [join_Ico_Ico]
+      obtain hK | hK := hK <;> simp_all [mem_iff]
+      . use Ioo c b₁, hK, Icc a₁ c; grind [join_Icc_Ioo]
+      use Ico c b₁, hK, Ico a₁ c; grind [join_Ico_Ico]
   obtain ⟨ K, L, hK, ⟨ h1, h2, h3 ⟩ ⟩ := this
   have : ∃ P' : Partition L, P'.intervals = P.intervals.erase K := by
     sorry
@@ -430,12 +416,12 @@ noncomputable instance Partition.instMax (I: BoundedInterval) : Max (Partition I
   max P P' := {
     intervals := Finset.image₂ (fun J K ↦ J ∩ K) P.intervals P'.intervals
     exists_unique x hx := by
-      obtain ⟨ J, ⟨ hJ1, hJ2⟩, hxJ ⟩ := P.exists_unique _ hx
-      obtain ⟨ K, ⟨ hK1, hK2⟩, hxK ⟩ := P'.exists_unique _ hx
-      simp at hxJ hxK
+      choose J _ _ using P.exists_unique _ hx
+      choose K _ _ using P'.exists_unique _ hx
+      simp at *
       apply ExistsUnique.intro (J ∩ K)
       . simp_all; grind
-      simp; rintro _ _ _ _ _ rfl hx'; simp at hx'; grind
+      simp; grind [mem_inter]
     contains L hL := by
       simp at hL; obtain ⟨ J, hJ, K, hK, rfl ⟩ := hL
       apply P.contains at hJ; apply P'.contains at hK
@@ -457,6 +443,5 @@ theorem BoundedInterval.le_max {I: BoundedInterval} (P P': Partition I) :
 theorem BoundedInterval.max_le_iff (I: BoundedInterval) {P P' P'': Partition I}
   {hP : P ≤ P''} {hP': P' ≤ P''} : P ⊔ P' ≤ P''  := by
   sorry
-
 
 end Chapter11

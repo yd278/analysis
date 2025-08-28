@@ -58,9 +58,7 @@ theorem Series.partial_le_sum_of_nonneg {s: Series} (hnon: s.nonneg) (hconv: s.c
 
 /-- Some useful nonnegativity lemmas for later applications. -/
 theorem Series.partial_nonneg {s: Series} (hnon: s.nonneg) (N : ℤ) : 0 ≤ s.partial N := by
-  simp [Series.partial]
-  apply Finset.sum_nonneg
-  aesop
+  simp [Series.partial]; apply Finset.sum_nonneg; aesop
 
 theorem Series.sum_of_nonneg {s:Series} (hnon: s.nonneg) : 0 ≤ s.sum := by
   by_cases h: s.converges <;> simp [Series.sum, h]

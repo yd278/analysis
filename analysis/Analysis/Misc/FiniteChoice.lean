@@ -20,6 +20,8 @@ theorem finite_choice {X:Type*} {f:X → ℕ} {N:ℕ} (h: ∀ n < N, ∃ x, f x 
 
 lemma sec_ex {α β:Type*} [Fintype β] [DecidableEq β] (f : α → β) (h : ∀ b: β, ∃ a : α, f a = b) : ∃ s :β → α, f ∘ s = id := by
   set N := Fintype.card β
+  have : Fintype.card β = N := rfl
+  have := (Fintype.truncEquivFinOfCardEq this)
   obtain ⟨ e, _ ⟩ := (Fintype.truncEquivFinOfCardEq (show Fintype.card β = N by rfl)).exists_rep
   set F: α → ℕ := fun a ↦ (e (f a)).val
   replace h : ∀ n < N, ∃ x, F x = n := by
@@ -29,9 +31,6 @@ lemma sec_ex {α β:Type*} [Fintype β] [DecidableEq β] (f : α → β) (h : �
   obtain ⟨ g, hg ⟩ := finite_choice h; use g ∘ e
   ext b; specialize hg (e b)
   simpa only [Function.comp_apply, id_eq, Fin.val_inj, EmbeddingLike.apply_eq_iff_eq, F] using hg
-
-#print axioms sec_ex -- 'sec_ex' depends on axioms: [propext, Quot.sound]
-
 
 /-- Variants of the above that use `Trunc` in place of `∃`.  Roughly speaking, this means that if the hypotheses are constructive, we can guarantee that the conclusion is constructive -/
 
@@ -66,5 +65,3 @@ def sec_ex_trunc {α β:Type*} [Fintype β] [DecidableEq β] (f : α → β) (h 
   apply Trunc.bind (finite_choice_trunc h); intro ⟨ g, hg ⟩
   apply Trunc.mk; use g ∘ e; ext b; specialize hg (e b)
   simpa only [Function.comp_apply, id_eq, Fin.val_inj, EmbeddingLike.apply_eq_iff_eq, F] using hg
-
-#print axioms sec_ex_trunc -- 'sec_ex_trunc' depends on axioms: [propext, Quot.sound]
