@@ -181,8 +181,29 @@ theorem SetTheory.Set.EquivCard_to_card_eq {X Y:Set} (h: X ≈ Y): X.card = Y.ca
   simp [card, hX, hY]
 
 /-- Exercise 3.6.2 -/
-theorem SetTheory.Set.card_eq_zero {X:Set} (hX: X.finite) :
-    X.card = 0 ↔ X = ∅ := by sorry
+theorem SetTheory.Set.empty_iff_card_eq_zero {X:Set} : X = ∅ ↔ X.finite ∧ X.card = 0 := by
+  sorry
+
+lemma SetTheory.Set.empty_of_card_eq_zero {X:Set} (hX : X.finite) : X.card = 0 → X = ∅ := by
+  intro h
+  rw [empty_iff_card_eq_zero]
+  exact ⟨hX, h⟩
+
+lemma SetTheory.Set.finite_of_empty {X:Set} : X = ∅ → X.finite := by
+  intro h
+  rw [empty_iff_card_eq_zero] at h
+  exact h.1
+
+lemma SetTheory.Set.card_eq_zero_of_empty {X:Set} : X = ∅ → X.card = 0 := by
+  intro h
+  rw [empty_iff_card_eq_zero] at h
+  exact h.2
+
+@[simp]
+lemma SetTheory.Set.empty_finite : (∅: Set).finite := finite_of_empty rfl
+
+@[simp]
+lemma SetTheory.Set.empty_card_eq_zero : (∅: Set).card = 0 := card_eq_zero_of_empty rfl
 
 /-- Proposition 3.6.14 (a) / Exercise 3.6.4 -/
 theorem SetTheory.Set.card_insert {X:Set} (hX: X.finite) {x:Object} (hx: x ∉ X) :
