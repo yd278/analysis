@@ -7,8 +7,7 @@ open Nat
 /-- $$\binom{n}{k} \cdot k = \binom{n-1}{k-1} \cdot n$$. -/
 theorem binom_eq {n k:ℕ} (hk: 1 ≤ k) : (n.choose k) * k = ((n-1).choose (k-1)) * n := by
   rcases le_or_gt k n with _ | hn
-  . symm
-    rw [←choose_symm]; nth_rewrite 2 [←choose_symm]
+  . symm; rw [←choose_symm]; nth_rewrite 2 [←choose_symm]
     convert choose_mul_succ_eq ?_ ((n-1)-(k-1)) using 3
     all_goals omega
   simp [choose_eq_zero_of_lt hn, choose_eq_zero_iff]; omega
@@ -25,8 +24,7 @@ theorem binom_eq_2 {n k:ℕ} (hk: 2 ≤ k) : (n.choose k) * k * (k-1) = ((n-2).c
 theorem lemma_1 {n k p a b:ℕ} (hk: 1 ≤ k)
  (hp: p.Prime) (h1: p^(a+b+1) ∣ n) : p^(a+1) ∣ n.choose k ∨ p^(b+1) ∣ k := by
   replace h1 := h1.trans (dvd_mul_left _ ((n-1).choose (k-1)))
-  rw [←binom_eq hk] at h1; contrapose! h1
-  apply Prime.prime at hp; apply finiteMultiplicity_mul_aux <;> tauto
+  rw [←binom_eq hk] at h1; contrapose! h1; apply finiteMultiplicity_mul_aux hp.prime <;> tauto
 
 /-- If $$p^r \mid n-1$$ and $$k,n-k$$ are not divisible by $$p$$, then $$p^r \mid \binom{n}{k}$$. -/
 theorem lemma_2 {n k p r:ℕ} (hk: 2 ≤ k) (hn: k ≤ n)
@@ -34,10 +32,8 @@ theorem lemma_2 {n k p r:ℕ} (hk: 2 ≤ k) (hn: k ≤ n)
   have h1' : p ∣ n-1 := (dvd_pow_self _ (by omega)).trans h1
   replace h1 := (h1.trans (dvd_mul_left _ ((n-2).choose (k-2)))).trans (dvd_mul_right _ n)
   rw [←binom_eq_2 hk] at h1
-  apply Prime.prime at hp
   replace h3 : ¬p∣k-1 := by contrapose! h3; convert dvd_sub h1' h3 using 1; omega
-  apply hp.pow_dvd_of_dvd_mul_right _ h3 at h1
-  exact hp.pow_dvd_of_dvd_mul_right _ h2 h1
+  exact hp.prime.pow_dvd_of_dvd_mul_right _ h2 (hp.prime.pow_dvd_of_dvd_mul_right _ h3 h1)
 
 /-- If $$n=2^{\phi(p^R)}$$ and $$p>2^{r-1}$$, then $$2^r \mid \binom{n}{k}$$ or $$p^R \mid \binom{n}{k}$$.-/
 theorem key_prop {k n p r R:ℕ} (hn: n = 2^((p^R).totient))
@@ -53,9 +49,7 @@ theorem key_prop {k n p r R:ℕ} (hn: n = 2^((p^R).totient))
   have hrm : n = 2^(r-1) * 2^(m-r+1) := by rw [hn,←pow_add]; congr; omega
   have _ : 2^(r-1) * 2^(m-r+1) < p * 2^(m-r+1) := by gcongr
   right; apply lemma_2 _ (by order) hp
-  . rw [←modEq_iff_dvd']; symm
-    . rw [hn]; apply_rules [ModEq.pow_totient, Coprime.pow_right]
-    omega
+  . rw [←modEq_iff_dvd',hn]; symm; apply_rules [ModEq.pow_totient, Coprime.pow_right]; omega
   . by_contra!; simp_all [m]; omega
   . by_contra! h
     apply (hcoprime.symm.pow_right _).mul_dvd_of_dvd_of_dvd h at this
@@ -68,6 +62,7 @@ theorem key_prop {k n p r R:ℕ} (hn: n = 2^((p^R).totient))
 
 noncomputable abbrev S (n:ℕ) : ℕ := sSup { r | ∀ k ∈ Finset.Ico 1 n, ∃ p, p.Prime ∧ p^r ∣ (n.choose k) }
 
+/-- The condition `1<n` is necessary to avoid the range of `k` being vacuous. -/
 theorem S_ge {n r:ℕ} (hn: 1 < n) (h: ∀ k ∈ Finset.Ico 1 n, ∃ p, p.Prime ∧ p^r ∣ n.choose k) : r ≤ S n := by
   apply le_csSup
   . rw [bddAbove_def]; use n; simp; intro r h
@@ -79,8 +74,7 @@ theorem S_ge {n r:ℕ} (hn: 1 < n) (h: ∀ k ∈ Finset.Ico 1 n, ∃ p, p.Prime 
 /-- If $$p>2^{r-1}$$, then $$S(2^{\phi(p^R)}) \ge r$$.-/
 theorem key_cor {p r:ℕ} (hp: p.Prime) (hpr: p > 2^(r-1)) (hr: 1 < r) :
   r ≤ S (2^((p^r).totient)) := by
-  apply S_ge
-  . simp; grind
+  apply S_ge; simp; grind
   intro k hk; simp at hk
   have := key_prop rfl hk.1 hk.2 hp hpr hr ?_; swap
   . have := hp.one_lt
@@ -95,8 +89,7 @@ theorem key_cor {p r:ℕ} (hp: p.Prime) (hpr: p > 2^(r-1)) (hr: 1 < r) :
 /-- A positive resolution to Erdos problem \#379.-/
 theorem erdos_379 : Filter.atTop.limsup (fun n ↦ (S n:ENat)) = ⊤ := by
   rw [Filter.limsup_eq_iInf_iSup_of_nat]
-  simp; intro N; rw [iSup₂_eq_top]; intro r hr
-  lift r to ℕ using (by order)
+  simp; intro N; rw [iSup₂_eq_top]; intro r hr; lift r to ℕ using (by order)
   have ⟨ p, hp, hp' ⟩ := exists_infinite_primes (max N (2^(r+1)+1))
   use 2^((p^(r+2)).totient), ?_
   . have := key_cor hp' (r := r+2) ?_ ?_ <;> simp at * <;> linarith
