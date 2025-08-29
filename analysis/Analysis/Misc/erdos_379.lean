@@ -9,11 +9,9 @@ theorem binom_eq {n k:ℕ} (hk: 1 ≤ k) : (n.choose k) * k = ((n-1).choose (k-1
   rcases le_or_gt k n with _ | hn
   . symm
     rw [←choose_symm]; nth_rewrite 2 [←choose_symm]
-    convert choose_mul_succ_eq (n-1) ((n-1)-(k-1)) using 3
+    convert choose_mul_succ_eq ?_ ((n-1)-(k-1)) using 3
     all_goals omega
-  simp [choose_eq_zero_of_lt hn, choose_eq_zero_iff]
-  omega
-
+  simp [choose_eq_zero_of_lt hn, choose_eq_zero_iff]; omega
 
 /-- $$\binom{n}{k} \cdot k \cdot (k-1) = \binom{n-2}{k-2} \cdot (n-1) \cdot n$$.-/
 theorem binom_eq_2 {n k:ℕ} (hk: 2 ≤ k) : (n.choose k) * k * (k-1) = ((n-2).choose (k-2)) * (n-1) * n := calc
@@ -48,27 +46,24 @@ theorem key_prop {k n p r R:ℕ} (hn: n = 2^((p^R).totient))
   2^r ∣ n.choose k ∨ p^R ∣ n.choose k := by
   set m := (p^R).totient
   have : 2 ^ (r - 1 + 1) ∣ n.choose k ∨ 2 ^ (m - r + 1) ∣ k := by
-    apply lemma_1 hk (by decide) _
-    convert dvd_rfl; rw [hn]; congr; omega
+    convert lemma_1 hk ?_ dvd_rfl; rw [hn]; congr; omega; decide
   rcases this with this | this
   . left; convert this; omega
   have hcoprime : Coprime 2 p := by simp; apply hp.odd_of_ne_two; grind [Nat.le_self_pow]
-  have hrm : 2^(r-1) * 2^(m-r+1) = n := by rw [hn,←pow_add]; congr; omega
-  have hrp : 2^(r-1) * 2^(m-r+1) < p * 2^(m-r+1) := by gcongr
-  right; apply lemma_2 _ (le_of_lt hkn) hp
+  have hrm : n = 2^(r-1) * 2^(m-r+1) := by rw [hn,←pow_add]; congr; omega
+  have _ : 2^(r-1) * 2^(m-r+1) < p * 2^(m-r+1) := by gcongr
+  right; apply lemma_2 _ (by order) hp
   . rw [←modEq_iff_dvd']; symm
     . rw [hn]; apply_rules [ModEq.pow_totient, Coprime.pow_right]
     omega
   . by_contra!; simp_all [m]; omega
   . by_contra! h
-    replace := Coprime.mul_dvd_of_dvd_of_dvd ?_ h this
-    . apply le_of_dvd at this <;> grind
-    apply hcoprime.symm.pow_right
+    apply (hcoprime.symm.pow_right _).mul_dvd_of_dvd_of_dvd h at this
+    apply le_of_dvd at this <;> grind
   . by_contra! h
-    replace : 2^(m-r+1) ∣ n-k := by apply dvd_sub _ this; rw [←hrm]; apply dvd_mul_left
-    replace := Coprime.mul_dvd_of_dvd_of_dvd ?_ h this
-    . apply le_of_dvd at this <;> omega
-    apply hcoprime.symm.pow_right
+    have : 2^(m-r+1) ∣ n-k := by rw [hrm]; apply_rules [dvd_sub, dvd_mul_left]
+    apply (hcoprime.symm.pow_right _).mul_dvd_of_dvd_of_dvd h at this
+    apply le_of_dvd at this <;> omega
   apply (Nat.le_self_pow _ _).trans (le_of_dvd _ this) <;> omega
 
 noncomputable abbrev S (n:ℕ) : ℕ := sSup { r | ∀ k ∈ Finset.Ico 1 n, ∃ p, p.Prime ∧ p^r ∣ (n.choose k) }
@@ -76,9 +71,8 @@ noncomputable abbrev S (n:ℕ) : ℕ := sSup { r | ∀ k ∈ Finset.Ico 1 n, ∃
 theorem S_ge {n r:ℕ} (hn: 1 < n) (h: ∀ k ∈ Finset.Ico 1 n, ∃ p, p.Prime ∧ p^r ∣ n.choose k) : r ≤ S n := by
   apply le_csSup
   . rw [bddAbove_def]; use n; simp; intro r h
-    have ⟨ p, hp, hp' ⟩ := h 1 ?_ hn
-    simp at hp'; apply le_of_dvd at hp'
-    have : r < p^r := Nat.lt_pow_self hp.one_lt
+    have ⟨ p, hp, hp' ⟩ := h 1 ?_ hn; simp at hp'; apply le_of_dvd at hp'
+    have := r.lt_pow_self hp.one_lt
     all_goals grind
   aesop
 
@@ -90,10 +84,9 @@ theorem key_cor {p r:ℕ} (hp: p.Prime) (hpr: p > 2^(r-1)) (hr: 1 < r) :
   intro k hk; simp at hk
   have := key_prop rfl hk.1 hk.2 hp hpr hr ?_; swap
   . have := hp.one_lt
-    have : r-1 < p^(r-1) := Nat.lt_pow_self this
+    have := (r-1).lt_pow_self this
     have : p^(r-1) ≤ (p^r).totient := by
-      rw [totient_prime_pow hp (by omega)]
-      apply Nat.le_mul_of_pos_right; omega
+      rw [totient_prime_pow hp]; apply Nat.le_mul_of_pos_right; omega; omega
     omega
   rcases this with _ | _
   . use 2; simp_all [prime_two]
@@ -109,8 +102,7 @@ theorem erdos_379 : Filter.atTop.limsup (fun n ↦ (S n:ENat)) = ⊤ := by
   . have := key_cor hp' (r := r+2) ?_ ?_ <;> simp at * <;> linarith
   trans p; order
   have := hp'.one_lt
-  have : p-1 < 2^(p-1) := Nat.lt_two_pow_self
+  have := (p-1).lt_two_pow_self
   have : 2^(p-1) ≤ 2 ^ (p ^ (r + 2)).totient := by
-    rw [totient_prime_pow hp' (by omega)]
-    gcongr; simp; apply Nat.le_mul_of_pos_left; positivity
+    rw [totient_prime_pow hp']; gcongr; simp; apply Nat.le_mul_of_pos_left; positivity; omega
   omega
