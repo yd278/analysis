@@ -4,42 +4,52 @@ import Mathlib
 
 open Nat
 
-theorem binom_eq {n k:ℕ} (hk: 1 ≤ k) (hn: k ≤ n) : (n.choose k) * k = ((n-1).choose (k-1)) * n := by
-  symm; rw [←choose_symm]; nth_rewrite 2 [←choose_symm]
-  convert choose_mul_succ_eq (n-1) ((n-1)-(k-1)) using 3
-  all_goals omega
+/-- $$\binom{n}{k} \cdot k = \binom{n-1}{k-1} \cdot n$$. -/
+theorem binom_eq {n k:ℕ} (hk: 1 ≤ k) : (n.choose k) * k = ((n-1).choose (k-1)) * n := by
+  rcases le_or_gt k n with hn | hn
+  . symm
+    rw [←Nat.choose_symm]; nth_rewrite 2 [←Nat.choose_symm]
+    convert Nat.choose_mul_succ_eq (n-1) ((n-1)-(k-1)) using 3
+    all_goals omega
+  simp [Nat.choose_eq_zero_of_lt hn, Nat.choose_eq_zero_iff]
+  omega
 
-theorem binom_eq_2 {n k:ℕ} (hk: 2 ≤ k) (hn: k ≤ n) : (n.choose k) * k * (k-1) = ((n-2).choose (k-2)) * (n-1) * n := calc
-  _ = ((n-1).choose (k-1)) * n * (k-1) := by rw [binom_eq] <;> omega
+
+/-- $$\binom{n}{k} \cdot k \cdot (k-1) = \binom{n-2}{k-2} \cdot (n-1) \cdot n$$.-/
+theorem binom_eq_2 {n k:ℕ} (hk: 2 ≤ k) : (n.choose k) * k * (k-1) = ((n-2).choose (k-2)) * (n-1) * n := calc
+  _ = ((n-1).choose (k-1)) * n * (k-1) := by rw [binom_eq] ; omega
   _ = ((n-1).choose (k-1)) * (k-1) * n := by ring
   _ = _ := by
     rw [binom_eq]; congr 2
     all_goals omega
 
-theorem lemma_1 {n k p a b:ℕ} (hk: 1 ≤ k) (hn: k ≤ n)
+/-- If $$p^{a+b+1} \mid n$$, then $$p^{a+1} \mid \binom{n}{k}$$ or $$p^{b+1} \mid k$$. -/
+theorem lemma_1 {n k p a b:ℕ} (hk: 1 ≤ k)
  (hp: p.Prime) (h1: p^(a+b+1) ∣ n) : p^(a+1) ∣ n.choose k ∨ p^(b+1) ∣ k := by
   replace h1 := h1.trans (n.dvd_mul_left ((n-1).choose (k-1)))
-  rw [←binom_eq hk hn] at h1; contrapose! h1
+  rw [←binom_eq hk] at h1; contrapose! h1
   apply Prime.prime at hp; apply finiteMultiplicity_mul_aux <;> tauto
 
+/-- If $$p^r \mid n-1$$ and $$k,n-k$$ are not divisible by $$p$$, then $$p^r \mid \binom{n}{k}$$. -/
 theorem lemma_2 {n k p r:ℕ} (hk: 2 ≤ k) (hn: k ≤ n)
  (hp: p.Prime) (h1: p^r ∣ n-1) (hr: 0 < r) (h2: ¬p∣k) (h3: ¬ p∣n-k) : p^r ∣ n.choose k := by
   have h1' : p ∣ n-1 := dvd_trans (dvd_pow_self _ (by omega)) h1
   replace h1 := h1.trans ((n-1).dvd_mul_left ((n-2).choose (k-2)))
   replace h1 := h1.trans (Nat.dvd_mul_right _ n)
-  rw [←binom_eq_2 hk hn] at h1
+  rw [←binom_eq_2 hk] at h1
   apply Prime.prime at hp
   replace h3 : ¬p∣k-1 := by contrapose! h3; convert Nat.dvd_sub h1' h3 using 1; omega
   apply hp.pow_dvd_of_dvd_mul_right _ h3 at h1
   exact hp.pow_dvd_of_dvd_mul_right _ h2 h1
 
+/-- If $$n=2^{\phi(p^R)}$$ and $$p>2^{r-1}$$, then $$2^r \mid \binom{n}{k}$$ or $$p^R \mid \binom{n}{k}$$.-/
 theorem key_prop {k n p r R:ℕ} (hn: n = 2^((p^R).totient))
   (hk: 1 ≤ k) (hkn: k < n) (hp: p.Prime) (hpr: p > 2^(r-1))
   (hr: 1 < r) (hr' : r ≤ (p^R).totient):
   2^r ∣ n.choose k ∨ p^R ∣ n.choose k := by
   set m := (p^R).totient
   have : 2 ^ (r - 1 + 1) ∣ n.choose k ∨ 2 ^ (m - r + 1) ∣ k := by
-    apply lemma_1 hk (le_of_lt hkn) (by decide) _
+    apply lemma_1 hk (by decide) _
     convert dvd_rfl; rw [hn]; congr; omega
   rcases this with this | this
   . left; convert this; omega
@@ -75,6 +85,7 @@ theorem S_ge {n r:ℕ} (hn: 1 < n) (h: ∀ k ∈ Finset.Ico 1 n, ∃ p, p.Prime 
     order
   aesop
 
+/-- If $$p>2^{r-1}$$, then $$S(2^{\phi(p^R)}) \ge r$$.-/
 theorem key_cor {p r:ℕ} (hp: p.Prime) (hpr: p > 2^(r-1)) (hr: 1 < r) :
   r ≤ S (2^((p^r).totient)) := by
   apply S_ge
@@ -90,6 +101,7 @@ theorem key_cor {p r:ℕ} (hp: p.Prime) (hpr: p > 2^(r-1)) (hr: 1 < r) :
   . use 2; simp [this, prime_two]
   use p
 
+/-- A positive resolution to Erdos problem \#379.-/
 theorem erdos_379 : Filter.atTop.limsup (fun n ↦ (S n:ENat)) = ⊤ := by
   rw [Filter.limsup_eq_iInf_iSup_of_nat]
   simp; intro N; rw [iSup₂_eq_top]; intro r hr
