@@ -148,7 +148,7 @@ theorem SetTheory.Set.nat_infinite : infinite nat := by
 
 open Classical in
 /-- It is convenient for Lean purposes to give infinite sets the ``junk`` cardinality of zero. -/
-noncomputable abbrev SetTheory.Set.card (X:Set) : ℕ := if h:X.finite then h.choose else 0
+noncomputable def SetTheory.Set.card (X:Set) : ℕ := if h:X.finite then h.choose else 0
 
 theorem SetTheory.Set.has_card_card {X:Set} (hX: X.finite) : X.has_card (SetTheory.Set.card X) := by
   simp [card, hX, hX.choose_spec]
@@ -157,7 +157,7 @@ theorem SetTheory.Set.has_card_to_card (X:Set) (n: ℕ): X.has_card n → X.card
   intro h; simp [card, card_uniq (⟨ n, h ⟩:X.finite).choose_spec h]; aesop
 
 theorem SetTheory.Set.card_to_has_card (X:Set) {n: ℕ} (hn: n ≠ 0): X.card = n → X.has_card n
-  := by grind [has_card_card]
+  := by grind [card, has_card_card]
 
 theorem SetTheory.Set.card_fin_eq (n:ℕ): (Fin n).has_card n := (has_card_iff _ _).mp ⟨ id, Function.bijective_id ⟩
 
@@ -179,6 +179,31 @@ theorem SetTheory.Set.EquivCard_to_card_eq {X Y:Set} (h: X ≈ Y): X.card = Y.ca
   . choose nX hXn using hX; rw [EquivCard_to_has_card_eq _ h] at hXn; tauto
   . choose nY hYn using hY; rw [←EquivCard_to_has_card_eq _ h] at hYn; tauto
   simp [card, hX, hY]
+
+/-- Exercise 3.6.2 -/
+theorem SetTheory.Set.empty_iff_card_eq_zero {X:Set} : X = ∅ ↔ X.finite ∧ X.card = 0 := by
+  sorry
+
+lemma SetTheory.Set.empty_of_card_eq_zero {X:Set} (hX : X.finite) : X.card = 0 → X = ∅ := by
+  intro h
+  rw [empty_iff_card_eq_zero]
+  exact ⟨hX, h⟩
+
+lemma SetTheory.Set.finite_of_empty {X:Set} : X = ∅ → X.finite := by
+  intro h
+  rw [empty_iff_card_eq_zero] at h
+  exact h.1
+
+lemma SetTheory.Set.card_eq_zero_of_empty {X:Set} : X = ∅ → X.card = 0 := by
+  intro h
+  rw [empty_iff_card_eq_zero] at h
+  exact h.2
+
+@[simp]
+lemma SetTheory.Set.empty_finite : (∅: Set).finite := finite_of_empty rfl
+
+@[simp]
+lemma SetTheory.Set.empty_card_eq_zero : (∅: Set).card = 0 := card_eq_zero_of_empty rfl
 
 /-- Proposition 3.6.14 (a) / Exercise 3.6.4 -/
 theorem SetTheory.Set.card_insert {X:Set} (hX: X.finite) {x:Object} (hx: x ∉ X) :
@@ -215,10 +240,6 @@ theorem SetTheory.Set.card_prod {X Y:Set} (hX: X.finite) (hY: Y.finite) :
 /-- Proposition 3.6.14 (f) / Exercise 3.6.4 -/
 theorem SetTheory.Set.card_pow {X Y:Set} (hX: X.finite) (hY: Y.finite) :
     (X ^ Y).finite ∧ (X ^ Y).card = X.card ^ Y.card := by sorry
-
-/-- Exercise 3.6.2 -/
-theorem SetTheory.Set.card_eq_zero {X:Set} (hX: X.finite) :
-    X.card = 0 ↔ X = ∅ := by sorry
 
 /-- Exercise 3.6.5. You might find `SetTheory.Set.prod_commutator` useful. -/
 theorem SetTheory.Set.prod_EqualCard_prod (A B:Set) :
