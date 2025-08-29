@@ -180,6 +180,10 @@ theorem SetTheory.Set.EquivCard_to_card_eq {X Y:Set} (h: X ≈ Y): X.card = Y.ca
   . choose nY hYn using hY; rw [←EquivCard_to_has_card_eq _ h] at hYn; tauto
   simp [card, hX, hY]
 
+/-- Exercise 3.6.2 -/
+theorem SetTheory.Set.card_eq_zero {X:Set} (hX: X.finite) :
+    X.card = 0 ↔ X = ∅ := by sorry
+
 /-- Proposition 3.6.14 (a) / Exercise 3.6.4 -/
 theorem SetTheory.Set.card_insert {X:Set} (hX: X.finite) {x:Object} (hx: x ∉ X) :
     (X ∪ {x}).finite ∧ (X ∪ {x}).card = X.card + 1 := by sorry
@@ -215,10 +219,6 @@ theorem SetTheory.Set.card_prod {X Y:Set} (hX: X.finite) (hY: Y.finite) :
 /-- Proposition 3.6.14 (f) / Exercise 3.6.4 -/
 theorem SetTheory.Set.card_pow {X Y:Set} (hX: X.finite) (hY: Y.finite) :
     (X ^ Y).finite ∧ (X ^ Y).card = X.card ^ Y.card := by sorry
-
-/-- Exercise 3.6.2 -/
-theorem SetTheory.Set.card_eq_zero {X:Set} (hX: X.finite) :
-    X.card = 0 ↔ X = ∅ := by sorry
 
 /-- Exercise 3.6.5. You might find `SetTheory.Set.prod_commutator` useful. -/
 theorem SetTheory.Set.prod_EqualCard_prod (A B:Set) :
