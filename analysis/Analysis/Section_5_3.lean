@@ -389,18 +389,16 @@ theorem Real.inv_of_equiv {a b:ℕ → ℚ} (ha: BoundedAwayZero a)
     LIM a⁻¹ = LIM b⁻¹ := by
   -- This proof is written to follow the structure of the original text.
   set P := LIM a⁻¹ * LIM a * LIM b⁻¹
-  have ha' := nonzero_of_boundedAwayZero ha
-  have hb' := nonzero_of_boundedAwayZero hb
   have hainv_cauchy := Real.inv_isCauchy_of_boundedAwayZero ha ha_cauchy
   have hbinv_cauchy := Real.inv_isCauchy_of_boundedAwayZero hb hb_cauchy
   have haainv_cauchy := hainv_cauchy.mul ha_cauchy
   have habinv_cauchy := hainv_cauchy.mul hb_cauchy
   have claim1 : P = LIM b⁻¹ := by
     simp only [P, LIM_mul hainv_cauchy ha_cauchy, LIM_mul haainv_cauchy hbinv_cauchy]
-    rcongr n; simp [ha' n]
+    rcongr n; simp [nonzero_of_boundedAwayZero ha n]
   have claim2 : P = LIM a⁻¹ := by
     simp only [P, hlim, LIM_mul hainv_cauchy hb_cauchy, LIM_mul habinv_cauchy hbinv_cauchy]
-    rcongr n; simp [hb' n]
+    rcongr n; simp [nonzero_of_boundedAwayZero hb n]
   grind
 
 open Classical in

@@ -88,21 +88,21 @@ theorem Real.isNeg_def (x:Real) :
 theorem Real.trichotomous (x:Real) : x = 0 ∨ x.IsPos ∨ x.IsNeg := by sorry
 
 /-- Proposition 5.4.4 (basic properties of positive reals) / Exercise 5.4.1 -/
-theorem Real.not_zero_pos (x:Real) : ¬ (x = 0 ∧ x.IsPos) := by sorry
+theorem Real.not_zero_pos (x:Real) : ¬(x = 0 ∧ x.IsPos) := by sorry
 
 theorem Real.nonzero_of_pos {x:Real} (hx: x.IsPos) : x ≠ 0 := by
   have := not_zero_pos x
   simpa [hx] using this
 
 /-- Proposition 5.4.4 (basic properties of positive reals) / Exercise 5.4.1 -/
-theorem Real.not_zero_neg (x:Real) : ¬ (x = 0 ∧ x.IsNeg) := by sorry
+theorem Real.not_zero_neg (x:Real) : ¬(x = 0 ∧ x.IsNeg) := by sorry
 
 theorem Real.nonzero_of_neg {x:Real} (hx: x.IsNeg) : x ≠ 0 := by
   have := not_zero_neg x
   simpa [hx] using this
 
 /-- Proposition 5.4.4 (basic properties of positive reals) / Exercise 5.4.1 -/
-theorem Real.not_pos_neg (x:Real) : ¬ (x.IsPos ∧ x.IsNeg) := by sorry
+theorem Real.not_pos_neg (x:Real) : ¬(x.IsPos ∧ x.IsNeg) := by sorry
 
 /-- Proposition 5.4.4 (basic properties of positive reals) / Exercise 5.4.1 -/
 @[simp]
@@ -130,14 +130,14 @@ theorem Real.abs_of_pos (x:Real) (hx: x.IsPos) : abs x = x := by
 /-- Definition 5.4.5 (absolute value) -/
 @[simp]
 theorem Real.abs_of_neg (x:Real) (hx: x.IsNeg) : abs x = -x := by
-  have : ¬ x.IsPos := by have := not_pos_neg x; simpa [hx] using this
+  have : ¬x.IsPos := by have := not_pos_neg x; simpa [hx] using this
   simp [abs, hx, this]
 
 /-- Definition 5.4.5 (absolute value) -/
 @[simp]
 theorem Real.abs_of_zero : abs 0 = 0 := by
-  have hpos: ¬ (0:Real).IsPos := by have := not_zero_pos 0; simpa using this
-  have hneg: ¬ (0:Real).IsNeg := by have := not_zero_neg 0; simpa using this
+  have hpos: ¬(0:Real).IsPos := by have := not_zero_pos 0; simpa using this
+  have hneg: ¬(0:Real).IsNeg := by have := not_zero_neg 0; simpa using this
   simp [abs, hpos, hneg]
 
 /-- Definition 5.4.6 (Ordering of the reals) -/
@@ -210,7 +210,7 @@ theorem Real.inv_of_pos {x:Real} (hx: x.IsPos) : x⁻¹.IsPos := by
   observe hnon: x ≠ 0
   observe hident : x⁻¹ * x = 1
   have hinv_non: x⁻¹ ≠ 0 := by contrapose! hident; simp [hident]
-  have hnonneg : ¬ x⁻¹.IsNeg := by
+  have hnonneg : ¬x⁻¹.IsNeg := by
     intro h
     observe : (x * x⁻¹).IsNeg
     have id : -(1:Real) = (-1:ℚ) := by simp
@@ -275,8 +275,8 @@ theorem Real.LIM_mono {a b:ℕ → ℚ} (ha: (a:Sequence).IsCauchy) (hb: (b:Sequ
 theorem Real.LIM_mono_fail :
     ∃ (a b:ℕ → ℚ), (a:Sequence).IsCauchy
     ∧ (b:Sequence).IsCauchy
-    ∧ ¬ (∀ n, a n > b n)
-    ∧ ¬ LIM a > LIM b := by
+    ∧ (∀ n, a n > b n)
+    ∧ ¬LIM a > LIM b := by
   use (fun n ↦ 1 + 1/(n:ℚ))
   use (fun n ↦ 1 - 1/(n:ℚ))
   sorry

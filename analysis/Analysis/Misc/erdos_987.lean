@@ -86,7 +86,7 @@ theorem Erdos_987 (z: ℕ → Circle) :
           convert card_le_card_of_injOn (t := range (2*k₀)) (fun a ↦ a+k₀-k) _ _
           . simp
           . intro a; grind
-          intro a b hab; grind
+          intro a b _; grind
         _ = _ := by simp
   clear hN; obtain ⟨ n, hn ⟩ := exists_nat_gt ((C')^2 + 1)
   let K := 2*k₀*n^2 + 1; specialize this n K
