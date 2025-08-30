@@ -36,8 +36,7 @@ theorem Real.lowerBound_def (E: Set Real) (M: Real) : M ∈ lowerBounds E ↔ �
 theorem Real.Icc_def (x y:Real) : .Icc x y = { z | x ≤ z ∧ z ≤ y } := rfl
 
 /-- API for Example 5.5.2 -/
-theorem Real.mem_Icc (x y z:Real) : z ∈ Set.Icc x y ↔ x ≤ z ∧ z ≤ y := by
-  simp [Real.Icc_def]
+theorem Real.mem_Icc (x y z:Real) : z ∈ Set.Icc x y ↔ x ≤ z ∧ z ≤ y := by simp [Real.Icc_def]
 
 /-- Example 5.5.2 -/
 example (M: Real) : M ∈ upperBounds (.Icc 0 1) ↔ M ≥ 1 := by sorry
@@ -56,8 +55,7 @@ theorem Real.upperBound_upper {M M': Real} (h: M ≤ M') {E: Set Real} (hb: M �
 
 /-- Definition 5.5.5 (least upper bound).  Here we use the `isLUB` predicate defined in Mathlib. -/
 theorem Real.isLUB_def (E: Set Real) (M: Real) :
-    IsLUB E M ↔ M ∈ upperBounds E ∧ ∀ M' ∈ upperBounds E, M' ≥ M := by
-  simp_rw [ge_iff_le]; rfl
+    IsLUB E M ↔ M ∈ upperBounds E ∧ ∀ M' ∈ upperBounds E, M' ≥ M := by rfl
 
 theorem Real.isGLB_def (E: Set Real) (M: Real) :
     IsGLB E M ↔ M ∈ lowerBounds E ∧ ∀ M' ∈ lowerBounds E, M' ≤ M := by rfl
@@ -72,9 +70,9 @@ example : ¬∃ M, IsLUB (∅: Set Real) M := by sorry
 theorem Real.LUB_unique {E: Set Real} {M M': Real} (h1: IsLUB E M) (h2: IsLUB E M') : M = M' := by grind [Real.isLUB_def]
 
 /-- definition of "bounded above", using Mathlib notation -/
-theorem Real.bddAbove_def (E: Set Real) : BddAbove E ↔ ∃ M, M ∈  upperBounds E := Set.nonempty_def
+theorem Real.bddAbove_def (E: Set Real) : BddAbove E ↔ ∃ M, M ∈ upperBounds E := Set.nonempty_def
 
-theorem Real.bddBelow_def (E: Set Real) : BddBelow E ↔ ∃ M, M ∈  lowerBounds E := Set.nonempty_def
+theorem Real.bddBelow_def (E: Set Real) : BddBelow E ↔ ∃ M, M ∈ lowerBounds E := Set.nonempty_def
 
 /-- Exercise 5.5.2 -/
 theorem Real.upperBound_between {E: Set Real} {n:ℕ} {L K:ℤ} (hLK: L < K)
@@ -97,7 +95,7 @@ theorem Real.LIM_of_Cauchy {q:ℕ → ℚ} (hq: ∀ M, ∀ n ≥ M, ∀ n' ≥ M
     (q:Sequence).IsCauchy ∧ ∀ M, |q M - LIM q| ≤ 1 / (M+1) := by sorry
 
 /--
-The sequence m₁, m₂ … is well-defined
+The sequence m₁, m₂, … is well-defined.
 This proof uses a different indexing convention than the text
 -/
 lemma Real.LUB_claim1 (n : ℕ) {E: Set Real} (hE: Set.Nonempty E) (hbound: BddAbove E)
@@ -106,7 +104,6 @@ lemma Real.LUB_claim1 (n : ℕ) {E: Set Real} (hE: Set.Nonempty E) (hbound: BddA
       ∧ ¬ (((m:ℚ) / (n+1) - 1 / (n+1):ℚ):Real) ∈ upperBounds E := by
   set x₀ := Set.Nonempty.some hE
   observe hx₀ : x₀ ∈ E
-
   set ε := ((1/(n+1):ℚ):Real)
   have hpos : ε.IsPos := by simp [isPos_iff, ε]; positivity
   apply existsUnique_of_exists_of_unique
@@ -125,11 +122,10 @@ lemma Real.LUB_claim1 (n : ℕ) {E: Set Real} (hE: Set.Nonempty E) (hbound: BddA
     have claim1_4 : ∃ m:ℤ, L < m ∧ m ≤ K ∧ m*ε ∈ upperBounds E ∧ (m-1)*ε ∉ upperBounds E := by
       convert Real.upperBound_between (n := n) _ _ claim1_2
       . qify; rwa [←gt_iff_lt, gt_of_coe]
-      simp [ε] at *; exact upperBound_upper (by order) hbound
+      simp [ε] at *; apply upperBound_upper _ hbound; order
     choose m _ _ hm hm' using claim1_4; use m
     have : (m/(n+1):ℚ) = m*ε := by simp [ε]; field_simp
-    refine ⟨ by convert hm, ?_ ⟩
-    convert hm'; simp [this, sub_mul, ε]
+    exact ⟨ by convert hm, by convert hm'; simp [this, sub_mul, ε] ⟩
   grind [upperBound_discrete_unique]
 
 lemma Real.LUB_claim2 {E : Set Real} (N:ℕ) {a b: ℕ → ℚ}
@@ -160,8 +156,8 @@ theorem Real.LUB_exist {E: Set Real} (hE: Set.Nonempty E) (hbound: BddAbove E): 
   set b : ℕ → ℚ := fun n ↦ 1 / (n+1)
   have claim1 (n: ℕ) := LUB_claim1 n hE hbound
   have hb : (b:Sequence).IsCauchy := .harmonic'
-  have hm1 (n:ℕ) : (a n:Real) ∈ upperBounds E := (claim1 n).exists.choose_spec.1
-  have hm2 (n:ℕ) : ¬ ((a - b) n: Real) ∈ upperBounds E := (claim1 n).exists.choose_spec.2
+  have hm1 (n:ℕ) := (claim1 n).exists.choose_spec.1
+  have hm2 (n:ℕ) : ¬((a - b) n: Real) ∈ upperBounds E := (claim1 n).exists.choose_spec.2
   have claim2 (N:ℕ) := LUB_claim2 N (by aesop) hm1 hm2
   have claim3 : (a:Sequence).IsCauchy := (LIM_of_Cauchy claim2).1
   set S := LIM a; use S
@@ -172,9 +168,8 @@ theorem Real.LUB_exist {E: Set Real} (hE: Set.Nonempty E) (hbound: BddAbove E): 
   split_ands
   . intros; apply LIM_of_ge claim3; grind [upperBound_def]
   intro y hy
-  have claim5 (n:ℕ) : y ≥ (a-b) n := by contrapose! hm2; use n; exact upperBound_upper (by order) hy
-  rw [claim4]; exact LIM_of_le (by solve_by_elim [Sequence.IsCauchy.sub]) claim5
-
+  have claim5 (n:ℕ) : y ≥ (a-b) n := by contrapose! hm2; use n; apply upperBound_upper _ hy; order
+  rw [claim4]; apply LIM_of_le _ claim5; solve_by_elim [Sequence.IsCauchy.sub]
 
 /-- A bare-bones extended real class to define supremum. -/
 inductive ExtendedReal where
@@ -250,8 +245,7 @@ theorem Real.exist_sqrt_two : ∃ x:Real, x^2 = 2 := by
   have claim4 : x ≥ 1 := by grind [isLUB_def, upperBound_def]
   have claim5 : x ≤ 2 := by grind [isLUB_def]
   have claim6 : x.IsPos := by rw [isPos_iff]; linarith
-  use x
-  obtain h | h | h := trichotomous' (x^2) 2
+  use x; obtain h | h | h := trichotomous' (x^2) 2
   . have claim11: ∃ ε, 0 < ε ∧ ε < 1 ∧ x^2 - 4*ε > 2 := by
       set ε := min (1/2) ((x^2-2)/8)
       have hx : x^2 - 2 > 0 := by linarith
