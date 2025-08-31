@@ -81,7 +81,7 @@ example : ¬ AdherentPt 2 (.Ioo 0 1) := by sorry
 theorem closure_def (X:Set ℝ) : closure X = { x | AdherentPt x X } := by
   ext; simp [Real.mem_closure_iff, AdherentPt, Real.adherent']
   constructor <;> intro h ε hε
-  all_goals choose y hy hxy using h _ (half_pos hε); exact ⟨ y, hy, by rw [abs_sub_comm]; linarith ⟩
+  all_goals choose y hy hxy using h _ (half_pos hε); exact ⟨ _, hy, by rw [abs_sub_comm]; linarith ⟩
 
 theorem closure_def' (X:Set ℝ) (x :ℝ) : x ∈ closure X ↔ AdherentPt x X := by
   simp [closure_def]
@@ -122,8 +122,7 @@ theorem closure_of_Ioo {a b:ℝ} (h:a < b) : closure (.Ioo a b) = .Icc a b := by
   . sorry
   by_cases hb : x = b
   . sorry
-  intro ε hε
-  use x, (by grind); simp; order
+  intro ε _; use x, (by grind); simp; order
 
 theorem closure_of_Ioc {a b:ℝ} (h:a < b) : closure (.Ioc a b) = .Icc a b := by
   sorry
@@ -243,17 +242,6 @@ example : IsolatedPt 3 ((.Ioo 1 2) ∪ {3}) := by sorry
 theorem LimitPt.iff_limit (x:ℝ) (X: Set ℝ) :
   LimitPt x X ↔ ∃ a : ℕ → ℝ, (∀ n, a n ∈ X \ {x}) ∧ Filter.atTop.Tendsto a (nhds x) := by
   simp [limit_of_AdherentPt]
-
-
-open Filter in
-/-- This lemma is in more recent versions of Mathlib and can be deleted once Mathlib is updated. -/
-theorem tendsto_mul_add_inv_atTop_nhds_zero (a c : ℝ) (ha : a ≠ 0) :
-    atTop.Tendsto (fun x => (a * x + c)⁻¹) (nhds 0) := by
-  obtain ha' | ha' := lt_or_gt_of_ne ha
-  · exact tendsto_inv_atBot_zero.comp
-      (tendsto_atBot_add_const_right _ c (tendsto_id.const_mul_atTop_of_neg ha'))
-  · exact tendsto_inv_atTop_zero.comp
-      (tendsto_atTop_add_const_right _ c (tendsto_id.const_mul_atTop ha'))
 
 /-- Lemma 9.1.21 -/
 theorem mem_Icc_isLimit {a b x:ℝ} (h: a < b) (hx: x ∈ Set.Icc a b) : LimitPt x (.Icc a b) := by
@@ -387,6 +375,5 @@ example (I: Finset ℝ) : IsClosed (I:Set ℝ) ∧ Bornology.IsBounded (I:Set �
 /-- Exercise 9.1.15 -/
 example {E:Set ℝ} (hE: Bornology.IsBounded E) (hnon: E.Nonempty): AdherentPt (sSup E) E ∧ AdherentPt (sSup E) Eᶜ := by
   sorry
-
 
 end Chapter9

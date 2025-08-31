@@ -151,10 +151,10 @@ theorem close_mul_mul {ε δ x y z w:ℚ} (hε: ε ≥ 0) (hxy: ε.Close x y) (h
   -- The proof is written to follow the structure of the original text, though
   -- on formalization it was revealed that the hypothesis δ ≥ 0 was unnecessary.
   set a := y-x
-  have ha : y = x + a := by simp [a]
+  have ha : y = x + a := by grind
   have haε: |a| ≤ ε := by rwa [close_symm, close_iff] at hxy
   set b := w-z
-  have hb : w = z + b := by simp [b]
+  have hb : w = z + b := by grind
   have hbδ: |b| ≤ δ := by rwa [close_symm, close_iff] at hzw
   have : y*w = x * z + a * z + x * b + a * b := by grind
   rw [close_symm, close_iff]
@@ -210,14 +210,13 @@ theorem pow_abs (x:ℚ) (n:ℕ) : |x|^n = |x^n| := by sorry
   Definition 4.3.11 (Exponentiation to a negative number).
   Here we use the Mathlib notion of integer exponentiation
 -/
-theorem zpow_neg (x:ℚ) (n:ℕ) : x^(-(n:ℤ)) = 1/(x^n) := by
-  simp only [_root_.zpow_neg, zpow_natCast, one_div]
+theorem zpow_neg (x:ℚ) (n:ℕ) : x^(-(n:ℤ)) = 1/(x^n) := by simp
 
 example (x:ℚ): x^(-3:ℤ) = 1/(x^3) := zpow_neg x 3
 
 example (x:ℚ): x^(-3:ℤ) = 1/(x*x*x) := by convert zpow_neg x 3; ring
 
-theorem pow_eq_zpow (x:ℚ) (n:ℕ): x^(n:ℤ) = x^n :=  zpow_natCast x n
+theorem pow_eq_zpow (x:ℚ) (n:ℕ): x^(n:ℤ) = x^n := zpow_natCast x n
 
 /-- Proposition 4.3.12(a) (Properties of exponentiation, II) / Exercise 4.3.4 -/
 theorem zpow_add (x:ℚ) (n m:ℤ) (hx: x ≠ 0): x^n * x^m = x^(n+m) := by sorry
