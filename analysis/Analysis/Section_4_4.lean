@@ -41,10 +41,8 @@ theorem Rat.exists_between_rat {x y:ℚ} (h: x < y) : ∃ z:ℚ, x < z ∧ z < y
     rw [show x/2 = x*(1/2) by ring, show y/2 = y*(1/2) by ring]
     apply mul_lt_mul_of_pos_right h; positivity
   constructor
-  . replace h' := add_lt_add_right h' (x/2)
-    convert h' using 1 <;> ring
-  replace h' := add_lt_add_right h' (y/2)
-  convert h' using 1 <;> ring
+  . convert add_lt_add_right h' (x/2) using 1 <;> ring
+  convert add_lt_add_right h' (y/2) using 1 <;> ring
 
 /-- Exercise 4.4.2 -/
 theorem Nat.no_infinite_descent : ¬ ∃ a:ℕ → ℕ, ∀ n, a (n+1) < a n := by
@@ -71,8 +69,7 @@ theorem Rat.not_exist_sqrt_two : ¬ ∃ x:ℚ, x^2 = 2 := by
   by_contra h; choose x hx using h
   have hnon : x ≠ 0 := by aesop
   wlog hpos : x > 0
-  . have hneg : -x > 0 := by simp; order
-    apply this _ _ _ hneg <;> grind
+  . apply this _ _ _ (show -x>0 by simp; order) <;> grind
   have hrep : ∃ p q:ℕ, p > 0 ∧ q > 0 ∧ p^2 = 2*q^2 := by
     use x.num.toNat, x.den
     observe hnum_pos : x.num > 0

@@ -42,7 +42,7 @@ instance PreInt.instSetoid : Setoid PreInt where
     symm := by sorry
     trans := by
       -- This proof is written to follow the structure of the original text.
-      intro ⟨ a,b ⟩ ⟨ c,d ⟩ ⟨ e,f ⟩ h1 h2; simp at h1 h2 ⊢
+      intro ⟨ a,b ⟩ ⟨ c,d ⟩ ⟨ e,f ⟩ h1 h2; simp_all
       have h3 := congrArg₂ (· + ·) h1 h2; simp at h3
       have : (a + f) + (c + d) = (e + b) + (c + d) := calc
         (a + f) + (c + d) = a + d + (c + f) := by abel
@@ -93,7 +93,7 @@ theorem Int.add_eq (a b c d:ℕ) : a —— b + c —— d = (a+c)——(b+d) :=
 /-- Lemma 4.1.3 (Multiplication well-defined) -/
 theorem Int.mul_congr_left (a b a' b' c d : ℕ) (h: a —— b = a' —— b') :
     (a*c+b*d) —— (a*d+b*c) = (a'*c+b'*d) —— (a'*d+b'*c) := by
-  simp only [eq] at h ⊢
+  simp only [eq] at *
   calc
     _ = c*(a+b') + d*(a'+b) := by ring
     _ = c*(a'+b) + d*(a+b') := by rw [h]
@@ -102,7 +102,7 @@ theorem Int.mul_congr_left (a b a' b' c d : ℕ) (h: a —— b = a' —— b') 
 /-- Lemma 4.1.3 (Multiplication well-defined) -/
 theorem Int.mul_congr_right (a b c d c' d' : ℕ) (h: c —— d = c' —— d') :
     (a*c+b*d) —— (a*d+b*c) = (a*c'+b*d') —— (a*d'+b*c') := by
-  simp only [eq] at h ⊢
+  simp only [eq] at *
   calc
     _ = a*(c+d') + b*(c'+d) := by ring
     _ = a*(c'+d) + b*(c+d') := by rw [h]
@@ -176,16 +176,16 @@ theorem Int.trichotomous (x:Int) : x = 0 ∨ x.IsPos ∨ x.IsNeg := by
 
 /-- Lemma 4.1.5 (trichotomy of integers)-/
 theorem Int.not_pos_zero (x:Int) : x = 0 ∧ x.IsPos → False := by
-  rintro ⟨ rfl, ⟨ n, hn, hn' ⟩ ⟩; simp_all [←natCast_ofNat]
+  rintro ⟨ rfl, ⟨ n, _, _ ⟩ ⟩; simp_all [←natCast_ofNat]
 
 /-- Lemma 4.1.5 (trichotomy of integers)-/
 theorem Int.not_neg_zero (x:Int) : x = 0 ∧ x.IsNeg → False := by
-  rintro ⟨ rfl, ⟨ n, hn, hn' ⟩ ⟩; simp_rw [←natCast_ofNat, natCast_eq, neg_eq, eq] at hn'
+  rintro ⟨ rfl, ⟨ n, _, hn ⟩ ⟩; simp_rw [←natCast_ofNat, natCast_eq, neg_eq, eq] at hn
   linarith
 
 /-- Lemma 4.1.5 (trichotomy of integers)-/
 theorem Int.not_pos_neg (x:Int) : x.IsPos ∧ x.IsNeg → False := by
-  rintro ⟨ ⟨ n, hn, rfl ⟩, ⟨ m, hm, hm' ⟩ ⟩; simp_rw [natCast_eq, neg_eq, eq] at hm'
+  rintro ⟨ ⟨ n, _, rfl ⟩, ⟨ m, _, hm ⟩ ⟩; simp_rw [natCast_eq, neg_eq, eq] at hm
   linarith
 
 /-- Proposition 4.1.6 (laws of algebra) / Exercise 4.1.4 -/
@@ -329,6 +329,5 @@ abbrev Int.equivInt_ordered_ring : Int ≃+*o ℤ where
   map_add' := by sorry
   map_mul' := by sorry
   map_le_map_iff' := by sorry
-
 
 end Section_4_1
