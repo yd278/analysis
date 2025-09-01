@@ -57,7 +57,7 @@ theorem PreRat.eq (a b c d:ℤ) (hb: b ≠ 0) (hd: d ≠ 0) :
 abbrev Rat := Quotient PreRat.instSetoid
 
 /-- We give division a "junk" value of 0//1 if the denominator is zero -/
-abbrev Rat.formalDiv (a b:ℤ)  : Rat :=
+abbrev Rat.formalDiv (a b:ℤ) : Rat :=
   Quotient.mk PreRat.instSetoid (if h:b ≠ 0 then ⟨ a,b,h ⟩ else ⟨ 0, 1, by decide ⟩)
 
 infix:100 " // " => Rat.formalDiv
