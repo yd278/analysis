@@ -57,7 +57,7 @@ theorem PreRat.eq (a b c d:ℤ) (hb: b ≠ 0) (hd: d ≠ 0) :
 abbrev Rat := Quotient PreRat.instSetoid
 
 /-- We give division a "junk" value of 0//1 if the denominator is zero -/
-abbrev Rat.formalDiv (a b:ℤ)  : Rat :=
+abbrev Rat.formalDiv (a b:ℤ) : Rat :=
   Quotient.mk PreRat.instSetoid (if h:b ≠ 0 then ⟨ a,b,h ⟩ else ⟨ 0, 1, by decide ⟩)
 
 infix:100 " // " => Rat.formalDiv
@@ -68,9 +68,9 @@ theorem Rat.eq (a c:ℤ) {b d:ℤ} (hb: b ≠ 0) (hd: d ≠ 0): a // b = c // d 
 
 /-- Definition 4.2.1 (Rationals) -/
 theorem Rat.eq_diff (n:Rat) : ∃ a b, b ≠ 0 ∧ n = a // b := by
-  apply Quot.ind _ n; intro ⟨ a, b, h ⟩
+  apply Quotient.ind _ n; intro ⟨ a, b, h ⟩
   refine ⟨ a, b, h, ?_ ⟩
-  simp [formalDiv, h]; rfl
+  simp [formalDiv, h]
 
 /--
   Decidability of equality. Hint: modify the proof of `DecidableEq Int` from the previous
