@@ -239,7 +239,7 @@ theorem SetTheory.Set.card_prod {X Y:Set} (hX: X.finite) (hY: Y.finite) :
 
 /-- Proposition 3.6.14 (f) / Exercise 3.6.4 -/
 theorem SetTheory.Set.card_pow {X Y:Set} (hX: X.finite) (hY: Y.finite) :
-    (X ^ Y).finite ∧ (X ^ Y).card = X.card ^ Y.card := by sorry
+    (Y ^ X).finite ∧ (Y ^ X).card = Y.card ^ X.card := by sorry
 
 /-- Exercise 3.6.5. You might find `SetTheory.Set.prod_commutator` useful. -/
 theorem SetTheory.Set.prod_EqualCard_prod (A B:Set) :
