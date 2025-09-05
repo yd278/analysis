@@ -251,7 +251,7 @@ theorem SetTheory.Set.card_pow {X Y:Set} (hY: Y.finite) (hX: X.finite) :
 theorem SetTheory.Set.prod_EqualCard_prod (A B:Set) :
     EqualCard (A ×ˢ B) (B ×ˢ A) := by sorry
 
-noncomputable def SetTheory.Set.pow_fun_equiv' (X Y : Set) : ↑(Y ^ X) ≃ (X → Y) :=
+noncomputable def SetTheory.Set.pow_fun_equiv' (Y X : Set) : ↑(Y ^ X) ≃ (X → Y) :=
   pow_fun_equiv (X:=X) (Y:=Y)
 
 /-- Exercise 3.6.6. You may find `SetTheory.Set.curry_equiv` useful. -/
