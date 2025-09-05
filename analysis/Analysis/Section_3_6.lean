@@ -161,9 +161,9 @@ theorem SetTheory.Set.card_to_has_card {X:Set} {n: ℕ} (hn: n ≠ 0): X.card = 
 
 theorem SetTheory.Set.card_fin_eq (n:ℕ): (Fin n).has_card n := (has_card_iff _ _).mp ⟨ id, Function.bijective_id ⟩
 
-theorem SetTheory.Set.Fin_card {n:ℕ}: (Fin n).card = n := has_card_to_card (card_fin_eq n)
+theorem SetTheory.Set.Fin_card (n:ℕ): (Fin n).card = n := has_card_to_card (card_fin_eq n)
 
-theorem SetTheory.Set.Fin_finite {n:ℕ}: (Fin n).finite := ⟨n, card_fin_eq n⟩
+theorem SetTheory.Set.Fin_finite (n:ℕ): (Fin n).finite := ⟨n, card_fin_eq n⟩
 
 theorem SetTheory.Set.EquivCard_to_has_card_eq {X Y:Set} {n: ℕ} (h: X ≈ Y): X.has_card n ↔ Y.has_card n := by
   choose f hf using h; let e := Equiv.ofBijective f hf
@@ -244,7 +244,7 @@ noncomputable def SetTheory.Set.pow_fun_equiv {X Y : Set} : ↑(Y ^ X) ≃ (X �
   right_inv := sorry
 
 /-- Proposition 3.6.14 (f) / Exercise 3.6.4 -/
-theorem SetTheory.Set.card_pow {X Y:Set} (hX: X.finite) (hY: Y.finite) :
+theorem SetTheory.Set.card_pow {X Y:Set} (hY: Y.finite) (hX: X.finite) :
     (Y ^ X).finite ∧ (Y ^ X).card = Y.card ^ X.card := by sorry
 
 /-- Exercise 3.6.5. You might find `SetTheory.Set.prod_commutator` useful. -/
