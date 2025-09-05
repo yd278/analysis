@@ -258,12 +258,12 @@ noncomputable def SetTheory.Set.pow_fun_equiv' (X Y : Set) : ↑(Y ^ X) ≃ (X �
 theorem SetTheory.Set.pow_pow_EqualCard_pow_prod (A B C:Set) :
     EqualCard ((A ^ B) ^ C) (A ^ (B ×ˢ C)) := by sorry
 
-example (a b c:ℕ): (a^b)^c = a^(b*c) := by sorry
+theorem SetTheory.Set.Exercise_3_6_6_a (a b c:ℕ): (a^b)^c = a^(b*c) := by sorry
 
 theorem SetTheory.Set.pow_prod_pow_EqualCard_pow_union (A B C:Set) (hd: Disjoint B C) :
     EqualCard ((A ^ B) ×ˢ (A ^ C)) (A ^ (B ∪ C)) := by sorry
 
-example (a b c:ℕ): (a^b) * a^c = a^(b+c) := by sorry
+theorem SetTheory.Set.Exercise_3_6_6_b (a b c:ℕ): (a^b) * a^c = a^(b+c) := by sorry
 
 /-- Exercise 3.6.7 -/
 theorem SetTheory.Set.injection_iff_card_le {A B:Set} (hA: A.finite) (hB: B.finite) :
