@@ -237,7 +237,7 @@ theorem SetTheory.Set.card_image_inj {X Y:Set} (hX: X.finite) {f: X → Y}
 theorem SetTheory.Set.card_prod {X Y:Set} (hX: X.finite) (hY: Y.finite) :
     (X ×ˢ Y).finite ∧ (X ×ˢ Y).card = X.card * Y.card := by sorry
 
-noncomputable def SetTheory.Set.pow_fun_equiv {X Y : Set} : ↑(Y ^ X) ≃ (X → Y) where
+noncomputable abbrev SetTheory.Set.pow_fun_equiv {X Y : Set} : ↑(Y ^ X) ≃ (X → Y) where
   toFun := sorry
   invFun := sorry
   left_inv := sorry
