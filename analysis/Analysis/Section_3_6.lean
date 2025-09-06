@@ -243,7 +243,6 @@ noncomputable def SetTheory.Set.pow_fun_equiv {A B : Set} : ↑(A ^ B) ≃ (B �
   left_inv := sorry
   right_inv := sorry
 
-@[simp]
 lemma SetTheory.Set.pow_fun_eq_iff {A B : Set} (x y : ↑(A ^ B)) : x = y ↔ pow_fun_equiv x = pow_fun_equiv y := by
   rw [←pow_fun_equiv.apply_eq_iff_eq]
 
