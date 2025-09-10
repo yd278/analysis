@@ -277,8 +277,8 @@ theorem Real.LIM_mono_fail :
     ∧ (b:Sequence).IsCauchy
     ∧ (∀ n, a n > b n)
     ∧ ¬LIM a > LIM b := by
-  use (fun n ↦ 1 + 1/(n:ℚ))
-  use (fun n ↦ 1 - 1/(n:ℚ))
+  use (fun n ↦ 1 + 1/((n:ℚ) + 1))
+  use (fun n ↦ 1 - 1/((n:ℚ) + 1))
   sorry
 
 /-- Proposition 5.4.12 (Bounding reals by rationals) -/
