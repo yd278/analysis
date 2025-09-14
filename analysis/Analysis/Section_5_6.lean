@@ -150,7 +150,7 @@ theorem Real.root_mono_of_gt_one {x : Real} (hx: x > 1) {k l: ℕ} (hkl: k > l) 
 theorem Real.root_mono_of_lt_one {x : Real} (hx0: 0 < x) (hx: x < 1) {k l: ℕ} (hkl: k > l) (hl: l ≥ 1) : x.root k > x.root l := by sorry
 
 /-- Lemma 5.6.6 (e) / Exercise 5.6.1 -/
-theorem Real.root_of_one (k: ℕ): (1:Real).root k = 1 := by sorry
+theorem Real.root_of_one {k: ℕ} (hk: k ≥ 1): (1:Real).root k = 1 := by sorry
 
 /-- Lemma 5.6.6 (f) / Exercise 5.6.1 -/
 theorem Real.root_mul {x y:Real} (hx: x ≥ 0) (hy: y ≥ 0) {n:ℕ} (hn: n ≥ 1) : (x*y).root n = (x.root n) * (y.root n) := by sorry
