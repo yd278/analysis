@@ -213,7 +213,7 @@ theorem Real.ratPow_eq_root {x:Real} (hx: x > 0) {n:ℕ} (hn: n ≥ 1) : x^(1/n:
 theorem Real.ratPow_eq_pow {x:Real} (hx: x > 0) (n:ℤ) : x^(n:ℚ) = x^n := by sorry
 
 /-- Lemma 5.6.9(a) / Exercise 5.6.2 -/
-theorem Real.ratPow_nonneg {x:Real} (hx: x > 0) (q:ℚ) : x^q ≥ 0 := by
+theorem Real.ratPow_nonneg {x:Real} (hx: x > 0) (q:ℚ) : x^q > 0 := by
   sorry
 
 /-- Lemma 5.6.9(b) / Exercise 5.6.2 -/
