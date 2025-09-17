@@ -303,17 +303,17 @@ theorem SetTheory.Set.Permutations_ih (n: ℕ):
 theorem SetTheory.Set.Permutations_card (n: ℕ):
     (Permutations n).card = n.factorial := by sorry
 
-/-- Connections with Mathlib's `Nat.card` -/
-theorem SetTheory.Set.card_eq_nat_card {X:Set} : X.card = Nat.card X := by sorry
-
-/-- Connections with Mathlib's `Set.ncard` -/
-theorem SetTheory.Set.card_eq_ncard {X:Set} : X.card = (X: _root_.Set Object).ncard := by sorry
-
 /-- Connections with Mathlib's `Finite` -/
 theorem SetTheory.Set.finite_iff_finite {X:Set} : X.finite ↔ Finite X := by sorry
 
 /-- Connections with Mathlib's `Set.Finite` -/
 theorem SetTheory.Set.finite_iff_set_finite {X:Set} :
     X.finite ↔ (X :_root_.Set Object).Finite := by sorry
+
+/-- Connections with Mathlib's `Nat.card` -/
+theorem SetTheory.Set.card_eq_nat_card {X:Set} : X.card = Nat.card X := by sorry
+
+/-- Connections with Mathlib's `Set.ncard` -/
+theorem SetTheory.Set.card_eq_ncard {X:Set} : X.card = (X: _root_.Set Object).ncard := by sorry
 
 end Chapter3
