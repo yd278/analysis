@@ -37,7 +37,19 @@ variable [SetTheory]
 abbrev SetTheory.Set.EqualCard (X Y:Set) : Prop := ∃ f : X → Y, Function.Bijective f
 
 /-- Example 3.6.2 -/
-theorem SetTheory.Set.Example_3_6_2 : EqualCard {0,1,2} {3,4,5} := by sorry
+theorem SetTheory.Set.Example_3_6_2 : EqualCard {0,1,2} {3,4,5} := by
+  use open Classical in fun x ↦
+    ⟨if x.val = 0 then 3 else if x.val = 1 then 4 else 5, by aesop⟩
+  constructor
+  · intro; aesop
+  intro y
+  have : y = (3: Object) ∨ y = (4: Object) ∨ y = (5: Object) := by
+    have := y.property
+    aesop
+  rcases this with (_ | _ | _)
+  · use ⟨0, by simp⟩; aesop
+  · use ⟨1, by simp⟩; aesop
+  · use ⟨2, by simp⟩; aesop
 
 /-- Example 3.6.3 -/
 theorem SetTheory.Set.Example_3_6_3 : EqualCard nat (nat.specify (fun x ↦ Even (x:ℕ))) := by sorry
@@ -69,10 +81,33 @@ theorem SetTheory.Set.Remark_3_6_6 (n:ℕ) :
     (nat.specify (fun x ↦ 1 ≤ (x:ℕ) ∧ (x:ℕ) ≤ n)).has_card n := by sorry
 
 /-- Example 3.6.7 -/
-theorem SetTheory.Set.Example_3_6_7a (a:Object) : ({a}:Set).has_card 1 := by sorry
+theorem SetTheory.Set.Example_3_6_7a (a:Object) : ({a}:Set).has_card 1 := by
+  rw [has_card_iff]
+  use fun _ ↦ Fin_mk _ 0 (by simp)
+  constructor
+  · intro x1 x2 hf; aesop
+  intro y
+  use ⟨a, by simp⟩
+  have := Fin.toNat_lt y
+  simp_all
 
 theorem SetTheory.Set.Example_3_6_7b {a b c d:Object} (hab: a ≠ b) (hac: a ≠ c) (had: a ≠ d)
-  (hbc: b ≠ c) (hbd: b ≠ d) (hcd: c ≠ d) : ({a,b,c,d}:Set).has_card 4 := by sorry
+    (hbc: b ≠ c) (hbd: b ≠ d) (hcd: c ≠ d) : ({a,b,c,d}:Set).has_card 4 := by
+  rw [has_card_iff]
+  use open Classical in fun x ↦ Fin_mk _ (
+    if x.val = a then 0 else if x.val = b then 1 else if x.val = c then 2 else 3
+  ) (by aesop)
+  constructor
+  · intro x1 x2 hf; aesop
+  intro y
+  have : y = (0:ℕ) ∨ y = (1:ℕ) ∨ y = (2:ℕ) ∨ y = (3:ℕ) := by
+    have := Fin.toNat_lt y
+    omega
+  rcases this with (_ | _ | _ | _)
+  · use ⟨a, by aesop⟩; aesop
+  · use ⟨b, by aesop⟩; aesop
+  · use ⟨c, by aesop⟩; aesop
+  · use ⟨d, by aesop⟩; aesop
 
 /-- Lemma 3.6.9 -/
 theorem SetTheory.Set.pos_card_nonempty {n:ℕ} (h: n ≥ 1) {X:Set} (hX: X.has_card n) : X ≠ ∅ := by
@@ -123,11 +158,37 @@ theorem SetTheory.Set.card_uniq {X:Set} {n m:ℕ} (h1: X.has_card n) (h2: X.has_
   have : m ≠ 0 := by contrapose! this; simpa [has_card_zero, this] using h2
   specialize hn (card_erase ?_ h1 ⟨ _, hx ⟩) (card_erase ?_ h2 ⟨ _, hx ⟩) <;> omega
 
-example : ({0,1,2}:Set).has_card 3 := by sorry
+lemma SetTheory.Set.Example_3_6_8_a: ({0,1,2}:Set).has_card 3 := by
+  rw [has_card_iff]
+  have : ({0, 1, 2}: Set) = SetTheory.Set.Fin 3 := by
+    ext x
+    simp only [mem_insert, mem_singleton, mem_Fin]
+    constructor
+    · aesop
+    rintro ⟨x, ⟨_, rfl⟩⟩
+    simp only [nat_coe_eq_iff]
+    omega
+  rw [this]
+  use id
+  exact Function.bijective_id
 
-example : ({3,4}:Set).has_card 2 := by sorry
+lemma SetTheory.Set.Example_3_6_8_b: ({3,4}:Set).has_card 2 := by
+  rw [has_card_iff]
+  use open Classical in fun x ↦ Fin_mk _ (if x = (3:Object) then 0 else 1) (by aesop)
+  constructor
+  · intro x1 x2
+    aesop
+  intro y
+  have := Fin.toNat_lt y
+  have : y = (0:ℕ) ∨ y = (1:ℕ) := by omega
+  aesop
 
-example : ¬({0,1,2}:Set) ≈ ({3,4}:Set) := by sorry
+lemma SetTheory.Set.Example_3_6_8_c : ¬({0,1,2}:Set) ≈ ({3,4}:Set) := by
+  by_contra h
+  have h1 : Fin 3 ≈ Fin 2 := (Example_3_6_8_a.symm.trans h).trans Example_3_6_8_b
+  have h2 : Fin 3 ≈ Fin 3 := by rfl
+  have := card_uniq h1 h2
+  contradiction
 
 abbrev SetTheory.Set.finite (X:Set) : Prop := ∃ n:ℕ, X.has_card n
 
@@ -304,16 +365,46 @@ theorem SetTheory.Set.Permutations_card (n: ℕ):
     (Permutations n).card = n.factorial := by sorry
 
 /-- Connections with Mathlib's `Finite` -/
-theorem SetTheory.Set.finite_iff_finite {X:Set} : X.finite ↔ Finite X := by sorry
+theorem SetTheory.Set.finite_iff_finite {X:Set} : X.finite ↔ Finite X := by
+  rw [finite_iff_exists_equiv_fin, finite]
+  constructor
+  · rintro ⟨n, hn⟩
+    use n
+    obtain ⟨f, hf⟩ := hn
+    have eq := (Equiv.ofBijective f hf).trans (Fin.Fin_equiv_Fin n)
+    exact ⟨eq⟩
+  rintro ⟨n, hn⟩
+  use n
+  have eq := hn.some.trans (Fin.Fin_equiv_Fin n).symm
+  exact ⟨eq, eq.bijective⟩
 
 /-- Connections with Mathlib's `Set.Finite` -/
 theorem SetTheory.Set.finite_iff_set_finite {X:Set} :
-    X.finite ↔ (X :_root_.Set Object).Finite := by sorry
+    X.finite ↔ (X :_root_.Set Object).Finite := by
+  rw [finite_iff_finite]
+  rfl
 
 /-- Connections with Mathlib's `Nat.card` -/
-theorem SetTheory.Set.card_eq_nat_card {X:Set} : X.card = Nat.card X := by sorry
+theorem SetTheory.Set.card_eq_nat_card {X:Set} : X.card = Nat.card X := by
+  by_cases hf : X.finite
+  · by_cases hz : X.card = 0
+    · rw [hz]; symm
+      have : X = ∅ := empty_of_card_eq_zero hf hz
+      rw [this, Nat.card_eq_zero, isEmpty_iff]
+      aesop
+    symm
+    have hc := has_card_card hf
+    obtain ⟨f, hf⟩ := hc
+    apply Nat.card_eq_of_equiv_fin
+    exact (Equiv.ofBijective f hf).trans (Fin.Fin_equiv_Fin X.card)
+  simp only [card, hf, ↓reduceDIte]; symm
+  rw [Nat.card_eq_zero, ←not_finite_iff_infinite]
+  right
+  rwa [finite_iff_set_finite] at hf
 
 /-- Connections with Mathlib's `Set.ncard` -/
-theorem SetTheory.Set.card_eq_ncard {X:Set} : X.card = (X: _root_.Set Object).ncard := by sorry
+theorem SetTheory.Set.card_eq_ncard {X:Set} : X.card = (X: _root_.Set Object).ncard := by
+  rw [card_eq_nat_card]
+  rfl
 
 end Chapter3
