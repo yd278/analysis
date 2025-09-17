@@ -297,7 +297,10 @@ theorem SetTheory.Set.Permutations_finite (n: ℕ): (Permutations n).finite := b
 
 /- To continue Exercise 3.6.12 (i), we'll first develop some theory about `Permutations` and `Fin`. -/
 
-noncomputable def SetTheory.Set.Permutations_toFun {n: ℕ} (p: Permutations n) : (Fin n) → (Fin n) := by sorry
+noncomputable def SetTheory.Set.Permutations_toFun {n: ℕ} (p: Permutations n) : (Fin n) → (Fin n) := by
+  have := p.property
+  simp only [Permutations, specification_axiom'', powerset_axiom] at this
+  exact this.choose.choose
 
 theorem SetTheory.Set.Permutations_bijective {n: ℕ} (p: Permutations n) :
     Function.Bijective (Permutations_toFun p) := by sorry
@@ -307,7 +310,7 @@ theorem SetTheory.Set.Permutations_inj {n: ℕ} (p1 p2: Permutations n) :
 
 /-- This connects our concept of a permutation with Mathlib's `Equiv` between `Fin n` and `Fin n`. -/
 noncomputable def SetTheory.Set.perm_equiv_equiv {n : ℕ} : Permutations n ≃ (Fin n ≃ Fin n) := {
-  toFun := sorry
+  toFun := fun p => Equiv.ofBijective (Permutations_toFun p) (Permutations_bijective p)
   invFun := sorry
   left_inv := sorry
   right_inv := sorry
@@ -386,8 +389,10 @@ theorem SetTheory.Set.Permutations_ih (n: ℕ):
   let S i := (Permutations (n + 1)).specify (fun p ↦ perm_equiv_equiv p (Fin.last n) = i)
 
   have hSe : ∀ i, S i ≈ Permutations n := by
+    intro i
     -- Hint: you might find `perm_equiv_equiv`, `Fin.succAbove`, and `Fin.predAbove` useful.
-    sorry
+    have equiv : S i ≃ Permutations n := sorry
+    use equiv, equiv.injective, equiv.surjective
 
   -- Hint: you might find `card_iUnion_card_disjoint` and `Permutations_finite` useful.
   sorry
