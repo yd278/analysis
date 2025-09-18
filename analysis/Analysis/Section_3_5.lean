@@ -291,7 +291,7 @@ theorem SetTheory.Set.Fin.toNat_lt {n:ℕ} (i: Fin n) : i < n := (toNat_spec i).
 theorem SetTheory.Set.Fin.coe_toNat {n:ℕ} (i: Fin n) : ((i:ℕ):Object) = (i:Object) := by
   set j := (i:ℕ); obtain ⟨ h, h':i = Fin_mk n j h ⟩ := toNat_spec i; rw [h']
 
-@[simp]
+@[simp low]
 lemma SetTheory.Set.Fin.coe_inj {n:ℕ} {i j: Fin n} : i = j ↔ (i:ℕ) = (j:ℕ) := by
   constructor
   · simp_all
@@ -307,6 +307,17 @@ theorem SetTheory.Set.Fin.coe_eq_iff {n:ℕ} (i: Fin n) {j:ℕ} : (i:Object) = (
     obtain ⟨_, rfl⟩ := h
     simp [←Object.natCast_inj]
   aesop
+
+@[simp]
+theorem SetTheory.Set.Fin.coe_eq_iff' {n m:ℕ} (i: Fin n) (hi : ↑i ∈ Fin m) : ((⟨i, hi⟩ : Fin m):ℕ) = (i:ℕ) := by
+  obtain ⟨val, property⟩ := i
+  simp only [toNat, Subtype.mk.injEq, exists_prop]
+  generalize_proofs h1 h2
+  suffices : (h1.choose: Object) = h2.choose
+  · aesop
+  have := h1.choose_spec
+  have := h2.choose_spec
+  grind
 
 @[simp]
 theorem SetTheory.Set.Fin.toNat_mk {n:ℕ} (m:ℕ) (h: m < n) : (Fin_mk n m h : ℕ) = m := by
