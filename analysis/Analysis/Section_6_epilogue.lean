@@ -67,6 +67,11 @@ theorem Chapter6.Sequence.lim_eq_CauSeq_lim (a:ℕ → ℝ) (ha: (a:Sequence).Is
   rw [←tendsto_iff_Tendsto] at h1
   by_contra! h; apply (a:Sequence).tendsTo_unique at h; tauto
 
+/-- Identification with `limUnder` -/
+theorem Chapter6.Sequence.lim_eq_limUnder (a:ℕ → ℝ) (ha: (a:Sequence).Convergent) :
+    Chapter6.lim (a:Sequence) = limUnder Filter.atTop a := by
+    sorry
+
 /-- Identification with `Bornology.IsBounded` -/
 theorem Chapter6.Sequence.isBounded_iff_isBounded_range (a:ℕ → ℝ):
     (a:Sequence).IsBounded ↔ Bornology.IsBounded (Set.range a) := by
