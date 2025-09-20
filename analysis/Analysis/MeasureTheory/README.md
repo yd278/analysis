@@ -15,7 +15,7 @@ Some of the material in this text is duplicated in Lean's standard math library 
   - Section 1.1: Prologue: the problem of measure
     - Section 1.1.1: Elementary measure (Documentation) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/MeasureTheory/Section_1_1_1.lean))
     - Section 1.1.2: Jordan measure (Documentation) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/MeasureTheory/Section_1_1_2.lean))
-    - Section 1.1.3: Connections with the Riemann integral (Documentation) (Lean source)
+    - Section 1.1.3: Connections with the Riemann integral (Documentation) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/MeasureTheory/Section_1_1_3.lean))
   - Section 1.2: Lebesgue measure
     - Introduction: (Documentation) (Lean source)
     - Section 1.2.1: Properties of Lebesgue outer measure (Documentation) (Lean source)

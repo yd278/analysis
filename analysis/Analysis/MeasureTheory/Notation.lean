@@ -138,9 +138,9 @@ theorem ENNReal.upward_continuous {x y:ℕ → ENNReal} (hx: Monotone x) (hy: Mo
   simp [hxx', hyy', hxx₀', hyy₀',←coe_mul] at *
   solve_by_elim [Filter.Tendsto.mul]
 
-example : ∃ (x y:ℕ → ENNReal) (hx: Antitone x) (hy: Antitone y)
- (x₀ y₀:ENNReal) (hx_lim: atTop.Tendsto x (nhds x₀))
- (hy_lim: atTop.Tendsto y (nhds y₀)), ¬ atTop.Tendsto (fun n ↦ x n * y n) (nhds (x₀ * y₀)) := by
+example : ∃ (x y:ℕ → ENNReal) (_hx: Antitone x) (_hy: Antitone y)
+ (x₀ y₀:ENNReal) (_hx_lim: atTop.Tendsto x (nhds x₀))
+ (_hy_lim: atTop.Tendsto y (nhds y₀)), ¬ atTop.Tendsto (fun n ↦ x n * y n) (nhds (x₀ * y₀)) := by
   let x : ℕ → ENNReal := fun n => (1 : ENNReal) / (n : ENNReal)
   let y : ℕ → ENNReal := fun _ => ⊤
   refine ⟨x, y, ?hx, ?hy, 0, ⊤, ?hx_lim, ?hy_lim, ?not_conv⟩
