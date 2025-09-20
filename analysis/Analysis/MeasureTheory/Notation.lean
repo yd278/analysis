@@ -141,7 +141,26 @@ theorem ENNReal.upward_continuous {x y:ℕ → ENNReal} (hx: Monotone x) (hy: Mo
 example : ∃ (x y:ℕ → ENNReal) (hx: Antitone x) (hy: Antitone y)
  (x₀ y₀:ENNReal) (hx_lim: atTop.Tendsto x (nhds x₀))
  (hy_lim: atTop.Tendsto y (nhds y₀)), ¬ atTop.Tendsto (fun n ↦ x n * y n) (nhds (x₀ * y₀)) := by
- sorry
+  let x : ℕ → ENNReal := fun n => (1 : ENNReal) / (n : ENNReal)
+  let y : ℕ → ENNReal := fun _ => ⊤
+  refine ⟨x, y, ?hx, ?hy, 0, ⊤, ?hx_lim, ?hy_lim, ?not_conv⟩
+  · intro i j _; aesop
+  · intro i j _; aesop
+  · have hxR : Tendsto (fun n : ℕ => (1 : ℝ) / (n : ℝ)) atTop (nhds 0) :=
+      tendsto_one_div_atTop_nhds_zero_nat
+    have hxR' : Tendsto (fun n : ℕ => ENNReal.ofReal (1 / (n : ℝ))) atTop (nhds 0) := by
+      simpa [Function.comp, ENNReal.ofReal_zero]
+      using (ENNReal.continuous_ofReal.tendsto 0).comp hxR
+    have heq : ∀ᶠ n in atTop, x n = ENNReal.ofReal (1 / (n : ℝ)) := by
+      refine (eventually_ge_atTop 1).mono ?_
+      intro n hn
+      have hn0 : n ≠ 0 := ne_of_gt (Nat.succ_le_iff.mp hn)
+      rw [ENNReal.ofReal_div_of_pos]
+      . aesop
+      . aesop
+    exact ((tendsto_congr' heq).2 hxR')
+  · aesop
+  · aesop
 
 #check ENNReal.tendsto_nat_tsum
 
@@ -152,7 +171,10 @@ example : ∃ (x y:ℕ → ENNReal) (hx: Antitone x) (hy: Antitone y)
 /-- Exercise 0.0.1 -/
 example {A:Type} {x : A → ENNReal} (hx: ∑' α, x α < ⊤) :
   ∃ E: Set A, Countable E ∧ ∀ α ∉ E, x α = 0 := by
-  sorry
+  refine ⟨{a | x a ≠ 0}, ?_, ?_⟩
+  · simpa [Set.mem_setOf_eq] using
+      (Summable.countable_support_ennreal (ne_of_lt hx))
+  · aesop
 
 /-- Theorem 0.0.2 (Tonelli's theorem for series)  -/
 theorem ENNReal.tsum_of_tsum (x: ℕ → ℕ → ENNReal) : ∑' p:ℕ × ℕ, x p.1 p.2 = ∑' n, ∑' m, x n m := by
@@ -187,16 +209,20 @@ theorem ENNReal.tsum_of_tsum (x: ℕ → ℕ → ENNReal) : ∑' p:ℕ × ℕ, x
 
 /-- Theorem 0.0.2 -/
 theorem ENNReal.tsum_of_tsum' (x: ℕ → ℕ → ENNReal) : ∑' p:ℕ × ℕ, x p.1 p.2 = ∑' m, ∑' n, x n m := by
-  sorry
+  calc
+    ∑' p:ℕ × ℕ, x p.1 p.2 = ∑' n, ∑' m, x n m := ENNReal.tsum_of_tsum x
+    _ = ∑' m, ∑' n, x n m := ENNReal.tsum_comm (f := x)
 
 #check ENNReal.tsum_comm
 
 /-- Exercise 0.0.2 (Tonelli's theorem for series over arbitrary sets)-/
 example {A B:Type*} (x: A → B → ENNReal) : ∑' p:A × B, x p.1 p.2 = ∑' a, ∑' b, x a b := by
-  sorry
+  simpa using ENNReal.tsum_prod (f := x)
 
 example {A B:Type*} (x: A → B → ENNReal) : ∑' p:A × B, x p.1 p.2 = ∑' b, ∑' a, x a b := by
-  sorry
+  calc
+    ∑' p : A × B, x p.1 p.2 = ∑' a, ∑' b, x a b := ENNReal.tsum_prod (f := x)
+    _ = ∑' b, ∑' a, x a b := ENNReal.tsum_comm (f := x)
 
 /-- Axiom 0.0.4 (Axiom of choice)-/
 noncomputable def Set.choose {A: Type*} {E: A → Type*} (hE: ∀ n, Nonempty (E n)) :
