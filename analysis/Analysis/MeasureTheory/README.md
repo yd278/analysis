@@ -8,7 +8,7 @@ Portions of the text that were left as exercises to the reader, as well as many 
 
 Some of the material in this text is duplicated in Lean's standard math library [Mathlib](https://leanprover-community.github.io/mathlib4_docs/), though with slightly different definitions.  To reconcile these discrepancies, this formalization will gradually transition from the textbook-provided definitions to the Mathlib-provided definitions as one progresses further into the text, thus sacrificing the self-containedness of the formalization in favor of compatibility with Mathlib.  For instance, Chapter 2 develops a theory of the natural numbers independent of Mathlib, but all subsequent chapters will use the Mathlib natural numbers instead.  (An epilogue to Chapter 2 is provided to show that the two notions of the natural numbers are isomorphic.)  As such, this formalization can also be used as an introduction to various portions of Mathlib.
 
-## Sections
+## Sections (work in progress)
 
 - Notation section (Documentation) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/MeasureTheory/Notation.lean))
 - Chapter 1: Measure Theory
@@ -30,7 +30,7 @@ Some of the material in this text is duplicated in Lean's standard math library 
     - Section 1.3.5: Littlewood's three principles (Documentation) (Lean source)
   - Section 1.4: Abstract measure spaces
     - Section 1.4.1: Boolean algebras (Documentation) (Lean source)
-    - Section 1.4.2: $$\sigma$$-algebras and measurable spaces (Documentation) (Lean source)
+    - Section 1.4.2: $\sigma$-algebras and measurable spaces (Documentation) (Lean source)
     - Section 1.4.3: Countably additive measures and measure spaces (Documentation) (Lean source)
     - Section 1.4.4: Measurable functions, and integration on a measure space (Documentation) (Lean source)
     - Section 1.4.5: The convergence theorems (Documentation) (Lean source)
@@ -51,6 +51,7 @@ Some of the material in this text is duplicated in Lean's standard math library 
     - Section 1.7.2: Pre-measures (Documentation) (Lean source)
     - Section 1.7.3: Lebesgue-Stieltjes measure (Documentation) (Lean source)
     - Section 1.7.4: Product measure (Documentation) (Lean source)
+  - Chapter 2: Related articles _(possible future expansion)_
 
 ## General Lean resources
 
