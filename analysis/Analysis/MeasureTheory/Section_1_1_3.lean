@@ -158,3 +158,27 @@ theorem riemann_integral_unique {I: BoundedInterval} (integ: (ℝ → ℝ) → �
   (hmono: ∀ (f g: ℝ → ℝ) (hf: RiemannIntegrableOn f I) (hg: RiemannIntegrableOn g I) (hmono: ∀ x ∈ I.toSet, f x ≤ g x), integ f ≤ integ g)
   (hindicator: ∀ (E:Set ℝ) (hE: JordanMeasurable (EuclideanSpace'.equiv_Real.symm '' E) ) (hsub: E ⊆ I.toSet), integ E.indicator' = hE.measure) :
   ∀ f, RiemannIntegrableOn f I → integ f = riemannIntegral f I := by sorry
+
+/-- Exercise 1.1.25 (Area interpretation of Riemann integral) -/
+theorem RiemannIntegrableOn.measurable_upper {I: BoundedInterval}
+  {f: ℝ → ℝ} (hfint: RiemannIntegrableOn f I) :
+  JordanMeasurable { p:EuclideanSpace' 2 | p 0 ∈ I.toSet ∧ 0 ≤ p 1 ∧ p 1 ≤ f (p 0) } := by sorry
+
+/-- Exercise 1.1.25 (Area interpretation of Riemann integral) -/
+theorem RiemannIntegrableOn.measurable_lower {I: BoundedInterval}
+  {f: ℝ → ℝ} (hfint: RiemannIntegrableOn f I) :
+  JordanMeasurable { p:EuclideanSpace' 2 | p 0 ∈ I.toSet ∧ f (p 0) ≤ p 1 ∧ p 1 ≤ 0 } := by sorry
+
+/-- Exercise 1.1.25 (Area interpretation of Riemann integral) -/
+theorem JordanMeasurable.iff_integrable {I: BoundedInterval} (hI: I = Icc I.a I.b)
+  {f: ℝ → ℝ} (hf: ∃ M, ∀ x ∈ I.toSet, |f x| ≤ M) : RiemannIntegrableOn f I ↔
+  JordanMeasurable { p:EuclideanSpace' 2 | p 0 ∈ I.toSet ∧ 0 ≤ p 1 ∧ p 1 ≤ f (p 0) } ∧
+  JordanMeasurable { p:EuclideanSpace' 2 | p 0 ∈ I.toSet ∧ f (p 0) ≤ p 1 ∧ p 1 ≤ 0 }
+  := by sorry
+
+/-- Exercise 1.1.25 (Area interpretation of Riemann integral) -/
+theorem RiemannIntegrableOn.eq_measure {I: BoundedInterval}
+  {f: ℝ → ℝ} (hfint: RiemannIntegrableOn f I) :
+  riemannIntegral f I = hfint.measurable_upper.measure - hfint.measurable_lower.measure := by sorry
+
+/- Exercise 1.1.26: Extend the definition of the Riemann and Darboux integrals to higher dimensions, in such a way that analogues of all the previous results hold; state and prove those analogues. -/
