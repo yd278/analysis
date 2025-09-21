@@ -108,6 +108,7 @@ In order to align the formalization with Mathlib conventions, a small number of 
 
 I am using this repository to host some other minor Lean content unrelated to the text book:
 
+- [A formalization of my book on Measure Theory](https://github.com/teorth/analysis/tree/main/analysis/Analysis/MeasureTheory) (work in progress)
 - A formalization of physical units
   - Support for systems of units ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Misc/UnitsSystem.html)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Misc/UnitsSystem.lean))
     - Examples of use ([Documentation](https://teorth.github.io/analysis/docs/Analysis/Misc/UnitsSystemExamples.html)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/Misc/UnitsSystemExamples.lean))
