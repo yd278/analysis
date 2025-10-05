@@ -18,8 +18,8 @@ Some of the material in this text is duplicated in Lean's standard math library 
     - Section 1.1.2: Jordan measure ([Documentation](https://teorth.github.io/analysis/docs/Analysis/MeasureTheory/Section_1_1_2.html)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/MeasureTheory/Section_1_1_2.lean))
     - Section 1.1.3: Connections with the Riemann integral ([Documentation](https://teorth.github.io/analysis/docs/Analysis/MeasureTheory/Section_1_1_3.html)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/MeasureTheory/Section_1_1_3.lean))
   - Section 1.2: Lebesgue measure
-    - Introduction: (Documentation) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/MeasureTheory/Section_1_2.lean))
-    - Section 1.2.1: Properties of Lebesgue outer measure (Documentation) (Lean source)
+    - Introduction: ([Documentation](https://teorth.github.io/analysis/docs/Analysis/MeasureTheory/Section_1_2.html)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/MeasureTheory/Section_1_2.lean))
+    - Section 1.2.1: Properties of Lebesgue outer measure ([Documentation](https://teorth.github.io/analysis/docs/Analysis/MeasureTheory/Section_1_2_1.html)) ([Lean source](https://github.com/teorth/analysis/blob/main/analysis/Analysis/MeasureTheory/Section_1_2_1.lean))
     - Section 1.2.2: Lebesgue measurability (Documentation) (Lean source)
     - Section 1.2.3: Non-measurable sets (Documentation) (Lean source)
   - Section 1.3: The Lebesgue integral
