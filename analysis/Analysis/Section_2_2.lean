@@ -50,7 +50,6 @@ theorem Nat.succ_add (n m: Nat) : n++ + m = (n+m)++ := by rfl
 /-- Compare with Mathlib's `Nat.one_add`. -/
 theorem Nat.one_add (m:Nat) : 1 + m = m++ := by
   rw [show 1 = 0++ from rfl, succ_add, zero_add]
-
 theorem Nat.two_add (m:Nat) : 2 + m = (m++)++ := by
   rw [show 2 = 1++ from rfl, succ_add, one_add]
 
@@ -64,7 +63,8 @@ example : (2:Nat) + 3 = 5 := by
 @[simp]
 lemma Nat.add_zero (n:Nat) : n + 0 = n := by
   -- This proof is written to follow the structure of the original text.
-  revert n; apply induction
+  revert n
+  apply induction
   . exact zero_add 0
   intro n ih
   calc
@@ -83,7 +83,8 @@ lemma Nat.add_succ (n m:Nat) : n + (m++) = (n + m)++ := by
 
 /-- n++ = n + 1 (Why?). Compare with Mathlib's `Nat.succ_eq_add_one` -/
 theorem Nat.succ_eq_add_one (n:Nat) : n++ = n + 1 := by
-  sorry
+  change n++ = n + (0++)
+  rw[add_succ, add_zero]
 
 /-- Proposition 2.2.4 (Addition is commutative). Compare with Mathlib's `Nat.add_comm` -/
 theorem Nat.add_comm (n m:Nat) : n + m = m + n := by
