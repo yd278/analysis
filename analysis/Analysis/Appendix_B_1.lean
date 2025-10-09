@@ -150,7 +150,7 @@ theorem PosintDecimal.pos (p:PosintDecimal) : 0 < (p:ℕ) := by
       . infer_instance
       grind
 
-/-- An operation implicit in the proof of Theorem B.1.5: -/
+/-- An operation implicit in the proof of Theorem B.1.4: -/
 abbrev PosintDecimal.append (p:PosintDecimal) (d:Digit) : PosintDecimal :=
   mk' p.head (p.digits.tail ++ [d]) p.head_ne_zero
 
@@ -183,7 +183,7 @@ theorem PosintDecimal.eq_append {p:PosintDecimal} (h: 2 ≤ p.digits.length) : �
   convert (List.dropLast_append_getLast _).symm using 2; grind
   simp [←List.length_pos_iff]; omega
 
-/-- Theorem B.1.5 (Uniqueness and existence of decimal representations) -/
+/-- Theorem B.1.4 (Uniqueness and existence of decimal representations) -/
 theorem PosintDecimal.exists_unique (n:ℕ) : n > 0 → ∃! p:PosintDecimal, (p:ℕ) = n := by
   -- this proof is written to follow the structure of the original text.
   apply n.case_strong_induction_on
