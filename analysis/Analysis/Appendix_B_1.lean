@@ -294,7 +294,7 @@ theorem IntDecimal.Int_bij : Function.Bijective IntDecimal.toInt := by
   simp [toInt, hp]
 
 abbrev PosintDecimal.digit (p:PosintDecimal) (i:ℕ) : Digit :=
-  if h: i < p.digits.length then p.digits[i] else 0
+  if h: i < p.digits.length then p.digits[p.digits.length - i - 1] else 0
 
 abbrev PosintDecimal.carry (p q:PosintDecimal) : ℕ → ℕ := Nat.rec 0 (fun i ε ↦ if ((p.digit i:ℕ) + (q.digit i:ℕ) + ε) < 10 then 0 else 1)
 
@@ -313,7 +313,12 @@ abbrev PosintDecimal.sum_digit (p q:PosintDecimal) (i:ℕ) : ℕ :=
 theorem PosintDecimal.sum_digit_lt (p q:PosintDecimal) (i:ℕ) :
   p.sum_digit q i < 10 := by sorry
 
-theorem PosintDecimal.sum_digit_top (p q:PosintDecimal) : ∃ l, p.sum_digit q l ≠ 0 ∧ ∀ i > l, p.sum_digit q l = 0 := by sorry
+def PosintDecimal.sum_digit_top (p q:PosintDecimal) : {l : ℕ // p.sum_digit q l ≠ 0 ∧ (∀ i > l, p.sum_digit q i = 0)} := by sorry
 
-theorem PosintDecimal.sum_eq (p q:PosintDecimal) : ∃ (r:PosintDecimal) (i:ℕ), (r.digit i:ℕ) = p.sum_digit q i ∧ (r:ℕ) = p + q := by
-  sorry
+def PosintDecimal.longAddition (p q : PosintDecimal) : PosintDecimal where
+  digits := sorry
+  nonempty := sorry
+  nonzero := sorry
+
+theorem PosintDecimal.sum_eq (p q:PosintDecimal) (i:ℕ) :
+    (((p.longAddition q).digit i):ℕ) = p.sum_digit q i ∧ (p.longAddition q:ℕ) = p + q := by sorry
