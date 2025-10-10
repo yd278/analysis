@@ -361,7 +361,8 @@ theorem Nat.lt_iff_add_pos (a b:Nat) : a < b ↔ ∃ d:Nat, d.IsPos ∧ b = a + 
   constructor
   . rw[lt_iff]
     intro hab
-    obtain ⟨⟨v,habv⟩ , hne⟩ := hab
+    choose ve hne using hab
+    choose v habv using ve
     use v
     constructor
     . rw[isPos_iff]
@@ -371,7 +372,7 @@ theorem Nat.lt_iff_add_pos (a b:Nat) : a < b ↔ ∃ d:Nat, d.IsPos ∧ b = a + 
       contradiction
     exact habv
   intro h
-  obtain ⟨d,⟨hpos,habv⟩ ⟩:=h 
+  choose d hpos habv using h
   rw[lt_iff]
   constructor
   . use d
@@ -412,7 +413,15 @@ theorem Nat.lt_of_le_of_lt {a b c : Nat} (hab: a ≤ b) (hbc: b < c) : a < c := 
 /-- This lemma was a `why?` statement from Proposition 2.2.13,
 but is more broadly useful, so is extracted here. -/
 theorem Nat.zero_le (a:Nat) : 0 ≤ a := by
-  sorry
+  apply induction
+  . rw[le_iff]
+    use 0
+    rw[add_zero]
+  intro n hn
+  rw[le_iff] at *
+  choose v hv using hn
+  use ( v++ )
+  rw[add_succ , ← hv ]
 
 /-- Proposition 2.2.13 (Trichotomy of order for natural numbers) / Exercise 2.2.4
     Compare with Mathlib's `trichotomous`.  Parts of this theorem have been placed
@@ -428,9 +437,15 @@ theorem Nat.trichotomous (a b:Nat) : a < b ∨ a = b ∨ a > b := by
   . rw [lt_iff_succ_le] at case1
     rw [le_iff_lt_or_eq] at case1
     tauto
-  . have why : a++ > b := by sorry
+  . have why : a++ > b := by
+      rw[case2]
+      exact succ_gt_self b
     tauto
-  have why : a++ > b := by sorry
+  have why : a++ > b := by
+    replace case3 := case3.1
+    rw[← ge_iff_le] at case3
+    observe cuz : a++ > a
+    apply lt_of_le_of_lt case3 cuz
   tauto
 
 /--
