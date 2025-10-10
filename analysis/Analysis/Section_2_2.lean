@@ -178,7 +178,20 @@ extracts a witness `x` and a proof `hx : P x` of the property from a hypothesis 
 
 /-- Lemma 2.2.10 (unique predecessor) / Exercise 2.2.2 -/
 lemma Nat.uniq_succ_eq (a:Nat) (ha: a.IsPos) : ∃! b, b++ = a := by
-  sorry
+  apply existsUnique_of_exists_of_unique
+  . revert a
+    apply induction
+    . rw[isPos_iff]
+      intro hp
+      contradiction
+    intro n ih
+    intro c
+    existsi n
+    rfl
+  intro y1 y2 h1 h2 
+  rw [← h2] at h1
+  apply succ_cancel at h1
+  exact h1
 
 /-- Definition 2.2.11 (Ordering of the natural numbers).
     This defines the `≤` notation on the natural numbers. -/
