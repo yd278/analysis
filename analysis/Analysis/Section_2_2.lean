@@ -234,6 +234,14 @@ example : (8:Nat) > 5 := by
     rw [this]
     use 3
   decide
+theorem Nat.succ_ne_self (n: Nat) : n++ ≠ n := by
+  conv =>
+    rhs
+    rw[← add_zero n]
+  by_contra h
+  rw[succ_eq_add_one ] at h
+  apply add_left_cancel at h
+  contradiction
 
 /-- Compare with Mathlib's `Nat.lt_succ_self`. -/
 theorem Nat.succ_gt_self (n:Nat) : n++ > n := by
@@ -241,13 +249,8 @@ theorem Nat.succ_gt_self (n:Nat) : n++ > n := by
   constructor
   . use 1
     rw[succ_eq_add_one n]
-  revert n
-  apply induction
-  . simp
-  intro n hn
-  simp
-  exact hn
-
+  symm
+  exact succ_ne_self n
 /-- Proposition 2.2.12 (Basic properties of order for natural numbers) / Exercise 2.2.3
 
 (a) (Order is reflexive). Compare with Mathlib's `Nat.le_refl`.-/
@@ -356,6 +359,11 @@ theorem Nat.lt_iff_succ_le (a b:Nat) : a < b ↔ a++ ≤ b := by
   have hu : v++ ≠ 0 := succ_ne _
   contradiction
 
+
+
+
+
+
 /-- (f) a < b if and only if b = a + d for positive d. -/
 theorem Nat.lt_iff_add_pos (a b:Nat) : a < b ↔ ∃ d:Nat, d.IsPos ∧ b = a + d := by
   constructor
@@ -460,20 +468,35 @@ theorem Nat.trichotomous (a b:Nat) : a < b ∨ a = b ∨ a > b := by
 def Nat.decLe : (a b : Nat) → Decidable (a ≤ b)
   | 0, b => by
     apply isTrue
-    sorry
+    exact zero_le b
   | a++, b => by
     cases decLe a b with
     | isTrue h =>
       cases decEq a b with
       | isTrue h =>
         apply isFalse
-        sorry
+        rw[h]
+        by_contra le
+        have ge :b++ ≥ b := by
+          rw[ge_iff_le, le_iff]
+          use 1
+          exact succ_eq_add_one b
+        observe eq : b++ = b
+        observe ne: b++ ≠ b
+        contradiction
       | isFalse h =>
         apply isTrue
-        sorry
+        have : a < b := by
+          push_neg at h
+          tauto 
+        rw[lt_iff_succ_le] at this
+        exact this
     | isFalse h =>
       apply isFalse
-      sorry
+      contrapose! h
+      rw[← lt_iff_succ_le] at h
+      rcases h with ⟨ le, eq⟩ 
+      exact le
 
 instance Nat.decidableRel : DecidableRel (· ≤ · : Nat → Nat → Prop) := Nat.decLe
 
@@ -533,7 +556,52 @@ example (a b c d e:Nat) (hab: a ≤ b) (hbc: b < c) (hde: d < e) :
 theorem Nat.strong_induction {m₀:Nat} {P: Nat → Prop}
   (hind: ∀ m, m ≥ m₀ → (∀ m', m₀ ≤ m' ∧ m' < m → P m') → P m) :
     ∀ m, m ≥ m₀ → P m := by
-  sorry
+
+      let Q(n:Nat) : Prop := ∀ m', m₀ ≤ m' ∧ m' <  n → P (m')
+      have qbase : Q 0 := by
+        intro  m' ⟨m_upper, m_lower⟩
+        observe : m' ≥ 0
+        order
+      
+      have qind : ∀ n , Q n → Q (n++) := by
+        intro n
+        by_cases hn : n < m₀ 
+        . intro qn 
+          have: n++ ≤ m₀ := by
+            rw[ lt_iff_succ_le] at hn
+            exact hn
+          intro p ⟨p_upper, p_lower⟩ 
+          order
+        push_neg at hn
+        rw[← ge_iff_le] at hn
+        intro qn
+        have hn_succ : n++ ≥ m₀ := by
+          rw[ge_iff_le, le_iff]
+          choose v hv using hn
+          use (v++)
+          rw[hv,add_succ]
+        have p_extra: P (n) := by
+          exact hind (n) hn qn  
+        intro m' ⟨m_upper, m_lower⟩ 
+        by_cases m_extra : n = m'
+        . rw[m_extra] at p_extra
+          exact p_extra
+        push_neg at m_extra
+        replace m_lower : m' < n := by
+          contrapose! m_lower
+          rw[← lt_iff_succ_le, lt_iff_le_and_ne]
+          split_ands
+          . exact m_lower
+          exact m_extra
+
+        have m_combo: m₀ ≤  m' ∧ m' < n :=  ⟨m_upper, m_lower⟩ 
+        exact qn m' m_combo
+      have q : ∀ n, Q n := by
+        apply induction
+        .exact qbase
+        exact qind
+      intro m mcond
+      exact hind m mcond (q m) 
 
 /-- Exercise 2.2.6 (backwards induction)
     Compare with Mathlib's `Nat.decreasingInduction`. -/
