@@ -635,7 +635,33 @@ theorem Nat.backwards_induction {n:Nat} {P: Nat → Prop}
     Compare with Mathlib's `Nat.le_induction`. -/
 theorem Nat.induction_from {n:Nat} {P: Nat → Prop} (hind: ∀ m, P m → P (m++)) :
     P n → ∀ m, m ≥ n → P m := by
-  sorry
+      intro pn
+      apply induction
+      . intro p0
+        observe : 0<=n
+        observe : n=0
+        rw[this] at pn
+        exact pn
+      intro m mpm succm
+      by_cases succmn : m++ = n
+      . rw[succmn]
+        exact pn
+      push_neg at succmn
+      replace succm : m++ > n := by
+        rw[gt_iff_lt, lt_iff_le_and_ne]
+        split_ands
+        . rw[<-ge_iff_le] 
+          exact succm
+        symm
+        exact succmn
+      have mn : m>=n := by
+        contrapose! succm
+        rw[<- lt_iff_succ_le]
+        exact succm
+      exact hind m (mpm mn)
+
+
+
 
 
 
