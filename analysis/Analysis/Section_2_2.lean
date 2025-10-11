@@ -562,7 +562,6 @@ theorem Nat.strong_induction {m₀:Nat} {P: Nat → Prop}
         intro  m' ⟨m_upper, m_lower⟩
         observe : m' ≥ 0
         order
-      
       have qind : ∀ n , Q n → Q (n++) := by
         intro n
         by_cases hn : n < m₀ 
@@ -608,7 +607,29 @@ theorem Nat.strong_induction {m₀:Nat} {P: Nat → Prop}
 theorem Nat.backwards_induction {n:Nat} {P: Nat → Prop}
   (hind: ∀ m, P (m++) → P m) (hn: P n) :
     ∀ m, m ≤ n → P m := by
-  sorry
+  revert n
+  apply induction
+  . intro pbase p pcond
+    observe pgdz : p≥ 0    
+    observe : p= 0 
+    rw[this]
+    exact pbase
+  intro n hn pextra
+  have pn : P n := hind n pextra
+  intro m mcond
+  by_cases extra: m=(n++)
+  . rw[extra]
+    exact pextra
+  push_neg at extra
+  replace mcond : m ≤ n := by
+    contrapose! mcond
+    rw[ lt_iff_le_and_ne]
+    split_ands
+    . rw[← lt_iff_succ_le] 
+      exact mcond
+    symm
+    exact extra
+  exact hn pn m mcond 
 
 /-- Exercise 2.2.7 (induction from a starting point)
     Compare with Mathlib's `Nat.le_induction`. -/
