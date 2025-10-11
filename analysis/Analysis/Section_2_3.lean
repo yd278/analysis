@@ -92,12 +92,29 @@ theorem Nat.mul_one (m: Nat) : m * 1 = m := by
 /-- This lemma will be useful to prove Lemma 2.3.3.
 Compare with Mathlib's `Nat.mul_pos` -/
 lemma Nat.pos_mul_pos {n m: Nat} (h₁: n.IsPos) (h₂: m.IsPos) : (n * m).IsPos := by
-  sorry
+    rcases uniq_succ_eq n h₁ with ⟨np, hn, _ ⟩  
+    rcases uniq_succ_eq m h₂ with ⟨mp, hm, _ ⟩  
+    rw[<-hn, <-hm,mul_succ]
+    have tri : (np++)≠  0 := succ_ne (np)
+    exact add_pos_right (np++ * mp) tri 
 
 /-- Lemma 2.3.3 (Positive natural numbers have no zero divisors) / Exercise 2.3.2.
     Compare with Mathlib's `Nat.mul_eq_zero`.  -/
 lemma Nat.mul_eq_zero (n m: Nat) : n * m = 0 ↔ n = 0 ∨ m = 0 := by
-  sorry
+  constructor
+  . contrapose
+    push_neg
+    rw[<- isPos_iff, <- isPos_iff, <- isPos_iff]
+    intro ⟨h1, h2⟩ 
+    exact pos_mul_pos h1 h2
+  intro hnm
+  cases hnm with
+  | inl hp => 
+    rw[hp]
+    exact zero_mul m
+  | inr hq =>
+    rw[hq]
+    exact mul_zero n
 
 /-- Proposition 2.3.4 (Distributive law)
 Compare with Mathlib's `Nat.mul_add` -/
