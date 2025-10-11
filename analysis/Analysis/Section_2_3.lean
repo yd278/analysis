@@ -135,7 +135,11 @@ theorem Nat.add_mul (a b c: Nat) : (a + b)*c = a*c + b*c := by
 /-- Proposition 2.3.5 (Multiplication is associative) / Exercise 2.3.3
 Compare with Mathlib's `Nat.mul_assoc` -/
 theorem Nat.mul_assoc (a b c: Nat) : (a * b) * c = a * (b * c) := by
-  sorry
+  revert a
+  apply induction
+  . rw[zero_mul,zero_mul,zero_mul]
+  intro n hind
+  rw[succ_eq_add_one,add_mul, add_mul, add_mul,one_mul, one_mul, hind]
 
 /-- (Not from textbook)  Nat is a commutative semiring.
     This allows tactics such as `ring` to apply to the Chapter 2 natural numbers. -/
@@ -194,12 +198,35 @@ lemma Nat.mul_cancel_right {a b c: Nat} (h: a * c = b * c) (hc: c.IsPos) : a = b
   apply ne_of_gt at hgt
   contradiction
 
+theorem Nat.mul_le_mul_of_nonneg_left : ∀ (a b c : Nat), a ≤ b → 0 ≤ c → c * a ≤ c * b := by 
+    intro a b c hab hc
+    rw[le_iff_lt_or_eq] at * 
+    obtain nez | ez := hc
+    . replace nez: 0≠ c := nez.2 
+      symm at nez
+      rw[<-isPos_iff] at nez
+      obtain lt | eq := hab
+      . have : c * a < c * b := mul_lt_mul_of_pos_left lt nez
+        tauto
+      . have : c * a = c * b := by
+          rw[eq]
+        tauto
+    have : c*a = c * b := by
+      rw[<- ez, zero_mul, zero_mul]
+    tauto
 /-- (Not from textbook) Nat is an ordered semiring.
 This allows tactics such as `gcongr` to apply to the Chapter 2 natural numbers. -/
 instance Nat.isOrderedRing : IsOrderedRing Nat where
-  zero_le_one := by sorry
-  mul_le_mul_of_nonneg_left := by sorry
-  mul_le_mul_of_nonneg_right := by sorry
+  zero_le_one := zero_le 1
+  mul_le_mul_of_nonneg_left := mul_le_mul_of_nonneg_left
+  mul_le_mul_of_nonneg_right := by
+    intro a b c hab hc
+    have : c * a ≤ c * b := mul_le_mul_of_nonneg_left a b c hab hc
+    rw[mul_comm, mul_comm b c]
+    exact this
+
+
+
 
 /-- This illustration of the `gcongr` tactic is not from the
     textbook. -/
