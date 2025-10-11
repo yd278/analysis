@@ -239,7 +239,37 @@ example (a b c d:Nat) (hab: a ≤ b) : c*a*d ≤ c*b*d := by
 Compare with Mathlib's `Nat.mod_eq_iff` -/
 theorem Nat.exists_div_mod (n:Nat) {q: Nat} (hq: q.IsPos) :
     ∃ m r: Nat, 0 ≤ r ∧ r < q ∧ n = m * q + r := by
-  sorry
+      revert n
+      apply induction
+      . use 0, 0
+        split_ands
+        . simp
+        . exact q.zero_le
+        . symm
+          rw[<- isPos_iff]
+          exact hq
+        simp
+      intro n hind 
+      obtain ⟨m,r ,hr, hle,heq ⟩ := hind
+      by_cases round: r++=q 
+      . use m++, 0
+        split_ands
+        . simp
+        . exact q.zero_le
+        . symm
+          rw[<- isPos_iff]
+          exact hq
+        rw[heq, <- add_succ, round, succ_mul]
+        simp
+      use m, (r++)
+      split_ands
+      . exact (r++).zero_le
+      . rw[lt_iff_succ_le] at hle
+        exact hle
+      . push_neg at round
+        exact round
+      rw[heq,add_succ]
+
 
 /-- Definition 2.3.11 (Exponentiation for natural numbers) -/
 abbrev Nat.pow (m n: Nat) : Nat := Nat.recurse (fun _ prod ↦ prod * m) 1 n
