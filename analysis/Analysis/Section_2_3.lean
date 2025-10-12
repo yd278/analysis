@@ -62,7 +62,7 @@ Compare with Mathlib's `Nat.mul_zero` -/
 lemma Nat.mul_zero (n: Nat) : n * 0 = 0 := by
   revert n
   apply induction
-  . exact zero_mul 0
+  . apply zero_mul
   intro n n_mul
   rw[succ_mul,n_mul,add_zero]
 
@@ -71,7 +71,7 @@ Compare with Mathlib's `Nat.mul_succ` -/
 lemma Nat.mul_succ (n m:Nat) : n * m++ = n * m + n := by
   revert n
   apply induction
-  . exact zero_mul m
+  . apply zero_mul
   intro n n_mul
   rw[succ_mul, succ_mul, n_mul, succ_eq_add_one, succ_eq_add_one]
   abel
@@ -83,7 +83,7 @@ lemma Nat.mul_comm (n m: Nat) : n * m = m * n := by
   apply induction
   . rw[zero_mul, mul_zero]
   intro n hind
-  rw[succ_mul, mul_succ,hind]
+  rw[succ_mul, mul_succ, hind]
 
 /-- Compare with Mathlib's `Nat.mul_one` -/
 theorem Nat.mul_one (m: Nat) : m * 1 = m := by
@@ -92,11 +92,11 @@ theorem Nat.mul_one (m: Nat) : m * 1 = m := by
 /-- This lemma will be useful to prove Lemma 2.3.3.
 Compare with Mathlib's `Nat.mul_pos` -/
 lemma Nat.pos_mul_pos {n m: Nat} (h₁: n.IsPos) (h₂: m.IsPos) : (n * m).IsPos := by
-    rcases uniq_succ_eq n h₁ with ⟨np, hn, _ ⟩  
-    rcases uniq_succ_eq m h₂ with ⟨mp, hm, _ ⟩  
-    rw[<-hn, <-hm,mul_succ]
-    have tri : (np++)≠  0 := succ_ne (np)
-    exact add_pos_right (np++ * mp) tri 
+    rcases uniq_succ_eq n h₁ with ⟨np, hn, _ ⟩
+    rcases uniq_succ_eq m h₂ with ⟨mp, hm, _ ⟩
+    rw[←hn, ←hm,mul_succ]
+    have tri : (np++) ≠  0 := succ_ne np
+    apply add_pos_right (np++ * mp) tri
 
 /-- Lemma 2.3.3 (Positive natural numbers have no zero divisors) / Exercise 2.3.2.
     Compare with Mathlib's `Nat.mul_eq_zero`.  -/
@@ -104,28 +104,25 @@ lemma Nat.mul_eq_zero (n m: Nat) : n * m = 0 ↔ n = 0 ∨ m = 0 := by
   constructor
   . contrapose
     push_neg
-    rw[<- isPos_iff, <- isPos_iff, <- isPos_iff]
-    intro ⟨h1, h2⟩ 
-    exact pos_mul_pos h1 h2
+    intro ⟨h1, h2⟩
+    apply pos_mul_pos h1 h2
   intro hnm
   cases hnm with
-  | inl hp => 
+  | inl hp =>
     rw[hp]
-    exact zero_mul m
+    apply zero_mul
   | inr hq =>
     rw[hq]
-    exact mul_zero n
+    apply mul_zero
 
 /-- Proposition 2.3.4 (Distributive law)
 Compare with Mathlib's `Nat.mul_add` -/
 theorem Nat.mul_add (a b c: Nat) : a * (b + c) = a * b + a * c := by
   -- This proof is written to follow the structure of the original text.
   revert c; apply induction
-  . rw [add_zero]
-    rw [mul_zero, add_zero]
+  . simp [mul_zero] 
   intro c habc
-  rw [add_succ, mul_succ]
-  rw [mul_succ, ←add_assoc, ←habc]
+  simp [add_succ, mul_succ , ←add_assoc, ←habc]
 
 /-- Proposition 2.3.4 (Distributive law)
 Compare with Mathlib's `Nat.add_mul`  -/
@@ -137,9 +134,9 @@ Compare with Mathlib's `Nat.mul_assoc` -/
 theorem Nat.mul_assoc (a b c: Nat) : (a * b) * c = a * (b * c) := by
   revert a
   apply induction
-  . rw[zero_mul,zero_mul,zero_mul]
+  . simp [zero_mul]
   intro n hind
-  rw[succ_eq_add_one,add_mul, add_mul, add_mul,one_mul, one_mul, hind]
+  simp [succ_eq_add_one, add_mul, one_mul, hind]
 
 /-- (Not from textbook)  Nat is a commutative semiring.
     This allows tactics such as `ring` to apply to the Chapter 2 natural numbers. -/
@@ -178,7 +175,7 @@ theorem Nat.mul_gt_mul_of_pos_right {a b c: Nat} (h: a > b) (hc: c.IsPos) :
 Compare with Mathlib's `Nat.mul_lt_mul_of_pos_left` -/
 theorem Nat.mul_lt_mul_of_pos_left {a b c: Nat} (h: a < b) (hc: c.IsPos) : c * a < c * b := by
   simp [mul_comm]
-  exact mul_lt_mul_of_pos_right h hc
+  apply mul_lt_mul_of_pos_right h hc
 
 /-- Proposition 2.3.6 (Multiplication preserves order) -/
 theorem Nat.mul_gt_mul_of_pos_left {a b c: Nat} (h: a > b) (hc: c.IsPos) :
@@ -198,21 +195,19 @@ lemma Nat.mul_cancel_right {a b c: Nat} (h: a * c = b * c) (hc: c.IsPos) : a = b
   apply ne_of_gt at hgt
   contradiction
 
-theorem Nat.mul_le_mul_of_nonneg_left : ∀ (a b c : Nat), a ≤ b → 0 ≤ c → c * a ≤ c * b := by 
+theorem Nat.mul_le_mul_of_nonneg_left : ∀ (a b c : Nat), a ≤ b → 0 ≤ c → c * a ≤ c * b := by
     intro a b c hab hc
-    rw[le_iff_lt_or_eq] at * 
+    rw[le_iff_lt_or_eq] at *
     obtain nez | ez := hc
-    . replace nez: 0≠ c := nez.2 
-      symm at nez
-      rw[<-isPos_iff] at nez
+    . replace nez: c ≠ 0 := nez.2.symm
       obtain lt | eq := hab
       . have : c * a < c * b := mul_lt_mul_of_pos_left lt nez
         tauto
       . have : c * a = c * b := by
           rw[eq]
         tauto
-    have : c*a = c * b := by
-      rw[<- ez, zero_mul, zero_mul]
+    have : c * a = c * b := by
+      simp [←ez]
     tauto
 /-- (Not from textbook) Nat is an ordered semiring.
 This allows tactics such as `gcongr` to apply to the Chapter 2 natural numbers. -/
@@ -220,13 +215,7 @@ instance Nat.isOrderedRing : IsOrderedRing Nat where
   zero_le_one := zero_le 1
   mul_le_mul_of_nonneg_left := mul_le_mul_of_nonneg_left
   mul_le_mul_of_nonneg_right := by
-    intro a b c hab hc
-    have : c * a ≤ c * b := mul_le_mul_of_nonneg_left a b c hab hc
-    rw[mul_comm, mul_comm b c]
-    exact this
-
-
-
+    grind [mul_comm, mul_le_mul_of_nonneg_left]
 
 /-- This illustration of the `gcongr` tactic is not from the
     textbook. -/
@@ -245,29 +234,24 @@ theorem Nat.exists_div_mod (n:Nat) {q: Nat} (hq: q.IsPos) :
         split_ands
         . simp
         . exact q.zero_le
-        . symm
-          rw[<- isPos_iff]
-          exact hq
+        . exact hq.symm
         simp
-      intro n hind 
+      intro n hind
       obtain ⟨m,r ,hr, hle,heq ⟩ := hind
-      by_cases round: r++=q 
+      by_cases round: r++=q
       . use m++, 0
         split_ands
         . simp
         . exact q.zero_le
-        . symm
-          rw[<- isPos_iff]
-          exact hq
-        rw[heq, <- add_succ, round, succ_mul]
-        simp
+        . exact hq.symm
+        simp[heq, ←add_succ, round, succ_mul]
       use m, (r++)
       split_ands
       . exact (r++).zero_le
       . rw[lt_iff_succ_le] at hle
-        exact hle
+        assumption
       . push_neg at round
-        exact round
+        assumption
       rw[heq,add_succ]
 
 
@@ -303,7 +287,7 @@ lemma Nat.pow_two (m : Nat) : m ^ (2: Nat) = m * m := by
 theorem Nat.sq_add_eq (a b: Nat) :
     (a + b) ^ (2 : Nat) = a ^ (2 : Nat) + 2 * a * b + b ^ (2 : Nat) := by
       rw[pow_two, pow_two, pow_two]
-      ring 
-         
+      ring
+
 
 end Chapter2
