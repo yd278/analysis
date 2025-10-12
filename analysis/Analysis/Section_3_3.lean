@@ -433,13 +433,13 @@ theorem Function.comp_of_surj {X Y Z:Set} {f: Function X Y} {g : Function Y Z} (
   (hg: g.onto) : (g ○ f).onto := by sorry
 
 /--
-  Exercise 3.3.3 - fill in the sorrys in the statements in  a reasonable fashion.
+  Exercise 3.3.3 - fill in the sorrys in the statements in a reasonable fashion.
 -/
-example (X: Set) : (SetTheory.Set.f_3_3_11 X).one_to_one ↔ sorry := by sorry
+theorem empty_function_one_to_one_iff (X: Set) (f: Function ∅ X) : f.one_to_one ↔ sorry := by sorry
 
-example (X: Set) : (SetTheory.Set.f_3_3_11 X).onto ↔ sorry := by sorry
+theorem empty_function_onto_iff (X: Set) (f: Function ∅ X) : f.onto ↔ sorry := by sorry
 
-example (X: Set) : (SetTheory.Set.f_3_3_11 X).bijective ↔ sorry := by sorry
+theorem empty_function_bijective_iff (X: Set) (f: Function ∅ X) : f.bijective ↔ sorry:= by sorry
 
 /--
   Exercise 3.3.4.
