@@ -464,15 +464,15 @@ def Function.comp_cancel_right_without_hg : Decidable (∀ (X Y Z:Set) (f: Funct
 theorem Function.comp_injective {X Y Z:Set} {f: Function X Y} {g : Function Y Z} (hinj :
     (g ○ f).one_to_one) : f.one_to_one := by sorry
 
-theorem Function.comp_surjective {X Y Z:Set} {f: Function X Y} {g : Function Y Z}
-  (hinj : (g ○ f).onto) : g.onto := by sorry
+theorem Function.comp_surjective {X Y Z:Set} {f: Function X Y} {g : Function Y Z} (hsurj :
+    (g ○ f).onto) : g.onto := by sorry
 
 def Function.comp_injective' : Decidable (∀ (X Y Z:Set) (f: Function X Y) (g : Function Y Z) (hinj :
     (g ○ f).one_to_one), g.one_to_one) := by
   -- the first line of this construction should be either `apply isTrue` or `apply isFalse`.
   sorry
 
-def Function.comp_surjective' : Decidable (∀ (X Y Z:Set) (f: Function X Y) (g : Function Y Z) (hinj :
+def Function.comp_surjective' : Decidable (∀ (X Y Z:Set) (f: Function X Y) (g : Function Y Z) (hsurj :
     (g ○ f).onto), f.onto) := by
   -- the first line of this construction should be either `apply isTrue` or `apply isFalse`.
   sorry
