@@ -116,3 +116,58 @@ theorem Lebesgue_measure.downward_monotone_convergence {d:ℕ} {E: ℕ → Set (
 
 /-- Exercise 1.2.11 (c) (counterexample)-/
 example : ∃ (d:ℕ) (E: ℕ → Set (EuclideanSpace' d)) (hE: ∀ n, Lebesgue_measurable (E n)) (hmono: ∀ n, E (n+1) ⊆ E n), ¬ Filter.atTop.Tendsto (fun n ↦ Lebesgue_measure (E n)) (nhds (Lebesgue_measure (⋂ n, E n))) := by sorry
+
+/-- Exercise 1.2.12 -/
+example {d:ℕ} (m: Set (EuclideanSpace' d) → EReal) (h_empty: m ∅ = 0) (h_pos: ∀ E, 0 ≤ m E) (hadd: ∀ E: ℕ → Set (EuclideanSpace' d), (Set.univ.PairwiseDisjoint E) → (∀ n, Lebesgue_measurable (E n)) → m (⋃ n, E n) = ∑' n, m (E n)) {E F: Set (EuclideanSpace' d)}
+(hsub: E ⊆ F) (hE: Lebesgue_measurable E) (hF: Lebesgue_measurable F) : m E ≤ m F := by
+  sorry
+
+/-- Exercise 1.2.12 -/
+example {d:ℕ} (m: Set (EuclideanSpace' d) → EReal) (h_empty: m ∅ = 0) (h_pos: ∀ E, 0 ≤ m E) (hadd: ∀ E: ℕ → Set (EuclideanSpace' d), (Set.univ.PairwiseDisjoint E) → (∀ n, Lebesgue_measurable (E n)) → m (⋃ n, E n) = ∑' n, m (E n)) {E: ℕ → Set (EuclideanSpace' d)} (hE: ∀ n, Lebesgue_measurable (E n)):  m (⋃ n, E n) ≤ ∑' n, m (E n) := by
+  sorry
+
+/-- Exercise 1.2.13(i) -/
+example {d:ℕ} {E: ℕ → Set (EuclideanSpace' d)} {E₀: Set (EuclideanSpace' d)} (hE: ∀ n, Lebesgue_measurable (E n)) (hpoint: ∀ x, Filter.atTop.Tendsto (fun n ↦ (E n).indicator' x) (nhds (E₀.indicator' x))) : Lebesgue_measurable E₀ := by sorry
+
+/-- Exercise 1.2.13(ii) -/
+example {d:ℕ} {E: ℕ → Set (EuclideanSpace' d)} {E₀ F: Set (EuclideanSpace' d)}
+  (hE: ∀ n, Lebesgue_measurable (E n))
+  (hpoint: ∀ x, Filter.atTop.Tendsto (fun n ↦ (E n).indicator' x) (nhds (E₀.indicator' x)))
+  (hsub: ∀ n, E n ⊆ F) (hFmes: Lebesgue_measurable F) (hfin: Lebesgue_measure F < ⊤) : Filter.atTop.Tendsto (fun n ↦ Lebesgue_measure (E n)) (nhds (Lebesgue_measure E₀)) := by sorry
+
+/-- Exercise 1.2.13(iii) -/
+example : ∃ (d:ℕ) (E: ℕ → Set (EuclideanSpace' d)) (E₀ F: Set (EuclideanSpace' d))
+  (hE: ∀ n, Lebesgue_measurable (E n))
+  (hpoint: ∀ x, Filter.atTop.Tendsto (fun n ↦ (E n).indicator' x) (nhds (E₀.indicator' x)))
+  (hsub: ∀ n, E n ⊆ F) (hFmes: Lebesgue_measurable F), ¬ Filter.atTop.Tendsto (fun n ↦ Lebesgue_measure (E n)) (nhds (Lebesgue_measure E₀)) := by sorry
+
+/-- Exercise 1.2.14 -/
+example {d:ℕ} (E: Set (EuclideanSpace' d)) : ∃ (F: Set (EuclideanSpace' d)), E ⊆ F ∧ Lebesgue_measurable F ∧ Lebesgue_measure F = Lebesgue_outer_measure E := by sorry
+
+/-- Exercise 1.2.15 (Inner regularity)-/
+theorem Lebesgue_measure.eq {d:ℕ} {E: Set (EuclideanSpace' d)} (hE: Lebesgue_measurable E): Lebesgue_measure E = sSup { M | ∃ K, K ⊆ E ∧ IsCompact K ∧ M = Lebesgue_measure K} := by
+  sorry
+
+/-- Exercise 1.2.16 (Criteria for measurability)-/
+theorem Lebesgue_measurable.finite_TFAE {d:ℕ} (E: Set (EuclideanSpace' d)) :
+    [
+      Lebesgue_measurable E ∧ Lebesgue_measure E < ⊤,
+      (∀ ε > 0, ∃ U : Set (EuclideanSpace' d), IsOpen U ∧ E ⊆ U ∧ Lebesgue_measure U < ⊤ ∧ Lebesgue_outer_measure (U \ E) ≤ ε),
+      (∀ ε > 0, ∃ U : Set (EuclideanSpace' d), IsOpen U ∧ Bornology.IsBounded U ∧ Lebesgue_outer_measure (symmDiff U E) ≤ ε),
+      (∀ ε > 0, ∃ F: Set (EuclideanSpace' d), IsCompact F ∧ F ⊆ E ∧ Lebesgue_outer_measure (E \ F) ≤ ε),
+      (∀ ε > 0, ∃ F: Set (EuclideanSpace' d), IsCompact F ∧ Lebesgue_outer_measure (symmDiff F E) ≤ ε),
+      (∀ ε > 0, ∃ E': Set (EuclideanSpace' d), Lebesgue_measurable E' ∧ Lebesgue_measure E' < ⊤ ∧ Lebesgue_outer_measure (symmDiff E' E) ≤ ε),
+      (∀ ε > 0, ∃ E': Set (EuclideanSpace' d), Lebesgue_measurable E' ∧ Bornology.IsBounded E' ∧ Lebesgue_outer_measure (symmDiff E' E) ≤ ε),
+      (∀ ε > 0, ∃ E': Set (EuclideanSpace' d), IsElementary E' ∧ Lebesgue_outer_measure (symmDiff E' E) ≤ ε),
+      (∀ ε > 0, ∃ (n:ℤ) (F: Finset (Box d)), (∀ B ∈ F, B.IsDyadicAtScale n) ∧ Lebesgue_outer_measure (symmDiff (⋃ B ∈ F, B.toSet) E) ≤ ε)
+    ].TFAE
+  := by sorry
+
+/-- Exercise 1.2.17 (Caratheodory criterion one direction)-/
+theorem Lebesgue_measurable.caratheodory {d:ℕ} (E: Set (EuclideanSpace' d)) :
+    [
+      Lebesgue_measurable E,
+      (∀ A: Set (EuclideanSpace' d), IsElementary A → Lebesgue_outer_measure A = Lebesgue_outer_measure (A ∩ E) + Lebesgue_outer_measure (A \ E)),
+      (∀ (B:Box d),  Lebesgue_outer_measure B.toSet = Lebesgue_outer_measure (B.toSet ∩ E) + Lebesgue_outer_measure (B.toSet \ E))
+    ].TFAE
+  := by sorry
