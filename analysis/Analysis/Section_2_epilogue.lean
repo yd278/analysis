@@ -57,29 +57,54 @@ abbrev Chapter2.Nat.map_add : ∀ (n m : Nat), (n + m).toNat = n.toNat + m.toNat
   intro n m
   induction' n with n hn
   · rw [show zero = 0 from rfl, zero_add, _root_.Nat.zero_add]
-  sorry
+  rw[succ_add, succ_toNat, succ_toNat, hn]
+  abel
+
 
 /-- The conversion preserves multiplication. -/
 abbrev Chapter2.Nat.map_mul : ∀ (n m : Nat), (n * m).toNat = n.toNat * m.toNat := by
   intro n m
-  sorry
+  induction' n with n hn
+  . rw[show zero = 0 from rfl, zero_mul, zero_toNat]
+    ring
+  rw[succ_mul, succ_toNat, map_add, hn]
+  ring
 
 /-- The conversion preserves order. -/
 abbrev Chapter2.Nat.map_le_map_iff : ∀ {n m : Nat}, n.toNat ≤ m.toNat ↔ n ≤ m := by
   intro n m
-  sorry
+  constructor
+  . contrapose
+    push_neg
+    intro ⟨⟨v, hv⟩, hne⟩
+    have : v ≠ 0 := by
+      by_contra h
+      simp[h] at hv
+      symm at hv
+      contradiction
+    have : 0 < v.toNat  := by
+      rcases uniq_succ_eq v this with ⟨ m, hm, hmu ⟩
+      rw[← hm, succ_toNat]
+      simp
+    rw[hv, map_add]
+    simp
+    assumption
+  intro ⟨ v, hv ⟩
+  rw[hv, map_add]
+  simp
 
 abbrev Chapter2.Nat.equivNat_ordered_ring : Chapter2.Nat ≃+*o ℕ where
   toEquiv := equivNat
   map_add' := map_add
   map_mul' := map_mul
   map_le_map_iff' := map_le_map_iff
-
 /-- The conversion preserves exponentiation. -/
 lemma Chapter2.Nat.pow_eq_pow (n m : Chapter2.Nat) :
-    n.toNat ^ m.toNat = n^m := by
-  sorry
-
+    n.toNat ^ m.toNat = (n^m).toNat := by
+      induction' m with m mh
+      . simp
+      rw[succ_toNat, pow_succ, map_mul, ← mh]
+      ring
 
 /-- The Peano axioms for an abstract type `Nat` -/
 @[ext]
@@ -117,13 +142,38 @@ abbrev natCast (P : PeanoAxioms) : ℕ → P.Nat := fun n ↦ match n with
   | Nat.zero => P.zero
   | Nat.succ n => P.succ (natCast P n)
 
+
 /-- One can start the proof here with `unfold Function.Injective`, although it is not strictly necessary. -/
 theorem natCast_injective (P : PeanoAxioms) : Function.Injective P.natCast  := by
-  sorry
+    unfold Function.Injective
+    intro a b p
+    revert a
+    induction' b with b hind
+    . intro a p
+      contrapose! p
+      rcases Nat.exists_eq_succ_of_ne_zero p  with ⟨v, hv⟩
+      rw[hv,natCast]
+      apply P.succ_ne
+    intro a' pa'
+    have : a' ≠ 0 := by
+      contrapose! pa'
+      rw[pa',natCast, natCast]
+      symm
+      apply P.succ_ne
+    rcases Nat.exists_eq_succ_of_ne_zero this  with ⟨v, hv⟩
+    rw[hv, natCast, natCast] at pa'
+    apply P.succ_cancel at pa'
+    apply hind at pa'
+    simp[hv,pa']
 
 /-- One can start the proof here with `unfold Function.Surjective`, although it is not strictly necessary. -/
 theorem natCast_surjective (P : PeanoAxioms) : Function.Surjective P.natCast := by
-  sorry
+    unfold Function.Surjective
+    apply P.induction
+    . use 0
+    intro p ⟨a, ha⟩ 
+    use (a + 1)
+    rw[natCast, ha]
 
 /-- The notion of an equivalence between two structures obeying the Peano axioms.
     The symbol `≃` is an alias for Mathlib's `Equiv` class; for instance `P.Nat ≃ Q.Nat` is
@@ -137,8 +187,17 @@ class Equiv (P Q : PeanoAxioms) where
     Some of this API can be invoked automatically via the `simp` tactic. -/
 abbrev Equiv.symm {P Q: PeanoAxioms} (equiv : Equiv P Q) : Equiv Q P where
   equiv := equiv.equiv.symm
-  equiv_zero := by sorry
-  equiv_succ n := by sorry
+  equiv_zero := by
+    have eq := equiv.equiv_zero.symm
+    rw[eq]
+    simp
+    
+  equiv_succ n := by 
+    have eq := equiv.equiv_succ
+    specialize eq (Equiv.equiv.symm n)
+    simp at eq
+    rw[← eq]
+    simp
 
 /-- This exercise will require application of Mathlib's API for the `Equiv` class.
     Some of this API can be invoked automatically via the `simp` tactic. -/
