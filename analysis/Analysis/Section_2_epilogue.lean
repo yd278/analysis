@@ -203,23 +203,42 @@ abbrev Equiv.symm {P Q: PeanoAxioms} (equiv : Equiv P Q) : Equiv Q P where
     Some of this API can be invoked automatically via the `simp` tactic. -/
 abbrev Equiv.trans {P Q R: PeanoAxioms} (equiv1 : Equiv P Q) (equiv2 : Equiv Q R) : Equiv P R where
   equiv := equiv1.equiv.trans equiv2.equiv
-  equiv_zero := by sorry
-  equiv_succ n := by sorry
+  equiv_zero := by 
+    simp [equiv1.equiv_zero, equiv2.equiv_zero]
+  equiv_succ n := by 
+    simp
+    have eq1 := equiv1.equiv_succ
+    specialize eq1 n
+    rw[eq1]
+    have eq2 := equiv2.equiv_succ
+    specialize eq2 (equiv n)
+    rw[eq2]
 
 /-- Useful Mathlib tools for inverting bijections include `Function.surjInv` and `Function.invFun`. -/
 noncomputable abbrev Equiv.fromNat (P : PeanoAxioms) : Equiv Mathlib_Nat P where
   equiv := {
     toFun := P.natCast
-    invFun := by sorry
-    left_inv := by sorry
-    right_inv := by sorry
+    invFun := P.natCast.invFun 
+    left_inv := by 
+      unfold Function.LeftInverse 
+      intro x
+      exact Function.leftInverse_invFun P.natCast_injective x
+    right_inv := by
+      unfold Function.RightInverse 
+      unfold Function.LeftInverse 
+      intro x
+      exact Function.rightInverse_invFun P.natCast_surjective x
   }
-  equiv_zero := by sorry
-  equiv_succ n := by sorry
+  equiv_zero := by 
+    simp
+    rfl
+  equiv_succ n := by 
+    simp
+    rfl
 
 /-- The task here is to establish that any two structures obeying the Peano axioms are equivalent. -/
-noncomputable abbrev Equiv.mk' (P Q : PeanoAxioms) : Equiv P Q := by sorry
-
+noncomputable abbrev Equiv.mk' (P Q : PeanoAxioms) : Equiv P Q :=
+     Equiv.trans (Equiv.symm (Equiv.fromNat P)) (Equiv.fromNat Q)
 /-- There is only one equivalence between any two structures obeying the Peano axioms. -/
 theorem Equiv.uniq {P Q : PeanoAxioms} (equiv1 equiv2 : PeanoAxioms.Equiv P Q) :
     equiv1 = equiv2 := by
@@ -227,11 +246,63 @@ theorem Equiv.uniq {P Q : PeanoAxioms} (equiv1 equiv2 : PeanoAxioms.Equiv P Q) :
   obtain ⟨equiv2, equiv_zero2, equiv_succ2⟩ := equiv2
   congr
   ext n
-  sorry
+  revert n
+  apply P.induction
+  . simp[equiv_zero1, equiv_zero2]
+  intro n hind
+  simp[equiv_succ1,equiv_succ2]
+  rw[hind]
+
+
 
 /-- A sample result: recursion is well-defined on any structure obeying the Peano axioms-/
 theorem Nat.recurse_uniq {P : PeanoAxioms} (f: P.Nat → P.Nat → P.Nat) (c: P.Nat) :
     ∃! (a: P.Nat → P.Nat), a P.zero = c ∧ ∀ n, a (P.succ n) = f n (a n) := by
-  sorry
+
+      -- definitions
+      let e := Equiv.fromNat P
+      let toP : ℕ → P.Nat := e.equiv.toFun
+      let toNat : P.Nat → ℕ := e.equiv.invFun
+      have l_inv : ∀ x : ℕ , toNat (toP x) = x := e.equiv.left_inv
+      have r_inv : ∀ y : P.Nat, toP (toNat y) = y := e.equiv.right_inv
+
+      -- recursive  function
+      let a_aux : ℕ → P.Nat :=
+        Nat.rec c (fun n' prev_result => f (toP n') prev_result)
+      let a : P.Nat → P.Nat := fun p ↦ a_aux (toNat p)
+
+      -- properties of the function 
+
+      have a_z : a P.zero = c := by
+        simp[a, show P.zero = toP 0 from rfl , l_inv 0, a_aux]
+      have a_succ :∀ n, a (P.succ n) = f n (a n) := by
+        intro n
+        simp[a, 
+          show toNat (P.succ n) = toNat n + 1 
+            from (Equiv.symm e).equiv_succ n, 
+          a_aux,
+          r_inv
+        ]
+     
+      -- body of the proof
+
+      use a
+      constructor
+      . --exist
+        split_ands
+        . exact a_z
+        . exact a_succ
+      . --unique
+        intro a' ha'
+        funext n
+        revert n
+        apply P.induction
+        . -- base case
+          rw[ha'.1]
+          exact a_z.symm
+        . -- induction
+          intro n hind
+          rw[ha'.2, hind]
+          exact (a_succ n).symm
 
 end PeanoAxioms
