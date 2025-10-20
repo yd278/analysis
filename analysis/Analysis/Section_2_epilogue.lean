@@ -74,8 +74,7 @@ abbrev Chapter2.Nat.map_mul : ∀ (n m : Nat), (n * m).toNat = n.toNat * m.toNat
 abbrev Chapter2.Nat.map_le_map_iff : ∀ {n m : Nat}, n.toNat ≤ m.toNat ↔ n ≤ m := by
   intro n m
   constructor
-  . contrapose
-    push_neg
+  . contrapose!
     intro ⟨⟨v, hv⟩, hne⟩
     have : v ≠ 0 := by
       by_contra h
@@ -84,14 +83,11 @@ abbrev Chapter2.Nat.map_le_map_iff : ∀ {n m : Nat}, n.toNat ≤ m.toNat ↔ n 
       contradiction
     have : 0 < v.toNat  := by
       rcases uniq_succ_eq v this with ⟨ m, hm, hmu ⟩
-      rw[← hm, succ_toNat]
-      simp
-    rw[hv, map_add]
-    simp
-    assumption
+      simp[← hm ]
+    simp[hv, map_add]
+    exact this
   intro ⟨ v, hv ⟩
-  rw[hv, map_add]
-  simp
+  simp[hv, map_add]
 
 abbrev Chapter2.Nat.equivNat_ordered_ring : Chapter2.Nat ≃+*o ℕ where
   toEquiv := equivNat
@@ -219,21 +215,14 @@ noncomputable abbrev Equiv.fromNat (P : PeanoAxioms) : Equiv Mathlib_Nat P where
   equiv := {
     toFun := P.natCast
     invFun := P.natCast.invFun 
-    left_inv := by 
-      unfold Function.LeftInverse 
-      intro x
-      exact Function.leftInverse_invFun P.natCast_injective x
-    right_inv := by
-      unfold Function.RightInverse 
-      unfold Function.LeftInverse 
-      intro x
-      exact Function.rightInverse_invFun P.natCast_surjective x
+    left_inv n := by 
+      exact Function.leftInverse_invFun P.natCast_injective n
+    right_inv n := by
+      exact Function.rightInverse_invFun P.natCast_surjective n
   }
   equiv_zero := by 
-    simp
     rfl
   equiv_succ n := by 
-    simp
     rfl
 
 /-- The task here is to establish that any two structures obeying the Peano axioms are equivalent. -/
@@ -267,22 +256,23 @@ theorem Nat.recurse_uniq {P : PeanoAxioms} (f: P.Nat → P.Nat → P.Nat) (c: P.
       have r_inv : ∀ y : P.Nat, toP (toNat y) = y := e.equiv.right_inv
 
       -- recursive  function
-      let a_aux : ℕ → P.Nat :=
-        Nat.rec c (fun n' prev_result => f (toP n') prev_result)
-      let a : P.Nat → P.Nat := fun p ↦ a_aux (toNat p)
-
+      let a : P.Nat → P.Nat := fun p ↦ 
+          Nat.rec c (fun n' pr => f (toP n') pr) (toNat p)
+    
       -- properties of the function 
 
       have a_z : a P.zero = c := by
-        simp[a, show P.zero = toP 0 from rfl , l_inv 0, a_aux]
+        unfold a
+        rw[show P.zero = toP 0 from rfl, l_inv]
+        rfl
       have a_succ :∀ n, a (P.succ n) = f n (a n) := by
         intro n
-        simp[a, 
+        unfold a
+        rw[ 
           show toNat (P.succ n) = toNat n + 1 
             from (Equiv.symm e).equiv_succ n, 
-          a_aux,
-          r_inv
         ]
+        simp only [r_inv]
      
       -- body of the proof
 

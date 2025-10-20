@@ -603,6 +603,7 @@ theorem Nat.induction_from {n:Nat} {P: Nat → Prop} (hind: ∀ m, P m → P (m+
       obtain ⟨z, hz⟩ := hm
       rw[hz]
       apply q z
+      
 
 
 
