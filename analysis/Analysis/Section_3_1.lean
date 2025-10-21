@@ -995,7 +995,13 @@ theorem SetTheory.Set.subset_inter_iff (A B C:Set) : C ⊆ A ∩ B ↔ C ⊆ A �
     specialize hc x
     rw[mem_inter] at hc
     tauto
-  intro habc
+  intro ⟨hca, hcb⟩ 
+  rw[subset_def] at *
+  intro x
+  replace hca := hca x
+  replace hcb := hcb x
+  have xab := mem_inter x A B
+  tauto
   
   
 
