@@ -82,7 +82,7 @@ lemma UnsignedSimpleFunction.integral_add {d:ℕ} {f g: EuclideanSpace' d → ER
 
 /-- Exercise 1.3.1 (i) (Unsigned linearity) -/
 lemma UnsignedSimpleFunction.integral_smul {d:ℕ} {f: EuclideanSpace' d → EReal} (hf: UnsignedSimpleFunction f) {c:EReal} (hc: c ≥ 0) :
-  (hf.smul c hc).integral = c * hf.integral := by
+  (hf.smul hc).integral = c * hf.integral := by
   sorry
 
 /-- Exercise 1.3.1 (ii) (Finiteness) -/
@@ -175,4 +175,3 @@ lemma ComplexSimpleFunction.integral_indicator {d:ℕ} {E: Set (EuclideanSpace' 
   sorry
 
 -- TODO: analogues for the real simple integral
-
