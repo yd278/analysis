@@ -11,7 +11,7 @@ def hasMonoStar {V:Type*} (G : SimpleGraph V) (color : Sym2 V → Fin 2)
   ∃ (x : V) (S : Finset V),
     S.card = k ∧
     x ∉ S ∧
-    ∀ ⦃y : V⦄, y ∈ S → G.Adj x y ∧ color (Sym2.mk x y) = col
+    ∀ ⦃y : V⦄, y ∈ S → G.Adj x y ∧ color (Sym2.mk (x, y)) = col
 
 /-- “Color-`col` monochromatic triangle”: there exist `a b c` with all three edges
     present in `G` and colored `col`.  (Adjacency already forces distinctness.) -/
@@ -19,9 +19,9 @@ def hasMonoTriangle {V:Type*} (G : SimpleGraph V) (color : Sym2 V → Fin 2)
     (col : Fin 2) : Prop :=
   ∃ a b c : V,
     G.Adj a b ∧ G.Adj b c ∧ G.Adj a c ∧
-    color (Sym2.mk a b) = col ∧
-    color (Sym2.mk b c) = col ∧
-    color (Sym2.mk a c) = col
+    color (Sym2.mk (a, b)) = col ∧
+    color (Sym2.mk (b, c)) = col ∧
+    color (Sym2.mk (a, c)) = col
 
 /-- **Statement (n = 5 case of Pikhurko’s counterexample).**
 There exists a simple graph on `16` vertices with exactly `44` edges such that
@@ -74,7 +74,7 @@ def G : SimpleGraph V where
   Adj := GAdj
   symm := by
     intro u v h
-    cases u <;> cases v <;> simpa [GAdj] using h
+    cases u <;> cases v <;> grind [GAdj]
   loopless := by
     intro v
     cases v <;> simp [GAdj]
