@@ -628,26 +628,19 @@ noncomputable instance : DecidablePred inBlock2 := by intro v; cases v <;> infer
 -- These came from the previous step you have:
 -- def redNeighbors (color : Sym2 V → Fin 2) : Finset V := ...
 
-/-- Red neighbors of `apex` in the first block. -/
-def redBlock1 (color : Sym2 V → Fin 2) : Finset V :=
-  (redNeighbors color).filter (fun v => inBlock1 v)
-
-/-- Red neighbors of `apex` in the second block. -/
-def redBlock2 (color : Sym2 V → Fin 2) : Finset V :=
-  (redNeighbors color).filter (fun v => inBlock2 v)
 
 /-- Further refine `redBlock1` into its `A1` and `B1` parts. -/
-def redBlock1A1 (color : Sym2 V → Fin 2) : Finset V :=
+noncomputable def redBlock1A1 (color : Sym2 V → Fin 2) : Finset V :=
   (redNeighbors color).filter (fun v => isA1 v)
 
-def redBlock1B1 (color : Sym2 V → Fin 2) : Finset V :=
+noncomputable def redBlock1B1 (color : Sym2 V → Fin 2) : Finset V :=
   (redNeighbors color).filter (fun v => isB1 v)
 
 /-- Further refine `redBlock2` into its `A2` and `B2` parts. -/
-def redBlock2A2 (color : Sym2 V → Fin 2) : Finset V :=
+noncomputable def redBlock2A2 (color : Sym2 V → Fin 2) : Finset V :=
   (redNeighbors color).filter (fun v => isA2 v)
 
-def redBlock2B2 (color : Sym2 V → Fin 2) : Finset V :=
+noncomputable def redBlock2B2 (color : Sym2 V → Fin 2) : Finset V :=
   (redNeighbors color).filter (fun v => isB2 v)
 
 /-- `redBlock1` is exactly the disjoint union of its `A1` and `B1` parts. -/
@@ -675,16 +668,22 @@ lemma redBlock2_eq_union (color : Sym2 V → Fin 2) :
   ext v; constructor
   · intro hv
     rcases Finset.mem_filter.1 hv with ⟨hRN, hB⟩
-    have : isA2 v ∨ isB2 v := (inBlock2_iff v).1 hB
+    have : isA2 v ∨ isB2 v := by
+      apply (inBlock2_iff v).1
+      cases v <;> simp_all [inBlock1, inBlock2, redNeighbors]
+
     cases this with
     | inl hA2 => exact Finset.mem_union.2 (Or.inl (Finset.mem_filter.2 ⟨hRN, hA2⟩))
     | inr hB2 => exact Finset.mem_union.2 (Or.inr (Finset.mem_filter.2 ⟨hRN, hB2⟩))
   · intro hv
     rcases Finset.mem_union.1 hv with hA2 | hB2
     · rcases Finset.mem_filter.1 hA2 with ⟨hRN, hA2⟩
-      exact Finset.mem_filter.2 ⟨hRN, (inBlock2_iff v).2 (Or.inl hA2)⟩
+      exact Finset.mem_filter.2 ⟨hRN, by
+        cases v <;> simp_all [inBlock1, isA2]
+        ⟩
     · rcases Finset.mem_filter.1 hB2 with ⟨hRN, hB2⟩
-      exact Finset.mem_filter.2 ⟨hRN, (inBlock2_iff v).2 (Or.inr hB2)⟩
+      exact Finset.mem_filter.2 ⟨hRN, by
+        cases v <;> simp_all [inBlock1, isB2]⟩
 
 /-- The two parts of `redBlock1` are disjoint. -/
 lemma redA1_redB1_disjoint (color : Sym2 V → Fin 2) :
