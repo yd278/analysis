@@ -714,20 +714,17 @@ lemma redBlock1_card_eq_sum (color : Sym2 V → Fin 2) :
             (s := redBlock1A1 color) (t := redBlock1B1 color)
   -- rewrite the union as `redBlock1` and show the intersection is empty
   have hU : redBlock1A1 color ∪ redBlock1B1 color = redBlock1 color := by
-    simpa [redBlock1_eq_union] using (redBlock1_eq_union color).symm
+    rw [redBlock1_eq_union]
   have hI : (redBlock1A1 color ∩ redBlock1B1 color).card = 0 := by
     have hdis := redA1_redB1_disjoint color
     -- `disjoint` implies the intersection is empty
-    have : redBlock1A1 color ∩ redBlock1B1 color ⊆ (∅ : Finset V) := by
-      simpa [Finset.disjoint_left] using hdis
-    -- empty has card 0; subset to empty means it *is* empty for finsets
     have : redBlock1A1 color ∩ redBlock1B1 color = (∅ : Finset V) := by
-      apply Finset.eq_bot_iff.mpr
-      simpa using this
-    simpa [this]
+      simp [Disjoint] at hdis
+      aesop
+    aesop
   -- put it together
   have := by simpa [hU, hI, add_comm] using this
-  exact this.symm
+  exact this
 
 lemma redBlock2_card_eq_sum (color : Sym2 V → Fin 2) :
   (redBlock2 color).card
@@ -736,15 +733,15 @@ lemma redBlock2_card_eq_sum (color : Sym2 V → Fin 2) :
   have := Finset.card_union_add_card_inter
             (s := redBlock2A2 color) (t := redBlock2B2 color)
   have hU : redBlock2A2 color ∪ redBlock2B2 color = redBlock2 color := by
-    simpa [redBlock2_eq_union] using (redBlock2_eq_union color).symm
+    rw [redBlock2_eq_union]
   have hdis := redA2_redB2_disjoint color
   have hI : (redBlock2A2 color ∩ redBlock2B2 color).card = 0 := by
     have : redBlock2A2 color ∩ redBlock2B2 color = (∅ : Finset V) := by
-      apply Finset.eq_bot_iff.mpr
-      simpa [Finset.disjoint_left] using hdis
-    simpa [this]
+      simp [Disjoint] at hdis
+      aesop
+    simp [this]
   have := by simpa [hU, hI, add_comm] using this
-  exact this.symm
+  exact this
 
 /-! ## Bounding the `B`-parts by `5` -/
 
@@ -794,11 +791,11 @@ lemma card_B2Set_le_5 : (B2Set).card ≤ 5 := by
 
 lemma redBlock1B1_card_le_5 (color : Sym2 V → Fin 2) :
   (redBlock1B1 color).card ≤ 5 :=
-  (Finset.card_le_of_subset (redBlock1B1_subset_B1Set color)).trans card_B1Set_le_5
+  (Finset.card_le_card (redBlock1B1_subset_B1Set color)).trans card_B1Set_le_5
 
 lemma redBlock2B2_card_le_5 (color : Sym2 V → Fin 2) :
   (redBlock2B2 color).card ≤ 5 :=
-  (Finset.card_le_of_subset (redBlock2B2_subset_B2Set color)).trans card_B2Set_le_5
+  (Finset.card_le_card (redBlock2B2_subset_B2Set color)).trans card_B2Set_le_5
 
 /-! ## Existence of a red neighbor in the clique parts `A1` / `A2` -/
 
@@ -806,7 +803,7 @@ lemma redBlock2B2_card_le_5 (color : Sym2 V → Fin 2) :
 lemma exists_red_A1_of_block1_ge6
     (color : Sym2 V → Fin 2)
     (h6 : 6 ≤ (redBlock1 color).card) :
-    ∃ i : Fin 2, G.Adj apex (A1 i) ∧ color (Sym2.mk apex (A1 i)) = 1 := by
+    ∃ i : Fin 2, G.Adj apex (A1 i) ∧ color (Sym2.mk (apex, A1 i)) = 1 := by
   classical
   -- From the decomposition `|redBlock1| = |A1-part| + |B1-part|`
   -- and `|B1-part| ≤ 5`, we get `|A1-part| ≥ 1`.
@@ -815,11 +812,11 @@ lemma exists_red_A1_of_block1_ge6
   have hposA1 : 0 < (redBlock1A1 color).card := by
     -- If `A1-part` were empty, then `|redBlock1| = |B1-part| ≤ 5`, contradicting `≥ 6`.
     by_contra hzero
-    have hz : (redBlock1A1 color).card = 0 := Nat.le_zero_iff.mp (le_of_not_gt hzero)
+    have hz : (redBlock1A1 color).card = 0 := Nat.eq_zero_of_not_pos hzero
     have : (redBlock1 color).card = (redBlock1B1 color).card := by
-      simpa [hdecomp, hz, zero_add]
+      simp [hdecomp, hz, zero_add]
     have : (redBlock1 color).card ≤ 5 := by simpa [this] using hB1le
-    exact (not_le_of_lt (by decide : 6 > 5)) (le_trans h6 this)
+    grind
   -- Choose a vertex `v` in the `A1` part.
   rcases Finset.card_pos.1 hposA1 with ⟨v, hv⟩
   -- From membership we extract adjacency and redness.
@@ -828,7 +825,7 @@ lemma exists_red_A1_of_block1_ge6
   -- Now `v` must be of the form `A1 i`.
   cases v with
   | A1 i =>
-      exact ⟨i, by simpa using hNei, by simpa using hRed⟩
+      exact ⟨i, by aesop, by simpa using hRed⟩
   | B1 _ => cases hA1
   | A2 _ => cases hA1
   | B2 _ => cases hA1
@@ -838,23 +835,23 @@ lemma exists_red_A1_of_block1_ge6
 lemma exists_red_A2_of_block2_ge6
     (color : Sym2 V → Fin 2)
     (h6 : 6 ≤ (redBlock2 color).card) :
-    ∃ i : Fin 3, G.Adj apex (A2 i) ∧ color (Sym2.mk apex (A2 i)) = 1 := by
+    ∃ i : Fin 3, G.Adj apex (A2 i) ∧ color (Sym2.mk (apex, A2 i)) = 1 := by
   classical
   have hdecomp := redBlock2_card_eq_sum color
   have hB2le := redBlock2B2_card_le_5 color
   have hposA2 : 0 < (redBlock2A2 color).card := by
     by_contra hzero
-    have hz : (redBlock2A2 color).card = 0 := Nat.le_zero_iff.mp (le_of_not_gt hzero)
+    have hz : (redBlock2A2 color).card = 0 := Nat.eq_zero_of_not_pos hzero
     have : (redBlock2 color).card = (redBlock2B2 color).card := by
-      simpa [hdecomp, hz, zero_add]
+      simp [hdecomp, hz, zero_add]
     have : (redBlock2 color).card ≤ 5 := by simpa [this] using hB2le
-    exact (not_le_of_lt (by decide : 6 > 5)) (le_trans h6 this)
+    grind
   rcases Finset.card_pos.1 hposA2 with ⟨v, hv⟩
   rcases Finset.mem_filter.1 hv with ⟨hRN, hA2⟩
   rcases Finset.mem_filter.1 hRN with ⟨hNei, hRed⟩
   cases v with
   | A2 i =>
-      exact ⟨i, by simpa using hNei, by simpa using hRed⟩
+      exact ⟨i, by aesop, by simpa using hRed⟩
   | A1 _ => cases hA2
   | B1 _ => cases hA2
   | B2 _ => cases hA2
@@ -865,8 +862,8 @@ in the appropriate clique `A1` or `A2`. -/
 lemma exists_red_clique_neighbor
     (color : Sym2 V → Fin 2)
     (hNoBlueStar : ¬ hasMonoStar G color 0 5) :
-    (∃ i : Fin 2, G.Adj apex (A1 i) ∧ color (Sym2.mk apex (A1 i)) = 1) ∨
-    (∃ i : Fin 3, G.Adj apex (A2 i) ∧ color (Sym2.mk apex (A2 i)) = 1) := by
+    (∃ i : Fin 2, G.Adj apex (A1 i) ∧ color (Sym2.mk (apex, A1 i)) = 1) ∨
+    (∃ i : Fin 3, G.Adj apex (A2 i) ∧ color (Sym2.mk (apex, A2 i)) = 1) := by
   classical
   -- Your previous lemma:
   have h := exists_block_receives_at_least_6_red color hNoBlueStar
