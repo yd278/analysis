@@ -1347,6 +1347,18 @@ theorem SetTheory.Set.recursion (X: Set) (f: nat → X → X) (c:X) :
         rw[this] at aux
         simp[aux]
 
+lemma SetTheory.Set.nat_pred_succ_cancle { x : nat } : x ≠ 0 → nat_equiv.symm x - 1 + 1 = x:= by
+  intro h
+  have ne : (x:ℕ) ≠ 0 := by
+    intro he 
+    apply congrArg nat_equiv at he
+    simp at he
+    contradiction
+  have hx1 : 1 ≤ (x:ℕ) := Nat.succ_le_of_lt (Nat.pos_of_ne_zero ne)
+  have htgt : (x:ℕ ) - 1 + 1 = x:= by
+    simpa using Nat.sub_add_cancel hx1
+  simp[htgt]
+
 /-- Exercise 3.5.13 -/
 theorem SetTheory.Set.nat_unique (nat':Set) (zero:nat') (succ:nat' → nat')
   (succ_ne: ∀ n:nat', succ n ≠ zero) (succ_of_ne: ∀ n m:nat', n ≠ m → succ n ≠ succ m)
@@ -1356,46 +1368,104 @@ theorem SetTheory.Set.nat_unique (nat':Set) (zero:nat') (succ:nat' → nat')
   have nat_coe_eq {m:nat} {n} : (m:ℕ) = n → m = n := by aesop
   have nat_coe_eq_zero {m:nat} : (m:ℕ) = 0 → m = 0 := nat_coe_eq
   obtain ⟨f, hf⟩ := recursion nat' (fun _ n ↦ succ n) zero
+  simp at hf
+  obtain ⟨ ⟨hfzero, hfind⟩ ,hfunique⟩ := hf 
+
+-- helper function 
+  have succ_inj :  ∀ n m : nat' , succ n = succ m → n = m:= by
+    intro n m
+    specialize succ_of_ne n m
+    contrapose!
+    exact succ_of_ne
+
   apply existsUnique_of_exists_of_unique
+-- prove that f is the function we are looking for
   · use f
     constructor
+    -- Show that F is Bijective
     · constructor
+      -- show that f is injective
+      -- that is, if f x1 = f x2, then x1 = x2
       · intro x1 x2 heq
+        -- prove by induction on x1
+        -- f x1 = f x2 and x1 = 0 -> x2 = 0
         induction' hx1: (x1:ℕ) with i ih generalizing x1 x2
+        -- case zero 
         · 
-          simp at hf
-          obtain ⟨⟨hfz,hfi⟩ , hfunique⟩ := hf
-          apply nat_coe_eq_zero at hx1
-          simp[hx1,hfz] at heq
-          rw[hx1]
-          by_contra hnz
-          set x2' :ℕ := (nat_equiv.symm x2)  with hxp
-          have hx2nz : x2' ≠ 0 := by
-            by_contra h
-            rw[hxp] at h
-            have := nat_coe_eq_zero h
-            symm at this
-            contradiction
-          have hx2g1 : 1 ≤ x2' := Nat.succ_le_of_lt (Nat.pos_of_ne_zero hx2nz)
-          have : x2' - 1 + 1 = x2' := by
-            simpa using Nat.sub_add_cancel hx2g1
-          specialize hfi (x2'-1)
-          rw[this] at hfi
-          simp[x2'] at hfi
-          rw[← heq] at hfi
-          symm at hfi
+          replace hx1 := nat_coe_eq_zero hx1
+          rw[hx1] at heq ⊢ 
+          rw[hfzero] at heq
+          symm
+          by_contra! hz
+          specialize hfind (x2 - 1)
+          rw[nat_pred_succ_cancle hz] at hfind
+          simp only [nat_equiv_coe_of_coe'] at hfind
+          rw[hfind] at heq
+          symm at heq
           specialize succ_ne (f ↑(nat_equiv.symm x2 - 1))
           contradiction
-
-
-        
-
-
-
-        
-      sorry
-    sorry
-  sorry
-
+        -- case k
+        -- hi : f x1 = f x2 and  x1 = i -> x2 = i 
+        have hfii := hfind i
+        simp[← hx1] at hfii
+        rw[hfii] at heq
+        have hz : x2 ≠ 0 := by
+          by_contra hcon
+          rw[hcon,hfzero] at heq
+          have := succ_ne (f ↑i)
+          contradiction
+        have hprev := hfind (x2 - 1)
+        rw[nat_pred_succ_cancle hz] at hprev
+        simp only [nat_equiv_coe_of_coe'] at hprev
+        rw[hprev] at heq
+        apply succ_inj at heq
+        specialize ih heq
+        simp at ih
+        rw[ih] at hx1
+        rw[nat_pred_succ_cancle hz] at hx1
+        simpa using hx1
+      -- show that f is surjective  
+      apply ind
+      . 
+        use 0
+      rintro k ⟨a,ha⟩ 
+      specialize hfind a
+      use ↑(nat_equiv.symm a + 1)
+      simp[ha] at hfind
+      exact hfind
+    -- show that f satisfies the requirement
+    split_ands
+    . 
+      exact hfzero
+    . 
+      intro n n'
+      constructor
+      . 
+        rintro rfl
+        specialize hfind n
+        simp[hfind]
+      . 
+        specialize hfind n
+        simp[hfind]
+        apply succ_inj
+  -- show that f is unique
+  intro f1 f2
+  rintro ⟨hbij1,⟨hfzero1,hfind1⟩ ⟩  ⟨hbij2,⟨hfzero2,hfind2⟩ ⟩ 
+  ext n
+  induction' hn: (n:ℕ) with k hk generalizing n
+  . 
+    apply nat_coe_eq_zero at hn
+    simp[hn,hfzero1,hfzero2]
+  . 
+    specialize hfind1 k (f1 k)
+    simp at hfind1
+    specialize hfind2 k (f2 k)
+    simp at hfind2
+    apply nat_coe_eq at hn
+    simp[hn,hfind1,hfind2]
+    specialize hk k
+    simp at hk
+    rw[coe_inj] at hk
+    rw[hk]
 
 end Chapter3
