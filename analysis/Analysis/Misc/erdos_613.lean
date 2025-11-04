@@ -98,6 +98,9 @@ properties about colorings later on.
 @[simp] lemma adj_A1B1 {i j} : G.Adj (A1 i) (B1 j) := by
   simp [G, GAdj]
 
+@[simp] lemma adj_B1A1 {i j} : G.Adj (B1 i) (A1 j) := by
+  simp [G, GAdj]
+
 @[simp] lemma adj_A2B2 {i j} : G.Adj (A2 i) (B2 j) := by
   simp [G, GAdj]
 
@@ -111,6 +114,12 @@ properties about colorings later on.
   simp [G, GAdj]
 
 @[simp] lemma no_cross_blocks_A2B1 {i j} : ¬ G.Adj (A2 i) (B1 j) := by
+  simp [G, GAdj]
+
+@[simp] lemma no_cross_blocks_B1A2 {i j} : ¬ G.Adj (B1 j) (A2 i)  := by
+  simp [G, GAdj]
+
+@[simp] lemma no_cross_blocks_B1B2 {i j} : ¬ G.Adj (B1 j) (B2 i)  := by
   simp [G, GAdj]
 
 end PikhurkoN5
@@ -185,88 +194,88 @@ lemma degree_apex : G.degree apex = 15 := by
 
 /-- `deg(A1 i) = 7` for each `i`. -/
 lemma degree_A1 (i : Fin 2) : G.degree (A1 i) = 7 := by
-  classical
-  -- Split `V` by constructors and evaluate adjacency pointwise.
-  -- Counting: 1 neighbor in `A1` (the other clique vertex) + 5 in `B1` + apex.
-  -- No neighbors in `B1`? (Yes: there are 5.) No in `A2` or `B2`.
-  -- We compute by filtering `Finset.univ` with the boolean predicate `Adj (A1 i)`.
-  have :=
-    (Finset.card_filter
-      (s := (Finset.univ : Finset V))
-      (p := fun v => G.Adj (A1 i) v))
-  -- `degree = card { neighbors }`, and `neighborFinset` is the filtered `univ`
-  -- (loopless guarantees we’re not counting `v = A1 i`).
-  -- We now rewrite the predicate by cases on the constructor of `v`.
-  -- The next `have` is just to package the counted numbers.
-  have hcount :
-      (G.neighborFinset (A1 i)).card
-        = 1   -- the other vertex of A1
-        + 5   -- all five in B1
-        + 1   -- apex
-        := by
-    -- Build it from `univ` by `filter` and evaluate membership by `simp`.
-    -- First: `v` cannot be itself because the graph is loopless.
-    -- Now compute each block contribution with `simp`.
-    -- `simp` facts used: your `[simp]` adjacency lemmas from Approach A and
-    -- standard facts about `Finset.filter` over `univ`.
-    have hA1 :
-        ((Finset.univ.filter fun v => ∃ j : Fin 2, v = A1 j ∧ G.Adj (A1 i) v)).card = 1 := by
-      -- Exactly one `A1`-neighbor: the other one.
-      -- We can count by mapping to `Fin 2` and erasing `i`.
-      -- `simp` plus `Finset.card_erase` do the job.
-      simpa [Finset.mem_univ, Finset.card_erase_of_mem, Fintype.card_fin, adj_A1A1]
-        using
-        (by
-          -- `{v ∈ univ | ∃ j, v=A1 j ∧ Adj(A1 i) v}` bijects with `{j | j ≠ i}` in `Fin 2`.
-          -- Thus its cardinal is `2 - 1 = 1`.
-          have : ((Finset.univ.filter fun j : Fin 2 => j ≠ i)).card = 1 := by
-            simpa [Finset.card_erase_of_mem, Fintype.card_fin] using
-              (by
-                have : i ∈ (Finset.univ : Finset (Fin 2)) := by simp
-                sorry
-                )
-          -- We reuse that equality by transporting along the obvious bijection.
-          sorry)
-    have hB1 :
-        ((Finset.univ.filter fun v => ∃ j : Fin 5, v = B1 j ∧ G.Adj (A1 i) v)).card = 5 := by
-      -- All five `B1` vertices are adjacent to `A1 i`.
-      simpa [adj_A1B1] using (by
-        -- `{j : Fin 5 | True}` has cardinal 5
-        sorry )
-    have hapex :
-        ((Finset.univ.filter fun v => v = apex ∧ G.Adj (A1 i) v)).card = 1 := by
-      -- `apex` is adjacent to everything.
-      simpa using (by
-        -- singleton `{apex}`
-        have : G.Adj (A1 i) apex := by simp [G, GAdj]
-        sorry)
-    -- Now add the contributions (blocks are disjoint), and transmogrify to
-    -- the neighbor finset cardinal.
-    -- For this part we squash the filters into a single count.
-    -- We only need the resulting number; proof details here are routine `simp`.
-    sorry
-  -- Finish: unfold degree.
-  simp [SimpleGraph.degree, hcount]  -- 1+5+1 = 7
+  rw [←G.card_neighborFinset_eq_degree, ←Finset.card_image_of_injective _ VEquiv.injective]
+  simp_rw [←Finset.card_toLeft_add_card_toRight]
+  calc
+    _ = 1 + 5 + 0 + 0 + 1 := by
+      congr
+      . calc
+        _ = Finset.card {j | j ≠ i} := by
+          congr; ext; simp
+          simp_rw [←Equiv.eq_symm_apply VEquiv]
+          simp [VEquiv]
+          grind
+        _ = 1 := by
+          fin_cases i <;> simp
+          . convert Finset.card_singleton 1
+          convert Finset.card_singleton 0
+      . calc
+        _ = Finset.card (Finset.univ : Finset (Fin 5)) := by
+          congr; ext; simp
+          simp_rw [←Equiv.eq_symm_apply VEquiv]
+          simp [VEquiv]
+        _ = 5 := by simp [Fintype.card_fin]
+      . calc
+        _ = Finset.card (∅ : Finset (Fin 3)) := by
+          congr; ext; simp [-iff_false]
+          simp_rw [←Equiv.eq_symm_apply VEquiv]
+          simp [VEquiv]
+          aesop
+        _ = 0 := by simp
+      . calc
+        _ = Finset.card (∅: Finset (Fin 5)) := by
+          congr; ext; simp [-iff_false]
+          simp_rw [←Equiv.eq_symm_apply VEquiv]
+          simp [VEquiv]
+        _ = 0 := by simp
+      calc
+        _ = Finset.card (Finset.univ : Finset Unit) := by
+          congr; ext; simp
+          simp_rw [←Equiv.eq_symm_apply VEquiv]
+          simp [VEquiv]
+        _ = 1 := by simp
+    _ = _ := by norm_num
 
 /-- `deg(B1 j) = 3` for each `j`. (Two `A1`s + apex.) -/
 lemma degree_B1 (j : Fin 5) : G.degree (B1 j) = 3 := by
-  classical
-  -- Analogous to `degree_A1`: neighbors are both `A1`s and `apex`.
-  -- Hence `2 + 1 = 3`.
-  -- A succinct way is to `simp` blockwise (no neighbors in `B1`, `A2`, `B2`).
-  have hA1 : (Finset.univ.filter fun v => ∃ i : Fin 2, v = A1 i ∧ G.Adj (B1 j) v).card = 2 := by
-    sorry
-  have hapex :
-      (Finset.univ.filter fun v => v = apex ∧ G.Adj (B1 j) v).card = 1 := by
-    have : G.Adj (B1 j) apex := by simp [G, GAdj]
-    sorry
-  -- no other neighbors
-  have hrest :
-      (G.neighborFinset (B1 j)).card = 2 + 1 := by
-    -- again, suppressing the routine disjointness bookkeeping
-    simpa using (by
-     sorry)
-  simp [SimpleGraph.degree, hrest]
+  rw [←G.card_neighborFinset_eq_degree, ←Finset.card_image_of_injective _ VEquiv.injective]
+  simp_rw [←Finset.card_toLeft_add_card_toRight]
+  calc
+    _ = 2 + 0 + 0 + 0 + 1 := by
+      congr
+      . calc
+          _ = Finset.card (Finset.univ : Finset (Fin 2)) := by
+            congr; ext; simp
+            simp_rw [←Equiv.eq_symm_apply VEquiv]
+            simp [VEquiv]
+          _ = _ := by simp
+      . calc
+          _ = Finset.card (∅: Finset (Fin 5)) := by
+            congr; ext; simp [-iff_false]
+            simp_rw [←Equiv.eq_symm_apply VEquiv]
+            simp [VEquiv]
+          _ = _ := by simp
+      . calc
+          _ = Finset.card (∅: Finset (Fin 3)) := by
+            congr; ext; simp [-iff_false]
+            simp_rw [←Equiv.eq_symm_apply VEquiv]
+            simp [VEquiv]
+          _ = _ := by simp
+      . calc
+          _ = Finset.card (∅: Finset (Fin 5)) := by
+            congr; ext; simp [-iff_false]
+            simp_rw [←Equiv.eq_symm_apply VEquiv]
+            simp [VEquiv]
+          _ = _ := by simp
+      calc
+        _ = Finset.card (Finset.univ : Finset Unit) := by
+          congr; ext; simp
+          simp_rw [←Equiv.eq_symm_apply VEquiv]
+          simp [VEquiv]
+        _ = 1 := by simp
+    _ = _ := by norm_num
+
+
 
 /-- `deg(A2 i) = 8` for each `i`. (Two inside `A2` + five in `B2` + apex.) -/
 lemma degree_A2 (i : Fin 3) : G.degree (A2 i) = 8 := by
