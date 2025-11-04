@@ -34,7 +34,7 @@ for *every* 2‑coloring of unordered pairs, either color `0` contains a `K_{1,5
 This only *states* the claim (as a `Prop`).  You can later prove it from the
 explicit construction, or assume it as an axiom while you develop the rest. -/
 def Pikhurko_n5_statement : Prop :=
-  ∃ (V:Type*) (G : SimpleGraph V),
+  ∃ (V:Type) (G : SimpleGraph V),
     G.edgeSet.ncard = 44 ∧
     ∀ (color : Sym2 V → Fin 2),
       hasMonoStar G color 0 5 ∨ hasMonoTriangle G color 1
@@ -954,7 +954,7 @@ lemma triangle_or_blueStar_from_block1
       | A1 j =>
           -- `j ≠ i` because `y ≠ A1 i`
           have hij : j ≠ i := by
-            intro h; exact hy_ne (by simpa [h])
+            intro h; exact hy_ne (by simp [h])
           -- use `adj_A1A1 : Adj (A1 i) (A1 j) ↔ i ≠ j`
           have : i ≠ j := by simpa [ne_comm] using hij
           simp [adj_A1A1, this]
@@ -996,16 +996,16 @@ lemma triangle_or_blueStar_from_block1
       -- same case split as above
       cases y with
       | A1 j =>
-          have hij : j ≠ i := by intro h; exact hy_ne (by simpa [h])
+          have hij : j ≠ i := by intro h; exact hy_ne (by simp [h])
           have : i ≠ j := by simpa [ne_comm] using hij
-          simpa [adj_A1A1, this]
-      | B1 _  => simpa [adj_A1B1]
-      | A2 _  => cases hy_block1
-      | B2 _  => cases hy_block1
-      | apex  => cases hy_block1
+          simp [adj_A1A1, this]
+      | B1 _  => simp [adj_A1B1]
+      | A2 _  => simp [isA1, isB1] at hy_block1
+      | B2 _  => simp [isA1, isB1] at hy_block1
+      | apex  => simp [G, GAdj]
     -- We have a blue star of size 5 centered at `A1 i` with leaf-set `T`.
     refine Or.inr ?star
-    refine ⟨A1 i, T, by simpa [hTcard], hnotin, ?_⟩
+    refine ⟨A1 i, T, by simp [hTcard], hnotin, ?_⟩
     intro y hy
     exact ⟨hAdjAll hy, hAllBlue hy⟩
 
@@ -1111,3 +1111,15 @@ theorem red_triangle_of_no_blue_star
     · exact (hNoBlueStar hStar).elim
 
 end PikhurkoN5
+
+-- Final statement
+
+namespace PikhurkoN5
+
+theorem main : Pikhurko_n5_statement := by
+  use V, G
+  split_ands
+  . exact edge_count_44
+  intro color
+  have := red_triangle_of_no_blue_star color
+  grind
