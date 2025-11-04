@@ -518,3 +518,60 @@ lemma red_from_apex_at_least_11
   simpa [hred_eq] using this
 
 end PikhurkoN5
+
+
+-- 5. Pigeonhole: one block gets ≥ 6 red edges from apex
+namespace PikhurkoN5
+open V
+
+/-- Membership in the first block `{A1, B1}`. -/
+def inBlock1 : V → Prop
+| A1 _ => True
+| B1 _ => True
+| _    => False
+
+noncomputable instance : DecidablePred inBlock1 := by
+  intro v; cases v <;> infer_instance
+
+/-- Red neighbors of `apex` that lie in the first block `{A1,B1}`. -/
+noncomputable def redBlock1 (color : Sym2 V → Fin 2) : Finset V :=
+  (redNeighbors color).filter (fun v => inBlock1 v)
+
+/-- Red neighbors of `apex` that lie in the second block `{A2,B2}`.
+
+We implement this as the *complement* of `inBlock1` inside `redNeighbors`.
+Since `apex ∉ redNeighbors color`, this is exactly the `{A2,B2}` part. -/
+noncomputable def redBlock2 (color : Sym2 V → Fin 2) : Finset V :=
+  (redNeighbors color).filter (fun v => ¬ inBlock1 v)
+
+/-- Partition of the red neighbors of `apex` into the two blocks. -/
+lemma redBlocks_partition_card (color : Sym2 V → Fin 2) :
+  (redBlock1 color).card + (redBlock2 color).card = (redNeighbors color).card := by
+  classical
+  -- Standard `filter` + `filter (¬p)` partition identity.
+  simpa [redBlock1, redBlock2] using
+    (Finset.filter_card_add_filter_neg_card_eq_card
+      (s := redNeighbors color) (p := fun v => inBlock1 v))
+
+/-- **Pigeonhole step.** If there is no blue `K_{1,5}`, then
+one of the two blocks receives at least six red edges from `apex`. -/
+lemma exists_block_receives_at_least_6_red
+    (color : Sym2 V → Fin 2)
+    (hNoBlueStar : ¬ hasMonoStar G color 0 5) :
+    (redBlock1 color).card ≥ 6 ∨ (redBlock2 color).card ≥ 6 := by
+  classical
+  -- Total red edges from `apex` is at least 11 (done earlier).
+  have h11 : 11 ≤ (redNeighbors color).card :=
+    red_from_apex_at_least_11 color hNoBlueStar
+  -- Split red neighbors across the two blocks.
+  have hsum := redBlocks_partition_card color
+  -- If both blocks had ≤ 5, then the total would be ≤ 10 — contradiction.
+  by_contra h
+  push_neg at h   -- h : (redBlock1 color).card ≤ 5 ∧ (redBlock2 color).card ≤ 5
+  have hle10 : (redNeighbors color).card ≤ 10 := by
+    have : (redBlock1 color).card + (redBlock2 color).card ≤ 5 + 5 := by
+      grind
+    simpa [hsum] using this
+  exact (Nat.not_succ_le_self 10) (le_trans h11 hle10)
+
+end PikhurkoN5
