@@ -883,14 +883,14 @@ open V
 
 lemma A1_mem_redBlock1_of_red
     (color : Sym2 V → Fin 2) (i : Fin 2)
-    (hAdj : G.Adj apex (A1 i))
-    (hRed : color (Sym2.mk apex (A1 i)) = 1) :
+    (_hAdj : G.Adj apex (A1 i))
+    (hRed : color (Sym2.mk (apex, A1 i)) = 1) :
     A1 i ∈ redBlock1 color := by
   classical
   -- First: `A1 i` is a red neighbor of `apex`.
   have hRN : A1 i ∈ redNeighbors color := by
     -- `neighborFinset` membership + color=1
-    have : A1 i ∈ G.neighborFinset apex := by simpa using hAdj
+    have : A1 i ∈ G.neighborFinset apex := by simp
     exact Finset.mem_filter.mpr ⟨this, by simpa⟩
   -- Second: it's in block 1.
   have hB : inBlock1 (A1 i) := by simp [inBlock1]
@@ -899,15 +899,15 @@ lemma A1_mem_redBlock1_of_red
 
 lemma A2_mem_redBlock2_of_red
     (color : Sym2 V → Fin 2) (i : Fin 3)
-    (hAdj : G.Adj apex (A2 i))
-    (hRed : color (Sym2.mk apex (A2 i)) = 1) :
+    (_hAdj : G.Adj apex (A2 i))
+    (hRed : color (Sym2.mk (apex, A2 i)) = 1) :
     A2 i ∈ redBlock2 color := by
   classical
   have hRN : A2 i ∈ redNeighbors color := by
-    have : A2 i ∈ G.neighborFinset apex := by simpa using hAdj
+    have : A2 i ∈ G.neighborFinset apex := by simp
     exact Finset.mem_filter.mpr ⟨this, by simpa⟩
   have hB : inBlock2 (A2 i) := by simp [inBlock2]
-  simpa [redBlock2] using Finset.mem_filter.mpr ⟨hRN, hB⟩
+  simp [redBlock2, hRN, isA1, isB1]
 
 /-! ### Triangle-or-star from Block 1 -/
 
@@ -918,7 +918,7 @@ lemma triangle_or_blueStar_from_block1
     (h6 : 6 ≤ (redBlock1 color).card)
     (i : Fin 2)
     (hAdj : G.Adj apex (A1 i))
-    (hRedApexA1 : color (Sym2.mk apex (A1 i)) = 1) :
+    (hRedApexA1 : color (Sym2.mk (apex, A1 i)) = 1) :
     hasMonoTriangle G color 1 ∨ hasMonoStar G color 0 5 := by
   classical
   -- Put `y0 := A1 i` into `redBlock1`.
@@ -939,7 +939,7 @@ lemma triangle_or_blueStar_from_block1
 
   -- Either some `y ∈ T` makes the edge `(A1 i,y)` red (→ triangle), or all are blue (→ star).
   classical
-  by_cases hTri : ∃ y ∈ T, color (Sym2.mk (A1 i) y) = 1
+  by_cases hTri : ∃ y ∈ T, color (Sym2.mk (A1 i, y)) = 1
   · rcases hTri with ⟨y, hyT, hyRedA1y⟩
     -- Facts from membership: `y ≠ A1 i`, `y ∈ redBlock1`.
     have hy_erase : y ∈ (redBlock1 color).erase (A1 i) := hTsub hyT
@@ -957,35 +957,35 @@ lemma triangle_or_blueStar_from_block1
             intro h; exact hy_ne (by simpa [h])
           -- use `adj_A1A1 : Adj (A1 i) (A1 j) ↔ i ≠ j`
           have : i ≠ j := by simpa [ne_comm] using hij
-          simpa [adj_A1A1, this]
-      | B1 _  => simpa [adj_A1B1]
+          simp [adj_A1A1, this]
+      | B1 _  => simp [adj_A1B1]
       | A2 _  => cases hy_block1       -- impossible
       | B2 _  => cases hy_block1       -- impossible
       | apex  => cases hy_block1       -- impossible
     -- Build the red triangle: apex — A1 i — y — apex.
     refine Or.inl ?triangle
     refine ⟨apex, A1 i, y, ?_, ?_, ?_, ?_, ?_, ?_⟩
-    · simpa using hAdj
+    · simp [hAdj]
     · exact hyAdjA1Y
-    · exact hyAdjApex
+    · simpa using hyAdjApex
     · simpa using hRedApexA1
     · exact hyRedA1y
     · simpa using hyRedApexY
   · -- No red `(A1 i,y)` with `y ∈ T` ⇒ all `(A1 i,y)` are blue.
-    have hAllBlue : ∀ {y}, y ∈ T → color (Sym2.mk (A1 i) y) = 0 := by
+    have hAllBlue : ∀ {y}, y ∈ T → color (Sym2.mk (A1 i, y)) = 0 := by
       intro y hy
-      have : color (Sym2.mk (A1 i) y) ≠ 1 := by
+      have h1 : color (Sym2.mk (A1 i, y)) ≠ 1 := by
         intro contra; exact hTri ⟨y, hy, contra⟩
       -- In `Fin 2`, being not `1` is being `0`.
       -- (If you prefer, keep and reuse your earlier lemma `fin2_eq_one_iff_ne_zero`.)
-      have : color (Sym2.mk (A1 i) y) = 0 ∨ color (Sym2.mk (A1 i) y) = 1 := by
-        fin_cases h' : color (Sym2.mk (A1 i) y) <;> simp [h']
-      exact this.resolve_right (by exact id)
+      have : color (Sym2.mk (A1 i, y)) = 0 ∨ color (Sym2.mk (A1 i, y)) = 1 := by
+        grind
+      exact this.resolve_right h1
     -- Show `A1 i ∉ T`.
     have hnotin : A1 i ∉ T := by
       intro hx
       have : A1 i ∈ (redBlock1 color).erase (A1 i) := hTsub hx
-      simpa using this
+      simp at this
     -- Adjacency `(A1 i,y)` for `y ∈ T`:
     have hAdjAll : ∀ {y}, y ∈ T → G.Adj (A1 i) y := by
       intro y hy
@@ -1016,7 +1016,7 @@ lemma triangle_or_blueStar_from_block2
     (h6 : 6 ≤ (redBlock2 color).card)
     (i : Fin 3)
     (hAdj : G.Adj apex (A2 i))
-    (hRedApexA2 : color (Sym2.mk apex (A2 i)) = 1) :
+    (hRedApexA2 : color (Sym2.mk (apex, A2 i)) = 1) :
     hasMonoTriangle G color 1 ∨ hasMonoStar G color 0 5 := by
   classical
   have hy0_in : A2 i ∈ redBlock2 color := A2_mem_redBlock2_of_red color i hAdj hRedApexA2
@@ -1030,7 +1030,7 @@ lemma triangle_or_blueStar_from_block2
   obtain ⟨T, hTsub, hTcard⟩ :=
     Finset.exists_subset_card_eq ((redBlock2 color).erase (A2 i)) h5
 
-  by_cases hTri : ∃ y ∈ T, color (Sym2.mk (A2 i) y) = 1
+  by_cases hTri : ∃ y ∈ T, color (Sym2.mk (A2 i, y)) = 1
   · rcases hTri with ⟨y, hyT, hyRedA2y⟩
     have hy_erase : y ∈ (redBlock2 color).erase (A2 i) := hTsub hyT
     have hy_ne : y ≠ A2 i := (Finset.mem_erase.mp hy_erase).1
@@ -1040,33 +1040,32 @@ lemma triangle_or_blueStar_from_block2
     have hyAdjA2Y : G.Adj (A2 i) y := by
       cases y with
       | A2 j =>
-          have hij : j ≠ i := by intro h; exact hy_ne (by simpa [h])
+          have hij : j ≠ i := by intro h; exact hy_ne (by simp [h])
           have : i ≠ j := by simpa [ne_comm] using hij
-          simpa [adj_A2A2, this]
-      | B2 _  => simpa [adj_A2B2]
-      | A1 _  => cases hy_block2
-      | B1 _  => cases hy_block2
-      | apex  => cases hy_block2
+          simp [adj_A2A2, this]
+      | B2 _  => simp [adj_A2B2]
+      | A1 _  => simp [isA1] at hy_block2
+      | B1 _  => simp [isB1] at hy_block2
+      | apex  => simp [G,GAdj]
     refine Or.inl ?triangle
     refine ⟨apex, A2 i, y, ?_, ?_, ?_, ?_, ?_, ?_⟩
-    · simpa using hAdj
+    · simp [hAdj]
     · exact hyAdjA2Y
-    · exact hyAdjApex
+    · aesop
     · simpa using hRedApexA2
     · exact hyRedA2y
     · simpa using hyRedApexY
   ·
-    have hAllBlue : ∀ {y}, y ∈ T → color (Sym2.mk (A2 i) y) = 0 := by
+    have hAllBlue : ∀ {y}, y ∈ T → color (Sym2.mk (A2 i, y)) = 0 := by
       intro y hy
-      have : color (Sym2.mk (A2 i) y) ≠ 1 := by
+      have h1 : color (Sym2.mk (A2 i, y)) ≠ 1 := by
         intro contra; exact hTri ⟨y, hy, contra⟩
-      have : color (Sym2.mk (A2 i) y) = 0 ∨ color (Sym2.mk (A2 i) y) = 1 := by
-        fin_cases h' : color (Sym2.mk (A2 i) y) <;> simp [h']
-      exact this.resolve_right (by exact id)
+      have : color (Sym2.mk (A2 i, y)) = 0 ∨ color (Sym2.mk (A2 i, y)) = 1 := by grind
+      exact this.resolve_right h1
     have hnotin : A2 i ∉ T := by
       intro hx
       have : A2 i ∈ (redBlock2 color).erase (A2 i) := hTsub hx
-      simpa using this
+      simp at this
     have hAdjAll : ∀ {y}, y ∈ T → G.Adj (A2 i) y := by
       intro y hy
       have hy_erase : y ∈ (redBlock2 color).erase (A2 i) := hTsub hy
@@ -1075,15 +1074,15 @@ lemma triangle_or_blueStar_from_block2
       rcases Finset.mem_filter.1 hy_in with ⟨_, hy_block2⟩
       cases y with
       | A2 j =>
-          have hij : j ≠ i := by intro h; exact hy_ne (by simpa [h])
+          have hij : j ≠ i := by intro h; exact hy_ne (by simp [h])
           have : i ≠ j := by simpa [ne_comm] using hij
-          simpa [adj_A2A2, this]
-      | B2 _  => simpa [adj_A2B2]
-      | A1 _  => cases hy_block2
-      | B1 _  => cases hy_block2
-      | apex  => cases hy_block2
+          simp [adj_A2A2, this]
+      | B2 _  => simp [adj_A2B2]
+      | A1 _  => simp [isA1] at hy_block2
+      | B1 _  => simp [isB1] at hy_block2
+      | apex  => simp [G, GAdj]
     refine Or.inr ?star
-    refine ⟨A2 i, T, by simpa [hTcard], hnotin, ?_⟩
+    refine ⟨A2 i, T, by simp [hTcard], hnotin, ?_⟩
     intro y hy
     exact ⟨hAdjAll hy, hAllBlue hy⟩
 
