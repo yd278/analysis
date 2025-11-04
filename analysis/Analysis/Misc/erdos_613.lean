@@ -575,3 +575,304 @@ lemma exists_block_receives_at_least_6_red
   exact (Nat.not_succ_le_self 10) (le_trans h11 hle10)
 
 end PikhurkoN5
+
+
+-- 6. demonstrate a red neighbor in the clique side
+
+namespace PikhurkoN5
+open V
+
+/-! ## Part / block predicates -/
+
+/-- Recognizes the clique side `A1`. -/
+def isA1 : V → Prop
+| A1 _ => True | _ => False
+
+/-- Recognizes the independent side `B1`. -/
+def isB1 : V → Prop
+| B1 _ => True | _ => False
+
+/-- Recognizes the clique side `A2`. -/
+def isA2 : V → Prop
+| A2 _ => True | _ => False
+
+/-- Recognizes the independent side `B2`. -/
+def isB2 : V → Prop
+| B2 _ => True | _ => False
+
+/-- Second block `{A2,B2}`. -/
+def inBlock2 : V → Prop
+| A2 _ => True | B2 _ => True | _ => False
+
+noncomputable instance : DecidablePred isA1 := by intro v; cases v <;> infer_instance
+noncomputable instance : DecidablePred isB1 := by intro v; cases v <;> infer_instance
+noncomputable instance : DecidablePred isA2 := by intro v; cases v <;> infer_instance
+noncomputable instance : DecidablePred isB2 := by intro v; cases v <;> infer_instance
+noncomputable instance : DecidablePred inBlock1 := by intro v; cases v <;> infer_instance
+noncomputable instance : DecidablePred inBlock2 := by intro v; cases v <;> infer_instance
+
+@[simp] lemma inBlock1_iff (v : V) : inBlock1 v ↔ (isA1 v ∨ isB1 v) := by
+  cases v <;> simp [inBlock1, isA1, isB1]
+
+@[simp] lemma inBlock2_iff (v : V) : inBlock2 v ↔ (isA2 v ∨ isB2 v) := by
+  cases v <;> simp [inBlock2, isA2, isB2]
+
+@[simp] lemma not_isA1_and_isB1 (v : V) : ¬ (isA1 v ∧ isB1 v) := by
+  cases v <;> simp [isA1, isB1]
+
+@[simp] lemma not_isA2_and_isB2 (v : V) : ¬ (isA2 v ∧ isB2 v) := by
+  cases v <;> simp [isA2, isB2]
+
+/-! ## Splitting the `apex` red neighbors by parts -/
+
+-- These came from the previous step you have:
+-- def redNeighbors (color : Sym2 V → Fin 2) : Finset V := ...
+
+/-- Red neighbors of `apex` in the first block. -/
+def redBlock1 (color : Sym2 V → Fin 2) : Finset V :=
+  (redNeighbors color).filter (fun v => inBlock1 v)
+
+/-- Red neighbors of `apex` in the second block. -/
+def redBlock2 (color : Sym2 V → Fin 2) : Finset V :=
+  (redNeighbors color).filter (fun v => inBlock2 v)
+
+/-- Further refine `redBlock1` into its `A1` and `B1` parts. -/
+def redBlock1A1 (color : Sym2 V → Fin 2) : Finset V :=
+  (redNeighbors color).filter (fun v => isA1 v)
+
+def redBlock1B1 (color : Sym2 V → Fin 2) : Finset V :=
+  (redNeighbors color).filter (fun v => isB1 v)
+
+/-- Further refine `redBlock2` into its `A2` and `B2` parts. -/
+def redBlock2A2 (color : Sym2 V → Fin 2) : Finset V :=
+  (redNeighbors color).filter (fun v => isA2 v)
+
+def redBlock2B2 (color : Sym2 V → Fin 2) : Finset V :=
+  (redNeighbors color).filter (fun v => isB2 v)
+
+/-- `redBlock1` is exactly the disjoint union of its `A1` and `B1` parts. -/
+lemma redBlock1_eq_union (color : Sym2 V → Fin 2) :
+  redBlock1 color =
+    redBlock1A1 color ∪ redBlock1B1 color := by
+  ext v; constructor
+  · intro hv
+    rcases Finset.mem_filter.1 hv with ⟨hRN, hB⟩
+    have : isA1 v ∨ isB1 v := (inBlock1_iff v).1 hB
+    cases this with
+    | inl hA1 => exact Finset.mem_union.2 (Or.inl (Finset.mem_filter.2 ⟨hRN, hA1⟩))
+    | inr hB1 => exact Finset.mem_union.2 (Or.inr (Finset.mem_filter.2 ⟨hRN, hB1⟩))
+  · intro hv
+    rcases Finset.mem_union.1 hv with hA1 | hB1
+    · rcases Finset.mem_filter.1 hA1 with ⟨hRN, hA1⟩
+      exact Finset.mem_filter.2 ⟨hRN, (inBlock1_iff v).2 (Or.inl hA1)⟩
+    · rcases Finset.mem_filter.1 hB1 with ⟨hRN, hB1⟩
+      exact Finset.mem_filter.2 ⟨hRN, (inBlock1_iff v).2 (Or.inr hB1)⟩
+
+/-- `redBlock2` is exactly the disjoint union of its `A2` and `B2` parts. -/
+lemma redBlock2_eq_union (color : Sym2 V → Fin 2) :
+  redBlock2 color =
+    redBlock2A2 color ∪ redBlock2B2 color := by
+  ext v; constructor
+  · intro hv
+    rcases Finset.mem_filter.1 hv with ⟨hRN, hB⟩
+    have : isA2 v ∨ isB2 v := (inBlock2_iff v).1 hB
+    cases this with
+    | inl hA2 => exact Finset.mem_union.2 (Or.inl (Finset.mem_filter.2 ⟨hRN, hA2⟩))
+    | inr hB2 => exact Finset.mem_union.2 (Or.inr (Finset.mem_filter.2 ⟨hRN, hB2⟩))
+  · intro hv
+    rcases Finset.mem_union.1 hv with hA2 | hB2
+    · rcases Finset.mem_filter.1 hA2 with ⟨hRN, hA2⟩
+      exact Finset.mem_filter.2 ⟨hRN, (inBlock2_iff v).2 (Or.inl hA2)⟩
+    · rcases Finset.mem_filter.1 hB2 with ⟨hRN, hB2⟩
+      exact Finset.mem_filter.2 ⟨hRN, (inBlock2_iff v).2 (Or.inr hB2)⟩
+
+/-- The two parts of `redBlock1` are disjoint. -/
+lemma redA1_redB1_disjoint (color : Sym2 V → Fin 2) :
+  Disjoint (redBlock1A1 color) (redBlock1B1 color) := by
+  classical
+  refine Finset.disjoint_left.2 ?_
+  intro v hvA hvB
+  rcases Finset.mem_filter.1 hvA with ⟨_, hA1⟩
+  rcases Finset.mem_filter.1 hvB with ⟨_, hB1⟩
+  exact (not_isA1_and_isB1 v) ⟨hA1, hB1⟩
+
+/-- The two parts of `redBlock2` are disjoint. -/
+lemma redA2_redB2_disjoint (color : Sym2 V → Fin 2) :
+  Disjoint (redBlock2A2 color) (redBlock2B2 color) := by
+  classical
+  refine Finset.disjoint_left.2 ?_
+  intro v hvA hvB
+  rcases Finset.mem_filter.1 hvA with ⟨_, hA2⟩
+  rcases Finset.mem_filter.1 hvB with ⟨_, hB2⟩
+  exact (not_isA2_and_isB2 v) ⟨hA2, hB2⟩
+
+/-- Cardinal decompositions of the blocks. -/
+lemma redBlock1_card_eq_sum (color : Sym2 V → Fin 2) :
+  (redBlock1 color).card
+    = (redBlock1A1 color).card + (redBlock1B1 color).card := by
+  classical
+  have := Finset.card_union_add_card_inter
+            (s := redBlock1A1 color) (t := redBlock1B1 color)
+  -- rewrite the union as `redBlock1` and show the intersection is empty
+  have hU : redBlock1A1 color ∪ redBlock1B1 color = redBlock1 color := by
+    simpa [redBlock1_eq_union] using (redBlock1_eq_union color).symm
+  have hI : (redBlock1A1 color ∩ redBlock1B1 color).card = 0 := by
+    have hdis := redA1_redB1_disjoint color
+    -- `disjoint` implies the intersection is empty
+    have : redBlock1A1 color ∩ redBlock1B1 color ⊆ (∅ : Finset V) := by
+      simpa [Finset.disjoint_left] using hdis
+    -- empty has card 0; subset to empty means it *is* empty for finsets
+    have : redBlock1A1 color ∩ redBlock1B1 color = (∅ : Finset V) := by
+      apply Finset.eq_bot_iff.mpr
+      simpa using this
+    simpa [this]
+  -- put it together
+  have := by simpa [hU, hI, add_comm] using this
+  exact this.symm
+
+lemma redBlock2_card_eq_sum (color : Sym2 V → Fin 2) :
+  (redBlock2 color).card
+    = (redBlock2A2 color).card + (redBlock2B2 color).card := by
+  classical
+  have := Finset.card_union_add_card_inter
+            (s := redBlock2A2 color) (t := redBlock2B2 color)
+  have hU : redBlock2A2 color ∪ redBlock2B2 color = redBlock2 color := by
+    simpa [redBlock2_eq_union] using (redBlock2_eq_union color).symm
+  have hdis := redA2_redB2_disjoint color
+  have hI : (redBlock2A2 color ∩ redBlock2B2 color).card = 0 := by
+    have : redBlock2A2 color ∩ redBlock2B2 color = (∅ : Finset V) := by
+      apply Finset.eq_bot_iff.mpr
+      simpa [Finset.disjoint_left] using hdis
+    simpa [this]
+  have := by simpa [hU, hI, add_comm] using this
+  exact this.symm
+
+/-! ## Bounding the `B`-parts by `5` -/
+
+/-- All `B1`-vertices as a finset (image of `Fin 5`). -/
+def B1Set : Finset V := (Finset.univ.image fun j : Fin 5 => B1 j)
+
+/-- All `B2`-vertices as a finset (image of `Fin 5`). -/
+def B2Set : Finset V := (Finset.univ.image fun j : Fin 5 => B2 j)
+
+lemma redBlock1B1_subset_B1Set (color : Sym2 V → Fin 2) :
+  redBlock1B1 color ⊆ B1Set := by
+  classical
+  intro v hv
+  rcases Finset.mem_filter.1 hv with ⟨_, hB1⟩
+  -- From `isB1 v`, `v = B1 j` for some `j`, hence in the image.
+  cases v with
+  | B1 j =>
+      simp [B1Set]    -- `v` is exactly `B1 j`, hence in the image of `j`.
+  | A1 _ => cases hB1
+  | A2 _ => cases hB1
+  | B2 _ => cases hB1
+  | apex => cases hB1
+
+lemma redBlock2B2_subset_B2Set (color : Sym2 V → Fin 2) :
+  redBlock2B2 color ⊆ B2Set := by
+  classical
+  intro v hv
+  rcases Finset.mem_filter.1 hv with ⟨_, hB2⟩
+  cases v with
+  | B2 j =>
+      simp [B2Set]
+  | A1 _ => cases hB2
+  | B1 _ => cases hB2
+  | A2 _ => cases hB2
+  | apex => cases hB2
+
+lemma card_B1Set_le_5 : (B1Set).card ≤ 5 := by
+  classical
+  -- image has card ≤ card of the domain
+  simpa [B1Set, Fintype.card_fin] using
+    (Finset.card_image_le : (Finset.univ.image (fun j : Fin 5 => B1 j)).card ≤ (Finset.univ : Finset (Fin 5)).card)
+
+lemma card_B2Set_le_5 : (B2Set).card ≤ 5 := by
+  classical
+  simpa [B2Set, Fintype.card_fin] using
+    (Finset.card_image_le : (Finset.univ.image (fun j : Fin 5 => B2 j)).card ≤ (Finset.univ : Finset (Fin 5)).card)
+
+lemma redBlock1B1_card_le_5 (color : Sym2 V → Fin 2) :
+  (redBlock1B1 color).card ≤ 5 :=
+  (Finset.card_le_of_subset (redBlock1B1_subset_B1Set color)).trans card_B1Set_le_5
+
+lemma redBlock2B2_card_le_5 (color : Sym2 V → Fin 2) :
+  (redBlock2B2 color).card ≤ 5 :=
+  (Finset.card_le_of_subset (redBlock2B2_subset_B2Set color)).trans card_B2Set_le_5
+
+/-! ## Existence of a red neighbor in the clique parts `A1` / `A2` -/
+
+/-- If block 1 receives at least 6 red neighbors from `apex`, then one of them lies in `A1`. -/
+lemma exists_red_A1_of_block1_ge6
+    (color : Sym2 V → Fin 2)
+    (h6 : 6 ≤ (redBlock1 color).card) :
+    ∃ i : Fin 2, G.Adj apex (A1 i) ∧ color (Sym2.mk apex (A1 i)) = 1 := by
+  classical
+  -- From the decomposition `|redBlock1| = |A1-part| + |B1-part|`
+  -- and `|B1-part| ≤ 5`, we get `|A1-part| ≥ 1`.
+  have hdecomp := redBlock1_card_eq_sum color
+  have hB1le := redBlock1B1_card_le_5 color
+  have hposA1 : 0 < (redBlock1A1 color).card := by
+    -- If `A1-part` were empty, then `|redBlock1| = |B1-part| ≤ 5`, contradicting `≥ 6`.
+    by_contra hzero
+    have hz : (redBlock1A1 color).card = 0 := Nat.le_zero_iff.mp (le_of_not_gt hzero)
+    have : (redBlock1 color).card = (redBlock1B1 color).card := by
+      simpa [hdecomp, hz, zero_add]
+    have : (redBlock1 color).card ≤ 5 := by simpa [this] using hB1le
+    exact (not_le_of_lt (by decide : 6 > 5)) (le_trans h6 this)
+  -- Choose a vertex `v` in the `A1` part.
+  rcases Finset.card_pos.1 hposA1 with ⟨v, hv⟩
+  -- From membership we extract adjacency and redness.
+  rcases Finset.mem_filter.1 hv with ⟨hRN, hA1⟩
+  rcases Finset.mem_filter.1 hRN with ⟨hNei, hRed⟩
+  -- Now `v` must be of the form `A1 i`.
+  cases v with
+  | A1 i =>
+      exact ⟨i, by simpa using hNei, by simpa using hRed⟩
+  | B1 _ => cases hA1
+  | A2 _ => cases hA1
+  | B2 _ => cases hA1
+  | apex  => cases hA1
+
+/-- If block 2 receives at least 6 red neighbors from `apex`, then one of them lies in `A2`. -/
+lemma exists_red_A2_of_block2_ge6
+    (color : Sym2 V → Fin 2)
+    (h6 : 6 ≤ (redBlock2 color).card) :
+    ∃ i : Fin 3, G.Adj apex (A2 i) ∧ color (Sym2.mk apex (A2 i)) = 1 := by
+  classical
+  have hdecomp := redBlock2_card_eq_sum color
+  have hB2le := redBlock2B2_card_le_5 color
+  have hposA2 : 0 < (redBlock2A2 color).card := by
+    by_contra hzero
+    have hz : (redBlock2A2 color).card = 0 := Nat.le_zero_iff.mp (le_of_not_gt hzero)
+    have : (redBlock2 color).card = (redBlock2B2 color).card := by
+      simpa [hdecomp, hz, zero_add]
+    have : (redBlock2 color).card ≤ 5 := by simpa [this] using hB2le
+    exact (not_le_of_lt (by decide : 6 > 5)) (le_trans h6 this)
+  rcases Finset.card_pos.1 hposA2 with ⟨v, hv⟩
+  rcases Finset.mem_filter.1 hv with ⟨hRN, hA2⟩
+  rcases Finset.mem_filter.1 hRN with ⟨hNei, hRed⟩
+  cases v with
+  | A2 i =>
+      exact ⟨i, by simpa using hNei, by simpa using hRed⟩
+  | A1 _ => cases hA2
+  | B1 _ => cases hA2
+  | B2 _ => cases hA2
+  | apex  => cases hA2
+
+/-- Corollary: under the “no blue star” hypothesis, there is a red neighbor of `apex`
+in the appropriate clique `A1` or `A2`. -/
+lemma exists_red_clique_neighbor
+    (color : Sym2 V → Fin 2)
+    (hNoBlueStar : ¬ hasMonoStar G color 0 5) :
+    (∃ i : Fin 2, G.Adj apex (A1 i) ∧ color (Sym2.mk apex (A1 i)) = 1) ∨
+    (∃ i : Fin 3, G.Adj apex (A2 i) ∧ color (Sym2.mk apex (A2 i)) = 1) := by
+  classical
+  -- Your previous lemma:
+  have h := exists_block_receives_at_least_6_red color hNoBlueStar
+  rcases h with h1 | h2
+  · exact Or.inl (exists_red_A1_of_block1_ge6 color h1)
+  · exact Or.inr (exists_red_A2_of_block2_ge6 color h2)
+
+end PikhurkoN5
