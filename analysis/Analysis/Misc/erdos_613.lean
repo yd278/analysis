@@ -399,30 +399,14 @@ open V
 
 /-! ### Small utilities -/
 
-/-- Pick a `k`-subset of a finset `s` when `k ≤ s.card`. -/
+/- Pick a `k`-subset of a finset `s` when `k ≤ s.card`. -/
 namespace Finset
-variable {α : Type*} [DecidableEq α]
+variable {α : Type*}
 
 lemma exists_subset_card_eq (s : Finset α) {k : ℕ} (hk : k ≤ s.card) :
   ∃ t ⊆ s, t.card = k := by
-  classical
-  revert k
-  refine s.induction_on ?base ?step
-  · intro k hk; simpa [hk, Nat.le_zero] using hk.antisymm (Nat.zero_le _)
-  · intro a s ha IH k hk
-    have hc : (insert a s).card = s.card + 1 := by
-      simpa [ha, Nat.add_comm] using (card_insert_if_not_mem ha)
-    have hk' : k ≤ s.card ∨ k = s.card + 1 := by
-      -- `k ≤ s.card + 1` ⇒ either `k ≤ s.card` or `k = s.card + 1`
-      have hk'' : k ≤ s.card + 1 := by simpa [hc] using hk
-      exact le_iff_eq_or_lt.mp hk'' |>.imp_right (by
-        intro hlt; exact (Nat.lt_succ_iff.mp hlt))
-    rcases hk' with hk' | hk'
-    · rcases IH hk' with ⟨t, ht, hcard⟩
-      exact ⟨t, subset_trans ht (subset_insert _ _), hcard⟩
-    · subst hk'
-      exact ⟨insert a s, by intro x hx; exact mem_of_subset_of_mem (subset_refl _) hx,
-              by simpa [hc]⟩
+  exact Finset.le_card_iff_exists_subset_card.mp hk
+
 end Finset
 
 /-- In `Fin 2`, saying “equals `1`” is the same as “not equal to `0`”. -/
@@ -432,12 +416,12 @@ lemma fin2_eq_one_iff_ne_zero (a : Fin 2) : (a = 1) ↔ a ≠ 0 := by
 /-! ### Red neighbors of the apex are ≥ 11 if there is no blue star K_{1,5} -/
 
 /-- The set of blue neighbors of `apex` in color class `0`. -/
-def blueNeighbors (color : Sym2 V → Fin 2) : Finset V :=
-  (G.neighborFinset apex).filter (fun v => color (Sym2.mk apex v) = 0)
+noncomputable def blueNeighbors (color : Sym2 V → Fin 2) : Finset V :=
+  (G.neighborFinset apex).filter (fun v => color (Sym2.mk (apex, v)) = 0)
 
 /-- The set of red neighbors of `apex` in color class `1`. -/
-def redNeighbors (color : Sym2 V → Fin 2) : Finset V :=
-  (G.neighborFinset apex).filter (fun v => color (Sym2.mk apex v) = 1)
+noncomputable def redNeighbors (color : Sym2 V → Fin 2) : Finset V :=
+  (G.neighborFinset apex).filter (fun v => color (Sym2.mk (apex, v)) = 1)
 
 /-- If there is no blue `K_{1,5}`, then the apex has at most 4 blue neighbors. -/
 lemma blueNeighbors_card_le_4
@@ -456,14 +440,14 @@ lemma blueNeighbors_card_le_4
   have hapex_notin : apex ∉ S := by
     have : apex ∉ G.neighborFinset apex := by
       -- No loops ⇒ apex not adjacent to itself ⇒ not in neighbor set.
-      simpa [SimpleGraph.neighborFinset, adj_apex_left] using
-        (by have : ¬ G.Adj apex apex := by simpa [G, GAdj]
-            exact this)
+      simp [SimpleGraph.neighborFinset]
     exact fun hx => this <| (by
       have hx' : apex ∈ blueNeighbors color := hSsubset hx
       -- Blue neighbors are a subset of neighbors.
       have : blueNeighbors color ⊆ G.neighborFinset apex :=
-        by intro v hv; exact (Finset.mem_of_mem_filter hv).1
+        by
+          intro v hv
+          exact Finset.mem_of_mem_filter _ hv
       exact this hx')
 
   -- All edges from `apex` to `S` are present and blue, so we have a blue K_{1,5}.
@@ -471,7 +455,7 @@ lemma blueNeighbors_card_le_4
     refine ⟨apex, S, hScard, hapex_notin, ?_⟩
     intro y hy
     have hy' : y ∈ blueNeighbors color := hSsubset hy
-    have hy_in : y ∈ G.neighborFinset apex ∧ color (Sym2.mk apex y) = 0 := by
+    have hy_in : y ∈ G.neighborFinset apex ∧ color (Sym2.mk (apex, y)) = 0 := by
       simpa [blueNeighbors] using hy'
     exact ⟨by simpa using hy_in.1, hy_in.2⟩
 
@@ -486,15 +470,15 @@ lemma red_from_apex_at_least_11
   -- Split neighbors of apex into blue vs. non-blue; identify non-blue with red.
   have hsplit :
       (blueNeighbors color).card
-      + ((G.neighborFinset apex).filter (fun v => ¬ (color (Sym2.mk apex v) = 0))).card
+      + ((G.neighborFinset apex).filter (fun v => ¬ (color (Sym2.mk (apex, v)) = 0))).card
       = (G.neighborFinset apex).card := by
     simpa [blueNeighbors] using
       (Finset.filter_card_add_filter_neg_card_eq_card
         (s := G.neighborFinset apex)
-        (p := fun v => color (Sym2.mk apex v) = 0))
+        (p := fun v => color (Sym2.mk (apex, v)) = 0))
 
   have hred_is_notblue :
-      (G.neighborFinset apex).filter (fun v => ¬ (color (Sym2.mk apex v) = 0))
+      (G.neighborFinset apex).filter (fun v => ¬ (color (Sym2.mk (apex, v)) = 0))
       =
       redNeighbors color := by
     ext v; by_cases hv : v ∈ G.neighborFinset apex
@@ -505,10 +489,15 @@ lemma red_from_apex_at_least_11
   -- So blue + red = all neighbors = 15 (by `degree_apex`).
   have hsum : (blueNeighbors color).card + (redNeighbors color).card
               = (G.neighborFinset apex).card := by
-    simpa [hred_is_notblue]
+    convert Finset.card_sdiff_add_card_eq_card _
+    . simp [←hred_is_notblue, blueNeighbors]
+      grind
+    . infer_instance
+    simp [redNeighbors]
+
 
   have hdeg : (G.neighborFinset apex).card = 15 := by
-    simpa [SimpleGraph.degree] using degree_apex
+    simp [degree_apex]
 
   have hblue_le_4 := blueNeighbors_card_le_4 color hNoBlueStar
 
@@ -523,7 +512,7 @@ lemma red_from_apex_at_least_11
 
   -- Finally: `blue ≤ 4` ⇒ `15 - blue ≥ 11`.
   have : 11 ≤ 15 - (blueNeighbors color).card :=
-    by simpa using (Nat.sub_le_sub_right hblue_le_4 15)
+    by grind
 
   -- Combine with `red = 15 - blue`.
   simpa [hred_eq] using this
