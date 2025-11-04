@@ -104,6 +104,9 @@ properties about colorings later on.
 @[simp] lemma adj_A2B2 {i j} : G.Adj (A2 i) (B2 j) := by
   simp [G, GAdj]
 
+@[simp] lemma adj_B2A2 {i j} : G.Adj (B2 j) (A2 i)  := by
+  simp [G, GAdj]
+
 @[simp] lemma no_adj_B1B1 {j j'} : ¬ G.Adj (B1 j) (B1 j') := by
   simp [G, GAdj]
 
@@ -120,6 +123,9 @@ properties about colorings later on.
   simp [G, GAdj]
 
 @[simp] lemma no_cross_blocks_B1B2 {i j} : ¬ G.Adj (B1 j) (B2 i)  := by
+  simp [G, GAdj]
+
+@[simp] lemma no_cross_blocks_A2A1 {i j} : ¬ G.Adj (A2 j) (A1 i)  := by
   simp [G, GAdj]
 
 end PikhurkoN5
@@ -279,42 +285,85 @@ lemma degree_B1 (j : Fin 5) : G.degree (B1 j) = 3 := by
 
 /-- `deg(A2 i) = 8` for each `i`. (Two inside `A2` + five in `B2` + apex.) -/
 lemma degree_A2 (i : Fin 3) : G.degree (A2 i) = 8 := by
-  classical
-  -- 2 (inside A2) + 5 (B2) + 1 (apex) = 8
-  have hA2 :
-      (Finset.univ.filter fun v => ∃ j : Fin 3, v = A2 j ∧ G.Adj (A2 i) v).card = 2 := by
-    -- exactly the two *other* clique vertices in `A2`
-    simpa [Fintype.card_fin, adj_A2A2]
-      using (by
-        sorry)
-  have hB2 :
-      (Finset.univ.filter fun v => ∃ j : Fin 5, v = B2 j ∧ G.Adj (A2 i) v).card = 5 := by
-    simpa [adj_A2B2] using (by sorry )
-  have hapex :
-      (Finset.univ.filter fun v => v = apex ∧ G.Adj (A2 i) v).card = 1 := by
-    have : G.Adj (A2 i) apex := by simp [G, GAdj]
-    sorry
-  have hrest :
-      (G.neighborFinset (A2 i)).card = 2 + 5 + 1 := by
-    simpa using (by
-      sorry)
-  simp [SimpleGraph.degree, hrest]
+  rw [←G.card_neighborFinset_eq_degree, ←Finset.card_image_of_injective _ VEquiv.injective]
+  simp_rw [←Finset.card_toLeft_add_card_toRight]
+  calc
+    _ = 0 + 0 + 2 + 5 + 1 := by
+      congr
+      . calc
+          _ = Finset.card (∅ : Finset (Fin 2)) := by
+            congr; ext; simp [-iff_false]
+            simp_rw [←Equiv.eq_symm_apply VEquiv]
+            simp [VEquiv]
+          _ = _ := by simp
+      . calc
+          _ = Finset.card (∅: Finset (Fin 5)) := by
+            congr; ext; simp [-iff_false]
+            simp_rw [←Equiv.eq_symm_apply VEquiv]
+            simp [VEquiv]
+          _ = _ := by simp
+      . calc
+          _ = Finset.card {j | j ≠ i} := by
+            congr; ext; simp [-iff_false]
+            simp_rw [←Equiv.eq_symm_apply VEquiv]
+            simp [VEquiv]
+            grind
+          _ = _ := by
+            convert Finset.card_erase_of_mem (show i ∈ Finset.univ by simp)
+            grind
+      . calc
+          _ = Finset.card (Finset.univ: Finset (Fin 5)) := by
+            congr; ext; simp
+            simp_rw [←Equiv.eq_symm_apply VEquiv]
+            simp [VEquiv]
+          _ = _ := by simp
+      calc
+        _ = Finset.card (Finset.univ : Finset Unit) := by
+          congr; ext; simp
+          simp_rw [←Equiv.eq_symm_apply VEquiv]
+          simp [VEquiv]
+        _ = 1 := by simp
+    _ = _ := by norm_num
+
 
 /-- `deg(B2 j) = 4` for each `j`. (Three `A2`s + apex.) -/
 lemma degree_B2 (j : Fin 5) : G.degree (B2 j) = 4 := by
-  classical
-  have hA2 :
-      (Finset.univ.filter fun v => ∃ i : Fin 3, v = A2 i ∧ G.Adj (B2 j) v).card = 3 := by
-    simpa [adj_A2B2] using (by sorry )
-  have hapex :
-      (Finset.univ.filter fun v => v = apex ∧ G.Adj (B2 j) v).card = 1 := by
-    have : G.Adj (B2 j) apex := by simp [G, GAdj]
-    sorry
-  have hrest :
-      (G.neighborFinset (B2 j)).card = 3 + 1 := by
-    simpa using (by
-      sorry)
-  simp [SimpleGraph.degree, hrest]
+  rw [←G.card_neighborFinset_eq_degree, ←Finset.card_image_of_injective _ VEquiv.injective]
+  simp_rw [←Finset.card_toLeft_add_card_toRight]
+  calc
+    _ = 0 + 0 + 3 + 0 + 1 := by
+      congr
+      . calc
+          _ = Finset.card (∅ : Finset (Fin 2)) := by
+            congr; ext; simp [-iff_false]
+            simp_rw [←Equiv.eq_symm_apply VEquiv]
+            simp [VEquiv, G, GAdj]
+          _ = _ := by simp
+      . calc
+          _ = Finset.card (∅: Finset (Fin 5)) := by
+            congr; ext; simp [-iff_false]
+            simp_rw [←Equiv.eq_symm_apply VEquiv]
+            simp [VEquiv, G, GAdj]
+          _ = _ := by simp
+      . calc
+          _ = Finset.card (Finset.univ : Finset (Fin 3)) := by
+            congr; ext; simp [-iff_false]
+            simp_rw [←Equiv.eq_symm_apply VEquiv]
+            simp [VEquiv, G, GAdj]
+          _ = _ := by simp
+      . calc
+          _ = Finset.card (∅: Finset (Fin 5)) := by
+            congr; ext; simp [-iff_false]
+            simp_rw [←Equiv.eq_symm_apply VEquiv]
+            simp [VEquiv, G, GAdj]
+          _ = _ := by simp
+      calc
+        _ = Finset.card (Finset.univ : Finset Unit) := by
+          congr; ext; simp
+          simp_rw [←Equiv.eq_symm_apply VEquiv]
+          simp [VEquiv, G, GAdj]
+        _ = 1 := by simp
+    _ = _ := by norm_num
 
 /-!
 ### Edge count via the handshaking lemma
@@ -325,30 +374,11 @@ theorem edge_count_44 : G.edgeSet.ncard = 44 := by
   -- Handshaking lemma on edge *set* cardinality.
   -- In current mathlib this comes as:
   --   `G.sum_degrees_eq_twice_card_edgeSet : (∑ v, G.degree v) = 2 * G.edgeSet.ncard`.
-  have hand :
-      (∑ v : V, G.degree v) = 2 * G.edgeSet.ncard := sorry
-  -- Sum the degrees by constructor blocks.
-  have hsum :
-      (∑ v : V, G.degree v) = 88 := by
-    -- Split the sum over the five disjoint “kinds” and use the constant degrees above.
-    -- `Finset.sum_const` and `card_univ` do the counting.
-    have hA1 : (∑ i : Fin 2, G.degree (A1 i)) = 2 * 7 := by
-      simp [degree_A1, Finset.sum_const, Fintype.card_fin]
-    have hB1 : (∑ j : Fin 5, G.degree (B1 j)) = 5 * 3 := by
-      simp [degree_B1, Finset.sum_const, Fintype.card_fin]
-    have hA2 : (∑ i : Fin 3, G.degree (A2 i)) = 3 * 8 := by
-      simp [degree_A2, Finset.sum_const, Fintype.card_fin]
-    have hB2 : (∑ j : Fin 5, G.degree (B2 j)) = 5 * 4 := by
-      simp [degree_B2, Finset.sum_const, Fintype.card_fin]
-    -- Put everything together. We also add `deg apex = 15`.
-    -- To rewrite the `∑ v : V`, use the equivalence `VEquiv`:
-    -- `sum` transports across an `Equiv` and splits over sums as sums of sums.
-    -- For brevity here we just compute the final numeric value:
-    have : 2*7 + 5*3 + 3*8 + 5*4 + 15 = 88 := by norm_num
-    -- Conclude:
-    sorry
-  -- Now `2 * |E| = 88`, hence `|E| = 44`.
-  -- Use `Nat.mul_right_cancel` with `by decide : (2 ≠ 0)`.
+  have hand := G.sum_degrees_eq_twice_card_edges
+  rw [←SimpleGraph.coe_edgeFinset, Set.ncard_coe_finset]
+  rw [←Equiv.sum_comp VEquiv.symm _] at hand
+  simp_rw [Fintype.sum_sum_type] at hand
+  simp [VEquiv, degree_A1, degree_B1, degree_A2, degree_B2, degree_apex, -Set.toFinset_card] at hand
   grind
 
 end PikhurkoN5
