@@ -872,3 +872,243 @@ lemma exists_red_clique_neighbor
   · exact Or.inr (exists_red_A2_of_block2_ge6 color h2)
 
 end PikhurkoN5
+
+
+-- 7. triangle-or-star from the clique vertex
+
+namespace PikhurkoN5
+open V
+
+/-! ### Helpers: the chosen clique vertex lies in the corresponding red block -/
+
+lemma A1_mem_redBlock1_of_red
+    (color : Sym2 V → Fin 2) (i : Fin 2)
+    (hAdj : G.Adj apex (A1 i))
+    (hRed : color (Sym2.mk apex (A1 i)) = 1) :
+    A1 i ∈ redBlock1 color := by
+  classical
+  -- First: `A1 i` is a red neighbor of `apex`.
+  have hRN : A1 i ∈ redNeighbors color := by
+    -- `neighborFinset` membership + color=1
+    have : A1 i ∈ G.neighborFinset apex := by simpa using hAdj
+    exact Finset.mem_filter.mpr ⟨this, by simpa⟩
+  -- Second: it's in block 1.
+  have hB : inBlock1 (A1 i) := by simp [inBlock1]
+  -- Filter once more.
+  simpa [redBlock1] using Finset.mem_filter.mpr ⟨hRN, hB⟩
+
+lemma A2_mem_redBlock2_of_red
+    (color : Sym2 V → Fin 2) (i : Fin 3)
+    (hAdj : G.Adj apex (A2 i))
+    (hRed : color (Sym2.mk apex (A2 i)) = 1) :
+    A2 i ∈ redBlock2 color := by
+  classical
+  have hRN : A2 i ∈ redNeighbors color := by
+    have : A2 i ∈ G.neighborFinset apex := by simpa using hAdj
+    exact Finset.mem_filter.mpr ⟨this, by simpa⟩
+  have hB : inBlock2 (A2 i) := by simp [inBlock2]
+  simpa [redBlock2] using Finset.mem_filter.mpr ⟨hRN, hB⟩
+
+/-! ### Triangle-or-star from Block 1 -/
+
+/-- If Block 1 has at least 6 red apex-neighbors, and one of them is `A1 i` with a red edge
+from `apex`, then either we have a red triangle, or a blue `K_{1,5}` centered at `A1 i`. -/
+lemma triangle_or_blueStar_from_block1
+    (color : Sym2 V → Fin 2)
+    (h6 : 6 ≤ (redBlock1 color).card)
+    (i : Fin 2)
+    (hAdj : G.Adj apex (A1 i))
+    (hRedApexA1 : color (Sym2.mk apex (A1 i)) = 1) :
+    hasMonoTriangle G color 1 ∨ hasMonoStar G color 0 5 := by
+  classical
+  -- Put `y0 := A1 i` into `redBlock1`.
+  have hy0_in : A1 i ∈ redBlock1 color := A1_mem_redBlock1_of_red color i hAdj hRedApexA1
+  -- We want 5 vertices in `redBlock1 \ {A1 i}`.
+  have h5 :
+    5 ≤ ((redBlock1 color).erase (A1 i)).card := by
+    -- `card (erase y0) + 1 = card`  ⇒  `card (erase y0) ≥ 5` from `card ≥ 6`
+    have hcard :
+        ((redBlock1 color).erase (A1 i)).card + 1 = (redBlock1 color).card :=
+      Finset.card_erase_add_one hy0_in
+    -- turn `6 ≤ RHS` into `5 ≤ LHS`
+    have : 6 ≤ ((redBlock1 color).erase (A1 i)).card + 1 := by simpa [hcard] using h6
+    exact (Nat.succ_le_succ_iff.mp this)
+  -- Pick any 5-element subset `T` of those.
+  obtain ⟨T, hTsub, hTcard⟩ :=
+    Finset.exists_subset_card_eq ((redBlock1 color).erase (A1 i)) h5
+
+  -- Either some `y ∈ T` makes the edge `(A1 i,y)` red (→ triangle), or all are blue (→ star).
+  classical
+  by_cases hTri : ∃ y ∈ T, color (Sym2.mk (A1 i) y) = 1
+  · rcases hTri with ⟨y, hyT, hyRedA1y⟩
+    -- Facts from membership: `y ≠ A1 i`, `y ∈ redBlock1`.
+    have hy_erase : y ∈ (redBlock1 color).erase (A1 i) := hTsub hyT
+    have hy_ne : y ≠ A1 i := (Finset.mem_erase.mp hy_erase).1
+    have hy_in : y ∈ redBlock1 color := (Finset.mem_erase.mp hy_erase).2
+    -- Unpack `redBlock1` membership to get that `y` is a red neighbor of `apex` in block 1.
+    rcases Finset.mem_filter.1 hy_in with ⟨hy_RN, hy_block1⟩
+    rcases Finset.mem_filter.1 hy_RN with ⟨hyAdjApex, hyRedApexY⟩
+    -- `A1 i` is adjacent to every other vertex in Block 1 (clique-to-A1, clique-to-B1).
+    have hyAdjA1Y : G.Adj (A1 i) y := by
+      cases y with
+      | A1 j =>
+          -- `j ≠ i` because `y ≠ A1 i`
+          have hij : j ≠ i := by
+            intro h; exact hy_ne (by simpa [h])
+          -- use `adj_A1A1 : Adj (A1 i) (A1 j) ↔ i ≠ j`
+          have : i ≠ j := by simpa [ne_comm] using hij
+          simpa [adj_A1A1, this]
+      | B1 _  => simpa [adj_A1B1]
+      | A2 _  => cases hy_block1       -- impossible
+      | B2 _  => cases hy_block1       -- impossible
+      | apex  => cases hy_block1       -- impossible
+    -- Build the red triangle: apex — A1 i — y — apex.
+    refine Or.inl ?triangle
+    refine ⟨apex, A1 i, y, ?_, ?_, ?_, ?_, ?_, ?_⟩
+    · simpa using hAdj
+    · exact hyAdjA1Y
+    · exact hyAdjApex
+    · simpa using hRedApexA1
+    · exact hyRedA1y
+    · simpa using hyRedApexY
+  · -- No red `(A1 i,y)` with `y ∈ T` ⇒ all `(A1 i,y)` are blue.
+    have hAllBlue : ∀ {y}, y ∈ T → color (Sym2.mk (A1 i) y) = 0 := by
+      intro y hy
+      have : color (Sym2.mk (A1 i) y) ≠ 1 := by
+        intro contra; exact hTri ⟨y, hy, contra⟩
+      -- In `Fin 2`, being not `1` is being `0`.
+      -- (If you prefer, keep and reuse your earlier lemma `fin2_eq_one_iff_ne_zero`.)
+      have : color (Sym2.mk (A1 i) y) = 0 ∨ color (Sym2.mk (A1 i) y) = 1 := by
+        fin_cases h' : color (Sym2.mk (A1 i) y) <;> simp [h']
+      exact this.resolve_right (by exact id)
+    -- Show `A1 i ∉ T`.
+    have hnotin : A1 i ∉ T := by
+      intro hx
+      have : A1 i ∈ (redBlock1 color).erase (A1 i) := hTsub hx
+      simpa using this
+    -- Adjacency `(A1 i,y)` for `y ∈ T`:
+    have hAdjAll : ∀ {y}, y ∈ T → G.Adj (A1 i) y := by
+      intro y hy
+      have hy_erase : y ∈ (redBlock1 color).erase (A1 i) := hTsub hy
+      have hy_ne : y ≠ A1 i := (Finset.mem_erase.mp hy_erase).1
+      have hy_in : y ∈ redBlock1 color := (Finset.mem_erase.mp hy_erase).2
+      rcases Finset.mem_filter.1 hy_in with ⟨_, hy_block1⟩
+      -- same case split as above
+      cases y with
+      | A1 j =>
+          have hij : j ≠ i := by intro h; exact hy_ne (by simpa [h])
+          have : i ≠ j := by simpa [ne_comm] using hij
+          simpa [adj_A1A1, this]
+      | B1 _  => simpa [adj_A1B1]
+      | A2 _  => cases hy_block1
+      | B2 _  => cases hy_block1
+      | apex  => cases hy_block1
+    -- We have a blue star of size 5 centered at `A1 i` with leaf-set `T`.
+    refine Or.inr ?star
+    refine ⟨A1 i, T, by simpa [hTcard], hnotin, ?_⟩
+    intro y hy
+    exact ⟨hAdjAll hy, hAllBlue hy⟩
+
+/-! ### Triangle-or-star from Block 2 (same proof pattern) -/
+
+lemma triangle_or_blueStar_from_block2
+    (color : Sym2 V → Fin 2)
+    (h6 : 6 ≤ (redBlock2 color).card)
+    (i : Fin 3)
+    (hAdj : G.Adj apex (A2 i))
+    (hRedApexA2 : color (Sym2.mk apex (A2 i)) = 1) :
+    hasMonoTriangle G color 1 ∨ hasMonoStar G color 0 5 := by
+  classical
+  have hy0_in : A2 i ∈ redBlock2 color := A2_mem_redBlock2_of_red color i hAdj hRedApexA2
+  have h5 :
+    5 ≤ ((redBlock2 color).erase (A2 i)).card := by
+    have hcard :
+        ((redBlock2 color).erase (A2 i)).card + 1 = (redBlock2 color).card :=
+      Finset.card_erase_add_one hy0_in
+    have : 6 ≤ ((redBlock2 color).erase (A2 i)).card + 1 := by simpa [hcard] using h6
+    exact (Nat.succ_le_succ_iff.mp this)
+  obtain ⟨T, hTsub, hTcard⟩ :=
+    Finset.exists_subset_card_eq ((redBlock2 color).erase (A2 i)) h5
+
+  by_cases hTri : ∃ y ∈ T, color (Sym2.mk (A2 i) y) = 1
+  · rcases hTri with ⟨y, hyT, hyRedA2y⟩
+    have hy_erase : y ∈ (redBlock2 color).erase (A2 i) := hTsub hyT
+    have hy_ne : y ≠ A2 i := (Finset.mem_erase.mp hy_erase).1
+    have hy_in : y ∈ redBlock2 color := (Finset.mem_erase.mp hy_erase).2
+    rcases Finset.mem_filter.1 hy_in with ⟨hy_RN, hy_block2⟩
+    rcases Finset.mem_filter.1 hy_RN with ⟨hyAdjApex, hyRedApexY⟩
+    have hyAdjA2Y : G.Adj (A2 i) y := by
+      cases y with
+      | A2 j =>
+          have hij : j ≠ i := by intro h; exact hy_ne (by simpa [h])
+          have : i ≠ j := by simpa [ne_comm] using hij
+          simpa [adj_A2A2, this]
+      | B2 _  => simpa [adj_A2B2]
+      | A1 _  => cases hy_block2
+      | B1 _  => cases hy_block2
+      | apex  => cases hy_block2
+    refine Or.inl ?triangle
+    refine ⟨apex, A2 i, y, ?_, ?_, ?_, ?_, ?_, ?_⟩
+    · simpa using hAdj
+    · exact hyAdjA2Y
+    · exact hyAdjApex
+    · simpa using hRedApexA2
+    · exact hyRedA2y
+    · simpa using hyRedApexY
+  ·
+    have hAllBlue : ∀ {y}, y ∈ T → color (Sym2.mk (A2 i) y) = 0 := by
+      intro y hy
+      have : color (Sym2.mk (A2 i) y) ≠ 1 := by
+        intro contra; exact hTri ⟨y, hy, contra⟩
+      have : color (Sym2.mk (A2 i) y) = 0 ∨ color (Sym2.mk (A2 i) y) = 1 := by
+        fin_cases h' : color (Sym2.mk (A2 i) y) <;> simp [h']
+      exact this.resolve_right (by exact id)
+    have hnotin : A2 i ∉ T := by
+      intro hx
+      have : A2 i ∈ (redBlock2 color).erase (A2 i) := hTsub hx
+      simpa using this
+    have hAdjAll : ∀ {y}, y ∈ T → G.Adj (A2 i) y := by
+      intro y hy
+      have hy_erase : y ∈ (redBlock2 color).erase (A2 i) := hTsub hy
+      have hy_ne : y ≠ A2 i := (Finset.mem_erase.mp hy_erase).1
+      have hy_in : y ∈ redBlock2 color := (Finset.mem_erase.mp hy_erase).2
+      rcases Finset.mem_filter.1 hy_in with ⟨_, hy_block2⟩
+      cases y with
+      | A2 j =>
+          have hij : j ≠ i := by intro h; exact hy_ne (by simpa [h])
+          have : i ≠ j := by simpa [ne_comm] using hij
+          simpa [adj_A2A2, this]
+      | B2 _  => simpa [adj_A2B2]
+      | A1 _  => cases hy_block2
+      | B1 _  => cases hy_block2
+      | apex  => cases hy_block2
+    refine Or.inr ?star
+    refine ⟨A2 i, T, by simpa [hTcard], hnotin, ?_⟩
+    intro y hy
+    exact ⟨hAdjAll hy, hAllBlue hy⟩
+
+/-! ### Final step: no blue K_{1,5} ⇒ a red triangle -/
+
+/-- **Main step (n=5):** If there is no blue `K_{1,5}`, then the red color class contains a triangle. -/
+theorem red_triangle_of_no_blue_star
+    (color : Sym2 V → Fin 2)
+    (hNoBlueStar : ¬ hasMonoStar G color 0 5) :
+    hasMonoTriangle G color 1 := by
+  classical
+  -- One of the two blocks has ≥6 red neighbors from `apex`.
+  have h6 := exists_block_receives_at_least_6_red color hNoBlueStar
+  -- From that block, extract a clique vertex with a red edge from `apex`.
+  rcases h6 with hB1 | hB2
+  · -- Block 1 case
+    rcases exists_red_A1_of_block1_ge6 color hB1 with ⟨i, hAdj, hRed⟩
+    -- Either get triangle or (if star) contradict `hNoBlueStar`.
+    rcases triangle_or_blueStar_from_block1 color hB1 i hAdj hRed with hTri | hStar
+    · exact hTri
+    · exact (hNoBlueStar hStar).elim
+  · -- Block 2 case
+    rcases exists_red_A2_of_block2_ge6 color hB2 with ⟨i, hAdj, hRed⟩
+    rcases triangle_or_blueStar_from_block2 color hB2 i hAdj hRed with hTri | hStar
+    · exact hTri
+    · exact (hNoBlueStar hStar).elim
+
+end PikhurkoN5
