@@ -12,4 +12,8 @@ _site/
 *.swp
 *.swo
 
+# AI assistant files
+.claude/
+
+# miscellaneous files
 analysis/Analysis/tobeIgnored/

@@ -68,6 +68,16 @@ theorem Bornology.IsBounded.of_boundedInterval (I: BoundedInterval) : Bornology.
     simp [set_Ico]
     exact Metric.isBounded_Ico a b
 
+/-- Helper: construct witness for lowerBound of upperBounds -/
+def witness_lowerBound_upperBounds {X : Set ℝ} (y : ℝ) (hy : y ∈ X)
+    : y ∈ lowerBounds (upperBounds X) := by
+  intro u hu; simp [upperBounds] at hu; exact hu hy
+
+/-- Helper: construct witness for upperBound of lowerBounds -/
+def witness_upperBound_lowerBounds {X : Set ℝ} (y : ℝ) (hy : y ∈ X)
+    : y ∈ upperBounds (lowerBounds X) := by
+  intro u hu; simp [lowerBounds] at hu; exact hu hy
+
 /-- Helper lemma for BoundedInterval.ordConnected_iff:
 If x < sSup X, then there exists z ∈ X with x < z -/
 theorem exists_gt_of_lt_csSup {X : Set ℝ} (hBddAbove : BddAbove X) (hNonempty : X.Nonempty)
@@ -75,13 +85,11 @@ theorem exists_gt_of_lt_csSup {X : Set ℝ} (hBddAbove : BddAbove X) (hNonempty 
     ∃ z ∈ X, x < z := by
   by_contra! h
   have : sSup X ≤ x := by
-    have hx_upper : x ∈ upperBounds X := fun z hz => h z hz
-    have h_bdd_below_upper : BddBelow (upperBounds X) := by
-      obtain ⟨y, hy, hy_lower⟩ := hLowerBound
-      exact ⟨y, hy_lower⟩
     rw [← csInf_upperBounds_eq_csSup hBddAbove hNonempty]
-    exact csInf_le h_bdd_below_upper hx_upper
-  linarith [this]
+    exact csInf_le
+      (by obtain ⟨y, hy, _⟩ := hLowerBound; exact ⟨y, witness_lowerBound_upperBounds y hy⟩)
+      (fun z hz => h z hz)
+  linarith
 
 /-- If sInf X < x, then there exists w ∈ X with w ≤ x -/
 theorem exists_le_of_lt_csInf {X : Set ℝ} (hBddBelow : BddBelow X) (hNonempty : X.Nonempty)
@@ -89,39 +97,34 @@ theorem exists_le_of_lt_csInf {X : Set ℝ} (hBddBelow : BddBelow X) (hNonempty 
     ∃ w ∈ X, w ≤ x := by
   by_contra! h
   have : x ≤ sInf X := by
-    have hx_lower : x ∈ lowerBounds X := fun u hu => le_of_lt (h u hu)
-    have h_bdd_above_lower : BddAbove (lowerBounds X) := by
-      obtain ⟨y, hy, hy_upper⟩ := hUpperBound
-      exact ⟨y, hy_upper⟩
     rw [← csSup_lowerBounds_eq_csInf hBddBelow hNonempty]
-    exact le_csSup h_bdd_above_lower hx_lower
-  linarith [this]
+    exact le_csSup
+      (by obtain ⟨y, hy, _⟩ := hUpperBound; exact ⟨y, witness_upperBound_lowerBounds y hy⟩)
+      (fun u hu => le_of_lt (h u hu))
+  linarith
 
 /-- Show x < b when b = sSup X and b ∉ X -/
 theorem lt_sSup_of_ne_sSup {X : Set ℝ} {x b : ℝ} (_hBddAbove : BddAbove X) (_hb : b = sSup X)
     (hb_notin : b ∉ X) (hx : x ∈ X) (hx_le_b : x ≤ b) : x < b := by
-  by_contra! h
-  have : x = b := le_antisymm hx_le_b h
-  rw [this] at hx
-  exact hb_notin hx
+  by_contra! h; exact hb_notin (hx_le_b.antisymm h ▸ hx)
 
 /-- Show a < x when a = sInf X and a ∉ X -/
 theorem sInf_lt_of_ne_sInf {X : Set ℝ} {a x : ℝ} (_hBddBelow : BddBelow X) (_ha : a = sInf X)
     (ha_notin : a ∉ X) (hx : x ∈ X) (ha_le_x : a ≤ x) : a < x := by
-  by_contra! h
-  have : x = a := le_antisymm h ha_le_x
-  rw [this] at hx
-  exact ha_notin hx
+  by_contra! h; exact ha_notin (h.antisymm ha_le_x ▸ hx)
 
 /-- Use order-connectedness to show x ∈ X when x ∈ [w, z] and w, z ∈ X -/
 theorem mem_of_mem_Icc_ordConnected {X : Set ℝ}
-    (hOrdConn : ∀ ⦃x : ℝ⦄, x ∈ X → ∀ ⦃y : ℝ⦄, y ∈ X → Set.Icc x y ⊆ X) {x w z : ℝ}
-    (hw : w ∈ X) (hz : z ∈ X) (hx : x ∈ Set.Icc w z) : x ∈ X :=
+    (hOrdConn : ∀ ⦃x : ℝ⦄, x ∈ X → ∀ ⦃y : ℝ⦄, y ∈ X → Set.Icc x y ⊆ X)
+    {x w z : ℝ} (hw : w ∈ X) (hz : z ∈ X) (hx : x ∈ Set.Icc w z) : x ∈ X :=
   hOrdConn hw hz hx
 
-theorem BoundedInterval.ordConnected_iff (X:Set ℝ) : Bornology.IsBounded X ∧ X.OrdConnected ↔ ∃ I: BoundedInterval, X = I := by
+
+theorem BoundedInterval.ordConnected_iff (X:Set ℝ) :
+    Bornology.IsBounded X ∧ X.OrdConnected ↔ ∃ I: BoundedInterval, X = I := by
   constructor
-  · -- Non-trivial direction: if X is bounded and order-connected, then X = I for some BoundedInterval I
+  · -- Non-trivial direction: if X is bounded and order-connected,
+    -- then X = I for some BoundedInterval I
     -- Strategy:
     -- 1. Handle the empty case: If X = ∅, use Ioo 0 0 (the empty interval representation)
     -- 2. For non-empty X:
@@ -143,6 +146,7 @@ theorem BoundedInterval.ordConnected_iff (X:Set ℝ) : Bornology.IsBounded X ∧
       exact hEmpty
     · -- Step 2: Non-empty case
       have hNonempty : X.Nonempty := Set.nonempty_iff_ne_empty.mpr hEmpty
+      rw [Set.ordConnected_def] at hOrdConn
       -- Step 2a: Get boundedness above and below
       -- Use that bounded sets in ℝ are contained in some Icc, which gives bounds directly
       rw [Chapter9.isBounded_def] at hBounded
@@ -156,106 +160,46 @@ theorem BoundedInterval.ordConnected_iff (X:Set ℝ) : Bornology.IsBounded X ∧
       by_cases ha : a ∈ X
       · by_cases hb : b ∈ X
         · -- Case: a ∈ X ∧ b ∈ X → use Icc a b
-          use Icc a b
-          simp [set_Icc]
-          ext x
-          constructor
-          · -- X ⊆ Icc a b
-            intro hx
-            simp [Set.mem_Icc]
+          use Icc a b; simp [set_Icc]; ext x; constructor
+          · intro hx; simp [Set.mem_Icc]
             exact ⟨csInf_le hBddBelow hx, le_csSup hBddAbove hx⟩
-          · -- Icc a b ⊆ X
-            intro hx
-            simp [Set.mem_Icc] at hx
-            rw [Set.ordConnected_def] at hOrdConn
-            have hIcc_subset : Set.Icc a b ⊆ X := hOrdConn ha hb
-            exact hIcc_subset hx
+          · intro hx; simp [Set.mem_Icc] at hx; exact (hOrdConn ha hb) hx
         · -- Case: a ∈ X ∧ b ∉ X → use Ico a b
-          use Ico a b
-          simp [set_Ico]
-          ext x
-          constructor
-          · -- X ⊆ Ico a b
-            intro hx
-            simp [Set.mem_Ico]
-            constructor
-            · exact csInf_le hBddBelow hx
-            · exact lt_sSup_of_ne_sSup hBddAbove rfl hb hx (le_csSup hBddAbove hx)
-          · -- Ico a b ⊆ X
-            intro hx
-            simp [Set.mem_Ico] at hx
-            rw [Set.ordConnected_def] at hOrdConn
-            -- Since x < b = sSup X, there exists z ∈ X with x < z
-            have h_exists_z : ∃ z ∈ X, x < z :=
-              exists_gt_of_lt_csSup hBddAbove hNonempty ⟨a, ha, by
-                intro u hu
-                simp [upperBounds] at hu
-                exact hu ha⟩ x (by rw [←show b = sSup X from rfl]; exact hx.2)
-            obtain ⟨z, hz, hxz⟩ := h_exists_z
-            -- Now x ∈ [a, z] ⊆ X
+          use Ico a b; simp [set_Ico]; ext x; constructor
+          · intro hx; simp [Set.mem_Ico]
+            exact ⟨csInf_le hBddBelow hx, lt_sSup_of_ne_sSup hBddAbove rfl hb hx (le_csSup hBddAbove hx)⟩
+          · intro hx; simp [Set.mem_Ico] at hx
+            have hb_eq : b = sSup X := rfl
+            obtain ⟨z, hz, hxz⟩ := exists_gt_of_lt_csSup hBddAbove hNonempty
+              ⟨a, ha, witness_lowerBound_upperBounds a ha⟩ x (by rw [←hb_eq]; exact hx.2)
             exact mem_of_mem_Icc_ordConnected hOrdConn ha hz ⟨hx.1, le_of_lt hxz⟩
       · by_cases hb : b ∈ X
         · -- Case: a ∉ X ∧ b ∈ X → use Ioc a b
-          use Ioc a b
-          simp [set_Ioc]
-          ext x
-          constructor
-          · -- X ⊆ Ioc a b
-            intro hx
-            simp [Set.mem_Ioc]
-            constructor
-            · exact sInf_lt_of_ne_sInf hBddBelow rfl ha hx (csInf_le hBddBelow hx)
-            · exact le_csSup hBddAbove hx
-          · -- Ioc a b ⊆ X
-            intro hx
-            simp [Set.mem_Ioc] at hx
-            rw [Set.ordConnected_def] at hOrdConn
+          use Ioc a b; simp [set_Ioc]; ext x; constructor
+          · intro hx; simp [Set.mem_Ioc]
+            exact ⟨sInf_lt_of_ne_sInf hBddBelow rfl ha hx (csInf_le hBddBelow hx), le_csSup hBddAbove hx⟩
+          · intro hx; simp [Set.mem_Ioc] at hx
             by_cases hx_eq_b : x = b
             · rw [hx_eq_b]; exact hb
-            · -- x < b, use b as z and find w ≤ x
-              have hx_lt_b : x < b := Ne.lt_of_le hx_eq_b hx.2
-              -- Find w ∈ X with w ≤ x, then use [w, b]
-              have h_exists_w : ∃ w ∈ X, w ≤ x :=
-                exists_le_of_lt_csInf hBddBelow hNonempty ⟨b, hb, by
-                  intro u hu
-                  simp [lowerBounds] at hu
-                  exact hu hb⟩ x (by rw [←show a = sInf X from rfl]; exact hx.1)
-              obtain ⟨w, hw, hwx⟩ := h_exists_w
-              -- x ∈ [w, b] ⊆ X
+            · have ha_eq : a = sInf X := rfl
+              obtain ⟨w, hw, hwx⟩ := exists_le_of_lt_csInf hBddBelow hNonempty
+                ⟨b, hb, witness_upperBound_lowerBounds b hb⟩ x (by rw [←ha_eq]; exact hx.1)
               exact mem_of_mem_Icc_ordConnected hOrdConn hw hb ⟨hwx, hx.2⟩
         · -- Case: a ∉ X ∧ b ∉ X → use Ioo a b
-          use Ioo a b
-          simp [set_Ioo]
-          ext x
-          constructor
-          · -- X ⊆ Ioo a b
-            intro hx
-            simp [Set.mem_Ioo]
-            constructor
-            · exact sInf_lt_of_ne_sInf hBddBelow rfl ha hx (csInf_le hBddBelow hx)
-            · exact lt_sSup_of_ne_sSup hBddAbove rfl hb hx (le_csSup hBddAbove hx)
-          · -- Ioo a b ⊆ X
-            intro hx
-            simp [Set.mem_Ioo] at hx
-            rw [Set.ordConnected_def] at hOrdConn
-            -- Find z ∈ X with x < z and w ∈ X with w ≤ x, then use [w, z]
-            have h_exists_z : ∃ z ∈ X, x < z :=
-              exists_gt_of_lt_csSup hBddAbove hNonempty (by
-                obtain ⟨y, hy⟩ := hNonempty
-                use y, hy
-                intro u hu
-                simp [upperBounds] at hu
-                exact hu hy) x (by rw [←show b = sSup X from rfl]; exact hx.2)
-            obtain ⟨z, hz, hxz⟩ := h_exists_z
-            have h_exists_w : ∃ w ∈ X, w ≤ x :=
-              exists_le_of_lt_csInf hBddBelow hNonempty (by
-                obtain ⟨y, hy⟩ := hNonempty
-                use y, hy
-                intro u hu
-                simp [lowerBounds] at hu
-                exact hu hy) x (by rw [←show a = sInf X from rfl]; exact hx.1)
-            obtain ⟨w, hw, hwx⟩ := h_exists_w
-            -- x ∈ [w, z] ⊆ X
+          use Ioo a b; simp [set_Ioo]; ext x; constructor
+          · intro hx; simp [Set.mem_Ioo]
+            exact ⟨sInf_lt_of_ne_sInf hBddBelow rfl ha hx (csInf_le hBddBelow hx),
+              lt_sSup_of_ne_sSup hBddAbove rfl hb hx (le_csSup hBddAbove hx)⟩
+          · intro hx; simp [Set.mem_Ioo] at hx
+            have ha_eq : a = sInf X := rfl; have hb_eq : b = sSup X := rfl
+            have h_lower : ∃ y ∈ X, y ∈ lowerBounds (upperBounds X) := by
+              obtain ⟨y, hy⟩ := hNonempty; exact ⟨y, hy, witness_lowerBound_upperBounds y hy⟩
+            have h_upper : ∃ y ∈ X, y ∈ upperBounds (lowerBounds X) := by
+              obtain ⟨y, hy⟩ := hNonempty; exact ⟨y, hy, witness_upperBound_lowerBounds y hy⟩
+            obtain ⟨z, hz, hxz⟩ := exists_gt_of_lt_csSup hBddAbove hNonempty h_lower x
+              (by rw [←hb_eq]; exact hx.2)
+            obtain ⟨w, hw, hwx⟩ := exists_le_of_lt_csInf hBddBelow hNonempty h_upper x
+              (by rw [←ha_eq]; exact hx.1)
             exact mem_of_mem_Icc_ordConnected hOrdConn hw hz ⟨hwx, le_of_lt hxz⟩
   · -- Trivial direction: if X = I for some BoundedInterval I, then X is bounded and order-connected
     intro ⟨I, hX⟩
@@ -268,43 +212,21 @@ theorem BoundedInterval.ordConnected_iff (X:Set ℝ) : Bornology.IsBounded X ∧
       -- using `Set.ordConnected_def` and proving that for any `x, y` in the interval
       -- and `z` in `[x, y]`, we have `z` in the interval
       rw [hX']
+      rw [Set.ordConnected_def]
+      intro x hx y hy z hz
       cases I with
       | Ioo a b =>
-        simp [set_Ioo]
-        rw [Set.ordConnected_def]
-        intro x hx y hy z hz
-        simp [Set.mem_Ioo] at hx hy hz
-        simp [Set.mem_Ioo]
-        constructor
-        · exact lt_of_lt_of_le hx.1 (hz.1)
-        · exact lt_of_le_of_lt (hz.2) hy.2
+        simp [set_Ioo, Set.mem_Ioo] at hx hy hz; simp [Set.mem_Ioo]
+        exact ⟨lt_of_lt_of_le hx.1 hz.1, lt_of_le_of_lt hz.2 hy.2⟩
       | Icc a b =>
-        simp [set_Icc]
-        rw [Set.ordConnected_def]
-        intro x hx y hy z hz
-        simp [Set.mem_Icc] at hx hy hz
-        simp [Set.mem_Icc]
-        constructor
-        · exact le_trans hx.1 hz.1
-        · exact le_trans hz.2 hy.2
+        simp [set_Icc, Set.mem_Icc] at hx hy hz; simp [Set.mem_Icc]
+        exact ⟨le_trans hx.1 hz.1, le_trans hz.2 hy.2⟩
       | Ioc a b =>
-        simp [set_Ioc]
-        rw [Set.ordConnected_def]
-        intro x hx y hy z hz
-        simp [Set.mem_Ioc] at hx hy hz
-        simp [Set.mem_Ioc]
-        constructor
-        · exact lt_of_lt_of_le hx.1 hz.1
-        · exact le_trans hz.2 hy.2
+        simp [set_Ioc, Set.mem_Ioc] at hx hy hz; simp [Set.mem_Ioc]
+        exact ⟨lt_of_lt_of_le hx.1 hz.1, le_trans hz.2 hy.2⟩
       | Ico a b =>
-        simp [set_Ico]
-        rw [Set.ordConnected_def]
-        intro x hx y hy z hz
-        simp [Set.mem_Ico] at hx hy hz
-        simp [Set.mem_Ico]
-        constructor
-        · exact le_trans hx.1 hz.1
-        · exact lt_of_le_of_lt hz.2 hy.2
+        simp [set_Ico, Set.mem_Ico] at hx hy hz; simp [Set.mem_Ico]
+        exact ⟨le_trans hx.1 hz.1, lt_of_le_of_lt hz.2 hy.2⟩
 
 theorem BoundedInterval.inter (I J: BoundedInterval) : ∃ K : BoundedInterval, (I:Set ℝ) ∩ (J:Set ℝ) = (K:Set ℝ) := by
   -- Strategy: Use the characterization theorem `BoundedInterval.ordConnected_iff`
