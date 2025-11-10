@@ -307,7 +307,22 @@ theorem BoundedInterval.ordConnected_iff (X:Set ℝ) : Bornology.IsBounded X ∧
         · exact lt_of_le_of_lt hz.2 hy.2
 
 theorem BoundedInterval.inter (I J: BoundedInterval) : ∃ K : BoundedInterval, (I:Set ℝ) ∩ (J:Set ℝ) = (K:Set ℝ) := by
-  sorry
+  -- Strategy: Use the characterization theorem `BoundedInterval.ordConnected_iff`
+  -- Step 1: Show that (I:Set ℝ) ∩ (J:Set ℝ) is bounded
+  -- Step 2: Show that (I:Set ℝ) ∩ (J:Set ℝ) is order-connected
+  -- Step 3: Apply the characterization theorem
+  have hBounded : Bornology.IsBounded ((I:Set ℝ) ∩ (J:Set ℝ)) := by
+    -- The intersection is a subset of I, which is bounded
+    exact (Bornology.IsBounded.of_boundedInterval I).subset Set.inter_subset_left
+  have hOrdConn : ((I:Set ℝ) ∩ (J:Set ℝ)).OrdConnected := by
+    -- Both I and J are order-connected (from ordConnected_iff)
+    have hI_ordConn : (I:Set ℝ).OrdConnected := by
+      exact (BoundedInterval.ordConnected_iff (I:Set ℝ)).mpr ⟨I, rfl⟩ |>.2
+    have hJ_ordConn : (J:Set ℝ).OrdConnected := by
+      exact (BoundedInterval.ordConnected_iff (J:Set ℝ)).mpr ⟨J, rfl⟩ |>.2
+    -- Intersection of order-connected sets is order-connected
+    exact Set.OrdConnected.inter hI_ordConn hJ_ordConn
+  exact (BoundedInterval.ordConnected_iff ((I:Set ℝ) ∩ (J:Set ℝ))).mp ⟨hBounded, hOrdConn⟩
 
 noncomputable instance BoundedInterval.instInter : Inter BoundedInterval where
   inter I J := (inter I J).choose
