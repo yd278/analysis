@@ -422,7 +422,9 @@ theorem Box.volume_of_interval (I:BoundedInterval) : |(I:Box 1)|ᵥ = |I|ₗ := 
 
 abbrev IsElementary {d:ℕ} (E: Set (EuclideanSpace' d)) : Prop := ∃ S : Finset (Box d), E = ⋃ B ∈ S, ↑B
 
-theorem IsElementary.box {d:ℕ} (B: Box d) : IsElementary B.toSet := by sorry
+theorem IsElementary.box {d:ℕ} (B: Box d) : IsElementary B.toSet := by
+  use {B}
+  simp
 
 /-- Exercise 1.1.1 (Boolean closure) -/
 theorem IsElementary.union {d:ℕ} {E F: Set (EuclideanSpace' d)}
