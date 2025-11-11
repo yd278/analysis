@@ -660,7 +660,7 @@ lemma IsElementary.measure_of_disjUnion {d:ℕ} {E F: Set (EuclideanSpace' d)}
   -- 4. Use IsElementary.measure_eq to show (hE.union hF).measure = ∑ B ∈ T_E ∪ T_F, |B|ᵥ
   -- 5. Use Finset.sum_union to split: ∑ B ∈ T_E ∪ T_F, |B|ᵥ = ∑ B ∈ T_E, |B|ᵥ + ∑ B ∈ T_F, |B|ᵥ
   -- 6. Apply IsElementary.measure_eq to show hE.measure = ∑ B ∈ T_E, |B|ᵥ and hF.measure = ∑ B ∈ T_F, |B|ᵥ
-  classical
+  classical -- for axiom of choice
   -- Step 1: Get partitions
   set T_E := hE.partition.choose
   set T_F := hF.partition.choose
@@ -717,7 +717,7 @@ lemma IsElementary.measure_of_disjUnion {d:ℕ} {E F: Set (EuclideanSpace' d)}
   have h_sum_split : ∑ B ∈ T_E ∪ T_F, |B|ᵥ = ∑ B ∈ T_E, |B|ᵥ + ∑ B ∈ T_F, |B|ᵥ := by
     rw [←Finset.sum_union_inter]
     suffices ∑ B ∈ T_E ∩ T_F, |B|ᵥ = 0 by
-      rw [this, sub_zero]
+      simp [this]
     apply Finset.sum_eq_zero
     intro B hB
     simp [Finset.mem_inter] at hB
@@ -732,38 +732,32 @@ lemma IsElementary.measure_of_disjUnion {d:ℕ} {E F: Set (EuclideanSpace' d)}
         rw [hF_eq]
         intro x hx
         exact Set.mem_biUnion hB_F hx
-      rw [Set.disjoint_iff] at hdisj
       have : B.toSet ⊆ E ∩ F := Set.subset_inter hB_E_subset hB_F_subset
-      rwa [hdisj] at this
+      exact this.trans (Set.disjoint_iff_inter_eq_empty.1 hdisj).subset
     -- Since B.toSet ⊆ ∅, we have B.toSet = ∅, so volume is 0
     have hB_empty : B.toSet = ∅ := Set.subset_empty_iff.1 hB_subset_empty
     -- If B.toSet = ∅, then the box is empty, so volume is 0
     -- This follows from the fact that an empty box has at least one empty side interval
     have : ∃ i, (B.side i).toSet = ∅ := by
       by_contra! h
-      have h_all_nonempty : ∀ i, (B.side i).toSet.Nonempty := by
-        intro i; by_contra! h_empty
-        exact h i (Set.not_nonempty_iff_eq_empty.1 h_empty)
+      have h_all_nonempty : ∀ i, (B.side i).toSet.Nonempty := h
       choose x hx using h_all_nonempty
       have h_nonempty : B.toSet.Nonempty := by
-        use fun i ↦ x i; simp [Box.toSet]; exact hx
+        exact ⟨fun i ↦ x i, fun i _ ↦ hx i⟩
       rw [hB_empty] at h_nonempty
       exact Set.not_nonempty_empty h_nonempty
     obtain ⟨i, hi⟩ := this
     -- Show |B.side i|ₗ = 0, which implies |B|ᵥ = 0
     rw [Box.volume]
-    apply Finset.prod_eq_zero
-    use i
+    apply Finset.prod_eq_zero (Finset.mem_univ i)
     -- If (B.side i).toSet = ∅, then the interval is degenerate (b ≤ a), so length = 0
     have h_le : (B.side i).b ≤ (B.side i).a := by
-      cases B.side i with
-      | Ioo a b => rw [BoundedInterval.set_Ioo] at hi; exact Set.Ioo_eq_empty_iff.1 hi
-      | Icc a b => rw [BoundedInterval.set_Icc] at hi; exact le_of_lt (Set.Icc_eq_empty_iff.1 hi)
-      | Ioc a b => rw [BoundedInterval.set_Ioc] at hi; exact Set.Ioc_eq_empty_iff.1 hi
-      | Ico a b => rw [BoundedInterval.set_Ico] at hi; exact Set.Ico_eq_empty_iff.1 hi
-    simp [BoundedInterval.length]
-    rw [max_eq_right (sub_nonpos.2 h_le)]
-    norm_num
+      match B.side i, hi with
+      | Ioo a b, hi => simp [BoundedInterval.set_Ioo] at hi; simp; exact le_of_not_gt (Set.Ioo_eq_empty_iff.1 hi)
+      | Icc a b, hi => simp [BoundedInterval.set_Icc] at hi; simp; exact le_of_not_ge (Set.Icc_eq_empty_iff.1 hi)
+      | Ioc a b, hi => simp [BoundedInterval.set_Ioc] at hi; simp; exact le_of_not_gt (Set.Ioc_eq_empty_iff.1 hi)
+      | Ico a b, hi => simp [BoundedInterval.set_Ico] at hi; simp; exact le_of_not_gt (Set.Ico_eq_empty_iff.1 hi)
+    simp [BoundedInterval.length, max_eq_right (sub_nonpos.2 h_le)]
   -- Step 6: Apply IsElementary.measure_eq to individual measures
   have hE_measure : hE.measure = ∑ B ∈ T_E, |B|ᵥ := hE.measure_eq hT_E_disj hE_eq
   have hF_measure : hF.measure = ∑ B ∈ T_F, |B|ᵥ := hF.measure_eq hT_F_disj hF_eq
