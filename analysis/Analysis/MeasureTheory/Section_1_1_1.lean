@@ -631,12 +631,144 @@ example :
 
 lemma IsElementary.measure_nonneg {d:ℕ} {E: Set (EuclideanSpace' d)} (hE: IsElementary E) :
   0 ≤ hE.measure := by
-  sorry
+  -- Strategy:
+  -- 1. Unfold measure: hE.measure = ∑ B ∈ partition, |B|ᵥ
+  -- 2. Show each |B|ᵥ ≥ 0: volume is product of lengths, each length = max(...) ≥ 0
+  -- 3. Apply Finset.sum_nonneg: sum of non-negative terms is non-negative
+  -- Step 1: Unfold measure definition
+  rw [IsElementary.measure]
+  -- Step 2: Show each |B|ᵥ ≥ 0 for B in the partition
+  have hvol_nonneg : ∀ B ∈ hE.partition.choose, 0 ≤ |B|ᵥ := by
+    intro B hB
+    -- Volume is product of lengths
+    rw [Box.volume]
+    apply Finset.prod_nonneg
+    intro i _
+    -- Each length = max(...) ≥ 0
+    rw [BoundedInterval.length]
+    exact le_max_right _ _
+  -- Step 3: Apply Finset.sum_nonneg with the fact from step 2
+  exact Finset.sum_nonneg hvol_nonneg
 
 lemma IsElementary.measure_of_disjUnion {d:ℕ} {E F: Set (EuclideanSpace' d)}
 (hE: IsElementary E) (hF: IsElementary F) (hdisj: Disjoint E F):
   (hE.union hF).measure = hE.measure + hF.measure := by
-  sorry
+  -- Strategy:
+  -- 1. Get partitions: T_E = hE.partition.choose, T_F = hF.partition.choose
+  -- 2. Show T_E ∪ T_F is pairwise disjoint
+  -- 3. Show E ∪ F = ⋃ B ∈ T_E ∪ T_F, B.toSet using partition properties
+  -- 4. Use IsElementary.measure_eq to show (hE.union hF).measure = ∑ B ∈ T_E ∪ T_F, |B|ᵥ
+  -- 5. Use Finset.sum_union to split: ∑ B ∈ T_E ∪ T_F, |B|ᵥ = ∑ B ∈ T_E, |B|ᵥ + ∑ B ∈ T_F, |B|ᵥ
+  -- 6. Apply IsElementary.measure_eq to show hE.measure = ∑ B ∈ T_E, |B|ᵥ and hF.measure = ∑ B ∈ T_F, |B|ᵥ
+  classical
+  -- Step 1: Get partitions
+  set T_E := hE.partition.choose
+  set T_F := hF.partition.choose
+  have hT_E_disj : T_E.toSet.PairwiseDisjoint Box.toSet := hE.partition.choose_spec.1
+  have hT_F_disj : T_F.toSet.PairwiseDisjoint Box.toSet := hF.partition.choose_spec.1
+  have hE_eq : E = ⋃ B ∈ T_E, B.toSet := hE.partition.choose_spec.2
+  have hF_eq : F = ⋃ B ∈ T_F, B.toSet := hF.partition.choose_spec.2
+  -- Step 2: Show T_E ∪ T_F is pairwise disjoint
+  have hT_union_disj : (T_E ∪ T_F).toSet.PairwiseDisjoint Box.toSet := by
+    rw [Set.pairwiseDisjoint_iff]
+    intro B₁ hB₁ B₂ hB₂ hB₁B₂
+    simp at hB₁ hB₂
+    -- Helper: boxes from different partitions can't intersect (E and F are disjoint)
+    have h_cross_disj : ∀ B_E ∈ T_E, ∀ B_F ∈ T_F, (B_E.toSet ∩ B_F.toSet).Nonempty → False := by
+      intro B_E hB_E B_F hB_F h_intersect
+      obtain ⟨x, hx₁, hx₂⟩ := h_intersect
+      have : x ∈ E ∩ F := by
+        constructor
+        · rw [hE_eq]
+          exact Set.mem_biUnion hB_E hx₁
+        · rw [hF_eq]
+          exact Set.mem_biUnion hB_F hx₂
+      rw [Set.disjoint_iff] at hdisj
+      exact Set.notMem_empty x (hdisj this)
+    -- Case analysis on which partitions the boxes belong to
+    obtain (hB₁_E | hB₁_F) := hB₁ <;> obtain (hB₂_E | hB₂_F) := hB₂
+    · -- Both in T_E: use hT_E_disj
+      rw [Set.pairwiseDisjoint_iff] at hT_E_disj
+      exact hT_E_disj hB₁_E hB₂_E hB₁B₂
+    · -- B₁ in T_E, B₂ in T_F: contradiction via h_cross_disj
+      exact False.elim (h_cross_disj B₁ hB₁_E B₂ hB₂_F hB₁B₂)
+    · -- B₁ in T_F, B₂ in T_E: contradiction via h_cross_disj (symmetric case)
+      have : (B₂.toSet ∩ B₁.toSet).Nonempty := Set.inter_comm B₁.toSet B₂.toSet ▸ hB₁B₂
+      exact False.elim (h_cross_disj B₂ hB₂_E B₁ hB₁_F this)
+    · -- Both in T_F: use hT_F_disj
+      rw [Set.pairwiseDisjoint_iff] at hT_F_disj
+      exact hT_F_disj hB₁_F hB₂_F hB₁B₂
+  -- Step 3: Show E ∪ F = ⋃ B ∈ T_E ∪ T_F, B.toSet
+  have h_union_eq : E ∪ F = ⋃ B ∈ T_E ∪ T_F, B.toSet := by
+    rw [hE_eq, hF_eq]
+    ext x
+    simp [Set.mem_union, Finset.mem_union]
+    constructor
+    · rintro (⟨B, hB, hx⟩ | ⟨B, hB, hx⟩)
+      · exact ⟨B, Or.inl hB, hx⟩
+      · exact ⟨B, Or.inr hB, hx⟩
+    · rintro ⟨B, hB | hB, hx⟩
+      · left; exact ⟨B, hB, hx⟩
+      · right; exact ⟨B, hB, hx⟩
+  -- Step 4: Use IsElementary.measure_eq
+  have h_union_measure : (hE.union hF).measure = ∑ B ∈ T_E ∪ T_F, |B|ᵥ :=
+    (hE.union hF).measure_eq hT_union_disj h_union_eq
+  -- Step 5: Use Finset.sum_union_inter to split the sum
+  have h_sum_split : ∑ B ∈ T_E ∪ T_F, |B|ᵥ = ∑ B ∈ T_E, |B|ᵥ + ∑ B ∈ T_F, |B|ᵥ := by
+    rw [←Finset.sum_union_inter]
+    suffices ∑ B ∈ T_E ∩ T_F, |B|ᵥ = 0 by
+      rw [this, sub_zero]
+    apply Finset.sum_eq_zero
+    intro B hB
+    simp [Finset.mem_inter] at hB
+    obtain ⟨hB_E, hB_F⟩ := hB
+    -- B is in both partitions, so B.toSet ⊆ E ∩ F = ∅
+    have hB_subset_empty : B.toSet ⊆ ∅ := by
+      have hB_E_subset : B.toSet ⊆ E := by
+        rw [hE_eq]
+        intro x hx
+        exact Set.mem_biUnion hB_E hx
+      have hB_F_subset : B.toSet ⊆ F := by
+        rw [hF_eq]
+        intro x hx
+        exact Set.mem_biUnion hB_F hx
+      rw [Set.disjoint_iff] at hdisj
+      have : B.toSet ⊆ E ∩ F := Set.subset_inter hB_E_subset hB_F_subset
+      rwa [hdisj] at this
+    -- Since B.toSet ⊆ ∅, we have B.toSet = ∅, so volume is 0
+    have hB_empty : B.toSet = ∅ := Set.subset_empty_iff.1 hB_subset_empty
+    -- If B.toSet = ∅, then the box is empty, so volume is 0
+    -- This follows from the fact that an empty box has at least one empty side interval
+    have : ∃ i, (B.side i).toSet = ∅ := by
+      by_contra! h
+      have h_all_nonempty : ∀ i, (B.side i).toSet.Nonempty := by
+        intro i; by_contra! h_empty
+        exact h i (Set.not_nonempty_iff_eq_empty.1 h_empty)
+      choose x hx using h_all_nonempty
+      have h_nonempty : B.toSet.Nonempty := by
+        use fun i ↦ x i; simp [Box.toSet]; exact hx
+      rw [hB_empty] at h_nonempty
+      exact Set.not_nonempty_empty h_nonempty
+    obtain ⟨i, hi⟩ := this
+    -- Show |B.side i|ₗ = 0, which implies |B|ᵥ = 0
+    rw [Box.volume]
+    apply Finset.prod_eq_zero
+    use i
+    -- If (B.side i).toSet = ∅, then the interval is degenerate (b ≤ a), so length = 0
+    have h_le : (B.side i).b ≤ (B.side i).a := by
+      cases B.side i with
+      | Ioo a b => rw [BoundedInterval.set_Ioo] at hi; exact Set.Ioo_eq_empty_iff.1 hi
+      | Icc a b => rw [BoundedInterval.set_Icc] at hi; exact le_of_lt (Set.Icc_eq_empty_iff.1 hi)
+      | Ioc a b => rw [BoundedInterval.set_Ioc] at hi; exact Set.Ioc_eq_empty_iff.1 hi
+      | Ico a b => rw [BoundedInterval.set_Ico] at hi; exact Set.Ico_eq_empty_iff.1 hi
+    simp [BoundedInterval.length]
+    rw [max_eq_right (sub_nonpos.2 h_le)]
+    norm_num
+  -- Step 6: Apply IsElementary.measure_eq to individual measures
+  have hE_measure : hE.measure = ∑ B ∈ T_E, |B|ᵥ := hE.measure_eq hT_E_disj hE_eq
+  have hF_measure : hF.measure = ∑ B ∈ T_F, |B|ᵥ := hF.measure_eq hT_F_disj hF_eq
+  -- Combine everything
+  rw [h_union_measure, h_sum_split, hE_measure, hF_measure]
 
 lemma IsElementary.measure_of_disjUnion' {d:ℕ} {S: Finset (Set (EuclideanSpace' d))}
 (hE: ∀ E ∈ S, IsElementary E) (hdisj: S.toSet.PairwiseDisjoint id):
