@@ -68,18 +68,17 @@ theorem Bornology.IsBounded.of_boundedInterval (I: BoundedInterval) : Bornology.
     simp [set_Ico]
     exact Metric.isBounded_Ico a b
 
-/-- Helper: construct witness for lowerBound of upperBounds -/
+/-- A witness for lowerBound of upperBounds -/
 def witness_lowerBound_upperBounds {X : Set ℝ} (y : ℝ) (hy : y ∈ X)
     : y ∈ lowerBounds (upperBounds X) := by
   intro u hu; simp [upperBounds] at hu; exact hu hy
 
-/-- Helper: construct witness for upperBound of lowerBounds -/
+/-- A witness for upperBound of lowerBounds -/
 def witness_upperBound_lowerBounds {X : Set ℝ} (y : ℝ) (hy : y ∈ X)
     : y ∈ upperBounds (lowerBounds X) := by
   intro u hu; simp [lowerBounds] at hu; exact hu hy
 
-/-- Helper lemma for BoundedInterval.ordConnected_iff:
-If x < sSup X, then there exists z ∈ X with x < z -/
+/-- If x < sSup X, then there exists z ∈ X with x < z -/
 theorem exists_gt_of_lt_csSup {X : Set ℝ} (hBddAbove : BddAbove X) (hNonempty : X.Nonempty)
     (hLowerBound : ∃ y ∈ X, y ∈ lowerBounds (upperBounds X)) (x : ℝ) (hx : x < sSup X) :
     ∃ z ∈ X, x < z := by
@@ -337,6 +336,29 @@ abbrev Box.volume {d:ℕ} (B: Box d) : ℝ := ∏ i, |B.side i|ₗ
 
 /-- Using ||ᵥ subscript here to not override || -/
 macro:max atomic("|" noWs) a:term noWs "|ᵥ" : term => `(Box.volume $a)
+
+/-- Helper lemma: If a box is empty, its volume is zero -/
+lemma Box.volume_eq_zero_of_empty {d:ℕ} (B: Box d) (h: B.toSet = ∅) : |B|ᵥ = 0 := by
+  -- If B.toSet = ∅, then the box has at least one empty side interval
+  have : ∃ i, (B.side i).toSet = ∅ := by
+    by_contra! h_all_nonempty
+    have h_all_nonempty : ∀ i, (B.side i).toSet.Nonempty := h_all_nonempty
+    choose x hx using h_all_nonempty
+    have h_nonempty : B.toSet.Nonempty := ⟨fun i ↦ x i, fun i _ ↦ hx i⟩
+    rw [h] at h_nonempty
+    exact Set.not_nonempty_empty h_nonempty
+  obtain ⟨i, hi⟩ := this
+  -- Show |B.side i|ₗ = 0, which implies |B|ᵥ = 0
+  rw [Box.volume]
+  apply Finset.prod_eq_zero (Finset.mem_univ i)
+  -- If (B.side i).toSet = ∅, then the interval is degenerate (b ≤ a), so length = 0
+  have h_le : (B.side i).b ≤ (B.side i).a := by
+    match B.side i, hi with
+    | Ioo a b, hi => simp [BoundedInterval.set_Ioo] at hi; simp; exact le_of_not_gt (Set.Ioo_eq_empty_iff.1 hi)
+    | Icc a b, hi => simp [BoundedInterval.set_Icc] at hi; simp; exact le_of_not_ge (Set.Icc_eq_empty_iff.1 hi)
+    | Ioc a b, hi => simp [BoundedInterval.set_Ioc] at hi; simp; exact le_of_not_gt (Set.Ioc_eq_empty_iff.1 hi)
+    | Ico a b, hi => simp [BoundedInterval.set_Ico] at hi; simp; exact le_of_not_gt (Set.Ico_eq_empty_iff.1 hi)
+  simp [BoundedInterval.length, max_eq_right (sub_nonpos.2 h_le)]
 
 @[simp]
 theorem Box.volume_of_interval (I:BoundedInterval) : |(I:Box 1)|ᵥ = |I|ₗ := by
@@ -693,8 +715,7 @@ lemma IsElementary.measure_of_disjUnion {d:ℕ} {E F: Set (EuclideanSpace' d)}
     · -- B₁ in T_E, B₂ in T_F: contradiction via h_cross_disj
       exact False.elim (h_cross_disj B₁ hB₁_E B₂ hB₂_F hB₁B₂)
     · -- B₁ in T_F, B₂ in T_E: contradiction via h_cross_disj (symmetric case)
-      have : (B₂.toSet ∩ B₁.toSet).Nonempty := Set.inter_comm B₁.toSet B₂.toSet ▸ hB₁B₂
-      exact False.elim (h_cross_disj B₂ hB₂_E B₁ hB₁_F this)
+      exact False.elim (h_cross_disj B₂ hB₂_E B₁ hB₁_F (Set.inter_comm B₁.toSet B₂.toSet ▸ hB₁B₂))
     · -- Both in T_F: use hT_F_disj
       rw [Set.pairwiseDisjoint_iff] at hT_F_disj
       exact hT_F_disj hB₁_F hB₂_F hB₁B₂
@@ -736,28 +757,7 @@ lemma IsElementary.measure_of_disjUnion {d:ℕ} {E F: Set (EuclideanSpace' d)}
       exact this.trans (Set.disjoint_iff_inter_eq_empty.1 hdisj).subset
     -- Since B.toSet ⊆ ∅, we have B.toSet = ∅, so volume is 0
     have hB_empty : B.toSet = ∅ := Set.subset_empty_iff.1 hB_subset_empty
-    -- If B.toSet = ∅, then the box is empty, so volume is 0
-    -- This follows from the fact that an empty box has at least one empty side interval
-    have : ∃ i, (B.side i).toSet = ∅ := by
-      by_contra! h
-      have h_all_nonempty : ∀ i, (B.side i).toSet.Nonempty := h
-      choose x hx using h_all_nonempty
-      have h_nonempty : B.toSet.Nonempty := by
-        exact ⟨fun i ↦ x i, fun i _ ↦ hx i⟩
-      rw [hB_empty] at h_nonempty
-      exact Set.not_nonempty_empty h_nonempty
-    obtain ⟨i, hi⟩ := this
-    -- Show |B.side i|ₗ = 0, which implies |B|ᵥ = 0
-    rw [Box.volume]
-    apply Finset.prod_eq_zero (Finset.mem_univ i)
-    -- If (B.side i).toSet = ∅, then the interval is degenerate (b ≤ a), so length = 0
-    have h_le : (B.side i).b ≤ (B.side i).a := by
-      match B.side i, hi with
-      | Ioo a b, hi => simp [BoundedInterval.set_Ioo] at hi; simp; exact le_of_not_gt (Set.Ioo_eq_empty_iff.1 hi)
-      | Icc a b, hi => simp [BoundedInterval.set_Icc] at hi; simp; exact le_of_not_ge (Set.Icc_eq_empty_iff.1 hi)
-      | Ioc a b, hi => simp [BoundedInterval.set_Ioc] at hi; simp; exact le_of_not_gt (Set.Ioc_eq_empty_iff.1 hi)
-      | Ico a b, hi => simp [BoundedInterval.set_Ico] at hi; simp; exact le_of_not_gt (Set.Ico_eq_empty_iff.1 hi)
-    simp [BoundedInterval.length, max_eq_right (sub_nonpos.2 h_le)]
+    exact Box.volume_eq_zero_of_empty B hB_empty
   -- Step 6: Apply IsElementary.measure_eq to individual measures
   have hE_measure : hE.measure = ∑ B ∈ T_E, |B|ᵥ := hE.measure_eq hT_E_disj hE_eq
   have hF_measure : hF.measure = ∑ B ∈ T_F, |B|ᵥ := hF.measure_eq hT_F_disj hF_eq
