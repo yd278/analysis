@@ -475,7 +475,7 @@ theorem Function.comp_of_surj {X Y Z:Set} {f: Function X Y} {g : Function Y Z} (
     rw[← hy, ← hx]
     simp 
 /--
-  Exercise 3.3.3 - fill in the sorrys in the statements in  a reasonable fashion.
+  Exercise 3.3.3 - fill in the sorrys in the statements in a reasonable fashion.
 -/
 example (X: Set) : (SetTheory.Set.f_3_3_11 X).one_to_one ↔ True := by 
   simp
@@ -595,7 +595,7 @@ def Function.comp_injective' : Decidable (∀ (X Y Z:Set) (f: Function X Y) (g :
   use 0,1
   simp[g]
 
-def Function.comp_surjective' : Decidable (∀ (X Y Z:Set) (f: Function X Y) (g : Function Y Z) (hinj :
+def Function.comp_surjective' : Decidable (∀ (X Y Z:Set) (f: Function X Y) (g : Function Y Z) (hsurj :
     (g ○ f).onto), f.onto) := by
   -- the first line of this construction should be either `apply isTrue` or `apply isFalse`.
   apply isFalse
