@@ -912,12 +912,78 @@ lemma IsElementary.measure_of_box {d:ℕ} (B: Box d) : (IsElementary.box B).meas
 lemma IsElementary.measure_mono  {d:ℕ} {E F: Set (EuclideanSpace' d)}
 (hE: IsElementary E) (hF: IsElementary F) (hcont: E ⊆ F):
   hE.measure ≤ hF.measure := by
-  sorry
+  -- Strategy using set difference:
+  -- 1. Decompose F = E ∪ (F \ E) (disjoint since E ⊆ F)
+  -- 2. Show F \ E is elementary via IsElementary.sdiff
+  -- 3. Apply measure_of_disjUnion: hF.measure = hE.measure + (F \ E).measure
+  -- 4. Use measure_nonneg: (F \ E).measure ≥ 0, so hE.measure ≤ hF.measure
+  -- Step 1: Decompose F = E ∪ (F \ E)
+  have hF_decomp : F = E ∪ (F \ E) := by
+    ext x
+    constructor
+    · intro hx; by_cases hx_E : x ∈ E
+      · left; exact hx_E
+      · right; exact ⟨hx, hx_E⟩
+    · intro h; obtain (hx_E | ⟨hx, _⟩) := h
+      · exact hcont hx_E
+      · exact hx
+  -- Step 2: Show F \ E is elementary and disjoint from E
+  have hF_sdiff_E : IsElementary (F \ E) := IsElementary.sdiff hF hE
+  have h_disj : Disjoint E (F \ E) := by
+    rw [Set.disjoint_iff]; intro x ⟨hx_E, _, hx_not_E⟩; exact hx_not_E hx_E
+  -- Step 3: Apply measure_of_disjUnion
+  have h_union_measure : (hE.union hF_sdiff_E).measure = hE.measure + hF_sdiff_E.measure :=
+    IsElementary.measure_of_disjUnion hE hF_sdiff_E h_disj
+  -- Step 4: Show that (hE.union hF_sdiff_E) and hF represent the same set F
+  classical
+  set T_F := hF.partition.choose
+  have hT_F_disj : T_F.toSet.PairwiseDisjoint Box.toSet := hF.partition.choose_spec.1
+  have hF_eq : F = ⋃ B ∈ T_F, B.toSet := hF.partition.choose_spec.2
+  have h_union_eq_partition : E ∪ (F \ E) = ⋃ B ∈ T_F, B.toSet := by rw [← hF_decomp, hF_eq]
+  -- Step 5: Use measure_eq to show (hE.union hF_sdiff_E).measure = hF.measure
+  have h_union_measure_eq : (hE.union hF_sdiff_E).measure = hF.measure := by
+    rw [(hE.union hF_sdiff_E).measure_eq hT_F_disj h_union_eq_partition, hF.measure_eq hT_F_disj hF_eq]
+  -- Step 6: Combine with measure_nonneg
+  rw [← h_union_measure_eq, h_union_measure]
+  linarith [IsElementary.measure_nonneg hF_sdiff_E]
 
 lemma IsElementary.measure_of_union {d:ℕ} {E F: Set (EuclideanSpace' d)}
 (hE: IsElementary E) (hF: IsElementary F):
   (hE.union hF).measure ≤ hE.measure + hF.measure := by
-  sorry
+  -- Strategy (using Exercise 1.1.1):
+  -- 1. Decompose E ∪ F = E ∪ (F \ E) (disjoint union)
+  -- 2. Use IsElementary.sdiff (Exercise 1.1.1) to show F \ E is elementary
+  -- 3. Apply measure_of_disjUnion: (hE.union hF_sdiff_E).measure = hE.measure + (F \ E).measure
+  -- 4. Show (hE.union hF) and (hE.union hF_sdiff_E) represent the same set E ∪ F
+  -- 5. Apply measure_mono: (F \ E).measure ≤ hF.measure since F \ E ⊆ F
+  -- 6. Combine: (hE.union hF).measure = hE.measure + (F \ E).measure ≤ hE.measure + hF.measure
+  -- Step 1: Decompose E ∪ F = E ∪ (F \ E)
+  have h_union_decomp : E ∪ F = E ∪ (F \ E) := by
+    ext x
+    constructor
+    · rintro (hx_E | hx_F); exact Or.inl hx_E
+      by_cases hx_E : x ∈ E; exact Or.inl hx_E; exact Or.inr ⟨hx_F, hx_E⟩
+    · rintro (hx_E | ⟨hx_F, _⟩); exact Or.inl hx_E; exact Or.inr hx_F
+  -- Step 2-3: Use IsElementary.sdiff and apply measure_of_disjUnion
+  have hF_sdiff_E : IsElementary (F \ E) := IsElementary.sdiff hF hE
+  have h_disj : Disjoint E (F \ E) := by
+    rw [Set.disjoint_iff]; intro x ⟨hx_E, _, hx_not_E⟩; exact hx_not_E hx_E
+  have h_union_measure : (hE.union hF_sdiff_E).measure = hE.measure + hF_sdiff_E.measure :=
+    IsElementary.measure_of_disjUnion hE hF_sdiff_E h_disj
+  -- Step 4: Show both unions represent the same set E ∪ F
+  classical
+  set T := (hE.union hF).partition.choose
+  have hT_disj : T.toSet.PairwiseDisjoint Box.toSet := (hE.union hF).partition.choose_spec.1
+  have h_eq : E ∪ F = ⋃ B ∈ T, B.toSet := (hE.union hF).partition.choose_spec.2
+  have h_union_measure_eq : (hE.union hF_sdiff_E).measure = (hE.union hF).measure := by
+    rw [(hE.union hF_sdiff_E).measure_eq hT_disj (by rw [← h_union_decomp, h_eq]),
+        (hE.union hF).measure_eq hT_disj h_eq]
+  -- Step 5-6: Apply measure_mono and combine
+  have h_mono : hF_sdiff_E.measure ≤ hF.measure :=
+    IsElementary.measure_mono hF_sdiff_E hF (fun _ hx => hx.1)
+  rw [← h_union_measure_eq, h_union_measure]
+  linarith
+
 
 lemma IsElementary.measure_of_union' {d:ℕ} {S: Finset (Set (EuclideanSpace' d))}
 (hE: ∀ E ∈ S, IsElementary E) :
