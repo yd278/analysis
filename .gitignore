@@ -15,6 +15,7 @@ _site/
 # AI assistant files
 .claude/
 .cursor/
+Claude.md
 
 # miscellaneous files
 analysis/Analysis/tobeIgnored/

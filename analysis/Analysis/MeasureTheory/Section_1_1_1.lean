@@ -767,7 +767,121 @@ lemma IsElementary.measure_of_disjUnion {d:ℕ} {E F: Set (EuclideanSpace' d)}
 lemma IsElementary.measure_of_disjUnion' {d:ℕ} {S: Finset (Set (EuclideanSpace' d))}
 (hE: ∀ E ∈ S, IsElementary E) (hdisj: S.toSet.PairwiseDisjoint id):
   (IsElementary.union' hE).measure = ∑ E:S, (hE E.val E.property).measure := by
-  sorry
+  -- Strategy: Finset induction on S
+  -- Base case (S = ∅): Both LHS and RHS equal 0
+  --   LHS: measure of empty union = 0 (by measure_of_empty)
+  --   RHS: empty sum = 0 (by Finset.sum_empty)
+  -- Induction step (S = insert E₀ S', E₀ ∉ S'):
+  --   (1) Let A = ⋃ E ∈ S', E. Show A ⊥ E₀ (from pairwise disjoint)
+  --   (2) Show ⋃ E ∈ (insert E₀ S'), E = A ∪ E₀ (set equality)
+  --   (3) KEY: Use Box.measure_uniq to show:
+  --       (IsElementary.union' hE).measure = (hA.union hE₀).measure
+  --       (Different IsElementary instances of the same set!)
+  --   (4) Apply binary measure_of_disjUnion: m(A ∪ E₀) = m(A) + m(E₀)
+  --   (5) Apply IH: m(A) = ∑ E:S', m(E)
+  --   (6) Use Finset.sum_insert: (∑ E:S', m(E)) + m(E₀) = ∑ E:(insert E₀ S'), m(E)
+  classical
+  induction S using Finset.induction_on with
+  | empty =>
+      -- Base case: S = ∅
+      -- Show that ⋃ E ∈ ∅, E = ∅
+      have h_empty_union : (⋃ E ∈ (∅ : Finset (Set (EuclideanSpace' d))), E) = ∅ := by
+        ext x
+        simp only [Set.mem_iUnion, Finset.notMem_empty, Set.mem_empty_iff_false]
+        constructor
+        · intro ⟨E, hE_mem, _⟩
+          exfalso
+          exact hE_mem
+        · intro h
+          exfalso
+          exact Set.notMem_empty x h
+      -- Use measure_of_empty for LHS: show that union' hE and empty d represent the same set
+      have h_union'_empty : (IsElementary.union' hE).measure = (IsElementary.empty d).measure := by
+        congr 1
+      -- Both sides equal 0: LHS by measure_of_empty, RHS by Finset.sum_empty
+      rw [h_union'_empty]
+      -- Use the same strategy as measure_of_empty: empty partition
+      have h_empty_eq : (∅ : Set (EuclideanSpace' d)) = ⋃ B ∈ (∅ : Finset (Box d)), B.toSet := by simp
+      have h_empty_disj : ((∅ : Finset (Box d)) : Set (Box d)).PairwiseDisjoint Box.toSet := by simp
+      rw [(IsElementary.empty d).measure_eq h_empty_disj h_empty_eq, Finset.sum_empty]
+      -- Simplify RHS: empty sum equals 0
+      simp [Finset.sum_empty]
+  | @insert E₀ S' hE₀_not_mem ih =>
+      -- Induction step: S = insert E₀ S'
+      -- (1) Setup: Define A and derive disjointness properties
+      have hS'_disj : S'.toSet.PairwiseDisjoint id := by
+        intro x hx y hy hxy
+        exact hdisj (Finset.mem_insert_of_mem hx) (Finset.mem_insert_of_mem hy) hxy
+      have hE_S' : ∀ E ∈ S', IsElementary E := fun E hE_mem =>
+        hE E (Finset.mem_insert_of_mem hE_mem)
+      have hA : IsElementary (⋃ E ∈ S', E) := IsElementary.union' hE_S'
+      have hE₀ : IsElementary E₀ := hE E₀ (Finset.mem_insert_self E₀ S')
+      have hA_E₀_disj : Disjoint (⋃ E ∈ S', E) E₀ := by
+        rw [Set.disjoint_iff_inter_eq_empty, Set.eq_empty_iff_forall_notMem]
+        intro x ⟨hxA, hxE₀⟩
+        simp only [Set.mem_iUnion, exists_prop] at hxA
+        obtain ⟨E, hE_mem, hxE⟩ := hxA
+        have hE_ne_E₀ : E ≠ E₀ := by
+          intro heq
+          subst heq
+          exact hE₀_not_mem hE_mem
+        have hdisj_E_E₀ := hdisj (Finset.mem_insert_of_mem hE_mem) (Finset.mem_insert_self E₀ S') hE_ne_E₀
+        exact Set.disjoint_left.mp hdisj_E_E₀ hxE hxE₀
+
+      -- (2) Set equality: ⋃ E ∈ (insert E₀ S'), E = (⋃ E ∈ S', E) ∪ E₀
+      have h_set_eq : (⋃ E ∈ insert E₀ S', E) = (⋃ E ∈ S', E) ∪ E₀ := by
+        ext x
+        simp only [Set.mem_iUnion, Set.mem_union, Finset.mem_insert, exists_prop]
+        constructor
+        · intro ⟨E, hE_mem, hx⟩
+          cases hE_mem with
+          | inl h => right; rwa [← h]
+          | inr h => left; exact ⟨E, h, hx⟩
+        · intro h
+          cases h with
+          | inl hxA =>
+              obtain ⟨E, hE_mem, hx⟩ := hxA
+              exact ⟨E, Or.inr hE_mem, hx⟩
+          | inr hx => exact ⟨E₀, Or.inl rfl, hx⟩
+
+      -- (3) KEY: Use Box.measure_uniq to connect different IsElementary instances
+      have h_meas_eq : (IsElementary.union' hE).measure = (hA.union hE₀).measure := by
+        obtain ⟨T₁, hT₁_disj, hT₁_eq⟩ := (IsElementary.union' hE).partition
+        obtain ⟨T₂, hT₂_disj, hT₂_eq⟩ := (hA.union hE₀).partition
+        rw [(IsElementary.union' hE).measure_eq hT₁_disj hT₁_eq]
+        rw [(hA.union hE₀).measure_eq hT₂_disj hT₂_eq]
+        apply Box.measure_uniq hT₁_disj hT₂_disj
+        rw [← hT₁_eq, ← hT₂_eq]
+        exact h_set_eq
+
+      -- (4) Apply binary measure_of_disjUnion
+      have h_binary : (hA.union hE₀).measure = hA.measure + hE₀.measure :=
+        IsElementary.measure_of_disjUnion hA hE₀ hA_E₀_disj
+
+      -- (5) Apply IH
+      have h_ih : hA.measure = ∑ E : S', (hE_S' E.val E.property).measure :=
+        ih hE_S' hS'_disj
+
+      -- (6) Combine everything
+      calc (IsElementary.union' hE).measure
+          = (hA.union hE₀).measure                                                := h_meas_eq
+        _ = hA.measure + hE₀.measure                                              := h_binary
+        _ = (∑ E : S', (hE_S' E.val E.property).measure) + hE₀.measure           := by rw [h_ih]
+        _ = (hE E₀ (Finset.mem_insert_self E₀ S')).measure +
+            (∑ E : S', (hE_S' E.val E.property).measure)                          := add_comm _ _
+        _ = (hE E₀ (Finset.mem_insert_self E₀ S')).measure +
+            (∑ E : S', (hE E.val (Finset.mem_insert_of_mem E.property)).measure) := by
+              rfl
+        _ = ∑ E : (insert E₀ S'), (hE E.val E.property).measure                  := by
+              -- Show that the subtype sum equals the sum of the first term plus the sum over S'
+              -- This is essentially Finset.sum_insert but for subtype notation
+              have h_sum_decomp : ∑ E : (insert E₀ S'), (hE E.val E.property).measure =
+                                   (hE E₀ (Finset.mem_insert_self E₀ S')).measure +
+                                   ∑ E : S', (hE E.val (Finset.mem_insert_of_mem E.property)).measure := by
+                -- This follows from the fact that insert E₀ S' = {E₀} ∪ S' (as sets)
+                -- and the sums are over the same elements
+                rfl  -- The sums are definitionally equal
+              rw [h_sum_decomp]
 
 
 
