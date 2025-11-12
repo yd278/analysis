@@ -990,9 +990,33 @@ lemma IsElementary.measure_of_union' {d:ℕ} {S: Finset (Set (EuclideanSpace' d)
   (IsElementary.union' hE).measure ≤ ∑ E:S, (hE E.val E.property).measure := by
   sorry
 
+/-- Helper: Translation preserves interval length -/
+lemma BoundedInterval.length_of_translate (I: BoundedInterval) (c: ℝ) :
+  ∃ I' : BoundedInterval, I'.toSet = I.toSet + {c} ∧ |I'|ₗ = |I|ₗ := by
+  cases I with
+  | Ioo a b => use Ioo (a + c) (b + c); constructor <;> simp [toSet, BoundedInterval.length]
+  | Icc a b => use Icc (a + c) (b + c); constructor <;> simp [toSet, BoundedInterval.length]
+  | Ioc a b => use Ioc (a + c) (b + c); constructor <;> simp [toSet, BoundedInterval.length]
+  | Ico a b => use Ico (a + c) (b + c); constructor <;> simp [toSet, BoundedInterval.length]
+
+/-- Helper: Translation preserves box volume -/
+lemma Box.volume_of_translate {d:ℕ} (B: Box d) (x: EuclideanSpace' d) :
+  ∃ B' : Box d, B'.toSet = B.toSet + {x} ∧ |B'|ᵥ = |B|ᵥ := by
+  -- Strategy:
+  -- 1. For each coordinate i, translate B.side i by x i using length_of_translate
+  -- 2. Construct B' with translated intervals: B'.side i = translated interval
+  -- 3. Show B'.toSet = B.toSet + {x}: y ∈ B'.toSet ↔ y - x ∈ B.toSet (coordinate-wise)
+  -- 4. Show |B'|ᵥ = |B|ᵥ: product of lengths, each length preserved by translation
+  sorry
+
 lemma IsElementary.measure_of_translate {d:ℕ} {E: Set (EuclideanSpace' d)}
 (hE: IsElementary E) (x: EuclideanSpace' d):
   (hE.translate x).measure ≤ hE.measure := by
+  -- Strategy:
+  -- 1. Get partition T of E: E = ⋃ B ∈ T, B.toSet
+  -- 2. Translate partition: T' = {B + {x} | B ∈ T} partitions E + {x}
+  -- 3. Use volume_of_translate: |B + {x}|ᵥ = |B|ᵥ for each B
+  -- 4. Apply measure_eq: both measures equal sum of volumes, so equal (hence ≤)
   sorry
 
 /-- Exercise 1.1.3 (uniqueness of elementary measure) -/
