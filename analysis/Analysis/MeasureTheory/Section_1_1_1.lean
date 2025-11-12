@@ -767,6 +767,10 @@ lemma IsElementary.measure_of_disjUnion {d:ℕ} {E F: Set (EuclideanSpace' d)}
 lemma IsElementary.measure_of_disjUnion' {d:ℕ} {S: Finset (Set (EuclideanSpace' d))}
 (hE: ∀ E ∈ S, IsElementary E) (hdisj: S.toSet.PairwiseDisjoint id):
   (IsElementary.union' hE).measure = ∑ E:S, (hE E.val E.property).measure := by
+  sorry
+
+
+
   -- Strategy: Use induction on S
   -- ① Base case (S = ∅): Both sides are 0 (empty union and empty sum)
   -- ② Induction step: For S' = S ∪ {E₀}, let A = ⋃ E ∈ S, E, B = A ∪ E₀
@@ -774,114 +778,114 @@ lemma IsElementary.measure_of_disjUnion' {d:ℕ} {S: Finset (Set (EuclideanSpace
   --    Apply measure_of_disjUnion: m(B) = m(A) + m(E₀)
   --    Apply IH: m(A) = ∑ E:S, m(E)
   --    Combine: m(B) = ∑ E:S', m(E) + m(E₀) = ∑ E:S', m(E)
-  classical
-  by_cases hS_empty : S = ∅
-  · -- Base case: S = ∅
-    subst hS_empty
-    -- Left side: empty union has measure 0
-    have h_empty_union : (⋃ E ∈ (∅ : Finset (Set (EuclideanSpace' d))), E) = (∅ : Set (EuclideanSpace' d)) := by
-      simp
-    -- Use measure_eq with empty partition, similar to measure_of_empty
-    have h_empty_disj : ((∅ : Finset (Box d)) : Set (Box d)).PairwiseDisjoint Box.toSet := by
-      simp
-    have h_empty_eq : (⋃ E ∈ (∅ : Finset (Set (EuclideanSpace' d))), E) = ⋃ B ∈ (∅ : Finset (Box d)), B.toSet := by
-      rw [h_empty_union]
-      simp
-    rw [(IsElementary.union' hE).measure_eq h_empty_disj h_empty_eq]
-    -- Right side: empty sum is 0
-    simp [Finset.sum_empty]
-  · -- Induction step: S is non-empty
-    -- Extract an element from S
-    obtain ⟨E₀, hE₀_mem⟩ := Finset.nonempty_iff_ne_empty.mpr hS_empty
-    let S' := S.erase E₀
-    have hE₀_not_mem : E₀ ∉ S' := Finset.notMem_erase E₀ S
-    have hS_insert : S = insert E₀ S' := by
-      rw [Finset.insert_erase hE₀_mem]
-    -- Show S' is pairwise disjoint (subset property)
-    have hS'_disj : S'.toSet.PairwiseDisjoint id := by
-      rw [Set.pairwiseDisjoint_iff]
-      intro E₁ hE₁_mem E₂ hE₂_mem hE₁E₂
-      rw [Set.pairwiseDisjoint_iff] at hdisj
-      have hE₁_mem_S : E₁ ∈ S := by
-        rw [Finset.mem_coe] at hE₁_mem
-        exact (Finset.mem_erase.mp hE₁_mem).2
-      have hE₂_mem_S : E₂ ∈ S := by
-        rw [Finset.mem_coe] at hE₂_mem
-        exact (Finset.mem_erase.mp hE₂_mem).2
-      apply hdisj
-      · rw [Finset.mem_coe]
-        exact hE₁_mem_S
-      · rw [Finset.mem_coe]
-        exact hE₂_mem_S
-      · exact hE₁E₂
-    -- Get IsElementary instances for S'
-    have hE_S' : ∀ E ∈ S', IsElementary E := by
-      intro E hE_mem
-      exact hE E (Finset.mem_erase.mp hE_mem).2
-    -- Apply induction hypothesis to S'
-    have ih_applied : (IsElementary.union' hE_S').measure = ∑ E:S', (hE_S' E.val E.property).measure := by
-      apply IsElementary.measure_of_disjUnion' hE_S' hS'_disj
-    -- Define A = ⋃ E ∈ S', E
-    set A := ⋃ E ∈ S', E with hA_def
-    have hA_elem : IsElementary A := IsElementary.union' hE_S'
-    -- Show A and E₀ are disjoint (from pairwise disjoint property of S)
-    have hA_E₀_disj : Disjoint A E₀ := by
-      rw [Set.disjoint_iff]
-      intro x ⟨hx_A, hx_E₀⟩
-      -- x is in both A and E₀
-      -- x ∈ A means x ∈ some E ∈ S'
-      -- x ∈ E₀ means x ∈ E₀
-      -- Since S is pairwise disjoint and E₀ ∉ S', we get a contradiction
-      rw [hA_def] at hx_A
-      simp at hx_A
-      obtain ⟨E, hE_mem_S', hx_E⟩ := hx_A
-      have hE_E₀_ne : E ≠ E₀ := (Finset.mem_erase.mp hE_mem_S').1
-      -- Use pairwise disjoint property
-      rw [Set.pairwiseDisjoint_iff] at hdisj
-      have hE_mem_S : E ∈ S := (Finset.mem_erase.mp hE_mem_S').2
-      have hx_both : (E ∩ E₀).Nonempty := ⟨x, ⟨hx_E, hx_E₀⟩⟩
-      have hE_eq_E₀ : E = E₀ := hdisj (by rw [Finset.mem_coe]; exact hE_mem_S) (by rw [Finset.mem_coe]; exact hE₀_mem) hx_both
-      exact hE_E₀_ne hE_eq_E₀
-    -- Get IsElementary instance for E₀
-    have hE₀_elem : IsElementary E₀ := hE E₀ hE₀_mem
-    -- Apply measure_of_disjUnion: m(A ∪ E₀) = m(A) + m(E₀)
-    have h_union_measure : (hA_elem.union hE₀_elem).measure = hA_elem.measure + hE₀_elem.measure :=
-      IsElementary.measure_of_disjUnion hA_elem hE₀_elem hA_E₀_disj
-    -- Show that (⋃ E ∈ S, E) = A ∪ E₀
-    have h_union_eq : (⋃ E ∈ insert E₀ S', E) = A ∪ E₀ := by
-      rw [hA_def]
-      ext x
-      simp [Finset.mem_insert, Set.mem_union]
-      constructor
-      · intro h
-        obtain (hx_E₀ | ⟨E, hE_mem, hx_E⟩) := h
-        · right
-          exact hx_E₀
-        · left
-          exact ⟨E, hE_mem, hx_E⟩
-      · intro h
-        obtain (⟨E, hE_mem, hx_E⟩ | hx_E₀) := h
-        · right
-          exact ⟨E, hE_mem, hx_E⟩
-        · left
-          exact hx_E₀
-    -- Show that (⋃ E ∈ S, E) = A ∪ E₀
-    have h_S_union_eq : (⋃ E ∈ S, E) = A ∪ E₀ := by
-      rw [hS_insert]
-      exact h_union_eq
-    -- Use measure_eq to show the measures are equal
-    have h_union'_measure_eq : (IsElementary.union' hE).measure = (hA_elem.union hE₀_elem).measure := by
-      -- Get partition from hA_elem.union hE₀_elem
-      let h_union_elem := hA_elem.union hE₀_elem
-      have h_partition := h_union_elem.partition
-      obtain ⟨T, hT_disj, hT_eq⟩ := h_partition
-      -- Use the same partition for both sets since they're equal
-      have h_union'_eq_partition : (⋃ E ∈ S, E) = ⋃ B ∈ T, B.toSet := by
-        rw [h_S_union_eq, hT_eq]
-      rw [(IsElementary.union' hE).measure_eq hT_disj h_union'_eq_partition]
-      rw [h_union_elem.measure_eq hT_disj hT_eq]
-    -- Combine everything
-    sorry
+  -- classical
+  -- by_cases hS_empty : S = ∅
+  -- · -- Base case: S = ∅
+  --   subst hS_empty
+  --   -- Left side: empty union has measure 0
+  --   have h_empty_union : (⋃ E ∈ (∅ : Finset (Set (EuclideanSpace' d))), E) = (∅ : Set (EuclideanSpace' d)) := by
+  --     simp
+  --   -- Use measure_eq with empty partition, similar to measure_of_empty
+  --   have h_empty_disj : ((∅ : Finset (Box d)) : Set (Box d)).PairwiseDisjoint Box.toSet := by
+  --     simp
+  --   have h_empty_eq : (⋃ E ∈ (∅ : Finset (Set (EuclideanSpace' d))), E) = ⋃ B ∈ (∅ : Finset (Box d)), B.toSet := by
+  --     rw [h_empty_union]
+  --     simp
+  --   rw [(IsElementary.union' hE).measure_eq h_empty_disj h_empty_eq]
+  --   -- Right side: empty sum is 0
+  --   simp [Finset.sum_empty]
+  -- · -- Induction step: S is non-empty
+  --   -- Extract an element from S
+  --   obtain ⟨E₀, hE₀_mem⟩ := Finset.nonempty_iff_ne_empty.mpr hS_empty
+  --   let S' := S.erase E₀
+  --   have hE₀_not_mem : E₀ ∉ S' := Finset.notMem_erase E₀ S
+  --   have hS_insert : S = insert E₀ S' := by
+  --     rw [Finset.insert_erase hE₀_mem]
+  --   -- Show S' is pairwise disjoint (subset property)
+  --   have hS'_disj : S'.toSet.PairwiseDisjoint id := by
+  --     rw [Set.pairwiseDisjoint_iff]
+  --     intro E₁ hE₁_mem E₂ hE₂_mem hE₁E₂
+  --     rw [Set.pairwiseDisjoint_iff] at hdisj
+  --     have hE₁_mem_S : E₁ ∈ S := by
+  --       rw [Finset.mem_coe] at hE₁_mem
+  --       exact (Finset.mem_erase.mp hE₁_mem).2
+  --     have hE₂_mem_S : E₂ ∈ S := by
+  --       rw [Finset.mem_coe] at hE₂_mem
+  --       exact (Finset.mem_erase.mp hE₂_mem).2
+  --     apply hdisj
+  --     · rw [Finset.mem_coe]
+  --       exact hE₁_mem_S
+  --     · rw [Finset.mem_coe]
+  --       exact hE₂_mem_S
+  --     · exact hE₁E₂
+  --   -- Get IsElementary instances for S'
+  --   have hE_S' : ∀ E ∈ S', IsElementary E := by
+  --     intro E hE_mem
+  --     exact hE E (Finset.mem_erase.mp hE_mem).2
+  --   -- Apply induction hypothesis to S'
+  --   have ih_applied : (IsElementary.union' hE_S').measure = ∑ E:S', (hE_S' E.val E.property).measure := by
+  --     apply IsElementary.measure_of_disjUnion' hE_S' hS'_disj
+  --   -- Define A = ⋃ E ∈ S', E
+  --   set A := ⋃ E ∈ S', E with hA_def
+  --   have hA_elem : IsElementary A := IsElementary.union' hE_S'
+  --   -- Show A and E₀ are disjoint (from pairwise disjoint property of S)
+  --   have hA_E₀_disj : Disjoint A E₀ := by
+  --     rw [Set.disjoint_iff]
+  --     intro x ⟨hx_A, hx_E₀⟩
+  --     -- x is in both A and E₀
+  --     -- x ∈ A means x ∈ some E ∈ S'
+  --     -- x ∈ E₀ means x ∈ E₀
+  --     -- Since S is pairwise disjoint and E₀ ∉ S', we get a contradiction
+  --     rw [hA_def] at hx_A
+  --     simp at hx_A
+  --     obtain ⟨E, hE_mem_S', hx_E⟩ := hx_A
+  --     have hE_E₀_ne : E ≠ E₀ := (Finset.mem_erase.mp hE_mem_S').1
+  --     -- Use pairwise disjoint property
+  --     rw [Set.pairwiseDisjoint_iff] at hdisj
+  --     have hE_mem_S : E ∈ S := (Finset.mem_erase.mp hE_mem_S').2
+  --     have hx_both : (E ∩ E₀).Nonempty := ⟨x, ⟨hx_E, hx_E₀⟩⟩
+  --     have hE_eq_E₀ : E = E₀ := hdisj (by rw [Finset.mem_coe]; exact hE_mem_S) (by rw [Finset.mem_coe]; exact hE₀_mem) hx_both
+  --     exact hE_E₀_ne hE_eq_E₀
+  --   -- Get IsElementary instance for E₀
+  --   have hE₀_elem : IsElementary E₀ := hE E₀ hE₀_mem
+  --   -- Apply measure_of_disjUnion: m(A ∪ E₀) = m(A) + m(E₀)
+  --   have h_union_measure : (hA_elem.union hE₀_elem).measure = hA_elem.measure + hE₀_elem.measure :=
+  --     IsElementary.measure_of_disjUnion hA_elem hE₀_elem hA_E₀_disj
+  --   -- Show that (⋃ E ∈ S, E) = A ∪ E₀
+  --   have h_union_eq : (⋃ E ∈ insert E₀ S', E) = A ∪ E₀ := by
+  --     rw [hA_def]
+  --     ext x
+  --     simp [Finset.mem_insert, Set.mem_union]
+  --     constructor
+  --     · intro h
+  --       obtain (hx_E₀ | ⟨E, hE_mem, hx_E⟩) := h
+  --       · right
+  --         exact hx_E₀
+  --       · left
+  --         exact ⟨E, hE_mem, hx_E⟩
+  --     · intro h
+  --       obtain (⟨E, hE_mem, hx_E⟩ | hx_E₀) := h
+  --       · right
+  --         exact ⟨E, hE_mem, hx_E⟩
+  --       · left
+  --         exact hx_E₀
+  --   -- Show that (⋃ E ∈ S, E) = A ∪ E₀
+  --   have h_S_union_eq : (⋃ E ∈ S, E) = A ∪ E₀ := by
+  --     rw [hS_insert]
+  --     exact h_union_eq
+  --   -- Use measure_eq to show the measures are equal
+  --   have h_union'_measure_eq : (IsElementary.union' hE).measure = (hA_elem.union hE₀_elem).measure := by
+  --     -- Get partition from hA_elem.union hE₀_elem
+  --     let h_union_elem := hA_elem.union hE₀_elem
+  --     have h_partition := h_union_elem.partition
+  --     obtain ⟨T, hT_disj, hT_eq⟩ := h_partition
+  --     -- Use the same partition for both sets since they're equal
+  --     have h_union'_eq_partition : (⋃ E ∈ S, E) = ⋃ B ∈ T, B.toSet := by
+  --       rw [h_S_union_eq, hT_eq]
+  --     rw [(IsElementary.union' hE).measure_eq hT_disj h_union'_eq_partition]
+  --     rw [h_union_elem.measure_eq hT_disj hT_eq]
+  --   -- Combine everything
+  --   sorry
 
 @[simp]
 lemma IsElementary.measure_of_empty (d:ℕ) : (IsElementary.empty d).measure = 0 := by
@@ -1030,15 +1034,110 @@ lemma Box.volume_of_translate {d:ℕ} (B: Box d) (x: EuclideanSpace' d) :
     ext i
     exact (hI' i).2
 
+/-- Translation is injective on sets: if S₁ + {x} = S₂ + {x}, then S₁ = S₂ -/
+lemma Set.translate_inj {d:ℕ} (x: EuclideanSpace' d) (S₁ S₂ : Set (EuclideanSpace' d))
+  (h_eq : S₁ + {x} = S₂ + {x}) : S₁ = S₂ := by
+  ext y
+  constructor
+  · intro hy
+    have : y + x ∈ S₁ + {x} := Set.mem_add.mpr ⟨y, hy, x, Set.mem_singleton x, rfl⟩
+    rw [h_eq] at this
+    obtain ⟨a, ha, b, hb, hab⟩ := Set.mem_add.mp this
+    rw [Set.mem_singleton_iff.mp hb] at hab
+    exact (add_right_cancel hab) ▸ ha
+  · intro hy
+    have : y + x ∈ S₂ + {x} := Set.mem_add.mpr ⟨y, hy, x, Set.mem_singleton x, rfl⟩
+    rw [← h_eq] at this
+    obtain ⟨a, ha, b, hb, hab⟩ := Set.mem_add.mp this
+    rw [Set.mem_singleton_iff.mp hb] at hab
+    exact (add_right_cancel hab) ▸ ha
+
 lemma IsElementary.measure_of_translate {d:ℕ} {E: Set (EuclideanSpace' d)}
 (hE: IsElementary E) (x: EuclideanSpace' d):
   (hE.translate x).measure ≤ hE.measure := by
   -- Strategy:
-  -- 1. Get partition T of E: E = ⋃ B ∈ T, B.toSet
-  -- 2. Translate partition: T' = {B + {x} | B ∈ T} partitions E + {x}
-  -- 3. Use volume_of_translate: |B + {x}|ᵥ = |B|ᵥ for each B
-  -- 4. Apply measure_eq: both measures equal sum of volumes, so equal (hence ≤)
-  sorry
+  -- 1. Get partition T of E: E = ⋃ B ∈ T, B.toSet (from hE.partition)
+  -- 2. For each B ∈ T, use Box.volume_of_translate to get B' with B'.toSet = B.toSet + {x} and |B'|ᵥ = |B|ᵥ
+  -- 3. Construct T' = {B' | B ∈ T} (using choose to get the translated boxes)
+  -- 4. Show T' is pairwise disjoint (translation preserves disjointness)
+  -- 5. Show E + {x} = ⋃ B' ∈ T', B'.toSet (translation distributes over union)
+  -- 6. Apply measure_eq: (hE.translate x).measure = ∑ B' ∈ T', |B'|ᵥ = ∑ B ∈ T, |B|ᵥ = hE.measure
+  classical
+  -- Step 1: Get partition T of E
+  set T := hE.partition.choose
+  have hT_disj : T.toSet.PairwiseDisjoint Box.toSet := hE.partition.choose_spec.1
+  have hE_eq : E = ⋃ B ∈ T, B.toSet := hE.partition.choose_spec.2
+  -- Step 2-3: Construct translated partition T'
+  choose f hf using fun B : Box d => Box.volume_of_translate B x
+  set T' := T.image f
+  have hf_spec : ∀ B ∈ T, (f B).toSet = B.toSet + {x} ∧ |f B|ᵥ = |B|ᵥ := fun B hB => hf B
+  -- Helper: f is injective on T
+  have hf_inj : ∀ B₁ B₂, B₁ ∈ T → B₂ ∈ T → f B₁ = f B₂ → B₁ = B₂ := by
+    intro B₁ B₂ hB₁ hB₂ h_eq
+    have h_set_eq' : B₁.toSet = B₂.toSet :=
+      Set.translate_inj x _ _ ((hf_spec B₁ hB₁).1.symm.trans ((congr_arg Box.toSet h_eq).trans (hf_spec B₂ hB₂).1))
+    by_cases h_empty : B₁.toSet = ∅
+    · -- Empty case: use helper lemma directly
+      sorry
+    · -- Nonempty case: use pairwise disjoint property
+      have h_inter_nonempty : (B₁.toSet ∩ B₂.toSet).Nonempty := by
+        rw [h_set_eq', Set.inter_self]
+        rw [← h_set_eq']
+        exact Set.nonempty_iff_ne_empty.mpr h_empty
+      rw [Set.pairwiseDisjoint_iff] at hT_disj
+      exact hT_disj hB₁ hB₂ h_inter_nonempty
+  -- Step 4: Show T' is pairwise disjoint
+  have hT'_disj : T'.toSet.PairwiseDisjoint Box.toSet := by
+    rw [Set.pairwiseDisjoint_iff]
+    intro B₁' hB₁' B₂' hB₂' hB₁'B₂'
+    simp [T'] at hB₁' hB₂'
+    obtain ⟨B₁, hB₁, rfl⟩ := hB₁'
+    obtain ⟨B₂, hB₂, rfl⟩ := hB₂'
+    by_cases h_eq : f B₁ = f B₂
+    · exact h_eq
+    · -- If f B₁ ≠ f B₂ but they intersect, then B₁ = B₂ (contradiction)
+      have h_translate_inter : (f B₁).toSet ∩ (f B₂).toSet = (B₁.toSet ∩ B₂.toSet) + {x} := by
+        rw [(hf_spec B₁ hB₁).1, (hf_spec B₂ hB₂).1]
+        ext y; simp only [Set.mem_inter_iff, Set.mem_add]
+        constructor
+        · rintro ⟨⟨a₁, ha₁, b₁, hb₁, hab₁⟩, ⟨a₂, ha₂, b₂, hb₂, hab₂⟩⟩
+          have hb₁_eq : b₁ = x := Set.mem_singleton_iff.mp hb₁
+          have hb₂_eq : b₂ = x := Set.mem_singleton_iff.mp hb₂
+          rw [hb₁_eq] at hab₁
+          rw [hb₂_eq] at hab₂
+          exact ⟨a₁, ⟨ha₁, add_right_cancel (hab₁.trans hab₂.symm) ▸ ha₂⟩, x, Set.mem_singleton x, hab₁⟩
+        · rintro ⟨a, ⟨ha₁, ha₂⟩, b, hb, hab⟩
+          rw [Set.mem_singleton_iff.mp hb] at hab
+          exact ⟨⟨a, ha₁, x, Set.mem_singleton x, hab⟩, ⟨a, ha₂, x, Set.mem_singleton x, hab⟩⟩
+      have h_B_nonempty : (B₁.toSet ∩ B₂.toSet).Nonempty := by
+        rw [h_translate_inter] at hB₁'B₂'
+        obtain ⟨y, hy⟩ := hB₁'B₂'
+        obtain ⟨a, ha, b, hb, hab⟩ := Set.mem_add.mp hy
+        exact ⟨a, ha.1, ha.2⟩
+      rw [Set.pairwiseDisjoint_iff] at hT_disj
+      exact (h_eq (congr_arg f (hT_disj hB₁ hB₂ h_B_nonempty))).elim
+  -- Step 5: Show E + {x} = ⋃ B' ∈ T', B'.toSet
+  have h_union_eq : E + {x} = ⋃ B' ∈ T', B'.toSet := by
+    rw [hE_eq]
+    ext y; simp
+    constructor
+    · rintro ⟨B, hB, hy⟩
+      use f B, Finset.mem_image.mpr ⟨B, hB, rfl⟩
+      rw [(hf_spec B hB).1]
+      exact ⟨y + -x, hy, x, Set.mem_singleton x, by simp [add_assoc, add_zero]⟩
+    · rintro ⟨B', hB', hy⟩
+      obtain ⟨B, hB, rfl⟩ := Finset.mem_image.mp hB'
+      rw [(hf_spec B hB).1] at hy
+      obtain ⟨a, ha, b, hb, hab⟩ := Set.mem_add.mp hy
+      rw [Set.mem_singleton_iff.mp hb] at hab
+      exact ⟨B, hB, by rw [← hab]; simp [add_assoc, add_neg_cancel, add_zero]; exact ha⟩
+  -- Step 6: Apply measure_eq and show sum equality
+  have h_translate_measure : (hE.translate x).measure = ∑ B' ∈ T', |B'|ᵥ :=
+    (hE.translate x).measure_eq hT'_disj h_union_eq
+  have h_sum_eq : ∑ B' ∈ T', |B'|ᵥ = ∑ B ∈ T, |B|ᵥ := by
+    rw [Finset.sum_image (fun B₁ hB₁ B₂ hB₂ h_eq => hf_inj B₁ B₂ hB₁ hB₂ h_eq)]
+    exact Finset.sum_congr rfl fun B hB => (hf_spec B hB).2
+  rw [h_translate_measure, h_sum_eq, hE.measure_eq hT_disj hE_eq]
 
 /-- Exercise 1.1.3 (uniqueness of elementary measure) -/
 theorem IsElementary.measure_uniq {d:ℕ} {m': (E: Set (EuclideanSpace' d)) → (IsElementary E) → ℝ}
