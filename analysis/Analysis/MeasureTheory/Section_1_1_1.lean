@@ -1007,7 +1007,28 @@ lemma Box.volume_of_translate {d:ℕ} (B: Box d) (x: EuclideanSpace' d) :
   -- 2. Construct B' with translated intervals: B'.side i = translated interval
   -- 3. Show B'.toSet = B.toSet + {x}: y ∈ B'.toSet ↔ y - x ∈ B.toSet (coordinate-wise)
   -- 4. Show |B'|ᵥ = |B|ᵥ: product of lengths, each length preserved by translation
-  sorry
+  -- Step 1: For each coordinate i, get translated interval
+  choose I' hI' using fun i ↦ BoundedInterval.length_of_translate (B.side i) (x i)
+  -- Step 2: Construct B' with translated intervals
+  use ⟨fun i ↦ I' i⟩
+  constructor
+  -- Step 3: Show B'.toSet = B.toSet + {x}
+  · ext y
+    simp [Box.toSet, Set.mem_pi]
+    constructor
+    · intro hy i
+      have : y i ∈ (I' i).toSet := hy i (Set.mem_univ i)
+      rw [(hI' i).1] at this
+      obtain ⟨a, ha, b, rfl, hab⟩ := this
+      convert ha using 1; rw [← hab]; ring
+    · intro hy i _
+      simp; rw [(hI' i).1]
+      use y i + -x i, hy i, x i, rfl; ring
+  -- Step 4: Show |B'|ᵥ = |B|ᵥ
+  · simp [Box.volume]
+    congr 1
+    ext i
+    exact (hI' i).2
 
 lemma IsElementary.measure_of_translate {d:ℕ} {E: Set (EuclideanSpace' d)}
 (hE: IsElementary E) (x: EuclideanSpace' d):
