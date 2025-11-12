@@ -936,7 +936,7 @@ lemma Set.translate_inj {d:ℕ} (x: EuclideanSpace' d) (S₁ S₂ : Set (Euclide
 
 lemma IsElementary.measure_of_translate {d:ℕ} {E: Set (EuclideanSpace' d)}
 (hE: IsElementary E) (x: EuclideanSpace' d):
-  (hE.translate x).measure ≤ hE.measure := by
+  (hE.translate x).measure = hE.measure := by
   -- Strategy:
   -- 0. Case split: E = ∅ or E ≠ ∅
   --    a. Empty case: E = ∅ → E + {x} = ∅, both measures are 0, so 0 ≤ 0 by le_refl
