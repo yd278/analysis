@@ -666,19 +666,19 @@ theorem SetTheory.Set.union_compl {A X:Set} (hAX: A ⊆ X) : A ∪ (X \ A) = X :
   tauto
 
 /-- Proposition 3.1.27(f) -/
-theorem SetTheory.Set.inter_compl {A X:Set} (hAX: A ⊆ X) : A ∩ (X \ A) = ∅ := by 
+theorem SetTheory.Set.inter_compl {A X:Set} : A ∩ (X \ A) = ∅ := by 
   ext x
   simp
   tauto
 /-- Proposition 3.1.27(g) -/
-theorem SetTheory.Set.compl_union {A B X:Set} (hAX: A ⊆ X) (hBX: B ⊆ X) :
+theorem SetTheory.Set.compl_union {A B X:Set} :
     X \ (A ∪ B) = (X \ A) ∩ (X \ B) := by
       ext x
       simp
       tauto
 
 /-- Proposition 3.1.27(g) -/
-theorem SetTheory.Set.compl_inter {A B X:Set} (hAX: A ⊆ X) (hBX: B ⊆ X) :
+theorem SetTheory.Set.compl_inter {A B X:Set} :
     X \ (A ∩ B) = (X \ A) ∪ (X \ B) := by
       ext x
       simp
