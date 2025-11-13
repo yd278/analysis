@@ -30,33 +30,126 @@ theorem JordanMeasurable.eq_outer {d:ℕ} {E: Set (EuclideanSpace' d)} (hE: Jord
 
 /-- Various preparatory lemmas for the exercises. -/
 theorem IsElementary.contains_bounded {d:ℕ} {E: Set (EuclideanSpace' d)} (hE: Bornology.IsBounded E) : ∃ A: Set (EuclideanSpace' d), IsElementary A ∧ E ⊆ A := by
-  sorry
+  -- Strategy:
+  -- 1. Get bound M from boundedness: E ⊆ Metric.closedBall 0 M
+  -- 2. Construct box B with Icc (-M') M' in each coordinate, where M' = max M 0 + 1
+  -- 3. Show E ⊆ B.toSet: for x ∈ E, we have ‖x‖ ≤ M < M', so |x i| ≤ ‖x‖ < M' for each coordinate i
+  -- 4. Use IsElementary.box to show B.toSet is elementary
+  -- Step 1: Get bound M from boundedness
+  rw [Metric.isBounded_iff_subset_closedBall 0] at hE
+  obtain ⟨M, hE_ball⟩ := hE
+  -- Step 2: Construct box B with Icc (-M') M' in each coordinate
+  set M' := max M 0 + 1
+  let B : Box d := {
+    side := fun _ => BoundedInterval.Icc (-M') M'
+  }
+  -- Step 3: Show E ⊆ B.toSet
+  have hE_subset : E ⊆ B.toSet := by
+    intro x hx
+    simp [Box.toSet]
+    intro i _
+    simp
+    have h_mem : x ∈ Metric.closedBall 0 M := hE_ball hx
+    rw [Metric.mem_closedBall, dist_zero_right] at h_mem
+    have h_M_bound : M ≤ max M 0 := le_max_left _ _
+    have h_M'_bound : max M 0 < M' := by
+      dsimp [M']
+      exact lt_add_one (max M 0)
+    have h_norm_bound : ‖x‖ < M' := lt_of_le_of_lt h_mem (lt_of_le_of_lt h_M_bound h_M'_bound)
+    have h_coord_sq : (x i)^2 ≤ ∑ j, (x j)^2 := by
+      exact Finset.single_le_sum (fun j _ => sq_nonneg (x j)) (Finset.mem_univ i)
+    have h_coord : |x i| ≤ ‖x‖ := by
+      rw [EuclideanSpace'.norm_eq]
+      calc |x i| = Real.sqrt ((x i)^2) := by rw [Real.sqrt_sq_eq_abs]
+        _ ≤ Real.sqrt (∑ j, (x j)^2) := Real.sqrt_le_sqrt h_coord_sq
+    have h_abs_bound : |x i| < M' := lt_of_le_of_lt h_coord h_norm_bound
+    constructor
+    · have : -M' < x i := by
+        rw [abs_lt] at h_abs_bound
+        exact h_abs_bound.1
+      linarith
+    · have : x i < M' := by
+        rw [abs_lt] at h_abs_bound
+        exact h_abs_bound.2
+      linarith
+  -- Step 4: Show B.toSet is elementary
+  have hB_elem : IsElementary B.toSet := IsElementary.box B
+  exact ⟨B.toSet, hB_elem, hE_subset⟩
 
 theorem Jordan_inner_measure_nonneg {d:ℕ} (E: Set (EuclideanSpace' d)) : 0 ≤ Jordan_inner_measure E := by
-  sorry
+  -- Strategy:
+  -- 1. Unfold the definition: Jordan_inner_measure E = sSup { m | ∃ A, IsElementary A, A ⊆ E ∧ m = hA.measure }
+  -- 2. Apply Real.sSup_nonneg: this requires showing ∀ m in the set, 0 ≤ m
+  -- 3. For any m in the set, extract the elementary set A and use IsElementary.measure_nonneg
+  -- Note: Real.sSup_nonneg handles both empty and nonempty sets, so we don't need to show nonemptiness
+  unfold Jordan_inner_measure
+  apply Real.sSup_nonneg
+  -- For any m in the set, there exists an elementary set A ⊆ E with m = hA.measure
+  intro m hm
+  -- Extract the elementary set and its measure
+  obtain ⟨A, hA, hA_subset, rfl⟩ := hm
+  -- Apply IsElementary.measure_nonneg to show 0 ≤ hA.measure
+  exact IsElementary.measure_nonneg hA
 
 theorem Jordan_outer_measure_nonneg {d:ℕ} (E: Set (EuclideanSpace' d)) : 0 ≤ Jordan_outer_measure E := by
+  -- Strategy:
+  -- 1. The outer measure is sInf of measures of elementary sets A ⊇ E
+  -- 2. If E is bounded, use IsElementary.contains_bounded to show the set is nonempty
+  -- 3. If E is unbounded, the set might be empty, but then sInf = ∞ ≥ 0
+  -- 4. All measures are ≥ 0 by IsElementary.measure_nonneg
+  -- 5. Apply csInf_nonneg or similar: infimum of non-negative reals is non-negative (when set is nonempty)
   sorry
 
 theorem Jordan_inner_le_outer {d:ℕ} {E: Set (EuclideanSpace' d)} (hE: Bornology.IsBounded E) : Jordan_inner_measure E ≤ Jordan_outer_measure E := by
+  -- Strategy:
+  -- 1. Use IsElementary.contains_bounded to get an elementary set B ⊇ E
+  -- 2. For any elementary A ⊆ E, we have A ⊆ B, so A.measure ≤ B.measure by IsElementary.measure_mono
+  -- 3. This shows Jordan_inner_measure E ≤ B.measure
+  -- 4. Since B.measure is in the set defining outer measure, we have B.measure ≥ Jordan_outer_measure E
+  -- 5. Combine: Jordan_inner_measure E ≤ B.measure ≤ Jordan_outer_measure E
+  -- 6. Alternatively: show sSup S ≤ sInf T where S = {A.measure | A ⊆ E, elementary} and T = {B.measure | B ⊇ E, elementary}
   sorry
 
 theorem le_Jordan_inner {d:ℕ} {E A: Set (EuclideanSpace' d)}
   (hA: IsElementary A) (hAE: A ⊆ E) : hA.measure ≤ Jordan_inner_measure A := by
+  -- Strategy:
+  -- 1. Unfold definition: Jordan_inner_measure A = sSup { m | ∃ B, IsElementary B, B ⊆ A ∧ m = hB.measure }
+  -- 2. Show hA.measure is in this set: use A itself (A ⊆ A, and hA.measure = hA.measure)
+  -- 3. Apply le_csSup: any element of a set is ≤ its supremum (need to show set is nonempty and bounded above)
+  -- 4. Set is nonempty because A is in it; bounded above by any elementary set containing A (if needed)
   sorry
 
 theorem Jordan_outer_le {d:ℕ} {E A: Set (EuclideanSpace' d)}
   (hA: IsElementary A) (hAE: E ⊆ A) : Jordan_outer_measure A ≤ hA.measure := by
+  -- Strategy:
+  -- 1. Unfold definition: Jordan_outer_measure A = sInf { m | ∃ B, IsElementary B, A ⊆ B ∧ m = hB.measure }
+  -- 2. Show hA.measure is in this set: use A itself (A ⊆ A, and hA.measure = hA.measure)
+  -- 3. Apply csInf_le: infimum of a set is ≤ any element (need to show set is nonempty and bounded below)
+  -- 4. Set is nonempty because A is in it; bounded below by 0 (IsElementary.measure_nonneg)
   sorry
 
 theorem Jordan_inner_le {d:ℕ} {E: Set (EuclideanSpace' d)} {m:ℝ}
   (hm: m < Jordan_inner_measure E) : ∃ A: Set (EuclideanSpace' d), ∃ hA: IsElementary A, A ⊆ E ∧ m < hA.measure := by
-    sorry
+  -- Strategy:
+  -- 1. Unfold definition: Jordan_inner_measure E = sSup { m' | ∃ A, IsElementary A, A ⊆ E ∧ m' = hA.measure }
+  -- 2. Since m < sSup S, by properties of supremum, there exists x ∈ S with m < x
+  -- 3. Need to show the set is nonempty (empty set is elementary with measure 0) and bounded above
+  -- 4. Use IsElementary.contains_bounded if E is bounded, or handle unbounded case
+  -- 5. Apply exists_gt_of_lt_csSup or similar supremum characterization lemma
+  -- 6. Extract the elementary set A from the witness
+  sorry
 
 theorem le_Jordan_outer {d:ℕ} {E: Set (EuclideanSpace' d)} {m:ℝ}
   (hm: Jordan_outer_measure E < m) (hbound: Bornology.IsBounded E) :
   ∃ A: Set (EuclideanSpace' d), ∃ hA: IsElementary A, E ⊆ A ∧ hA.measure < m := by
-    sorry
+  -- Strategy:
+  -- 1. Unfold definition: Jordan_outer_measure E = sInf { m' | ∃ A, IsElementary A, E ⊆ A ∧ m' = hA.measure }
+  -- 2. Since sInf S < m, by properties of infimum, there exists x ∈ S with x < m
+  -- 3. Use IsElementary.contains_bounded to show the set is nonempty (since E is bounded)
+  -- 4. The set is bounded below by 0 (IsElementary.measure_nonneg)
+  -- 5. Apply exists_le_of_lt_csInf or similar infimum characterization lemma
+  -- 6. Extract the elementary set A from the witness
+  sorry
 
 /-- Exercise 1.1.5 -/
 theorem JordanMeasurable.equiv {d:ℕ} {E: Set (EuclideanSpace' d)} (hE: Bornology.IsBounded E) :
