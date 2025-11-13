@@ -45,9 +45,19 @@ structure PreRat where
 instance PreRat.instSetoid : Setoid PreRat where
   r a b := a.numerator * b.denominator = b.numerator * a.denominator
   iseqv := {
-    refl := by sorry
-    symm := by sorry
-    trans := by sorry
+    refl := by simp
+    symm := by
+      rintro ⟨x1,x2,hx⟩ ⟨y1,y2,hy⟩; simp;
+      intro h;simp[h]
+    trans := by
+      rintro ⟨x1,x2,hx⟩ ⟨y1,y2,hy⟩ ⟨z1,z2,hz⟩ ; simp;
+      intro hxy hyz
+      have hxyz : (x1 * z2) * y2 = (z1 * x2) * y2 := by
+        calc
+          _ = x1 * y2 * z2 := by ring
+          _ = y1 * z2 * x2 := by rw[hxy];ring
+          _ = _ := by rw[hyz];ring
+      simpa[hy] using hxyz
     }
 
 @[simp]
