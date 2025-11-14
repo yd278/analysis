@@ -316,11 +316,47 @@ instance Rat.instCommMonoid : CommMonoid Rat where
 
 /-- Proposition 4.2.4 (laws of algebra) / Exercise 4.2.3 -/
 instance Rat.instCommRing : CommRing Rat where
-  left_distrib := by sorry
-  right_distrib := by sorry
-  zero_mul := by sorry
-  mul_zero := by sorry
-  mul_assoc := by sorry
+  left_distrib := by
+    intro a b c
+    obtain ⟨a1,a2,ha,rfl⟩ := eq_diff a
+    obtain ⟨b1,b2,hb,rfl⟩ := eq_diff b
+    obtain ⟨c1,c2,hc,rfl⟩ := eq_diff c
+    rw[add_eq,mul_eq,mul_eq,mul_eq,add_eq,eq]
+    ring
+    all_goals
+      simp[ha,hb,hc]
+  right_distrib := by
+    intro a b c
+    obtain ⟨a1,a2,ha,rfl⟩ := eq_diff a
+    obtain ⟨b1,b2,hb,rfl⟩ := eq_diff b
+    obtain ⟨c1,c2,hc,rfl⟩ := eq_diff c
+    rw[add_eq,mul_eq,mul_eq,mul_eq,add_eq,eq]
+    ring
+    all_goals
+      simp[ha,hb,hc]
+  zero_mul := by
+    intro a
+    obtain ⟨a1,a2,ha,rfl⟩ := eq_diff a
+    rw[of_Nat_eq,mul_eq,eq]
+    ring
+    all_goals
+      simp[ha]
+  mul_zero := by
+    intro a
+    obtain ⟨a1,a2,ha,rfl⟩ := eq_diff a
+    rw[of_Nat_eq,mul_eq,eq]
+    ring
+    all_goals
+      simp[ha]
+  mul_assoc := by 
+    intro a b c
+    obtain ⟨a1,a2,ha,rfl⟩ := eq_diff a
+    obtain ⟨b1,b2,hb,rfl⟩ := eq_diff b
+    obtain ⟨c1,c2,hc,rfl⟩ := eq_diff c
+    rw[mul_eq,mul_eq,mul_eq,mul_eq,eq]
+    ring
+    all_goals
+      simp[ha,hb,hc]
   -- Usually CommRing will generate a natCast instance and a proof for this.
   -- However, we are using a custom natCast for which `natCast_succ` cannot
   -- be proven automatically by `rfl`. Luckily we have proven it already.
