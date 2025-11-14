@@ -87,8 +87,22 @@ theorem Rat.eq_diff (n:Rat) : ∃ a b, b ≠ 0 ∧ n = a // b := by
   section. However, because formal division handles the case of zero denominator separately, it
   may be more convenient to avoid that operation and work directly with the `Quotient` API.
 -/
-instance Rat.decidableEq : DecidableEq Rat := by
-  sorry
+noncomputable instance Rat.decidableEq : DecidableEq Rat := by
+  intro x y
+  let ex := eq_diff x
+  set hb := ex.choose_spec.choose_spec
+  set b := ex.choose_spec.choose
+  set a := ex.choose
+  let ey := eq_diff y
+  set hd := ey.choose_spec.choose_spec
+  set d := ey.choose_spec.choose
+  set c := ey.choose
+  have : Decidable (a // b = c // d) := by
+    rw[eq]
+    exact decEq _ _
+    exact hb.1
+    exact hd.1
+  simpa only [hb.2,hd.2]
 
 /-- Lemma 4.2.3 (Addition well-defined) -/
 instance Rat.add_inst : Add Rat where
@@ -108,7 +122,24 @@ theorem Rat.add_eq (a c:ℤ) {b d:ℤ} (hb: b ≠ 0) (hd: d ≠ 0) :
 
 /-- Lemma 4.2.3 (Multiplication well-defined) -/
 instance Rat.mul_inst : Mul Rat where
-  mul := Quotient.lift₂ (fun ⟨ a, b, h1 ⟩ ⟨ c, d, h2 ⟩ ↦ (a*c) // (b*d)) (by sorry)
+  mul := Quotient.lift₂ (fun ⟨ a, b, h1 ⟩ ⟨ c, d, h2 ⟩ ↦ (a*c) // (b*d)) (by 
+    intro ⟨a1,a2,ha⟩ ⟨b1,b2,hb⟩ ⟨c1,c2,hc⟩ ⟨d1,d2,hd⟩  hac hbd
+    simp at hac hbd
+    simp only
+    have hab : a2 * b2 ≠ 0 := by
+      by_contra h
+      rw[mul_eq_zero] at h
+      tauto
+    have hcd : c2 * d2 ≠ 0 := by
+      by_contra h
+      rw[mul_eq_zero] at h
+      tauto
+
+    simp[eq (a1 * b1) (c1 * d1) hab hcd]
+    calc
+      _ = (a1 * c2) * (b1 * d2) := by ring
+      _ = _ := by rw[hac,hbd];ring
+  )
 
 /-- Definition 4.2.2 (Multiplication of rationals) -/
 theorem Rat.mul_eq (a c:ℤ) {b d:ℤ} (hb: b ≠ 0) (hd: d ≠ 0) :
@@ -117,7 +148,12 @@ theorem Rat.mul_eq (a c:ℤ) {b d:ℤ} (hb: b ≠ 0) (hd: d ≠ 0) :
 
 /-- Lemma 4.2.3 (Negation well-defined) -/
 instance Rat.neg_inst : Neg Rat where
-  neg := Quotient.lift (fun ⟨ a, b, h1 ⟩ ↦ (-a) // b) (by sorry)
+  neg := Quotient.lift (fun ⟨ a, b, h1 ⟩ ↦ (-a) // b) (by 
+    intro ⟨a1,a2,ha⟩ ⟨b1,b2,hb⟩ hab
+    simp at hab
+    simp only [eq (-a1) (-b1) ha hb]
+    simp[hab]
+  )
 
 /-- Definition 4.2.2 (Negation of rationals) -/
 theorem Rat.neg_eq (a:ℤ) {b:ℤ} (hb: b ≠ 0) : - (a // b) = (-a) // b := by
@@ -140,18 +176,30 @@ theorem Rat.coe_Nat_eq (n:ℕ) : (n:Rat) = n // 1 := rfl
 theorem Rat.of_Nat_eq (n:ℕ) : (ofNat(n):Rat) = (ofNat(n):Nat) // 1 := rfl
 
 /-- natCast distributes over successor -/
-theorem Rat.natCast_succ (n: ℕ) : ((n + 1: ℕ): Rat) = (n: Rat) + 1 := by sorry
+theorem Rat.natCast_succ (n: ℕ) : ((n + 1: ℕ): Rat) = (n: Rat) + 1 := by
+  simp_rw[coe_Nat_eq,of_Nat_eq]
+  rw[add_eq,eq] <;> simp
 
 /-- intCast distributes over addition -/
-lemma Rat.intCast_add (a b:ℤ) : (a:Rat) + (b:Rat) = (a+b:ℤ) := by sorry
+lemma Rat.intCast_add (a b:ℤ) : (a:Rat) + (b:Rat) = (a+b:ℤ) := by
+  simp_rw[coe_Int_eq]
+  rw[add_eq,eq] <;> simp
 
 /-- intCast distributes over multiplication -/
-lemma Rat.intCast_mul (a b:ℤ) : (a:Rat) * (b:Rat) = (a*b:ℤ) := by sorry
+lemma Rat.intCast_mul (a b:ℤ) : (a:Rat) * (b:Rat) = (a*b:ℤ) := by
+  simp_rw[coe_Int_eq]
+  rw[mul_eq,eq] <;> simp
 
 /-- intCast commutes with negation -/
 lemma Rat.intCast_neg (a:ℤ) : - (a:Rat) = (-a:ℤ) := rfl
 
-theorem Rat.coe_Int_inj : Function.Injective (fun n:ℤ ↦ (n:Rat)) := by sorry
+theorem Rat.coe_Int_inj : Function.Injective (fun n:ℤ ↦ (n:Rat)) := by
+  intro z1 z2
+  simp
+  intro heq
+  simp_rw[coe_Int_eq] at heq
+  rw[eq] at heq<;> simp_all
+
 
 /--
   Whereas the book leaves the inverse of 0 undefined, it is more convenient in Lean to assign a
