@@ -289,7 +289,7 @@ theorem Rat.not_gt_and_eq (x y:Rat) : ¬ (x > y ∧ x = y):= by sorry
 theorem Rat.not_lt_and_eq (x y:Rat) : ¬ (x < y ∧ x = y):= by sorry
 
 /-- Proposition 4.2.9(b) (order is anti-symmetric) / Exercise 4.2.5 -/
-theorem Rat.antisymm (x y:Rat) : x < y ↔ (y - x).isPos := by sorry
+theorem Rat.antisymm (x y:Rat) : x < y ↔ y > x := by sorry
 
 /-- Proposition 4.2.9(c) (order is transitive) / Exercise 4.2.5 -/
 theorem Rat.lt_trans {x y z:Rat} (hxy: x < y) (hyz: y < z) : x < z := by sorry
