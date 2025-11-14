@@ -140,29 +140,65 @@ theorem le_Jordan_inner {d:ℕ} {E A: Set (EuclideanSpace' d)}
   -- Strategy:
   -- 1. Unfold definition: Jordan_inner_measure A = sSup { m | ∃ B, IsElementary B, B ⊆ A ∧ m = hB.measure }
   -- 2. Show hA.measure is in this set: use A itself (A ⊆ A, and hA.measure = hA.measure)
-  -- 3. Apply le_csSup: any element of a set is ≤ its supremum (need to show set is nonempty and bounded above)
-  -- 4. Set is nonempty because A is in it; bounded above by any elementary set containing A (if needed)
-  sorry
+  -- 3. Show the set is bounded above by hA.measure: for any B ⊆ A elementary, B.measure ≤ A.measure by monotonicity
+  -- 4. Apply le_csSup: any element of a set is ≤ its supremum
+  unfold Jordan_inner_measure
+  -- Step 2: Show hA.measure is in the set
+  have h_mem : hA.measure ∈ { m:ℝ | ∃ (B: Set (EuclideanSpace' d)), ∃ hB: IsElementary B, B ⊆ A ∧ m = hB.measure } := by
+    use A, hA, Set.Subset.refl A
+  -- Step 3: Show the set is bounded above by hA.measure
+  have h_bdd : BddAbove { m:ℝ | ∃ (B: Set (EuclideanSpace' d)), ∃ hB: IsElementary B, B ⊆ A ∧ m = hB.measure } := by
+    use hA.measure
+    intro m hm
+    obtain ⟨B, hB, hB_subset_A, rfl⟩ := hm
+    -- Since B ⊆ A and both are elementary, B.measure ≤ A.measure by monotonicity
+    exact IsElementary.measure_mono hB hA hB_subset_A
+  -- Step 4: Apply le_csSup
+  exact le_csSup h_bdd h_mem
 
 theorem Jordan_outer_le {d:ℕ} {E A: Set (EuclideanSpace' d)}
   (hA: IsElementary A) (hAE: E ⊆ A) : Jordan_outer_measure A ≤ hA.measure := by
   -- Strategy:
   -- 1. Unfold definition: Jordan_outer_measure A = sInf { m | ∃ B, IsElementary B, A ⊆ B ∧ m = hB.measure }
   -- 2. Show hA.measure is in this set: use A itself (A ⊆ A, and hA.measure = hA.measure)
-  -- 3. Apply csInf_le: infimum of a set is ≤ any element (need to show set is nonempty and bounded below)
-  -- 4. Set is nonempty because A is in it; bounded below by 0 (IsElementary.measure_nonneg)
-  sorry
+  -- 3. Show the set is bounded below by 0: for any B ⊇ A elementary, 0 ≤ B.measure by nonnegativity
+  -- 4. Apply csInf_le: infimum of a set is ≤ any element in the set
+  unfold Jordan_outer_measure
+  -- Step 2: Show hA.measure is in the set
+  have h_mem : hA.measure ∈ { m:ℝ | ∃ (B: Set (EuclideanSpace' d)), ∃ hB: IsElementary B, A ⊆ B ∧ m = hB.measure } := by
+    use A, hA, Set.Subset.refl A
+  -- Step 3: Show the set is bounded below by 0
+  have h_bdd : BddBelow { m:ℝ | ∃ (B: Set (EuclideanSpace' d)), ∃ hB: IsElementary B, A ⊆ B ∧ m = hB.measure } := by
+    use 0
+    intro m hm
+    obtain ⟨B, hB, _, rfl⟩ := hm
+    -- Since B is elementary, 0 ≤ B.measure by nonnegativity
+    exact IsElementary.measure_nonneg hB
+  -- Step 4: Apply csInf_le
+  exact csInf_le h_bdd h_mem
 
 theorem Jordan_inner_le {d:ℕ} {E: Set (EuclideanSpace' d)} {m:ℝ}
   (hm: m < Jordan_inner_measure E) : ∃ A: Set (EuclideanSpace' d), ∃ hA: IsElementary A, A ⊆ E ∧ m < hA.measure := by
   -- Strategy:
   -- 1. Unfold definition: Jordan_inner_measure E = sSup { m' | ∃ A, IsElementary A, A ⊆ E ∧ m' = hA.measure }
-  -- 2. Since m < sSup S, by properties of supremum, there exists x ∈ S with m < x
-  -- 3. Need to show the set is nonempty (empty set is elementary with measure 0) and bounded above
-  -- 4. Use IsElementary.contains_bounded if E is bounded, or handle unbounded case
-  -- 5. Apply exists_gt_of_lt_csSup or similar supremum characterization lemma
-  -- 6. Extract the elementary set A from the witness
-  sorry
+  -- 2. Show the set is nonempty (empty set is elementary with measure 0)
+  -- 3. Apply exists_lt_of_lt_csSup to get existence of element greater than m
+  -- 4. Extract the elementary set A from the witness
+  unfold Jordan_inner_measure at hm
+  set S := { m:ℝ | ∃ (A: Set (EuclideanSpace' d)), ∃ hA: IsElementary A, A ⊆ E ∧ m = hA.measure }
+  -- Step 2: Show the set is nonempty
+  have h_nonempty : S.Nonempty := by
+    use 0
+    use ∅
+    use IsElementary.empty d
+    constructor
+    · exact Set.empty_subset E
+    · exact Eq.symm (IsElementary.measure_of_empty d)
+  -- Step 3: Apply exists_lt_of_lt_csSup to get existence of element greater than m
+  obtain ⟨m', hm', hm_lt⟩ := exists_lt_of_lt_csSup h_nonempty hm
+  -- Step 4: Extract the elementary set A from the witness
+  obtain ⟨A, hA, hA_subset, rfl⟩ := hm'
+  exact ⟨A, hA, hA_subset, hm_lt⟩
 
 theorem le_Jordan_outer {d:ℕ} {E: Set (EuclideanSpace' d)} {m:ℝ}
   (hm: Jordan_outer_measure E < m) (hbound: Bornology.IsBounded E) :
@@ -171,10 +207,19 @@ theorem le_Jordan_outer {d:ℕ} {E: Set (EuclideanSpace' d)} {m:ℝ}
   -- 1. Unfold definition: Jordan_outer_measure E = sInf { m' | ∃ A, IsElementary A, E ⊆ A ∧ m' = hA.measure }
   -- 2. Since sInf S < m, by properties of infimum, there exists x ∈ S with x < m
   -- 3. Use IsElementary.contains_bounded to show the set is nonempty (since E is bounded)
-  -- 4. The set is bounded below by 0 (IsElementary.measure_nonneg)
-  -- 5. Apply exists_le_of_lt_csInf or similar infimum characterization lemma
-  -- 6. Extract the elementary set A from the witness
-  sorry
+  -- 4. Apply exists_lt_of_csInf_lt to get existence of element less than m
+  -- 5. Extract the elementary set A from the witness
+  unfold Jordan_outer_measure at hm
+  set S := { m:ℝ | ∃ (A: Set (EuclideanSpace' d)), ∃ hA: IsElementary A, E ⊆ A ∧ m = hA.measure }
+  -- Step 3: Show the set is nonempty
+  have h_nonempty : S.Nonempty := by
+    obtain ⟨A, hA, hE_subset⟩ := IsElementary.contains_bounded hbound
+    exact ⟨hA.measure, A, hA, hE_subset, rfl⟩
+  -- Step 4: Apply exists_lt_of_csInf_lt to get existence of element less than m
+  obtain ⟨m', hm', hm'_lt⟩ := exists_lt_of_csInf_lt h_nonempty hm
+  -- Step 5: Extract the elementary set A from the witness
+  obtain ⟨A, hA, hE_subset, rfl⟩ := hm'
+  exact ⟨A, hA, hE_subset, hm'_lt⟩
 
 /-- Exercise 1.1.5 -/
 theorem JordanMeasurable.equiv {d:ℕ} {E: Set (EuclideanSpace' d)} (hE: Bornology.IsBounded E) :
