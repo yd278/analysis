@@ -400,8 +400,21 @@ theorem Rat.div_eq (q r:Rat) : q/r = q * r⁻¹ := by rfl
 
 /-- Proposition 4.2.4 (laws of algebra) / Exercise 4.2.3 -/
 instance Rat.instField : Field Rat where
-  exists_pair_ne := by sorry
-  mul_inv_cancel := by sorry
+  exists_pair_ne := by
+    use 1,2
+    by_contra heq
+    simp only [of_Nat_eq] at heq
+    rw[eq _ _ (by simp) (by simp) ]at heq
+    simp at heq
+  mul_inv_cancel := by
+    intro a ane
+    obtain ⟨a1,a2,ha2,rfl⟩  := eq_diff a
+    have ha1 : a1 ≠ 0 := by
+      contrapose! ane
+      rw[of_Nat_eq,eq _ _ ha2 (by simp),ane]
+      simp
+    rw[inv_eq _ ha2,of_Nat_eq,mul_eq _ _ ha2 ha1,eq _ _ (by simp; tauto) (by simp)]
+    ring
   inv_zero := rfl
   ratCast_def := by
     intro q
