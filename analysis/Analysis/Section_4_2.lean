@@ -366,14 +366,21 @@ instance Rat.instRatCast : RatCast Rat where
   ratCast q := q.num // q.den
 
 theorem Rat.ratCast_inj : Function.Injective (fun n:ℚ ↦ (n:Rat)) := by
-  rintro ⟨q1n,q1d,hq1,hc1⟩ ⟨q2n,q2d,h12,hc2⟩  
-  intro heq
-  change q1n // q1d = q2n // q2d at heq
-  simp
-  rw[eq] at heq
-  . sorry
-  all_goals
-    simpa
+  intro q1 q2 heq
+  simp at heq
+  set num1 : ℤ := q1.num
+  set den1 : ℤ := (q1.den:ℤ)
+  have hden1 : den1 ≠ 0 := by simp[den1, q1.den_nz]
+  set num2 : ℤ := q2.num
+  set den2 : ℤ := (q2.den:ℤ)
+  have hden2 : den2 ≠ 0 := by simp[den2, q2.den_nz]
+  change num1 // den1 = num2 // den2 at heq
+  rw[eq _ _ hden1 hden2] at heq
+  qify at heq hden1 hden2
+  have hq1 : num1 / den1 = q1 := Rat.num_div_den q1
+  have hq2 : num2 / den2 = q2 := Rat.num_div_den q2
+  simp[← hq1, ← hq2]
+  rwa[div_eq_div_iff hden1 hden2]
 
 theorem Rat.coe_Rat_eq (a:ℤ) {b:ℤ} (hb: b ≠ 0) : (a/b:ℚ) = a // b := by
   set q := (a/b:ℚ)
