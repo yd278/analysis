@@ -247,8 +247,25 @@ AddGroup.ofLeftAxioms (by
   rw [add_eq _ _ hb hd, add_eq _ _ hbd hf, add_eq _ _ hd hf,
       add_eq _ _ hb hdf, ←mul_assoc b, eq _ _ hbdf hbdf]
   ring
-)
- (by sorry) (by sorry)
+) (
+  by 
+  intro a
+  obtain ⟨a1,a2,ha,rfl⟩ := eq_diff a 
+  simp only [of_Nat_eq]
+  rw[add_eq]
+  simp
+  simp
+  assumption
+) (
+  by 
+    intro a
+    obtain ⟨a1,a2,ha,rfl⟩ := eq_diff a 
+    rw[of_Nat_eq,neg_eq,add_eq,eq]
+    ring
+    simpa
+    simp
+    assumption'
+ )
 
 /-- Proposition 4.2.4 (laws of algebra) / Exercise 4.2.3 -/
 instance Rat.instAddCommGroup : AddCommGroup Rat where
