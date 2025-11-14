@@ -427,14 +427,15 @@ instance Rat.instField : Field Rat where
   qsmul := _
   nnqsmul := _
 
-example : (3//4) / (5//6) = 9 // 10 := by sorry
+example : (3//4) / (5//6) = 9 // 10 := by
+  rw[Rat.div_eq,Rat.inv_eq,Rat.mul_eq,Rat.eq] <;> simp
 
 def Rat.coe_int_hom : ℤ →+* Rat where
   toFun n := (n:Rat)
   map_zero' := rfl
   map_one' := rfl
-  map_add' := by sorry
-  map_mul' := by sorry
+  map_add' := by simp
+  map_mul' := by simp
 
 /-- Definition 4.2.6 (positivity) -/
 def Rat.isPos (q:Rat) : Prop := ∃ a b:ℤ, a > 0 ∧ b > 0 ∧ q = a/b
