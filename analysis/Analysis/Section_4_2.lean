@@ -207,7 +207,24 @@ theorem Rat.coe_Int_inj : Function.Injective (fun n:ℤ ↦ (n:Rat)) := by
 -/
 instance Rat.instInv : Inv Rat where
   inv := Quotient.lift (fun ⟨ a, b, h1 ⟩ ↦ b // a) (by
-    sorry -- hint: split into the `a=0` and `a≠0` cases
+    rintro ⟨a1,a2,ha⟩ ⟨b1,b2,hb⟩  heq
+    simp at heq; simp only
+    by_cases ha1 : a1 ≠ 0 <;>
+    by_cases hb1 : b1 ≠ 0
+    . 
+      rw[eq]
+      simpa[mul_comm]  using heq.symm
+      assumption'
+    .
+      push_neg at hb1
+      simp[hb1] at heq
+      tauto
+    .
+      push_neg at ha1
+      simp[ha1] at heq
+      tauto
+    push_neg at ha1 hb1
+    simp  [formalDiv,ha1,hb1]
 )
 
 lemma Rat.inv_eq (a:ℤ) {b:ℤ} (hb: b ≠ 0) : (a // b)⁻¹ = b // a := by
