@@ -723,26 +723,44 @@ instance Rat.decidableRel : DecidableRel (· ≤ · : Rat → Rat → Prop) := b
           | isFalse h =>
             apply isFalse
             push_neg at h
+            have hbd' : 0 ≠ b * d := by
+              simp;tauto
+            have hbd'' : 0 < b * d := by
+              omega
             by_contra! hcon
             rw[le_iff,lt_iff] at hcon
             set x : Rat := ⟦⟨a,b,hb⟩⟧   
             set y : Rat := ⟦⟨c,d,hd⟩⟧   
             obtain (hlt | heq ) := hcon
-            obtain ⟨v,⟨va,vb,hva,hvb,hvab⟩ ,hxyv⟩ := hlt 
-            have hyxv : - -v = y + (-x) := by
-              simp[← hxyv];ring
-            simp at hyxv
-            have :y = c // d := by simp[y,hd];rfl
-            rw[this] at hyxv
-            have :x = a // b := by simp[x,hb];rfl
-            rw[this] at hyxv
-            rw[
-              neg_eq, add_eq,
-              hvab,
-              div_eq_formal_div,
-              eq
-            ] at hyxv
-            have 
+            .
+              obtain ⟨v,⟨va,vb,hva,hvb,hvab⟩ ,hxyv⟩ := hlt 
+              have hyxv : - -v = y + (-x) := by
+                simp[← hxyv];ring
+              simp at hyxv
+              have :y = c // d := by simp[y,hd];rfl
+              rw[this] at hyxv
+              have :x = a // b := by simp[x,hb];rfl
+              rw[this] at hyxv
+              rw[
+                neg_eq _ hb, add_eq _ _ hd hb,
+                hvab,
+                div_eq_formal_div (by omega),
+                eq _ _ (by omega) (by simp; tauto)
+              ] at hyxv
+              have: va * (d * b) > 0 := by
+                have := mul_pos hva hbd''
+                rw[mul_comm d b]
+                omega
+              rw[hyxv] at this
+              have : (c * b + d * -a) < 0 := by
+                calc
+                 _ = (b * c - a * d) := by simp;ring
+                 _ < 0 := by omega
+              have := mul_neg_of_neg_of_pos this hvb
+              omega
+
+
+
 
 
 
