@@ -727,46 +727,33 @@ instance Rat.decidableRel : DecidableRel (· ≤ · : Rat → Rat → Prop) := b
               simp;tauto
             have hbd'' : 0 < b * d := by
               omega
-            by_contra! hcon
-            rw[le_iff,lt_iff] at hcon
             set x : Rat := ⟦⟨a,b,hb⟩⟧   
             set y : Rat := ⟦⟨c,d,hd⟩⟧   
-            obtain (hlt | heq ) := hcon
-            .
-              obtain ⟨v,⟨va,vb,hva,hvb,hvab⟩ ,hxyv⟩ := hlt 
-              have hyxv : - -v = y + (-x) := by
-                simp[← hxyv];ring
-              simp at hyxv
-              have :y = c // d := by simp[y,hd];rfl
-              rw[this] at hyxv
-              have :x = a // b := by simp[x,hb];rfl
-              rw[this] at hyxv
-              rw[
-                neg_eq _ hb, add_eq _ _ hd hb,
-                hvab,
-                div_eq_formal_div (by omega),
-                eq _ _ (by omega) (by simp; tauto)
-              ] at hyxv
-              have: va * (d * b) > 0 := by
-                have := mul_pos hva hbd''
-                rw[mul_comm d b]
-                omega
-              rw[hyxv] at this
-              have : (c * b + d * -a) < 0 := by
-                calc
-                 _ = (b * c - a * d) := by simp;ring
-                 _ < 0 := by omega
-              have := mul_neg_of_neg_of_pos this hvb
-              omega
+            simp only [le_iff, lt_iff]
+            suffices h: (x+ (-y)).isPos from by
+              push_neg
+              split_ands
+              . have npn := not_pos_and_neg (x-y)
+                tauto
+              have npz := not_zero_and_pos (x-y) 
+              apply_fun fun exp ↦ exp - y
+              simp;tauto
 
-
-
-
-
-
-
-
-
+            have :y = c // d := by simp[y,hd];rfl
+            rw[this]
+            have :x = a // b := by simp[x,hb];rfl
+            rw[this]
+            rw[
+              neg_eq _ hd,
+              add_eq _ _ hb hd,
+              ]
+            use (a * d + b * -c) , (b * d)
+            split_ands
+            . calc
+                _ > ( b * c) + (b * -c) := by simp[h]
+                _ = _ := by simp
+            simpa
+            rw[div_eq_formal_div hbd'.symm]
       | isFalse hbd =>
         cases (b * c).decLe (a * d) with
           | isTrue h =>
