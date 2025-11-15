@@ -806,22 +806,18 @@ lemma IsElementary.sum_insert_split {d:ℕ} {a: Set (EuclideanSpace' d)} {S': Fi
     simp [Finset.sum_empty]
   | @insert b S'' hb_notin ih =>
     -- Inductive case: S' = insert b S''
+    -- Goal: ∑ E:(insert a (insert b S'')), ... = measure(a) + ∑ E:(insert b S''), ...
+    -- Use simp to expand both sides
+    simp [hb_notin]
+    -- Now split the sum on the LHS using Finset.sum_insert
+    -- First split out a
+    have ha_ne_b : a ≠ b := by simp_all
+    have ha_notin_S'' : a ∉ S'' := by simp_all
+    rw [Finset.sum_insert (by simp [ha_ne_b, ha_notin_S''])]
+    -- Now split out b from the remaining sum
+    rw [Finset.sum_insert (by simp [hb_notin])]
+    -- Both sides should now match
     simp
-    -- After simp, rewrite using Finset.sum_insert to split the sum
-    rw [Finset.sum_insert]
-    · sorry
-    · -- Need to show ⟨a, ...⟩ ∉ insert ⟨b, ...⟩ ...
-      -- This follows from ha : a ∉ insert b S''
-      intro hmem
-      -- From hmem we can derive that a ∈ insert b S'', contradicting ha
-      simp at hmem
-      -- hmem is now: a = b ∨ a ∈ S'' ∧ (a = b ∨ a ∈ S'')
-      -- This simplifies to a = b ∨ a ∈ S'', which is a ∈ insert b S''
-      cases hmem with
-      | inl h_eq => exact ha (h_eq ▸ Finset.mem_insert_self b S'')
-      | inr h_and =>
-        obtain ⟨ha_mem, _⟩ := h_and
-        exact ha (Finset.mem_insert_of_mem ha_mem)
 
 lemma IsElementary.measure_of_disjUnion' {d:ℕ} {S: Finset (Set (EuclideanSpace' d))}
 (hE: ∀ E ∈ S, IsElementary E) (hdisj: S.toSet.PairwiseDisjoint id):
