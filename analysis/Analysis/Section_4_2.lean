@@ -543,9 +543,25 @@ instance Rat.instLE : LE Rat where
 
 theorem Rat.lt_iff (x y:Rat) : x < y ↔ (x-y).isNeg := by rfl
 theorem Rat.le_iff (x y:Rat) : x ≤ y ↔ (x < y) ∨ (x = y) := by rfl
-
-theorem Rat.gt_iff (x y:Rat) : x > y ↔ (x-y).isPos := by sorry
-theorem Rat.ge_iff (x y:Rat) : x ≥ y ↔ (x > y) ∨ (x = y) := by sorry
+theorem Rat.neg_sub (x y: Rat) : x - y = - (y - x) := by ring
+theorem Rat.gt_iff (x y:Rat) : x > y ↔ (x-y).isPos := by
+  have dif := lt_iff y x
+  simp[dif]
+  constructor
+  . intro h
+    choose v hv hvyx using h
+    have : - (-v) = x - y := by
+      rw[← hvyx]; ring
+    simp at this
+    rwa[this] at hv
+  intro h
+  set v := y - x with hv
+  have : -v = x - y := by simp[hv]
+  rw[← this] at h
+  use -v
+  simp[h]
+theorem Rat.ge_iff (x y:Rat) : x ≥ y ↔ (x > y) ∨ (x = y) := by
+  have le := le_iff y x;tauto
 
 /-- Proposition 4.2.9(a) (order trichotomy) / Exercise 4.2.5 -/
 theorem Rat.trichotomous' (x y:Rat) : x > y ∨ x < y ∨ x = y := by sorry
