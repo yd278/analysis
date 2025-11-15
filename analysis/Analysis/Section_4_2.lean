@@ -564,22 +564,90 @@ theorem Rat.ge_iff (x y:Rat) : x ≥ y ↔ (x > y) ∨ (x = y) := by
   have le := le_iff y x;tauto
 
 /-- Proposition 4.2.9(a) (order trichotomy) / Exercise 4.2.5 -/
-theorem Rat.trichotomous' (x y:Rat) : x > y ∨ x < y ∨ x = y := by sorry
+theorem Rat.trichotomous' (x y:Rat) : x > y ∨ x < y ∨ x = y := by
+  set v := x - y with dv
+  obtain (hv|hv|hv) := trichotomous v
+  . right;right
+    rw[hv] at dv
+    symm at dv
+    apply_fun fun exp ↦  exp + y at dv
+    simpa using dv
+  . left
+    rw[gt_iff]
+    simpa
+  right;left
+  rw[lt_iff];simpa
 
 /-- Proposition 4.2.9(a) (order trichotomy) / Exercise 4.2.5 -/
-theorem Rat.not_gt_and_lt (x y:Rat) : ¬ (x > y ∧ x < y):= by sorry
+theorem Rat.not_gt_and_lt (x y:Rat) : ¬ (x > y ∧ x < y):= by
+  rw[lt_iff,gt_iff]
+  set v:= x-y
+  convert not_pos_and_neg v
 
 /-- Proposition 4.2.9(a) (order trichotomy) / Exercise 4.2.5 -/
-theorem Rat.not_gt_and_eq (x y:Rat) : ¬ (x > y ∧ x = y):= by sorry
+theorem Rat.not_gt_and_eq (x y:Rat) : ¬ (x > y ∧ x = y):= by 
+  by_contra h
+  obtain ⟨hp,hz⟩ := h 
+  rw[gt_iff] at hp
+  apply_fun fun exp ↦ exp - y at hz
+  simp at hz
+  have hv := not_zero_and_pos (x - y)
+  tauto
+
 
 /-- Proposition 4.2.9(a) (order trichotomy) / Exercise 4.2.5 -/
-theorem Rat.not_lt_and_eq (x y:Rat) : ¬ (x < y ∧ x = y):= by sorry
+theorem Rat.not_lt_and_eq (x y:Rat) : ¬ (x < y ∧ x = y):= by
+  by_contra h
+  obtain ⟨hn,hz⟩ := h 
+  rw[lt_iff] at hn
+  apply_fun fun exp ↦ exp - y at hz
+  simp at hz
+  have hv := not_zero_and_neg (x - y)
+  tauto
 
 /-- Proposition 4.2.9(b) (order is anti-symmetric) / Exercise 4.2.5 -/
-theorem Rat.antisymm (x y:Rat) : x < y ↔ (y - x).isPos := by sorry
+theorem Rat.antisymm (x y:Rat) : x < y ↔ (y - x).isPos := by
+  have h := lt_iff x y
+  simp[h]
+  constructor <;> intro hp
+  . 
+    choose v hv hxyv using hp
+    apply_fun fun exp ↦ -exp  at hxyv
+    simp at hxyv
+    simpa [ hxyv]
+  set v := y-x
+  use v
+  simp[v,hp]
 
 /-- Proposition 4.2.9(c) (order is transitive) / Exercise 4.2.5 -/
-theorem Rat.lt_trans {x y z:Rat} (hxy: x < y) (hyz: y < z) : x < z := by sorry
+theorem Rat.lt_trans {x y z:Rat} (hxy: x < y) (hyz: y < z) : x < z := by
+  rw[lt_iff] at *
+  set v1 := x - y with hv1
+  choose nv1 hnv1 heq1 using hxy
+  set v2 := y - z with hv2
+  choose nv2 hnv2 heq2 using hyz
+  have : x - z = v1 + v2 := by simp[hv1,hv2]
+  rw[this]
+  use nv1 + nv2
+  simp[heq1,heq2]
+  choose a1 b1 ha1 hb1 hab1 using hnv1
+  choose a2 b2 ha2 hb2 hab2 using hnv2
+  refine ⟨?_,by ring⟩ 
+  rw[div_eq_formal_div (by omega)] at hab1
+  rw[div_eq_formal_div (by omega)] at hab2
+  rw[hab1,hab2,add_eq]
+  use a1*b2+b1*a2, b1*b2
+  split_ands
+  . 
+    have  := mul_pos ha1 hb2
+    have := mul_pos hb1 ha2
+    omega
+  . apply mul_pos hb1 hb2
+  . 
+    have := mul_pos hb1 hb2
+    rw[div_eq_formal_div (by omega)]
+  omega
+  omega
 
 /-- Proposition 4.2.9(d) (addition preserves order) / Exercise 4.2.5 -/
 theorem Rat.add_lt_add_right {x y:Rat} (z:Rat) (hxy: x < y) : x + z < y + z := by sorry
