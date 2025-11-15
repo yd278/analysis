@@ -455,6 +455,17 @@ theorem Rat.eq_diff' (x : Rat) : ∃ a b : ℤ, b ≠ 0 ∧ x = a/b := by
   ]
   ring
 
+theorem Rat.eq_diff'' (x : Rat) : ∃ a b : ℤ, b ≠ 0 ∧ x = (a/b:ℚ) := by
+  obtain ⟨a,b,hx,rfl⟩ := eq_diff x
+  use a, b
+  refine ⟨hx, ?_⟩  
+  rw[coe_Rat_eq _ hx]
+
+theorem Rat.div_eq_formal_div {x y :ℤ} (h: y ≠ 0) : x / y = x // y := by
+  simp[coe_Int_eq]
+  rw[div_eq,inv_eq _ (by simp),mul_eq _ _ (by simp) h, eq _ _ (by simp[h]) h]
+  ring
+
 /-- Lemma 4.2.7 (trichotomy of rationals) / Exercise 4.2.4 -/
 theorem Rat.trichotomous (x:Rat) : x = 0 ∨ x.isPos ∨ x.isNeg := by
   obtain ⟨x1, x2, hx,rfl⟩ := eq_diff' x 
@@ -502,11 +513,25 @@ theorem Rat.not_zero_and_neg (x:Rat) : ¬(x = 0 ∧ x.isNeg) := by
   obtain ⟨hz, hneg⟩ := h 
   obtain ⟨hap, ⟨  a,b,ha,hb,hxab ⟩,hxneg⟩ := hneg
   simp[hxab] at hxneg
-  simp_rw[coe_Int_eq] at hxneg
-  rw[neg_eq]
+  rw[hz] at hxneg
+  simp at hxneg
+  obtain (hx| hx) := hxneg
+  <;> simp only[coe_Int_eq,of_Nat_eq] at hx
+  <;> rw[eq _ _ (by simp) (by simp)] at hx
+  <;>omega
 
 /-- Lemma 4.2.7 (trichotomy of rationals) / Exercise 4.2.4 -/
-theorem Rat.not_pos_and_neg (x:Rat) : ¬(x.isPos ∧ x.isNeg) := by sorry
+theorem Rat.not_pos_and_neg (x:Rat) : ¬(x.isPos ∧ x.isNeg) := by
+  by_contra h
+  obtain ⟨hpos,hneg⟩:=h 
+  obtain ⟨pa,pb,hpa,hpb,hpxab⟩  := hpos
+  obtain ⟨hnegv, ⟨na,nb,hna,hnb,hnxab⟩,hxneg ⟩ := hneg
+  rw[hnxab,hpxab,div_eq_formal_div (by omega), div_eq_formal_div (by omega),neg_eq _ (by omega),eq _ _ (by omega) (by omega)] at hxneg
+  have hpab :=  mul_pos hpa hnb 
+  have hnab := mul_pos hna hpb
+  rw[hxneg] at hpab
+  simp at hpab 
+  omega
 
 /-- Definition 4.2.8 (Ordering of the rationals) -/
 instance Rat.instLT : LT Rat where
