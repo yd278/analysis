@@ -443,11 +443,58 @@ def Rat.isPos (q:Rat) : Prop := ∃ a b:ℤ, a > 0 ∧ b > 0 ∧ q = a/b
 /-- Definition 4.2.6 (negativity) -/
 def Rat.isNeg (q:Rat) : Prop := ∃ r:Rat, r.isPos ∧ q = -r
 
-/-- Lemma 4.2.7 (trichotomy of rationals) / Exercise 4.2.4 -/
-theorem Rat.trichotomous (x:Rat) : x = 0 ∨ x.isPos ∨ x.isNeg := by sorry
+theorem Rat.eq_diff' (x : Rat) : ∃ a b : ℤ, b ≠ 0 ∧ x = a/b := by
+  obtain ⟨a,b,hx,rfl⟩ := eq_diff x
+  use a, b
+  simp[hx]
+  simp_rw[div_eq,coe_Int_eq]
+  rw[
+    inv_eq _ (by simp), 
+    mul_eq _ _ (by simp) hx,
+    eq _ _ hx (by simp[hx])
+  ]
+  ring
 
 /-- Lemma 4.2.7 (trichotomy of rationals) / Exercise 4.2.4 -/
-theorem Rat.not_zero_and_pos (x:Rat) : ¬(x = 0 ∧ x.isPos) := by sorry
+theorem Rat.trichotomous (x:Rat) : x = 0 ∨ x.isPos ∨ x.isNeg := by
+  obtain ⟨x1, x2, hx,rfl⟩ := eq_diff' x 
+  obtain (hx1 | hx1 | hx1) := Int.sign_trichotomy x1 <;>
+  obtain (hx2 | hx2 | hx2) := Int.sign_trichotomy x2 <;>
+  simp at hx1 hx2 <;> try contradiction
+  .
+    right;left;simp[isPos]
+    use x1; simp[hx1]
+    use x2
+  . right; right
+    simp[isNeg]
+    use x1/(-x2)
+    refine ⟨?_, by ring⟩ 
+    simp[isPos]
+    use x1; simp[hx1]
+    use -x2; simp[hx2]
+  . left; simp[hx1]
+  . left; simp[hx1]
+  . right;right
+    use (-x1)/x2
+    refine ⟨?_, by ring⟩ 
+    use -x1,x2
+    simp[hx1,hx2]
+  . right;left
+    use -x1, -x2
+    simp[hx1,hx2]
+
+/-- Lemma 4.2.7 (trichotomy of rationals) / Exercise 4.2.4 -/
+theorem Rat.not_zero_and_pos (x:Rat) : ¬(x = 0 ∧ x.isPos) := by
+  by_contra h 
+  obtain ⟨hz, hpos⟩ := h 
+  obtain ⟨a,b,ha,hb,hxab⟩ := hpos  
+  simp[hz] at hxab
+  rw[div_eq] at hxab
+  simp at hxab
+  obtain (hx| hx) := hxab 
+  <;> simp only[coe_Int_eq,of_Nat_eq] at hx
+  <;> rw[eq _ _ (by simp) (by simp)] at hx
+  <;>omega
 
 /-- Lemma 4.2.7 (trichotomy of rationals) / Exercise 4.2.4 -/
 theorem Rat.not_zero_and_neg (x:Rat) : ¬(x = 0 ∧ x.isNeg) := by sorry
