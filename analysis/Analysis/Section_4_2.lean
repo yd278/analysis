@@ -650,10 +650,28 @@ theorem Rat.lt_trans {x y z:Rat} (hxy: x < y) (hyz: y < z) : x < z := by
   omega
 
 /-- Proposition 4.2.9(d) (addition preserves order) / Exercise 4.2.5 -/
-theorem Rat.add_lt_add_right {x y:Rat} (z:Rat) (hxy: x < y) : x + z < y + z := by sorry
+theorem Rat.add_lt_add_right {x y:Rat} (z:Rat) (hxy: x < y) : x + z < y + z := by
+  rw[lt_iff] at *
+  simpa
 
 /-- Proposition 4.2.9(e) (positive multiplication preserves order) / Exercise 4.2.5 -/
-theorem Rat.mul_lt_mul_right {x y z:Rat} (hxy: x < y) (hz: z.isPos) : x * z < y * z := by sorry
+theorem Rat.mul_lt_mul_right {x y z:Rat} (hxy: x < y) (hz: z.isPos) : x * z < y * z := by
+  rw[lt_iff] at *
+  have : ((x-y)*z).isNeg := by
+    choose v hv hvxy using hxy
+    use v*z
+    refine ⟨?_, by simp[hvxy]⟩ 
+    choose za zb hza hzb hzab using hz
+    choose va vb hva hvb hvab using hv
+    rw[hvab,hzab,div_eq_formal_div (by omega),div_eq_formal_div (by omega), mul_eq _ _ (by omega) (by omega)]
+    use va * za, vb * zb
+    split_ands
+    . exact mul_pos hva hza
+    . exact mul_pos hvb hzb
+    have := mul_pos hvb hzb
+    rw[div_eq_formal_div (by omega)]
+  ring_nf at this
+  assumption
 
 /-- (Not from textbook) Establish the decidability of this order. -/
 instance Rat.decidableRel : DecidableRel (· ≤ · : Rat → Rat → Prop) := by
