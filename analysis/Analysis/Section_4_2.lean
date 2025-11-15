@@ -687,10 +687,68 @@ instance Rat.decidableRel : DecidableRel (· ≤ · : Rat → Rat → Prop) := b
         cases (a * d).decLe (b * c) with
           | isTrue h =>
             apply isTrue
-            sorry
+            rw[le_iff]
+            by_cases heq : a * d = b * c
+            . 
+              right
+              simp
+              change (⟨a,b,hb⟩: PreRat) ≈ ⟨c,d,hd⟩  
+              simpa[PreRat.eq,mul_comm]
+            . 
+              left
+              have hbd' : 0 ≠ b * d := by
+                simp;tauto
+              have hlt : a * d < b * c := by omega
+              simp[lt_iff]
+              set x: PreRat := ⟨a,b,hb⟩ 
+              set y: PreRat := ⟨c,d,hd⟩ 
+              set xr : Rat := ⟦x⟧ 
+              set yr : Rat := ⟦y⟧ 
+              use yr  + (- xr)
+              split_ands
+              use b * c - a * d, b*d
+              split_ands
+              . omega
+              . omega
+              have : xr = a // b := by
+                simp[xr,hb,x] ;rfl
+              rw[this]
+              have : yr = c // d := by
+                simp[yr,hd,y] ;rfl
+              rw[this]
+              rw[neg_eq,add_eq,div_eq_formal_div,eq]
+              ring
+              all_goals
+                simp;tauto
           | isFalse h =>
             apply isFalse
-            sorry
+            push_neg at h
+            by_contra! hcon
+            rw[le_iff,lt_iff] at hcon
+            set x : Rat := ⟦⟨a,b,hb⟩⟧   
+            set y : Rat := ⟦⟨c,d,hd⟩⟧   
+            obtain (hlt | heq ) := hcon
+            obtain ⟨v,⟨va,vb,hva,hvb,hvab⟩ ,hxyv⟩ := hlt 
+            have hyxv : - -v = y + (-x) := by
+              simp[← hxyv];ring
+            simp at hyxv
+            have :y = c // d := by simp[y,hd];rfl
+            rw[this] at hyxv
+            have :x = a // b := by simp[x,hb];rfl
+            rw[this] at hyxv
+            rw[
+              neg_eq, add_eq,
+              hvab,
+              div_eq_formal_div,
+              eq
+            ] at hyxv
+            have 
+
+
+
+
+
+
       | isFalse hbd =>
         cases (b * c).decLe (a * d) with
           | isTrue h =>
