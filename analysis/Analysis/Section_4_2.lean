@@ -758,7 +758,40 @@ instance Rat.decidableRel : DecidableRel (· ≤ · : Rat → Rat → Prop) := b
         cases (b * c).decLe (a * d) with
           | isTrue h =>
             apply isTrue
-            sorry
+            push_neg at hbd
+            set x : Rat := ⟦⟨a,b,hb⟩⟧   
+            set y : Rat := ⟦⟨c,d,hd⟩⟧   
+            rw[le_iff,lt_iff]
+            suffices hsuf : ¬ (x-y).isPos from by
+              have tri := trichotomous (x - y)
+              simp[hsuf] at tri
+              obtain (eq | neg) := tri
+              . right
+                rwa[sub_eq_zero] at eq
+              left; assumption
+            by_contra hcon
+            obtain ⟨ca, cb, hca, hcb, hcabv⟩ := hcon 
+            rw[sub_eq_add_neg] at hcabv
+            have :y = c // d := by simp[y,hd];rfl
+            rw[this] at hcabv
+            have :x = a // b := by simp[x,hb];rfl
+            rw[this] at hcabv
+            rw[
+              neg_eq _ hd,
+              add_eq _ _ hb hd,
+              div_eq_formal_div (by omega),
+              eq _ _ (by simp; tauto) (by omega)
+            ] at hcabv
+            have hneg : ca * (b * d) < 0 := by
+              apply mul_neg_of_pos_of_neg hca hbd
+            have hpos' : (a * d + b * -c) ≥ 0 := by
+              calc
+                _ ≥ (b * c + b * -c) := by simp[h]
+                _ = _ := by simp
+            have hpos : (a * d + b * -c) * cb ≥ 0 := by
+              apply mul_nonneg hpos' (by omega)
+            rw[hcabv] at hpos
+            omega
           | isFalse h =>
             apply isFalse
             sorry
