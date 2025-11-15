@@ -497,7 +497,13 @@ theorem Rat.not_zero_and_pos (x:Rat) : ¬(x = 0 ∧ x.isPos) := by
   <;>omega
 
 /-- Lemma 4.2.7 (trichotomy of rationals) / Exercise 4.2.4 -/
-theorem Rat.not_zero_and_neg (x:Rat) : ¬(x = 0 ∧ x.isNeg) := by sorry
+theorem Rat.not_zero_and_neg (x:Rat) : ¬(x = 0 ∧ x.isNeg) := by
+  by_contra h 
+  obtain ⟨hz, hneg⟩ := h 
+  obtain ⟨hap, ⟨  a,b,ha,hb,hxab ⟩,hxneg⟩ := hneg
+  simp[hxab] at hxneg
+  simp_rw[coe_Int_eq] at hxneg
+  rw[neg_eq]
 
 /-- Lemma 4.2.7 (trichotomy of rationals) / Exercise 4.2.4 -/
 theorem Rat.not_pos_and_neg (x:Rat) : ¬(x.isPos ∧ x.isNeg) := by sorry
