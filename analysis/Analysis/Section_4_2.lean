@@ -794,7 +794,36 @@ instance Rat.decidableRel : DecidableRel (· ≤ · : Rat → Rat → Prop) := b
             omega
           | isFalse h =>
             apply isFalse
-            sorry
+            push_neg at hbd
+            push_neg at h
+            set x : Rat := ⟦⟨a,b,hb⟩⟧   
+            set y : Rat := ⟦⟨c,d,hd⟩⟧   
+            rw[le_iff,lt_iff]
+            suffices h: (x+ (-y)).isPos from by
+              push_neg
+              split_ands
+              . have npn := not_pos_and_neg (x-y)
+                tauto
+              have npz := not_zero_and_pos (x-y) 
+              apply_fun fun exp ↦ exp - y
+              simp;tauto
+            have :y = c // d := by simp[y,hd];rfl
+            rw[this] 
+            have :x = a // b := by simp[x,hb];rfl
+            rw[this] 
+            rw[
+              neg_eq _ hd,
+              add_eq _ _ (by omega) hd
+              ]
+            use a * -d + b * c , b * -d
+            split_ands
+            rw[mul_neg]
+            simp
+            . exact h
+            simpa
+            rw[div_eq_formal_div (by simp;tauto),
+              eq _ _ (by simp;tauto) (by simp;tauto)]
+            ring
   exact Quotient.recOnSubsingleton₂ n m this
 
 /-- (Not from textbook) Rat has the structure of a linear ordering. -/
