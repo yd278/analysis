@@ -828,11 +828,47 @@ instance Rat.decidableRel : DecidableRel (· ≤ · : Rat → Rat → Prop) := b
 
 /-- (Not from textbook) Rat has the structure of a linear ordering. -/
 instance Rat.instLinearOrder : LinearOrder Rat where
-  le_refl := sorry
-  le_trans := sorry
-  lt_iff_le_not_ge := sorry
-  le_antisymm := sorry
-  le_total := sorry
+  le_refl := by
+    intro a; right;rfl
+  le_trans := by
+    intro a b c hab hbc
+    rw[le_iff] at *
+    obtain (hablt | habeq ):= hab <;>
+    obtain (hbclt | hbceq ):= hbc
+    . left; apply lt_trans hablt hbclt
+    all_goals
+      simp_all
+  lt_iff_le_not_ge := by
+    intro a b
+    simp[le_iff]
+    suffices heq : a < b ↔ a < b ∧ ¬b < a ∧ ¬ b = a from by
+      rw[heq]; simp
+      intro nle neq 
+      simp[nle,neq]
+      intro eq; symm at eq
+      contradiction
+    simp
+    intro le
+    have hne := not_lt_and_eq a b
+    have hngt := not_gt_and_lt a b
+    tauto
+  le_antisymm := by
+    intro a b hle hge
+    rw[le_iff] at hle hge
+    have hne := not_lt_and_eq a b
+    have hngt := not_gt_and_lt a b
+    have hnb := not_gt_and_eq a b
+    obtain (hlt | heq ) := hle <;>
+    obtain (hgt | heq2 ):= hge <;>
+    tauto
+  le_total := by
+    intro a b
+    by_cases hle : a ≤ b ; tauto
+    right
+    rw[le_iff] at *
+    left
+    have tri := trichotomous' a b
+    tauto
   toDecidableLE := decidableRel
 
 /-- (Not from textbook) Rat has the structure of a strict ordered ring. -/
