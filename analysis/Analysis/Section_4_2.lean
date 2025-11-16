@@ -964,13 +964,36 @@ abbrev Rat.equivRat : Rat ≃ ℚ where
 /-- Not in textbook: equivalence preserves order -/
 abbrev Rat.equivRat_order : Rat ≃o ℚ where
   toEquiv := equivRat
-  map_rel_iff' := by sorry
+  map_rel_iff' := by
+    intro a b
+    set aq := equivRat a
+    have : a = equivRat.symm aq := by simp only[aq,Equiv.symm_apply_apply] 
+    rw[this]
+    set bq := equivRat b
+    have : b = equivRat.symm bq := by simp only[bq,Equiv.symm_apply_apply] 
+    rw[this]
+    simp
 
 /-- Not in textbook: equivalence preserves ring operations -/
 abbrev Rat.equivRat_ring : Rat ≃+* ℚ where
   toEquiv := equivRat
-  map_add' := by sorry
-  map_mul' := by sorry
+  map_add' := by
+    intro a b
+    rw[Equiv.toFun_as_coe]
+    obtain ⟨a1,a2,ha,rfl⟩ := eq_diff a
+    obtain ⟨b1,b2,hb,rfl⟩ := eq_diff b
+    rw[add_eq _ _ ha hb]
+    simp[ha,hb]
+    field_simp; ring
+
+  map_mul' := by 
+    intro a b
+    rw[Equiv.toFun_as_coe]
+    obtain ⟨a1,a2,ha,rfl⟩ := eq_diff a
+    obtain ⟨b1,b2,hb,rfl⟩ := eq_diff b
+    rw[ mul_eq _ _ ha hb] 
+    simp[ha,hb]
+    field_simp
 
 /--
   (Not from textbook) The textbook rationals are isomorphic (as a field) to the Mathlib rationals.
