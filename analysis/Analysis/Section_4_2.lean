@@ -870,16 +870,56 @@ instance Rat.instLinearOrder : LinearOrder Rat where
     have tri := trichotomous' a b
     tauto
   toDecidableLE := decidableRel
-
+lemma Rat.isPos_iff_gt_0 {a : Rat} : a.isPos ↔ a > 0:= by
+  rw[gt_iff];simp
+lemma Rat.isNeg_iff_lt_0 {a : Rat} : a.isNeg ↔ a < 0:= by
+  rw[lt_iff];simp
 /-- (Not from textbook) Rat has the structure of a strict ordered ring. -/
 instance Rat.instIsStrictOrderedRing : IsStrictOrderedRing Rat where
-  add_le_add_left := by sorry
-  add_le_add_right := by sorry
-  mul_lt_mul_of_pos_left := by sorry
-  mul_lt_mul_of_pos_right := by sorry
-  le_of_add_le_add_left := by sorry
-  zero_le_one := by sorry
-
+  add_le_add_left := by
+    intro a b le
+    intro c
+    rw[le_iff] at *
+    obtain (hlt | heq) := le
+    . 
+      obtain ⟨v,hv,habv⟩:= hlt 
+      left
+      use v
+      simp[hv,habv]
+    right;simp[heq]
+  add_le_add_right := by
+    intro a b le c
+    rw[le_iff] at *
+    obtain (hlt | heq) := le
+    . 
+      obtain ⟨v,hv,habv⟩:= hlt 
+      left
+      use v
+      simp[hv,habv]
+    right;simp[heq]
+  mul_lt_mul_of_pos_left := by
+      
+    intro a b c lt hc
+    have hc := (isPos_iff_gt_0).mpr hc
+    have con:= mul_lt_mul_right lt hc 
+    simpa[ mul_comm] using con
+  mul_lt_mul_of_pos_right := by
+    intro a b c hab hc
+    have hc := (isPos_iff_gt_0).mpr hc
+    exact mul_lt_mul_right hab hc 
+  le_of_add_le_add_left := by
+    intro a b c le
+    rw[le_iff]
+    obtain ⟨v,hv,hvab⟩ | eq:= le 
+    simp at hvab; left; use v
+    right;simpa using eq
+  zero_le_one := by
+    rw[le_iff]
+    left
+    use 1
+    simp
+    use 1,1
+    simp
 /-- Exercise 4.2.6 -/
 theorem Rat.mul_lt_mul_right_of_neg (x y z:Rat) (hxy: x < y) (hz: z.isNeg) : x * z > y * z := by
   sorry
