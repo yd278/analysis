@@ -45,9 +45,19 @@ structure PreRat where
 instance PreRat.instSetoid : Setoid PreRat where
   r a b := a.numerator * b.denominator = b.numerator * a.denominator
   iseqv := {
-    refl := by sorry
-    symm := by sorry
-    trans := by sorry
+    refl := by simp
+    symm := by
+      rintro ⟨x1,x2,hx⟩ ⟨y1,y2,hy⟩; simp;
+      intro h;simp[h]
+    trans := by
+      rintro ⟨x1,x2,hx⟩ ⟨y1,y2,hy⟩ ⟨z1,z2,hz⟩ ; simp;
+      intro hxy hyz
+      have hxyz : (x1 * z2) * y2 = (z1 * x2) * y2 := by
+        calc
+          _ = x1 * y2 * z2 := by ring
+          _ = y1 * z2 * x2 := by rw[hxy];ring
+          _ = _ := by rw[hyz];ring
+      simpa[hy] using hxyz
     }
 
 @[simp]
@@ -77,8 +87,22 @@ theorem Rat.eq_diff (n:Rat) : ∃ a b, b ≠ 0 ∧ n = a // b := by
   section. However, because formal division handles the case of zero denominator separately, it
   may be more convenient to avoid that operation and work directly with the `Quotient` API.
 -/
-instance Rat.decidableEq : DecidableEq Rat := by
-  sorry
+noncomputable instance Rat.decidableEq : DecidableEq Rat := by
+  intro x y
+  let ex := eq_diff x
+  set hb := ex.choose_spec.choose_spec
+  set b := ex.choose_spec.choose
+  set a := ex.choose
+  let ey := eq_diff y
+  set hd := ey.choose_spec.choose_spec
+  set d := ey.choose_spec.choose
+  set c := ey.choose
+  have : Decidable (a // b = c // d) := by
+    rw[eq]
+    exact decEq _ _
+    exact hb.1
+    exact hd.1
+  simpa only [hb.2,hd.2]
 
 /-- Lemma 4.2.3 (Addition well-defined) -/
 instance Rat.add_inst : Add Rat where
@@ -98,7 +122,24 @@ theorem Rat.add_eq (a c:ℤ) {b d:ℤ} (hb: b ≠ 0) (hd: d ≠ 0) :
 
 /-- Lemma 4.2.3 (Multiplication well-defined) -/
 instance Rat.mul_inst : Mul Rat where
-  mul := Quotient.lift₂ (fun ⟨ a, b, h1 ⟩ ⟨ c, d, h2 ⟩ ↦ (a*c) // (b*d)) (by sorry)
+  mul := Quotient.lift₂ (fun ⟨ a, b, h1 ⟩ ⟨ c, d, h2 ⟩ ↦ (a*c) // (b*d)) (by 
+    intro ⟨a1,a2,ha⟩ ⟨b1,b2,hb⟩ ⟨c1,c2,hc⟩ ⟨d1,d2,hd⟩  hac hbd
+    simp at hac hbd
+    simp only
+    have hab : a2 * b2 ≠ 0 := by
+      by_contra h
+      rw[mul_eq_zero] at h
+      tauto
+    have hcd : c2 * d2 ≠ 0 := by
+      by_contra h
+      rw[mul_eq_zero] at h
+      tauto
+
+    simp[eq (a1 * b1) (c1 * d1) hab hcd]
+    calc
+      _ = (a1 * c2) * (b1 * d2) := by ring
+      _ = _ := by rw[hac,hbd];ring
+  )
 
 /-- Definition 4.2.2 (Multiplication of rationals) -/
 theorem Rat.mul_eq (a c:ℤ) {b d:ℤ} (hb: b ≠ 0) (hd: d ≠ 0) :
@@ -107,7 +148,12 @@ theorem Rat.mul_eq (a c:ℤ) {b d:ℤ} (hb: b ≠ 0) (hd: d ≠ 0) :
 
 /-- Lemma 4.2.3 (Negation well-defined) -/
 instance Rat.neg_inst : Neg Rat where
-  neg := Quotient.lift (fun ⟨ a, b, h1 ⟩ ↦ (-a) // b) (by sorry)
+  neg := Quotient.lift (fun ⟨ a, b, h1 ⟩ ↦ (-a) // b) (by 
+    intro ⟨a1,a2,ha⟩ ⟨b1,b2,hb⟩ hab
+    simp at hab
+    simp only [eq (-a1) (-b1) ha hb]
+    simp[hab]
+  )
 
 /-- Definition 4.2.2 (Negation of rationals) -/
 theorem Rat.neg_eq (a:ℤ) {b:ℤ} (hb: b ≠ 0) : - (a // b) = (-a) // b := by
@@ -130,18 +176,30 @@ theorem Rat.coe_Nat_eq (n:ℕ) : (n:Rat) = n // 1 := rfl
 theorem Rat.of_Nat_eq (n:ℕ) : (ofNat(n):Rat) = (ofNat(n):Nat) // 1 := rfl
 
 /-- natCast distributes over successor -/
-theorem Rat.natCast_succ (n: ℕ) : ((n + 1: ℕ): Rat) = (n: Rat) + 1 := by sorry
+theorem Rat.natCast_succ (n: ℕ) : ((n + 1: ℕ): Rat) = (n: Rat) + 1 := by
+  simp_rw[coe_Nat_eq,of_Nat_eq]
+  rw[add_eq,eq] <;> simp
 
 /-- intCast distributes over addition -/
-lemma Rat.intCast_add (a b:ℤ) : (a:Rat) + (b:Rat) = (a+b:ℤ) := by sorry
+lemma Rat.intCast_add (a b:ℤ) : (a:Rat) + (b:Rat) = (a+b:ℤ) := by
+  simp_rw[coe_Int_eq]
+  rw[add_eq,eq] <;> simp
 
 /-- intCast distributes over multiplication -/
-lemma Rat.intCast_mul (a b:ℤ) : (a:Rat) * (b:Rat) = (a*b:ℤ) := by sorry
+lemma Rat.intCast_mul (a b:ℤ) : (a:Rat) * (b:Rat) = (a*b:ℤ) := by
+  simp_rw[coe_Int_eq]
+  rw[mul_eq,eq] <;> simp
 
 /-- intCast commutes with negation -/
 lemma Rat.intCast_neg (a:ℤ) : - (a:Rat) = (-a:ℤ) := rfl
 
-theorem Rat.coe_Int_inj : Function.Injective (fun n:ℤ ↦ (n:Rat)) := by sorry
+theorem Rat.coe_Int_inj : Function.Injective (fun n:ℤ ↦ (n:Rat)) := by
+  intro z1 z2
+  simp
+  intro heq
+  simp_rw[coe_Int_eq] at heq
+  rw[eq] at heq<;> simp_all
+
 
 /--
   Whereas the book leaves the inverse of 0 undefined, it is more convenient in Lean to assign a
@@ -149,7 +207,24 @@ theorem Rat.coe_Int_inj : Function.Injective (fun n:ℤ ↦ (n:Rat)) := by sorry
 -/
 instance Rat.instInv : Inv Rat where
   inv := Quotient.lift (fun ⟨ a, b, h1 ⟩ ↦ b // a) (by
-    sorry -- hint: split into the `a=0` and `a≠0` cases
+    rintro ⟨a1,a2,ha⟩ ⟨b1,b2,hb⟩  heq
+    simp at heq; simp only
+    by_cases ha1 : a1 ≠ 0 <;>
+    by_cases hb1 : b1 ≠ 0
+    . 
+      rw[eq]
+      simpa[mul_comm]  using heq.symm
+      assumption'
+    .
+      push_neg at hb1
+      simp[hb1] at heq
+      tauto
+    .
+      push_neg at ha1
+      simp[ha1] at heq
+      tauto
+    push_neg at ha1 hb1
+    simp  [formalDiv,ha1,hb1]
 )
 
 lemma Rat.inv_eq (a:ℤ) {b:ℤ} (hb: b ≠ 0) : (a // b)⁻¹ = b // a := by
@@ -172,27 +247,116 @@ AddGroup.ofLeftAxioms (by
   rw [add_eq _ _ hb hd, add_eq _ _ hbd hf, add_eq _ _ hd hf,
       add_eq _ _ hb hdf, ←mul_assoc b, eq _ _ hbdf hbdf]
   ring
-)
- (by sorry) (by sorry)
+) (
+  by 
+  intro a
+  obtain ⟨a1,a2,ha,rfl⟩ := eq_diff a 
+  simp only [of_Nat_eq]
+  rw[add_eq]
+  simp
+  simp
+  assumption
+) (
+  by 
+    intro a
+    obtain ⟨a1,a2,ha,rfl⟩ := eq_diff a 
+    rw[of_Nat_eq,neg_eq,add_eq,eq]
+    ring
+    simpa
+    simp
+    assumption'
+ )
 
 /-- Proposition 4.2.4 (laws of algebra) / Exercise 4.2.3 -/
 instance Rat.instAddCommGroup : AddCommGroup Rat where
-  add_comm := by sorry
+  add_comm := by
+    intro a b
+    obtain ⟨a1,a2,ha,rfl⟩ := eq_diff a
+    obtain ⟨b1,b2,hb,rfl⟩ := eq_diff b
+    rw[add_eq,add_eq,eq]
+    ring
+    simp;tauto
+    simp;tauto
+    assumption'
 
 /-- Proposition 4.2.4 (laws of algebra) / Exercise 4.2.3 -/
 instance Rat.instCommMonoid : CommMonoid Rat where
-  mul_comm := by sorry
-  mul_assoc := by sorry
-  one_mul := by sorry
-  mul_one := by sorry
+  mul_comm := by
+    intro a b
+    obtain ⟨a1,a2,ha,rfl⟩ := eq_diff a
+    obtain ⟨b1,b2,hb,rfl⟩ := eq_diff b
+    rw[mul_eq,mul_eq,eq]
+    ring
+    simp;tauto
+    simp;tauto
+    assumption'
+  mul_assoc := by
+    intro a b c
+    obtain ⟨a1,a2,ha,rfl⟩ := eq_diff a
+    obtain ⟨b1,b2,hb,rfl⟩ := eq_diff b
+    obtain ⟨c1,c2,hc,rfl⟩ := eq_diff c
+    rw[mul_eq,mul_eq,mul_eq,mul_eq,eq]
+    . ring
+    all_goals
+      simp[hc,hb,ha]
+  one_mul := by
+    intro a
+    obtain ⟨a1,a2,ha,rfl⟩ := eq_diff a
+    rw[of_Nat_eq,mul_eq,eq]
+    ring
+    all_goals
+      simp[ha]
+  mul_one := by
+    intro a
+    obtain ⟨a1,a2,ha,rfl⟩ := eq_diff a
+    rw[of_Nat_eq,mul_eq,eq]
+    ring
+    all_goals
+      simp[ha]
 
 /-- Proposition 4.2.4 (laws of algebra) / Exercise 4.2.3 -/
 instance Rat.instCommRing : CommRing Rat where
-  left_distrib := by sorry
-  right_distrib := by sorry
-  zero_mul := by sorry
-  mul_zero := by sorry
-  mul_assoc := by sorry
+  left_distrib := by
+    intro a b c
+    obtain ⟨a1,a2,ha,rfl⟩ := eq_diff a
+    obtain ⟨b1,b2,hb,rfl⟩ := eq_diff b
+    obtain ⟨c1,c2,hc,rfl⟩ := eq_diff c
+    rw[add_eq,mul_eq,mul_eq,mul_eq,add_eq,eq]
+    ring
+    all_goals
+      simp[ha,hb,hc]
+  right_distrib := by
+    intro a b c
+    obtain ⟨a1,a2,ha,rfl⟩ := eq_diff a
+    obtain ⟨b1,b2,hb,rfl⟩ := eq_diff b
+    obtain ⟨c1,c2,hc,rfl⟩ := eq_diff c
+    rw[add_eq,mul_eq,mul_eq,mul_eq,add_eq,eq]
+    ring
+    all_goals
+      simp[ha,hb,hc]
+  zero_mul := by
+    intro a
+    obtain ⟨a1,a2,ha,rfl⟩ := eq_diff a
+    rw[of_Nat_eq,mul_eq,eq]
+    ring
+    all_goals
+      simp[ha]
+  mul_zero := by
+    intro a
+    obtain ⟨a1,a2,ha,rfl⟩ := eq_diff a
+    rw[of_Nat_eq,mul_eq,eq]
+    ring
+    all_goals
+      simp[ha]
+  mul_assoc := by 
+    intro a b c
+    obtain ⟨a1,a2,ha,rfl⟩ := eq_diff a
+    obtain ⟨b1,b2,hb,rfl⟩ := eq_diff b
+    obtain ⟨c1,c2,hc,rfl⟩ := eq_diff c
+    rw[mul_eq,mul_eq,mul_eq,mul_eq,eq]
+    ring
+    all_goals
+      simp[ha,hb,hc]
   -- Usually CommRing will generate a natCast instance and a proof for this.
   -- However, we are using a custom natCast for which `natCast_succ` cannot
   -- be proven automatically by `rfl`. Luckily we have proven it already.
@@ -201,7 +365,22 @@ instance Rat.instCommRing : CommRing Rat where
 instance Rat.instRatCast : RatCast Rat where
   ratCast q := q.num // q.den
 
-theorem Rat.ratCast_inj : Function.Injective (fun n:ℚ ↦ (n:Rat)) := by sorry
+theorem Rat.ratCast_inj : Function.Injective (fun n:ℚ ↦ (n:Rat)) := by
+  intro q1 q2 heq
+  simp at heq
+  set num1 : ℤ := q1.num
+  set den1 : ℤ := (q1.den:ℤ)
+  have hden1 : den1 ≠ 0 := by simp[den1, q1.den_nz]
+  set num2 : ℤ := q2.num
+  set den2 : ℤ := (q2.den:ℤ)
+  have hden2 : den2 ≠ 0 := by simp[den2, q2.den_nz]
+  change num1 // den1 = num2 // den2 at heq
+  rw[eq _ _ hden1 hden2] at heq
+  qify at heq hden1 hden2
+  have hq1 : num1 / den1 = q1 := Rat.num_div_den q1
+  have hq2 : num2 / den2 = q2 := Rat.num_div_den q2
+  simp[← hq1, ← hq2]
+  rwa[div_eq_div_iff hden1 hden2]
 
 theorem Rat.coe_Rat_eq (a:ℤ) {b:ℤ} (hb: b ≠ 0) : (a/b:ℚ) = a // b := by
   set q := (a/b:ℚ)
@@ -221,8 +400,21 @@ theorem Rat.div_eq (q r:Rat) : q/r = q * r⁻¹ := by rfl
 
 /-- Proposition 4.2.4 (laws of algebra) / Exercise 4.2.3 -/
 instance Rat.instField : Field Rat where
-  exists_pair_ne := by sorry
-  mul_inv_cancel := by sorry
+  exists_pair_ne := by
+    use 1,2
+    by_contra heq
+    simp only [of_Nat_eq] at heq
+    rw[eq _ _ (by simp) (by simp) ]at heq
+    simp at heq
+  mul_inv_cancel := by
+    intro a ane
+    obtain ⟨a1,a2,ha2,rfl⟩  := eq_diff a
+    have ha1 : a1 ≠ 0 := by
+      contrapose! ane
+      rw[of_Nat_eq,eq _ _ ha2 (by simp),ane]
+      simp
+    rw[inv_eq _ ha2,of_Nat_eq,mul_eq _ _ ha2 ha1,eq _ _ (by simp; tauto) (by simp)]
+    ring
   inv_zero := rfl
   ratCast_def := by
     intro q
@@ -235,14 +427,15 @@ instance Rat.instField : Field Rat where
   qsmul := _
   nnqsmul := _
 
-example : (3//4) / (5//6) = 9 // 10 := by sorry
+example : (3//4) / (5//6) = 9 // 10 := by
+  rw[Rat.div_eq,Rat.inv_eq,Rat.mul_eq,Rat.eq] <;> simp
 
 def Rat.coe_int_hom : ℤ →+* Rat where
   toFun n := (n:Rat)
   map_zero' := rfl
   map_one' := rfl
-  map_add' := by sorry
-  map_mul' := by sorry
+  map_add' := by simp
+  map_mul' := by simp
 
 /-- Definition 4.2.6 (positivity) -/
 def Rat.isPos (q:Rat) : Prop := ∃ a b:ℤ, a > 0 ∧ b > 0 ∧ q = a/b
@@ -250,17 +443,95 @@ def Rat.isPos (q:Rat) : Prop := ∃ a b:ℤ, a > 0 ∧ b > 0 ∧ q = a/b
 /-- Definition 4.2.6 (negativity) -/
 def Rat.isNeg (q:Rat) : Prop := ∃ r:Rat, r.isPos ∧ q = -r
 
-/-- Lemma 4.2.7 (trichotomy of rationals) / Exercise 4.2.4 -/
-theorem Rat.trichotomous (x:Rat) : x = 0 ∨ x.isPos ∨ x.isNeg := by sorry
+theorem Rat.eq_diff' (x : Rat) : ∃ a b : ℤ, b ≠ 0 ∧ x = a/b := by
+  obtain ⟨a,b,hx,rfl⟩ := eq_diff x
+  use a, b
+  simp[hx]
+  simp_rw[div_eq,coe_Int_eq]
+  rw[
+    inv_eq _ (by simp), 
+    mul_eq _ _ (by simp) hx,
+    eq _ _ hx (by simp[hx])
+  ]
+  ring
+
+theorem Rat.eq_diff'' (x : Rat) : ∃ a b : ℤ, b ≠ 0 ∧ x = (a/b:ℚ) := by
+  obtain ⟨a,b,hx,rfl⟩ := eq_diff x
+  use a, b
+  refine ⟨hx, ?_⟩  
+  rw[coe_Rat_eq _ hx]
+
+theorem Rat.div_eq_formal_div {x y :ℤ} (h: y ≠ 0) : x / y = x // y := by
+  simp[coe_Int_eq]
+  rw[div_eq,inv_eq _ (by simp),mul_eq _ _ (by simp) h, eq _ _ (by simp[h]) h]
+  ring
 
 /-- Lemma 4.2.7 (trichotomy of rationals) / Exercise 4.2.4 -/
-theorem Rat.not_zero_and_pos (x:Rat) : ¬(x = 0 ∧ x.isPos) := by sorry
+theorem Rat.trichotomous (x:Rat) : x = 0 ∨ x.isPos ∨ x.isNeg := by
+  obtain ⟨x1, x2, hx,rfl⟩ := eq_diff' x 
+  obtain (hx1 | hx1 | hx1) := Int.sign_trichotomy x1 <;>
+  obtain (hx2 | hx2 | hx2) := Int.sign_trichotomy x2 <;>
+  simp at hx1 hx2 <;> try contradiction
+  .
+    right;left;simp[isPos]
+    use x1; simp[hx1]
+    use x2
+  . right; right
+    simp[isNeg]
+    use x1/(-x2)
+    refine ⟨?_, by ring⟩ 
+    simp[isPos]
+    use x1; simp[hx1]
+    use -x2; simp[hx2]
+  . left; simp[hx1]
+  . left; simp[hx1]
+  . right;right
+    use (-x1)/x2
+    refine ⟨?_, by ring⟩ 
+    use -x1,x2
+    simp[hx1,hx2]
+  . right;left
+    use -x1, -x2
+    simp[hx1,hx2]
 
 /-- Lemma 4.2.7 (trichotomy of rationals) / Exercise 4.2.4 -/
-theorem Rat.not_zero_and_neg (x:Rat) : ¬(x = 0 ∧ x.isNeg) := by sorry
+theorem Rat.not_zero_and_pos (x:Rat) : ¬(x = 0 ∧ x.isPos) := by
+  by_contra h 
+  obtain ⟨hz, hpos⟩ := h 
+  obtain ⟨a,b,ha,hb,hxab⟩ := hpos  
+  simp[hz] at hxab
+  rw[div_eq] at hxab
+  simp at hxab
+  obtain (hx| hx) := hxab 
+  <;> simp only[coe_Int_eq,of_Nat_eq] at hx
+  <;> rw[eq _ _ (by simp) (by simp)] at hx
+  <;>omega
 
 /-- Lemma 4.2.7 (trichotomy of rationals) / Exercise 4.2.4 -/
-theorem Rat.not_pos_and_neg (x:Rat) : ¬(x.isPos ∧ x.isNeg) := by sorry
+theorem Rat.not_zero_and_neg (x:Rat) : ¬(x = 0 ∧ x.isNeg) := by
+  by_contra h 
+  obtain ⟨hz, hneg⟩ := h 
+  obtain ⟨hap, ⟨  a,b,ha,hb,hxab ⟩,hxneg⟩ := hneg
+  simp[hxab] at hxneg
+  rw[hz] at hxneg
+  simp at hxneg
+  obtain (hx| hx) := hxneg
+  <;> simp only[coe_Int_eq,of_Nat_eq] at hx
+  <;> rw[eq _ _ (by simp) (by simp)] at hx
+  <;>omega
+
+/-- Lemma 4.2.7 (trichotomy of rationals) / Exercise 4.2.4 -/
+theorem Rat.not_pos_and_neg (x:Rat) : ¬(x.isPos ∧ x.isNeg) := by
+  by_contra h
+  obtain ⟨hpos,hneg⟩:=h 
+  obtain ⟨pa,pb,hpa,hpb,hpxab⟩  := hpos
+  obtain ⟨hnegv, ⟨na,nb,hna,hnb,hnxab⟩,hxneg ⟩ := hneg
+  rw[hnxab,hpxab,div_eq_formal_div (by omega), div_eq_formal_div (by omega),neg_eq _ (by omega),eq _ _ (by omega) (by omega)] at hxneg
+  have hpab :=  mul_pos hpa hnb 
+  have hnab := mul_pos hna hpb
+  rw[hxneg] at hpab
+  simp at hpab 
+  omega
 
 /-- Definition 4.2.8 (Ordering of the rationals) -/
 instance Rat.instLT : LT Rat where
@@ -272,33 +543,135 @@ instance Rat.instLE : LE Rat where
 
 theorem Rat.lt_iff (x y:Rat) : x < y ↔ (x-y).isNeg := by rfl
 theorem Rat.le_iff (x y:Rat) : x ≤ y ↔ (x < y) ∨ (x = y) := by rfl
-
-theorem Rat.gt_iff (x y:Rat) : x > y ↔ (x-y).isPos := by sorry
-theorem Rat.ge_iff (x y:Rat) : x ≥ y ↔ (x > y) ∨ (x = y) := by sorry
+theorem Rat.neg_sub (x y: Rat) : x - y = - (y - x) := by ring
+theorem Rat.gt_iff (x y:Rat) : x > y ↔ (x-y).isPos := by
+  have dif := lt_iff y x
+  simp[dif]
+  constructor
+  . intro h
+    choose v hv hvyx using h
+    have : - (-v) = x - y := by
+      rw[← hvyx]; ring
+    simp at this
+    rwa[this] at hv
+  intro h
+  set v := y - x with hv
+  have : -v = x - y := by simp[hv]
+  rw[← this] at h
+  use -v
+  simp[h]
+theorem Rat.ge_iff (x y:Rat) : x ≥ y ↔ (x > y) ∨ (x = y) := by
+  have le := le_iff y x;tauto
 
 /-- Proposition 4.2.9(a) (order trichotomy) / Exercise 4.2.5 -/
-theorem Rat.trichotomous' (x y:Rat) : x > y ∨ x < y ∨ x = y := by sorry
+theorem Rat.trichotomous' (x y:Rat) : x > y ∨ x < y ∨ x = y := by
+  set v := x - y with dv
+  obtain (hv|hv|hv) := trichotomous v
+  . right;right
+    rw[hv] at dv
+    symm at dv
+    apply_fun fun exp ↦  exp + y at dv
+    simpa using dv
+  . left
+    rw[gt_iff]
+    simpa
+  right;left
+  rw[lt_iff];simpa
 
 /-- Proposition 4.2.9(a) (order trichotomy) / Exercise 4.2.5 -/
-theorem Rat.not_gt_and_lt (x y:Rat) : ¬ (x > y ∧ x < y):= by sorry
+theorem Rat.not_gt_and_lt (x y:Rat) : ¬ (x > y ∧ x < y):= by
+  rw[lt_iff,gt_iff]
+  set v:= x-y
+  convert not_pos_and_neg v
 
 /-- Proposition 4.2.9(a) (order trichotomy) / Exercise 4.2.5 -/
-theorem Rat.not_gt_and_eq (x y:Rat) : ¬ (x > y ∧ x = y):= by sorry
+theorem Rat.not_gt_and_eq (x y:Rat) : ¬ (x > y ∧ x = y):= by 
+  by_contra h
+  obtain ⟨hp,hz⟩ := h 
+  rw[gt_iff] at hp
+  apply_fun fun exp ↦ exp - y at hz
+  simp at hz
+  have hv := not_zero_and_pos (x - y)
+  tauto
+
 
 /-- Proposition 4.2.9(a) (order trichotomy) / Exercise 4.2.5 -/
-theorem Rat.not_lt_and_eq (x y:Rat) : ¬ (x < y ∧ x = y):= by sorry
+theorem Rat.not_lt_and_eq (x y:Rat) : ¬ (x < y ∧ x = y):= by
+  by_contra h
+  obtain ⟨hn,hz⟩ := h 
+  rw[lt_iff] at hn
+  apply_fun fun exp ↦ exp - y at hz
+  simp at hz
+  have hv := not_zero_and_neg (x - y)
+  tauto
 
 /-- Proposition 4.2.9(b) (order is anti-symmetric) / Exercise 4.2.5 -/
-theorem Rat.antisymm (x y:Rat) : x < y ↔ (y - x).isPos := by sorry
+theorem Rat.antisymm (x y:Rat) : x < y ↔ (y - x).isPos := by
+  have h := lt_iff x y
+  simp[h]
+  constructor <;> intro hp
+  . 
+    choose v hv hxyv using hp
+    apply_fun fun exp ↦ -exp  at hxyv
+    simp at hxyv
+    simpa [ hxyv]
+  set v := y-x
+  use v
+  simp[v,hp]
 
 /-- Proposition 4.2.9(c) (order is transitive) / Exercise 4.2.5 -/
-theorem Rat.lt_trans {x y z:Rat} (hxy: x < y) (hyz: y < z) : x < z := by sorry
+theorem Rat.lt_trans {x y z:Rat} (hxy: x < y) (hyz: y < z) : x < z := by
+  rw[lt_iff] at *
+  set v1 := x - y with hv1
+  choose nv1 hnv1 heq1 using hxy
+  set v2 := y - z with hv2
+  choose nv2 hnv2 heq2 using hyz
+  have : x - z = v1 + v2 := by simp[hv1,hv2]
+  rw[this]
+  use nv1 + nv2
+  simp[heq1,heq2]
+  choose a1 b1 ha1 hb1 hab1 using hnv1
+  choose a2 b2 ha2 hb2 hab2 using hnv2
+  refine ⟨?_,by ring⟩ 
+  rw[div_eq_formal_div (by omega)] at hab1
+  rw[div_eq_formal_div (by omega)] at hab2
+  rw[hab1,hab2,add_eq]
+  use a1*b2+b1*a2, b1*b2
+  split_ands
+  . 
+    have  := mul_pos ha1 hb2
+    have := mul_pos hb1 ha2
+    omega
+  . apply mul_pos hb1 hb2
+  . 
+    have := mul_pos hb1 hb2
+    rw[div_eq_formal_div (by omega)]
+  omega
+  omega
 
 /-- Proposition 4.2.9(d) (addition preserves order) / Exercise 4.2.5 -/
-theorem Rat.add_lt_add_right {x y:Rat} (z:Rat) (hxy: x < y) : x + z < y + z := by sorry
+theorem Rat.add_lt_add_right {x y:Rat} (z:Rat) (hxy: x < y) : x + z < y + z := by
+  rw[lt_iff] at *
+  simpa
 
 /-- Proposition 4.2.9(e) (positive multiplication preserves order) / Exercise 4.2.5 -/
-theorem Rat.mul_lt_mul_right {x y z:Rat} (hxy: x < y) (hz: z.isPos) : x * z < y * z := by sorry
+theorem Rat.mul_lt_mul_right {x y z:Rat} (hxy: x < y) (hz: z.isPos) : x * z < y * z := by
+  rw[lt_iff] at *
+  have : ((x-y)*z).isNeg := by
+    choose v hv hvxy using hxy
+    use v*z
+    refine ⟨?_, by simp[hvxy]⟩ 
+    choose za zb hza hzb hzab using hz
+    choose va vb hva hvb hvab using hv
+    rw[hvab,hzab,div_eq_formal_div (by omega),div_eq_formal_div (by omega), mul_eq _ _ (by omega) (by omega)]
+    use va * za, vb * zb
+    split_ands
+    . exact mul_pos hva hza
+    . exact mul_pos hvb hzb
+    have := mul_pos hvb hzb
+    rw[div_eq_formal_div (by omega)]
+  ring_nf at this
+  assumption
 
 /-- (Not from textbook) Establish the decidability of this order. -/
 instance Rat.decidableRel : DecidableRel (· ≤ · : Rat → Rat → Prop) := by
@@ -314,42 +687,243 @@ instance Rat.decidableRel : DecidableRel (· ≤ · : Rat → Rat → Prop) := b
         cases (a * d).decLe (b * c) with
           | isTrue h =>
             apply isTrue
-            sorry
+            rw[le_iff]
+            by_cases heq : a * d = b * c
+            . 
+              right
+              simp
+              change (⟨a,b,hb⟩: PreRat) ≈ ⟨c,d,hd⟩  
+              simpa[PreRat.eq,mul_comm]
+            . 
+              left
+              have hbd' : 0 ≠ b * d := by
+                simp;tauto
+              have hlt : a * d < b * c := by omega
+              simp[lt_iff]
+              set x: PreRat := ⟨a,b,hb⟩ 
+              set y: PreRat := ⟨c,d,hd⟩ 
+              set xr : Rat := ⟦x⟧ 
+              set yr : Rat := ⟦y⟧ 
+              use yr  + (- xr)
+              split_ands
+              use b * c - a * d, b*d
+              split_ands
+              . omega
+              . omega
+              have : xr = a // b := by
+                simp[xr,hb,x] ;rfl
+              rw[this]
+              have : yr = c // d := by
+                simp[yr,hd,y] ;rfl
+              rw[this]
+              rw[neg_eq,add_eq,div_eq_formal_div,eq]
+              ring
+              all_goals
+                simp;tauto
           | isFalse h =>
             apply isFalse
-            sorry
+            push_neg at h
+            have hbd' : 0 ≠ b * d := by
+              simp;tauto
+            have hbd'' : 0 < b * d := by
+              omega
+            set x : Rat := ⟦⟨a,b,hb⟩⟧   
+            set y : Rat := ⟦⟨c,d,hd⟩⟧   
+            simp only [le_iff, lt_iff]
+            suffices h: (x+ (-y)).isPos from by
+              push_neg
+              split_ands
+              . have npn := not_pos_and_neg (x-y)
+                tauto
+              have npz := not_zero_and_pos (x-y) 
+              apply_fun fun exp ↦ exp - y
+              simp;tauto
+
+            have :y = c // d := by simp[y,hd];rfl
+            rw[this]
+            have :x = a // b := by simp[x,hb];rfl
+            rw[this]
+            rw[
+              neg_eq _ hd,
+              add_eq _ _ hb hd,
+              ]
+            use (a * d + b * -c) , (b * d)
+            split_ands
+            . calc
+                _ > ( b * c) + (b * -c) := by simp[h]
+                _ = _ := by simp
+            simpa
+            rw[div_eq_formal_div hbd'.symm]
       | isFalse hbd =>
         cases (b * c).decLe (a * d) with
           | isTrue h =>
             apply isTrue
-            sorry
+            push_neg at hbd
+            set x : Rat := ⟦⟨a,b,hb⟩⟧   
+            set y : Rat := ⟦⟨c,d,hd⟩⟧   
+            rw[le_iff,lt_iff]
+            suffices hsuf : ¬ (x-y).isPos from by
+              have tri := trichotomous (x - y)
+              simp[hsuf] at tri
+              obtain (eq | neg) := tri
+              . right
+                rwa[sub_eq_zero] at eq
+              left; assumption
+            by_contra hcon
+            obtain ⟨ca, cb, hca, hcb, hcabv⟩ := hcon 
+            rw[sub_eq_add_neg] at hcabv
+            have :y = c // d := by simp[y,hd];rfl
+            rw[this] at hcabv
+            have :x = a // b := by simp[x,hb];rfl
+            rw[this] at hcabv
+            rw[
+              neg_eq _ hd,
+              add_eq _ _ hb hd,
+              div_eq_formal_div (by omega),
+              eq _ _ (by simp; tauto) (by omega)
+            ] at hcabv
+            have hneg : ca * (b * d) < 0 := by
+              apply mul_neg_of_pos_of_neg hca hbd
+            have hpos' : (a * d + b * -c) ≥ 0 := by
+              calc
+                _ ≥ (b * c + b * -c) := by simp[h]
+                _ = _ := by simp
+            have hpos : (a * d + b * -c) * cb ≥ 0 := by
+              apply mul_nonneg hpos' (by omega)
+            rw[hcabv] at hpos
+            omega
           | isFalse h =>
             apply isFalse
-            sorry
+            push_neg at hbd
+            push_neg at h
+            set x : Rat := ⟦⟨a,b,hb⟩⟧   
+            set y : Rat := ⟦⟨c,d,hd⟩⟧   
+            rw[le_iff,lt_iff]
+            suffices h: (x+ (-y)).isPos from by
+              push_neg
+              split_ands
+              . have npn := not_pos_and_neg (x-y)
+                tauto
+              have npz := not_zero_and_pos (x-y) 
+              apply_fun fun exp ↦ exp - y
+              simp;tauto
+            have :y = c // d := by simp[y,hd];rfl
+            rw[this] 
+            have :x = a // b := by simp[x,hb];rfl
+            rw[this] 
+            rw[
+              neg_eq _ hd,
+              add_eq _ _ (by omega) hd
+              ]
+            use a * -d + b * c , b * -d
+            split_ands
+            rw[mul_neg]
+            simp
+            . exact h
+            simpa
+            rw[div_eq_formal_div (by simp;tauto),
+              eq _ _ (by simp;tauto) (by simp;tauto)]
+            ring
   exact Quotient.recOnSubsingleton₂ n m this
 
 /-- (Not from textbook) Rat has the structure of a linear ordering. -/
 instance Rat.instLinearOrder : LinearOrder Rat where
-  le_refl := sorry
-  le_trans := sorry
-  lt_iff_le_not_ge := sorry
-  le_antisymm := sorry
-  le_total := sorry
+  le_refl := by
+    intro a; right;rfl
+  le_trans := by
+    intro a b c hab hbc
+    rw[le_iff] at *
+    obtain (hablt | habeq ):= hab <;>
+    obtain (hbclt | hbceq ):= hbc
+    . left; apply lt_trans hablt hbclt
+    all_goals
+      simp_all
+  lt_iff_le_not_ge := by
+    intro a b
+    simp[le_iff]
+    suffices heq : a < b ↔ a < b ∧ ¬b < a ∧ ¬ b = a from by
+      rw[heq]; simp
+      intro nle neq 
+      simp[nle,neq]
+      intro eq; symm at eq
+      contradiction
+    simp
+    intro le
+    have hne := not_lt_and_eq a b
+    have hngt := not_gt_and_lt a b
+    tauto
+  le_antisymm := by
+    intro a b hle hge
+    rw[le_iff] at hle hge
+    have hne := not_lt_and_eq a b
+    have hngt := not_gt_and_lt a b
+    have hnb := not_gt_and_eq a b
+    obtain (hlt | heq ) := hle <;>
+    obtain (hgt | heq2 ):= hge <;>
+    tauto
+  le_total := by
+    intro a b
+    by_cases hle : a ≤ b ; tauto
+    right
+    rw[le_iff] at *
+    left
+    have tri := trichotomous' a b
+    tauto
   toDecidableLE := decidableRel
-
+lemma Rat.isPos_iff_gt_0 {a : Rat} : a.isPos ↔ a > 0:= by
+  rw[gt_iff];simp
+lemma Rat.isNeg_iff_lt_0 {a : Rat} : a.isNeg ↔ a < 0:= by
+  rw[lt_iff];simp
 /-- (Not from textbook) Rat has the structure of a strict ordered ring. -/
 instance Rat.instIsStrictOrderedRing : IsStrictOrderedRing Rat where
-  add_le_add_left := by sorry
-  add_le_add_right := by sorry
-  mul_lt_mul_of_pos_left := by sorry
-  mul_lt_mul_of_pos_right := by sorry
-  le_of_add_le_add_left := by sorry
-  zero_le_one := by sorry
-
+  add_le_add_left := by
+    intro a b le
+    intro c
+    rw[le_iff] at *
+    obtain (hlt | heq) := le
+    . 
+      obtain ⟨v,hv,habv⟩:= hlt 
+      left
+      use v
+      simp[hv,habv]
+    right;simp[heq]
+  add_le_add_right := by
+    intro a b le c
+    rw[le_iff] at *
+    obtain (hlt | heq) := le
+    . 
+      obtain ⟨v,hv,habv⟩:= hlt 
+      left
+      use v
+      simp[hv,habv]
+    right;simp[heq]
+  mul_lt_mul_of_pos_left := by
+      
+    intro a b c lt hc
+    have hc := (isPos_iff_gt_0).mpr hc
+    have con:= mul_lt_mul_right lt hc 
+    simpa[ mul_comm] using con
+  mul_lt_mul_of_pos_right := by
+    intro a b c hab hc
+    have hc := (isPos_iff_gt_0).mpr hc
+    exact mul_lt_mul_right hab hc 
+  le_of_add_le_add_left := by
+    intro a b c le
+    rw[le_iff]
+    obtain ⟨v,hv,hvab⟩ | eq:= le 
+    simp at hvab; left; use v
+    right;simpa using eq
+  zero_le_one := by
+    rw[le_iff]
+    left
+    use 1
+    simp
+    use 1,1
+    simp
 /-- Exercise 4.2.6 -/
 theorem Rat.mul_lt_mul_right_of_neg (x y z:Rat) (hxy: x < y) (hz: z.isNeg) : x * z > y * z := by
-  sorry
-
+    rw[isNeg_iff_lt_0] at hz
+    simpa[_root_.mul_lt_mul_right_of_neg hz]
 
 /--
   Not in textbook: create an equivalence between Rat and ℚ. This requires some familiarity with
@@ -357,21 +931,69 @@ theorem Rat.mul_lt_mul_right_of_neg (x y z:Rat) (hxy: x < y) (hz: z.isNeg) : x *
 -/
 abbrev Rat.equivRat : Rat ≃ ℚ where
   toFun := Quotient.lift (fun ⟨ a, b, h ⟩ ↦ a / b) (by
-    sorry)
+    intro a b hab
+    rw[PreRat.eq] at hab
+    have ha := a.nonzero
+    have hb := b.nonzero
+    qify at hab ha hb
+    simp
+    set aa := (a.numerator : ℚ)
+    set ab := (a.denominator : ℚ)
+    set ba := (b.numerator : ℚ )
+    set bb := (b.denominator : ℚ)
+    exact (div_eq_div_iff ha hb).mpr hab
+  )
   invFun := fun n: ℚ ↦ (n:Rat)
-  left_inv n := sorry
-  right_inv n := sorry
+  left_inv n := by
+    obtain ⟨a,b,hab,rfl⟩ := eq_diff n 
+    simp[hab]
+    rw[div_eq_formal_div hab]
+  right_inv n := by
+    set a := n.num
+    set hb := n.den_ne_zero
+    set b  := (n.den : ℤ )
+    have : n = (a / b) := by
+      simp[a,b]
+      rw[Rat.num_div_den]
+    have hb : b ≠ 0 := by simp[b]
+    have eq := coe_Rat_eq a hb
+    simp[← this] at eq
+    simp[eq,hb]
+    exact this.symm
 
 /-- Not in textbook: equivalence preserves order -/
 abbrev Rat.equivRat_order : Rat ≃o ℚ where
   toEquiv := equivRat
-  map_rel_iff' := by sorry
+  map_rel_iff' := by
+    intro a b
+    set aq := equivRat a
+    have : a = equivRat.symm aq := by simp only[aq,Equiv.symm_apply_apply] 
+    rw[this]
+    set bq := equivRat b
+    have : b = equivRat.symm bq := by simp only[bq,Equiv.symm_apply_apply] 
+    rw[this]
+    simp
 
 /-- Not in textbook: equivalence preserves ring operations -/
 abbrev Rat.equivRat_ring : Rat ≃+* ℚ where
   toEquiv := equivRat
-  map_add' := by sorry
-  map_mul' := by sorry
+  map_add' := by
+    intro a b
+    rw[Equiv.toFun_as_coe]
+    obtain ⟨a1,a2,ha,rfl⟩ := eq_diff a
+    obtain ⟨b1,b2,hb,rfl⟩ := eq_diff b
+    rw[add_eq _ _ ha hb]
+    simp[ha,hb]
+    field_simp; ring
+
+  map_mul' := by 
+    intro a b
+    rw[Equiv.toFun_as_coe]
+    obtain ⟨a1,a2,ha,rfl⟩ := eq_diff a
+    obtain ⟨b1,b2,hb,rfl⟩ := eq_diff b
+    rw[ mul_eq _ _ ha hb] 
+    simp[ha,hb]
+    field_simp
 
 /--
   (Not from textbook) The textbook rationals are isomorphic (as a field) to the Mathlib rationals.
