@@ -922,8 +922,8 @@ instance Rat.instIsStrictOrderedRing : IsStrictOrderedRing Rat where
     simp
 /-- Exercise 4.2.6 -/
 theorem Rat.mul_lt_mul_right_of_neg (x y z:Rat) (hxy: x < y) (hz: z.isNeg) : x * z > y * z := by
-  sorry
-
+    rw[isNeg_iff_lt_0] at hz
+    simpa[_root_.mul_lt_mul_right_of_neg hz]
 
 /--
   Not in textbook: create an equivalence between Rat and ℚ. This requires some familiarity with
@@ -931,10 +931,35 @@ theorem Rat.mul_lt_mul_right_of_neg (x y z:Rat) (hxy: x < y) (hz: z.isNeg) : x *
 -/
 abbrev Rat.equivRat : Rat ≃ ℚ where
   toFun := Quotient.lift (fun ⟨ a, b, h ⟩ ↦ a / b) (by
-    sorry)
+    intro a b hab
+    rw[PreRat.eq] at hab
+    have ha := a.nonzero
+    have hb := b.nonzero
+    qify at hab ha hb
+    simp
+    set aa := (a.numerator : ℚ)
+    set ab := (a.denominator : ℚ)
+    set ba := (b.numerator : ℚ )
+    set bb := (b.denominator : ℚ)
+    exact (div_eq_div_iff ha hb).mpr hab
+  )
   invFun := fun n: ℚ ↦ (n:Rat)
-  left_inv n := sorry
-  right_inv n := sorry
+  left_inv n := by
+    obtain ⟨a,b,hab,rfl⟩ := eq_diff n 
+    simp[hab]
+    rw[div_eq_formal_div hab]
+  right_inv n := by
+    set a := n.num
+    set hb := n.den_ne_zero
+    set b  := (n.den : ℤ )
+    have : n = (a / b) := by
+      simp[a,b]
+      rw[Rat.num_div_den]
+    have hb : b ≠ 0 := by simp[b]
+    have eq := coe_Rat_eq a hb
+    simp[← this] at eq
+    simp[eq,hb]
+    exact this.symm
 
 /-- Not in textbook: equivalence preserves order -/
 abbrev Rat.equivRat_order : Rat ≃o ℚ where
