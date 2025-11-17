@@ -400,7 +400,7 @@ lemma JordanMeasurable.null_iff {d:ℕ} {E: Set (EuclideanSpace' d)} : null E �
   sorry
 
 /-- Exercise 1.1.12 -/
-lemma JordanMeasurable.null_mono {d:ℕ} {E F: Set (EuclideanSpace' d)} (h: null E) (hEF: E ⊆ F) : null F := by
+lemma JordanMeasurable.null_mono {d:ℕ} {E F: Set (EuclideanSpace' d)} (h: null E) (hEF: F ⊆ E) : null F := by
   sorry
 
 /-- Exercise 1.1.13 -/
