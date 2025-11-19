@@ -55,7 +55,121 @@ lemma riemann_integral_of_integrable {f:ℝ → ℝ} {I: BoundedInterval} (h: Ri
 lemma riemann_integral_eq_iff_of_integrable {f:ℝ → ℝ} {I: BoundedInterval} (h: RiemannIntegrableOn f I) (R:ℝ): riemann_integral_eq f I R ↔ R = riemannIntegral f I := by sorry
 
 /-- Definition 1.1.15 (Riemann integrability)-/
-lemma riemann_integral_eq_iff {f:ℝ → ℝ} {I: BoundedInterval} (h: RiemannIntegrableOn f I) (R:ℝ): riemann_integral_eq f I R ↔ ∀ ε>0, ∃ δ>0, ∀ n, ∀ P: TaggedPartition I n, P.norm ≤ δ → |P.RiemannSum f - R| ≤ ε := by sorry
+-- lemma riemann_integral_eq_iff {f:ℝ → ℝ} {I: BoundedInterval} (h: RiemannIntegrableOn f I) (R:ℝ): riemann_integral_eq f I R ↔ ∀ ε>0, ∃ δ>0, ∀ n, ∀ P: TaggedPartition I n, P.norm ≤ δ → |P.RiemannSum f - R| ≤ ε := by
+lemma riemann_integral_eq_iff {f:ℝ → ℝ} {I: BoundedInterval} (R:ℝ): riemann_integral_eq f I R ↔ ∀ ε>0, ∃ δ>0, ∀ n, ∀ P: TaggedPartition I n, P.norm ≤ δ → |P.RiemannSum f - R| ≤ ε := by
+  -- Show equivalence between filter convergence and ε-δ definition.
+  -- Forward (→): Use `LinearOrderedAddCommGroup.tendsto_nhds` and `Filter.eventually_comap` to extract ε-δ.
+  -- Backward (←): Given ε-δ, show filter convergence
+  unfold riemann_integral_eq TaggedPartition.nhds_zero
+  -- Use LinearOrderedAddCommGroup.tendsto_nhds to characterize filter convergence
+  rw [LinearOrderedAddCommGroup.tendsto_nhds]
+  -- Use Filter.eventually_comap to relate comap filter to nhds 0
+  simp_rw [Filter.eventually_comap]
+  constructor
+  · -- Forward direction: filter convergence → ε-δ
+    intro h_tendsto ε hε
+    -- Get eventually condition from filter convergence
+    have h_eventually : ∀ᶠ (x : ℝ) in nhds 0, ∀ (a : Sigma (TaggedPartition I)), a.snd.norm = x → |TaggedPartition.RiemannSum f a.snd - R| < ε := h_tendsto ε hε
+    -- Extract δ from nhds 0: use Metric.mem_nhds_iff to get a ball
+    rw [Metric.eventually_nhds_iff] at h_eventually
+    obtain ⟨δ, hδ_pos, hδ_ball⟩ := h_eventually
+    -- Use δ/2 to ensure strict inequality, then strengthen to ≤
+    use δ / 2, half_pos hδ_pos
+    intro n P hP_norm
+    -- Show |RiemannSum - R| ≤ ε using the filter condition
+    -- First show P.norm < δ (since P.norm ≤ δ/2 < δ)
+    have h_norm_lt : P.norm < δ := by
+      linarith [hP_norm]
+    -- P.norm is nonnegative (each delta is nonnegative by monotonicity)
+    have h_norm_nonneg : 0 ≤ P.norm := by
+      unfold TaggedPartition.norm
+      -- Show that 0 ≤ iSup by showing each delta ≥ 0
+      by_cases h_n_empty : n = 0
+      · -- If n = 0, the range is empty, so iSup = 0
+        subst h_n_empty
+        simp [iSup]
+      · -- If n > 0, pick any index and show its delta ≥ 0
+        have h_n_pos : n > 0 := Nat.pos_of_ne_zero h_n_empty
+        -- Construct Fin n element for index 0
+        have h_fin_zero : 0 < n := h_n_pos
+        let i0 : Fin n := Fin.mk 0 h_fin_zero
+        have h_delta_nonneg : 0 ≤ P.delta i0 := by
+          unfold TaggedPartition.delta
+          -- Show P.x i0.castSucc ≤ P.x i0.succ using strict monotonicity
+          have h_lt : i0.castSucc < i0.succ := Fin.castSucc_lt_succ i0
+          have h_x_lt : P.x i0.castSucc < P.x i0.succ := P.x_mono.imp h_lt
+          linarith
+        -- Show 0 ≤ iSup by showing 0 ≤ some element in the range
+        -- The range is bounded above since Fin n is finite
+        have h_bdd : BddAbove (Set.range P.delta) := by
+          -- Fin n is finite, so the range is finite and bounded
+          have h_finite : (Set.range P.delta).Finite := Set.finite_range P.delta
+          exact Set.Finite.bddAbove h_finite
+        -- Use le_trans: 0 ≤ P.delta i0 ≤ iSup P.delta
+        have h_le_sup : P.delta i0 ≤ iSup P.delta := le_ciSup h_bdd i0
+        linarith [h_delta_nonneg, h_le_sup]
+    -- Apply filter condition: if dist P.norm 0 < δ, then for all P with P.norm = P.norm, |RiemannSum - R| < ε
+    -- Note: ⟨n, P⟩.snd.norm = P.norm, and dist P.norm 0 = |P.norm| = P.norm (since nonnegative)
+    -- Show dist P.norm 0 < δ
+    have h_dist : dist P.norm 0 < δ := by
+      rw [Real.dist_eq]
+      simp [sub_zero]
+      rw [abs_of_nonneg h_norm_nonneg]
+      exact h_norm_lt
+    -- Apply hδ_ball with P.norm and show ⟨n, P⟩.snd.norm = P.norm
+    have h_eq : (⟨n, P⟩ : Sigma (TaggedPartition I)).snd.norm = P.norm := rfl
+    have h_applied := hδ_ball h_dist ⟨n, P⟩ h_eq
+    -- Convert < to ≤
+    linarith
+  · -- Backward direction: ε-δ → filter convergence
+    intro h_eps_delta ε hε
+    -- Use ε/2 to get strict inequality from ≤ condition
+    obtain ⟨δ, hδ_pos, hδ⟩ := h_eps_delta (ε / 2) (half_pos hε)
+    -- Show eventually condition using Metric.eventually_nhds_iff
+    rw [Metric.eventually_nhds_iff]
+    use δ, hδ_pos
+    -- Show that if |x| < δ and P.norm = x, then |RiemannSum - R| < ε
+    intro x hx_abs a hP_eq
+    -- Show a.snd.norm ≤ δ
+    have hP_norm_le : a.snd.norm ≤ δ := by
+      -- Use hP_eq: a.snd.norm = x, and hx_abs: dist x 0 < δ
+      -- Convert dist to abs
+      rw [Real.dist_eq, sub_zero] at hx_abs
+      rw [abs_lt] at hx_abs
+      -- Use hP_eq to substitute: a.snd.norm = x, so |a.snd.norm| < δ
+      rw [←hP_eq] at hx_abs
+      -- a.snd.norm is nonnegative (as partition norm), so |a.snd.norm| = a.snd.norm
+      -- Extract n and P from a to show nonnegativity
+      have h_norm_nonneg : 0 ≤ a.snd.norm := by
+        -- Use the same approach as forward direction
+        unfold TaggedPartition.norm
+        -- Destructure a to get n as a variable
+        cases a with | mk n P =>
+        -- Simplify ⟨n, P⟩.snd to P in the goal
+        simp
+        by_cases h_n_empty : n = 0
+        · -- If n = 0, the range is empty, so iSup = 0
+          subst h_n_empty
+          simp [iSup]
+        · have h_n_pos : n > 0 := Nat.pos_of_ne_zero h_n_empty
+          have h_fin_zero : 0 < n := h_n_pos
+          let i0 : Fin n := Fin.mk 0 h_fin_zero
+          have h_delta_nonneg : 0 ≤ P.delta i0 := by
+            unfold TaggedPartition.delta
+            have h_lt : i0.castSucc < i0.succ := Fin.castSucc_lt_succ i0
+            have h_x_lt : P.x i0.castSucc < P.x i0.succ := P.x_mono.imp h_lt
+            linarith
+          have h_bdd : BddAbove (Set.range P.delta) := by
+            have h_finite : (Set.range P.delta).Finite := Set.finite_range P.delta
+            exact Set.Finite.bddAbove h_finite
+          have h_le_sup : P.delta i0 ≤ iSup P.delta := le_ciSup h_bdd i0
+          linarith [h_delta_nonneg, h_le_sup]
+      -- hx_abs is already in the form -δ < a.snd.norm ∧ a.snd.norm < δ from abs_lt
+      -- So we can directly use hx_abs.2: a.snd.norm < δ, which implies a.snd.norm ≤ δ
+      linarith [hx_abs.2]
+    -- Apply ε-δ condition: need to extract n and P from a
+    have h_applied := hδ (Sigma.fst a) a.snd hP_norm_le
+    linarith
 
 /-- Definition 1.1.15.  (Riemann integrability) I *think* this follows from the "junk" definitions of various Mathlib operations, but needs to be checked. If not, then the above definitions need to be adjusted appropriately. -/
 lemma RiemannIntegrable.of_zero_length (f: ℝ → ℝ) {I: BoundedInterval} (h: |I|ₗ = 0) : RiemannIntegrableOn f I ∧ riemannIntegral f I = 0 := by sorry
