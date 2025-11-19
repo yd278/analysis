@@ -40,7 +40,16 @@ open Classical in
 noncomputable def riemannIntegral (f: ℝ → ℝ) (I: BoundedInterval) : ℝ := if h:RiemannIntegrableOn f I then h.2.choose else 0
 
 /-- Definition 1.1.15 (Riemann integrability) -/
-lemma riemann_integral_of_integrable {f:ℝ → ℝ} {I: BoundedInterval} (h: RiemannIntegrableOn f I) : riemann_integral_eq f I (riemannIntegral f I) := by sorry
+lemma riemann_integral_of_integrable {f:ℝ → ℝ} {I: BoundedInterval} (h: RiemannIntegrableOn f I) : riemann_integral_eq f I (riemannIntegral f I) := by
+  -- Strategy: Since `h : RiemannIntegrableOn f I` means `∃ R, riemann_integral_eq f I R`,
+  -- and `riemannIntegral f I` is defined as `h.2.choose` (the witness chosen by Classical.choose),
+  -- we need to show that `riemann_integral_eq f I h.2.choose`, which is exactly `h.2.choose_spec`.
+  unfold riemannIntegral
+  convert h.2.choose_spec using 2
+  -- Split on the if condition (which is `RiemannIntegrableOn f I`, true by hypothesis `h`)
+  split_ifs
+  -- In the `then` branch, we have `h.2.choose = h.2.choose` by reflexivity
+  · rfl
 
 /-- Definition 1.1.15 (Riemann integrability) -/
 lemma riemann_integral_eq_iff_of_integrable {f:ℝ → ℝ} {I: BoundedInterval} (h: RiemannIntegrableOn f I) (R:ℝ): riemann_integral_eq f I R ↔ R = riemannIntegral f I := by sorry
