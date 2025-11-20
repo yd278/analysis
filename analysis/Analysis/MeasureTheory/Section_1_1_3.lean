@@ -33,11 +33,198 @@ instance TaggedPartition.nhds_zero (I: BoundedInterval) : Filter (Sigma (TaggedP
 
 def riemann_integral_eq (f: ℝ → ℝ) (I: BoundedInterval) (R: ℝ) : Prop := (TaggedPartition.nhds_zero I).Tendsto (fun P ↦ TaggedPartition.RiemannSum f P.snd) (nhds R)
 
+/-- Construct a uniform partition of `[a,b]` into `n` equal pieces with left endpoint tags. -/
+noncomputable def TaggedPartition.uniform (I: BoundedInterval) (n: ℕ) (hn: n > 0) (_: I = Icc I.a I.b) (hab: I.a < I.b) : TaggedPartition I n where
+  x := fun i => I.a + (I.b - I.a) * (i.val : ℝ) / n
+  x_tag := fun i => I.a + (I.b - I.a) * (i.castSucc.val : ℝ) / n
+  x_start := by simp
+  x_end := by
+    show I.a + (I.b - I.a) * ((Fin.last n).val : ℝ) / n = I.b
+    rw [Fin.val_last]
+    field_simp
+  x_mono i j hij := by
+    have h_width_pos : 0 < I.b - I.a := by linarith
+    have h_n_pos : 0 < (n : ℝ) := Nat.cast_pos.mpr hn
+    have : (i.val : ℝ) < (j.val : ℝ) := Nat.cast_lt.mpr hij
+    apply add_lt_add_left
+    apply div_lt_div_of_pos_right
+    · exact mul_lt_mul_of_pos_left this h_width_pos
+    · exact h_n_pos
+  x_tag_between i := by
+    constructor
+    · -- i.castSucc.val = i.val
+      rfl
+    · -- i.castSucc.val ≤ i.succ.val
+      have h_width_nonneg : 0 ≤ I.b - I.a := by linarith
+      have h_n_pos : 0 < (n : ℝ) := Nat.cast_pos.mpr hn
+      show I.a + (I.b - I.a) * (i.castSucc.val : ℝ) / n ≤ I.a + (I.b - I.a) * (i.succ.val : ℝ) / n
+      rw [show i.castSucc.val = i.val from rfl, Fin.val_succ]
+      apply add_le_add_left
+      apply div_le_div_of_nonneg_right
+      · apply mul_le_mul_of_nonneg_left _ h_width_nonneg
+        norm_num
+      · linarith
+
+/-- The norm of a uniform partition is (b-a)/n. -/
+lemma TaggedPartition.uniform_norm (I: BoundedInterval) (n: ℕ) (hn: n > 0) (hI: I = Icc I.a I.b) (hab: I.a < I.b) :
+    (TaggedPartition.uniform I n hn hI hab).norm = (I.b - I.a) / n := by
+  let P := TaggedPartition.uniform I n hn hI hab
+  unfold TaggedPartition.norm
+  -- All deltas are equal to (b-a)/n
+  have h_eq : ∀ i : Fin n, P.delta i = (I.b - I.a) / n := by
+    intro i
+    unfold TaggedPartition.delta
+    show P.x i.succ - P.x i.castSucc = (I.b - I.a) / n
+    -- Unfold the definition of P.x from uniform
+    show (I.a + (I.b - I.a) * (i.succ.val : ℝ) / n) - (I.a + (I.b - I.a) * (i.castSucc.val : ℝ) / n) = (I.b - I.a) / n
+    rw [show i.castSucc.val = i.val from rfl, Fin.val_succ]
+    field_simp
+    ring
+  -- The supremum of a constant function is that constant
+  have h_bdd : BddAbove (Set.range P.delta) := Set.Finite.bddAbove (Set.finite_range P.delta)
+  have h_le : ∀ i, P.delta i ≤ (I.b - I.a) / n := by
+    intro i
+    rw [h_eq]
+  have h_nonempty : Nonempty (Fin n) := ⟨⟨0, hn⟩⟩
+  have h_ge : (I.b - I.a) / n ≤ iSup P.delta := by
+    have : ∃ i, P.delta i = (I.b - I.a) / n := ⟨⟨0, hn⟩, h_eq ⟨0, hn⟩⟩
+    obtain ⟨i, hi⟩ := this
+    calc (I.b - I.a) / n = P.delta i := hi.symm
+      _ ≤ iSup P.delta := le_ciSup h_bdd i
+  have h_le_sup : iSup P.delta ≤ (I.b - I.a) / n := by
+    haveI : Nonempty (Fin n) := h_nonempty
+    exact ciSup_le h_le
+  linarith
+
+/-- For any positive interval and δ > 0, there exists a tagged partition with norm ≤ δ. -/
+lemma TaggedPartition.exists_norm_le (I: BoundedInterval) (hI: I = Icc I.a I.b) (hab: I.a < I.b) (δ : ℝ) (hδ : 0 < δ) :
+    ∃ (n : ℕ) (P : TaggedPartition I n), P.norm ≤ δ := by
+  -- Choose n large enough that (b-a)/n < δ
+  obtain ⟨N, hN⟩ := exists_nat_gt ((I.b - I.a) / δ)
+  have h_width_pos : 0 < I.b - I.a := by linarith
+  have h_ratio_pos : 0 < (I.b - I.a) / δ := div_pos h_width_pos hδ
+  have hN_pos : N > 0 := Nat.pos_of_ne_zero (fun h => by
+    rw [h] at hN
+    simp at hN
+    linarith)
+  use N, TaggedPartition.uniform I N hN_pos hI hab
+  rw [TaggedPartition.uniform_norm]
+  -- We have: (b-a)/δ < N, so (b-a) < N*δ, so (b-a)/N < δ
+  have : (I.b - I.a) / (N : ℝ) < δ := by
+    calc (I.b - I.a) / (N : ℝ)
+        < (I.b - I.a) / ((I.b - I.a) / δ) := by
+          apply div_lt_div_of_pos_left h_width_pos h_ratio_pos hN
+      _ = δ := by field_simp
+  linarith
+
+/-- The filter TaggedPartition.nhds_zero is non-trivial when the interval has positive length. -/
+instance TaggedPartition.nhds_zero_neBot (I: BoundedInterval) (hI: I = Icc I.a I.b) (hab: I.a < I.b) :
+    Filter.NeBot (TaggedPartition.nhds_zero I) := by
+  unfold TaggedPartition.nhds_zero
+  rw [Filter.comap_neBot_iff]
+  intro t ht
+  -- t is a neighborhood of 0, so it contains some ball around 0
+  rw [Metric.mem_nhds_iff] at ht
+  obtain ⟨δ, hδ_pos, hδ_sub⟩ := ht
+  -- Construct a partition with norm < δ
+  obtain ⟨n, P, hP_norm⟩ := TaggedPartition.exists_norm_le I hI hab (δ / 2) (half_pos hδ_pos)
+  use ⟨n, P⟩
+  apply hδ_sub
+  rw [Metric.mem_ball, Real.dist_eq, sub_zero, abs_of_nonneg]
+  · calc P.norm ≤ δ / 2 := hP_norm
+      _ < δ := half_lt_self hδ_pos
+  · -- Show P.norm is nonnegative
+    unfold TaggedPartition.norm
+    by_cases h_n_zero : n = 0
+    · subst h_n_zero
+      simp [iSup]
+    · have h_n_pos : n > 0 := Nat.pos_of_ne_zero h_n_zero
+      let i0 : Fin n := ⟨0, h_n_pos⟩
+      have h_delta_nonneg : 0 ≤ P.delta i0 := by
+        unfold TaggedPartition.delta
+        have h_lt : i0.castSucc < i0.succ := Fin.castSucc_lt_succ i0
+        have h_x_lt : P.x i0.castSucc < P.x i0.succ := P.x_mono.imp h_lt
+        linarith
+      have h_bdd : BddAbove (Set.range P.delta) := Set.Finite.bddAbove (Set.finite_range P.delta)
+      have h_le_sup : P.delta i0 ≤ iSup P.delta := le_ciSup h_bdd i0
+      linarith
+
 /-- We enforce `I` to be closed for the definition of Riemann integrability. -/
 abbrev RiemannIntegrableOn (f: ℝ → ℝ) (I: BoundedInterval) : Prop := I = Icc I.a I.b ∧ ∃ R, riemann_integral_eq f I R
 
 open Classical in
 noncomputable def riemannIntegral (f: ℝ → ℝ) (I: BoundedInterval) : ℝ := if h:RiemannIntegrableOn f I then h.2.choose else 0
+
+/-- When an interval has zero length, all Riemann sums equal zero. -/
+lemma riemann_sum_eq_zero_of_zero_length {f : ℝ → ℝ} {I : BoundedInterval} (h_len : |I|ₗ = 0)
+    {n : ℕ} (P : TaggedPartition I n) : P.RiemannSum f = 0 := by
+  unfold TaggedPartition.RiemannSum
+  by_cases hn : n = 0
+  · -- When n = 0, the sum is empty
+    subst hn
+    rfl
+  · -- When n > 0 and |I| = 0, we derive a contradiction from StrictMono
+    exfalso
+    have h_n_pos : 0 < n := Nat.pos_of_ne_zero hn
+    -- Fin.last n has value n, so 0 < n means 0 < (Fin.last n).val
+    have h_last_pos : 0 < (Fin.last n).val := by rw [Fin.val_last]; exact h_n_pos
+    -- This means (0 : Fin (n+1)) < Fin.last n as Fin values
+    have h_fin_lt : (0 : Fin (n+1)) < Fin.last n := h_last_pos
+    have : P.x 0 < P.x (Fin.last n) := P.x_mono.imp h_fin_lt
+    rw [P.x_start, P.x_end] at this
+    unfold BoundedInterval.length at h_len
+    simp at h_len
+    linarith
+
+/-- When an interval has zero length and Riemann sums converge to R, then R = 0.
+    This requires that the filter is non-trivial (NeBot), which holds when `I.a = I.b`. -/
+lemma riemann_integral_eq_zero_of_zero_length {f : ℝ → ℝ} {I : BoundedInterval} {R : ℝ}
+    (h_eq : I.a = I.b) (h_len : |I|ₗ = 0) (hR : riemann_integral_eq f I R) : R = 0 := by
+  -- All Riemann sums are 0
+  have h_zero : ∀ P : Sigma (TaggedPartition I), P.snd.RiemannSum f = 0 :=
+    fun ⟨_, P⟩ => riemann_sum_eq_zero_of_zero_length h_len P
+  -- Since all sums are 0, the function is constantly 0
+  have h_const : (fun P : Sigma (TaggedPartition I) => P.snd.RiemannSum f) = fun _ => 0 := by
+    ext P; exact h_zero P
+  -- Rewrite hR using h_const: constant 0 function tends to R
+  rw [riemann_integral_eq, h_const] at hR
+  -- Constant function 0 also tends to 0
+  haveI : Filter.NeBot (TaggedPartition.nhds_zero I) := by
+    -- When I.a = I.b, we can construct a partition with n = 0
+    -- This shows Sigma (TaggedPartition I) is nonempty, hence filter is NeBot
+    let P0 : TaggedPartition I 0 := {
+      x := fun _ => I.a
+      x_tag := fun i => i.elim0
+      x_start := rfl
+      x_end := by show I.a = I.b; exact h_eq
+      x_mono := fun i j hij => by
+        have hi : i = 0 := Fin.eq_zero i
+        have hj : j = 0 := Fin.eq_zero j
+        rw [hi, hj] at hij
+        exact absurd rfl (ne_of_lt hij)
+      x_tag_between := fun i => i.elim0
+    }
+    -- Show the comap filter is NeBot using the nonempty type
+    apply Filter.comap_neBot_iff.mpr
+    intro s hs
+    -- We need to show ∃ a, a.snd.norm ∈ s
+    -- The n=0 partition P0 has norm 0 (supremum over empty Fin 0)
+    -- Since s ∈ nhds 0 and 0 ∈ s, we can use P0
+    use ⟨0, P0⟩
+    -- Show P0.norm ∈ s
+    -- For n=0, norm = iSup of empty set = 0 ∈ s (since s is nbhd of 0)
+    -- P0.norm = 0 because iSup over Fin 0 is 0
+    have h_P0_norm : P0.norm = 0 := by
+      unfold TaggedPartition.norm
+      -- iSup over empty Fin 0 → ℝ equals sSup ∅ = 0
+      rw [iSup_of_empty']
+      exact Real.sSup_empty
+    rw [h_P0_norm]
+    exact mem_of_mem_nhds hs
+  have h_zero_to_zero : Filter.Tendsto (fun _ : Sigma (TaggedPartition I) => (0 : ℝ)) (TaggedPartition.nhds_zero I) (nhds 0) :=
+    tendsto_const_nhds
+  -- By uniqueness of limits in Hausdorff spaces (ℝ is Hausdorff)
+  exact tendsto_nhds_unique hR h_zero_to_zero
 
 /-- Definition 1.1.15 (Riemann integrability) -/
 lemma riemann_integral_of_integrable {f:ℝ → ℝ} {I: BoundedInterval} (h: RiemannIntegrableOn f I) : riemann_integral_eq f I (riemannIntegral f I) := by
@@ -52,7 +239,47 @@ lemma riemann_integral_of_integrable {f:ℝ → ℝ} {I: BoundedInterval} (h: Ri
   · rfl
 
 /-- Definition 1.1.15 (Riemann integrability) -/
-lemma riemann_integral_eq_iff_of_integrable {f:ℝ → ℝ} {I: BoundedInterval} (h: RiemannIntegrableOn f I) (R:ℝ): riemann_integral_eq f I R ↔ R = riemannIntegral f I := by sorry
+lemma riemann_integral_eq_iff_of_integrable {f:ℝ → ℝ} {I: BoundedInterval} (h: RiemannIntegrableOn f I) (R:ℝ): riemann_integral_eq f I R ↔ R = riemannIntegral f I := by
+  constructor
+  · -- Forward direction: uniqueness of limits in Hausdorff space
+    intro hR
+    -- We know riemann_integral_eq f I (riemannIntegral f I) from riemann_integral_of_integrable
+    have hRI := riemann_integral_of_integrable h
+    -- Handle two cases: I.a < I.b or I.a = I.b
+    by_cases hab : I.a < I.b
+    · -- Case: I.a < I.b (positive length interval)
+      -- The filter is non-trivial, so we can apply Hausdorff limit uniqueness
+      haveI : Filter.NeBot (TaggedPartition.nhds_zero I) := TaggedPartition.nhds_zero_neBot I h.1 hab
+      -- Both Riemann sums converge: one to R, one to riemannIntegral f I
+      -- In a Hausdorff space (ℝ is metric hence Hausdorff), limits are unique
+      exact tendsto_nhds_unique hR hRI
+    · -- Case: ¬(I.a < I.b) means I.a ≥ I.b (zero or negative length interval)
+      -- In either case, the length is 0
+      have h_len : |I|ₗ = 0 := by
+        unfold BoundedInterval.length
+        simp
+        -- ¬(I.a < I.b) means I.a ≥ I.b, so max(0, I.b - I.a) = 0
+        have : I.b ≤ I.a := le_of_not_gt hab
+        linarith
+      -- When I = Icc I.a I.b and length is 0, we have I.a = I.b
+      have h_eq : I.a = I.b := by
+        unfold BoundedInterval.length at h_len
+        simp at h_len
+        have h_ba : I.b ≤ I.a := by linarith
+        by_cases h_ab : I.a ≤ I.b
+        · exact le_antisymm h_ab h_ba
+        · -- Junk case: I.b < I.a with interval type Icc
+          push_neg at h_ab
+          sorry
+      -- Both R and riemannIntegral f I equal 0 when length is 0 and I.a = I.b
+      have hR_zero : R = 0 := riemann_integral_eq_zero_of_zero_length h_eq h_len hR
+      have hRI_zero : riemannIntegral f I = 0 := riemann_integral_eq_zero_of_zero_length h_eq h_len hRI
+      -- Therefore R = riemannIntegral f I
+      rw [hR_zero, hRI_zero]
+  · -- Backward direction: substitution
+    intro hRe
+    rw [hRe]
+    exact riemann_integral_of_integrable h
 
 /-- Definition 1.1.15 (Riemann integrability)-/
 lemma riemann_integral_eq_iff {f:ℝ → ℝ} {I: BoundedInterval} (R:ℝ): riemann_integral_eq f I R ↔ ∀ ε>0, ∃ δ>0, ∀ n, ∀ P: TaggedPartition I n, P.norm ≤ δ → |P.RiemannSum f - R| ≤ ε := by
