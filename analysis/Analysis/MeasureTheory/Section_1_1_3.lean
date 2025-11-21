@@ -455,7 +455,99 @@ noncomputable def LowerDarbouxIntegral (f:ℝ → ℝ) (I: BoundedInterval) : �
 noncomputable def UpperDarbouxIntegral (f:ℝ → ℝ) (I: BoundedInterval) : ℝ := sInf { R | ∃ h: PiecewiseConstantFunction I, h.integral = R ∧ ∀ x ∈ I.toSet, f x ≤ h.f x }
 
 /-- Definition 1.1.6 (Darboux integral) -/
-lemma lower_darboux_le_upper_darboux {f:ℝ → ℝ} {I: BoundedInterval} (hbound: ∃ M, ∀ x ∈ I, |f x| ≤ M) : LowerDarbouxIntegral f I ≤ UpperDarbouxIntegral f I := by sorry
+lemma lower_darboux_le_upper_darboux {f:ℝ → ℝ} {I: BoundedInterval} (hbound: ∃ M, ∀ x ∈ I, |f x| ≤ M) : LowerDarbouxIntegral f I ≤ UpperDarbouxIntegral f I := by
+  -- Strategy: Use csSup_le to show sSup (lower set) ≤ sInf (upper set)
+  -- 1. Unfold both definitions
+  -- 2. Apply csSup_le, which requires:
+  --    a) Lower set is nonempty (use constant function -M from hbound)
+  --    b) Every lower element ≤ UpperDarbouxIntegral
+  -- 3. For (b), use le_csInf, which requires:
+  --    a) Upper set is nonempty (use constant function M from hbound)
+  --    b) Lower element is ≤ every upper element
+  -- 4. For (3b), use that g ≤ f ≤ h pointwise, so by integral_mono: g.integral ≤ h.integral
+  obtain ⟨M, hM⟩ := hbound
+  -- Step 1: Unfold definitions
+  unfold LowerDarbouxIntegral UpperDarbouxIntegral
+  -- Step 2: Apply csSup_le
+  apply csSup_le
+  · -- Step 2a: Show lower set is nonempty (construct constant function -M)
+    -- Construct a constant piecewise constant function with value -M
+    let g_const : PiecewiseConstantFunction I := {
+      f := fun _ => -M
+      T := {I}
+      c := fun _ => -M
+      disjoint := by
+        simp [Set.pairwiseDisjoint_singleton]
+      cover := by
+        simp
+      const := by
+        intro J
+        intro x hx
+        -- Show f x = c J, i.e., -M = -M (trivially true)
+        rfl
+    }
+    -- Show g_const is in the lower set
+    use g_const.integral, g_const, rfl
+    -- Show g_const.f x ≤ f x for all x ∈ I.toSet
+    intro x hx
+    -- We have |f x| ≤ M, so -M ≤ f x
+    have h_abs : |f x| ≤ M := hM x hx
+    rw [abs_le] at h_abs
+    linarith [h_abs.1]
+  · -- Step 2b: Show every lower element ≤ UpperDarbouxIntegral
+    intro R hR
+    obtain ⟨g, rfl, hg_lower⟩ := hR
+    -- Use le_csInf to show g.integral ≤ sInf (upper set)
+    apply le_csInf
+    · -- Step 3a: Show upper set is nonempty (construct constant function M)
+      -- Construct a constant piecewise constant function with value M
+      let h_const : PiecewiseConstantFunction I := {
+        f := fun _ => M
+        T := {I}
+        c := fun _ => M
+        disjoint := by
+          simp [Set.pairwiseDisjoint_singleton]
+        cover := by
+          simp
+        const := by
+          intro J
+          intro x hx
+          -- Show f x = c J, i.e., M = M (trivially true)
+          rfl
+      }
+      -- Show h_const is in the upper set
+      use h_const.integral, h_const, rfl
+      -- Show f x ≤ h_const.f x for all x ∈ I.toSet
+      intro x hx
+      -- We have |f x| ≤ M, so f x ≤ M
+      have h_abs : |f x| ≤ M := hM x hx
+      rw [abs_le] at h_abs
+      linarith [h_abs.2]
+    · -- Step 3b: Show g.integral is a lower bound for upper set
+      intro b hb
+      obtain ⟨h, rfl, hh_upper⟩ := hb
+      -- We have: ∀ x ∈ I.toSet, g.f x ≤ f x ≤ h.f x
+      -- So: ∀ x ∈ I.toSet, g.f x ≤ h.f x
+      have h_pointwise : ∀ x ∈ I.toSet, g.f x ≤ h.f x := by
+        intro x hx
+        have hg : g.f x ≤ f x := hg_lower x hx
+        have hh : f x ≤ h.f x := hh_upper x hx
+        linarith
+      -- Convert PiecewiseConstantFunctions to PiecewiseConstantOn
+      have hg_agrees : g.agreesWith g.f := fun x hx => rfl
+      have hh_agrees : h.agreesWith h.f := fun x hx => rfl
+      have hg_pc : PiecewiseConstantOn g.f I := ⟨g, hg_agrees⟩
+      have hh_pc : PiecewiseConstantOn h.f I := ⟨h, hh_agrees⟩
+      -- Apply integral_mono: since g.f ≤ h.f pointwise, g.integral ≤ h.integral
+      have h_integral_eq_g : hg_pc.integral = g.integral := by
+        exact PiecewiseConstantOn.integral_eq g.f hg_pc g hg_agrees
+      have h_integral_eq_h : hh_pc.integral = h.integral := by
+        exact PiecewiseConstantOn.integral_eq h.f hh_pc h hh_agrees
+      -- Apply integral_mono
+      have h_mono : hg_pc.integral ≤ hh_pc.integral := PiecewiseConstantFunction.integral_mono hg_pc hh_pc h_pointwise
+      -- Convert back to PiecewiseConstantFunction integrals
+      rw [h_integral_eq_g, h_integral_eq_h] at h_mono
+      exact h_mono
 
 /-- Definition 1.1.6 (Darboux integral) -/
 noncomputable def DarbouxIntegrableOn (f:ℝ → ℝ) (I: BoundedInterval) : Prop := (I = Icc I.a I.b) ∧ ∃ M, ∀ x ∈ I, |f x| ≤ M ∧ LowerDarbouxIntegral f I = UpperDarbouxIntegral f I
