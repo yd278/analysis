@@ -556,7 +556,277 @@ noncomputable def DarbouxIntegrableOn (f:ℝ → ℝ) (I: BoundedInterval) : Pro
 noncomputable def darbouxIntegral (f:ℝ → ℝ) (I: BoundedInterval) : ℝ := LowerDarbouxIntegral f I
 
 /-- Definition 1.1.6 (Darboux integral) -/
-lemma UpperDarbouxIntegral.neg {f:ℝ → ℝ} {I: BoundedInterval} (hbound: ∃ M, ∀ x ∈ I, |f x| ≤ M) : UpperDarbouxIntegral (-f) I = -LowerDarbouxIntegral f I := by sorry
+lemma UpperDarbouxIntegral.neg {f:ℝ → ℝ} {I: BoundedInterval} (hbound: ∃ M, ∀ x ∈ I, |f x| ≤ M) : UpperDarbouxIntegral (-f) I = -LowerDarbouxIntegral f I := by
+  obtain ⟨M, hM⟩ := hbound
+  -- Step 1: Unfold definitions
+  unfold UpperDarbouxIntegral LowerDarbouxIntegral
+  -- Step 2: Apply le_antisymm
+  apply le_antisymm
+  · -- Step 2a: Show UpperDarbouxIntegral (-f) I ≤ -LowerDarbouxIntegral f I
+    rw [← neg_le_neg_iff, neg_neg]
+    -- Goal is now: sSup (lower set) ≤ -sInf (upper set)
+    apply csSup_le
+    · -- Show lower set is nonempty
+      -- Use constant function -M
+      let g_const : PiecewiseConstantFunction I := {
+        f := fun _ => -M
+        T := {I}
+        c := fun _ => -M
+        disjoint := by simp [Set.pairwiseDisjoint_singleton]
+        cover := by simp
+        const := by intro J x hx; rfl
+      }
+      use g_const.integral, g_const, rfl
+      intro x hx
+      have h_abs : |f x| ≤ M := hM x hx
+      rw [abs_le] at h_abs
+      linarith [h_abs.1]
+    · -- Show -sInf (upper set) is an upper bound for lower set
+      intro b hb
+      obtain ⟨g, rfl, hg_lower⟩ := hb
+      -- Key bijection: -g is an upper approximation for -f
+      -- Since g ≤ f pointwise, we have -f ≤ -g pointwise
+      -- Construct -g first, then show the inequality
+      let neg_g : PiecewiseConstantFunction I := {
+        f := fun x => -g.f x
+        T := g.T
+        c := fun J => -g.c J
+        disjoint := g.disjoint
+        cover := g.cover
+        const := by
+          intro J
+          intro x hx
+          have h_const : g.f x = g.c J := g.const J x hx
+          simp [h_const]
+      }
+      have h_neg_upper : ∀ x ∈ I.toSet, (-f) x ≤ neg_g.f x := by
+        intro x hx
+        have h_ineq : g.f x ≤ f x := hg_lower x hx
+        simp [neg_g]
+        linarith
+      -- Show (-g).integral = -g.integral
+      have h_integral_neg : neg_g.integral = -g.integral := by
+        unfold PiecewiseConstantFunction.integral
+        simp only [neg_g]
+        -- Show: ∑ J : g.T, (-g.c J) * |J|ₗ = -∑ J : g.T, g.c J * |J|ₗ
+        rw [← Finset.sum_neg_distrib]
+        congr 1
+        ext J
+        ring
+      -- Show neg_g is in the upper set for -f
+      have h_neg_in_set : -g.integral ∈ { R | ∃ h: PiecewiseConstantFunction I, h.integral = R ∧ ∀ x ∈ I.toSet, (-f) x ≤ h.f x } := by
+        use neg_g, h_integral_neg, h_neg_upper
+      -- We want: g.integral ≤ -sInf (upper set)
+      -- Which is: sInf (upper set) ≤ -g.integral
+      -- Since -g.integral is in the upper set, use csInf_le
+      have h_bdd_below : BddBelow ({ R | ∃ h: PiecewiseConstantFunction I, h.integral = R ∧ ∀ x ∈ I.toSet, (-f) x ≤ h.f x } : Set ℝ) := by
+        -- The set is bounded below by -M * |I|ₗ (from constant function -M)
+        -- Use bddBelow_def: show there exists a lower bound
+        rw [bddBelow_def]
+        -- Construct constant function -M as lower bound
+        let h_const : PiecewiseConstantFunction I := {
+          f := fun _ => -M
+          T := {I}
+          c := fun _ => -M
+          disjoint := by simp [Set.pairwiseDisjoint_singleton]
+          cover := by simp
+          const := by intro J x hx; rfl
+        }
+        -- Show h_const.integral = -M * |I|ₗ
+        have h_const_integral : h_const.integral = -M * |I|ₗ := by
+          unfold PiecewiseConstantFunction.integral
+          simp [h_const, Finset.sum_singleton]
+        -- Use -M * |I|ₗ as the lower bound
+        use -M * |I|ₗ
+        -- Show every element in the set is ≥ -M * |I|ₗ
+        intro R hR
+        obtain ⟨h, rfl, hh_upper⟩ := hR
+        -- We have: ∀ x ∈ I.toSet, (-f) x ≤ h.f x
+        -- Since |f x| ≤ M, we have -M ≤ f x ≤ M, so -M ≤ -f x ≤ M
+        -- Therefore: -M ≤ (-f) x ≤ h.f x, so -M ≤ h.f x pointwise
+        have h_pointwise : ∀ x ∈ I.toSet, h_const.f x ≤ h.f x := by
+          intro x hx
+          -- We have (-f) x ≤ h.f x from hh_upper
+          -- And (-f) x ≥ -M from boundedness
+          have h_abs : |f x| ≤ M := hM x hx
+          rw [abs_le] at h_abs
+          -- We have -M ≤ f x ≤ M
+          -- From f x ≤ M, we get -M ≤ -f x (multiply by -1 and reverse inequality)
+          -- From (-f) x ≤ h.f x, we get -M ≤ h.f x
+          simp [h_const]
+          -- Show -M ≤ (-f) x: from f x ≤ M, we get -M ≤ -f x
+          have h_neg_f : -M ≤ (-f) x := by
+            -- From f x ≤ M, multiply by -1: -f x ≥ -M, so -M ≤ -f x
+            have : f x ≤ M := h_abs.2
+            -- Direct calculation: -M ≤ -f x
+            have : -M ≤ -f x := by linarith
+            exact this
+          -- From (-f) x ≤ h.f x and -M ≤ (-f) x, we get -M ≤ h.f x
+          have h_ineq : (-f) x ≤ h.f x := hh_upper x hx
+          -- Chain: -M ≤ (-f) x ≤ h.f x, so -M ≤ h.f x
+          calc
+            -M ≤ (-f) x := h_neg_f
+            _ ≤ h.f x := h_ineq
+        -- Convert to PiecewiseConstantOn and apply integral_mono
+        have h_const_agrees : h_const.agreesWith h_const.f := fun x hx => rfl
+        have h_agrees : h.agreesWith h.f := fun x hx => rfl
+        have h_const_pc : PiecewiseConstantOn h_const.f I := ⟨h_const, h_const_agrees⟩
+        have h_pc : PiecewiseConstantOn h.f I := ⟨h, h_agrees⟩
+        -- Apply integral_mono: h_const.integral ≤ h.integral
+        have h_mono : h_const_pc.integral ≤ h_pc.integral :=
+          PiecewiseConstantFunction.integral_mono h_const_pc h_pc h_pointwise
+        -- Convert back to PiecewiseConstantFunction integrals
+        have h_const_eq : h_const_pc.integral = h_const.integral := by
+          exact PiecewiseConstantOn.integral_eq h_const.f h_const_pc h_const h_const_agrees
+        have h_eq : h_pc.integral = h.integral := by
+          exact PiecewiseConstantOn.integral_eq h.f h_pc h h_agrees
+        rw [h_const_eq, h_eq, h_const_integral] at h_mono
+        exact h_mono
+      -- Apply csInf_le: sInf (upper set) ≤ -g.integral
+      have h_inf_le : sInf { R | ∃ h: PiecewiseConstantFunction I, h.integral = R ∧ ∀ x ∈ I.toSet, (-f) x ≤ h.f x } ≤ -g.integral :=
+        csInf_le h_bdd_below h_neg_in_set
+      -- Therefore: g.integral ≤ -sInf (upper set)
+      linarith
+  · -- Step 2b: Show -LowerDarbouxIntegral f I ≤ UpperDarbouxIntegral (-f) I
+    -- Goal: -sSup (lower set) ≤ sInf (upper set for -f)
+    apply le_csInf
+    · -- Show upper set for -f is nonempty
+      -- Use constant function M
+      let h_const : PiecewiseConstantFunction I := {
+        f := fun _ => M
+        T := {I}
+        c := fun _ => M
+        disjoint := by simp [Set.pairwiseDisjoint_singleton]
+        cover := by simp
+        const := by intro J x hx; rfl
+      }
+      use h_const.integral, h_const, rfl
+      intro x hx
+      -- Show (-f) x ≤ M
+      have h_abs : |f x| ≤ M := hM x hx
+      rw [abs_le] at h_abs
+      -- We have -M ≤ f x ≤ M, so -f x ≤ M
+      have h_neg_f : -f x ≤ M := by
+        have : -M ≤ f x := h_abs.1
+        linarith
+      exact h_neg_f
+    · -- Show -sSup (lower set) is a lower bound for upper set
+      intro b hb
+      obtain ⟨h, rfl, hh_upper⟩ := hb
+      -- Key bijection: -h is a lower approximation for f
+      -- Since -f ≤ h pointwise, we have -h ≤ f pointwise
+      -- Construct -h first
+      let neg_h : PiecewiseConstantFunction I := {
+        f := fun x => -h.f x
+        T := h.T
+        c := fun J => -h.c J
+        disjoint := h.disjoint
+        cover := h.cover
+        const := by
+          intro J
+          intro x hx
+          have h_const : h.f x = h.c J := h.const J x hx
+          simp [h_const]
+      }
+      -- Show -h ≤ f pointwise
+      have h_neg_lower : ∀ x ∈ I.toSet, neg_h.f x ≤ f x := by
+        intro x hx
+        have h_ineq : (-f) x ≤ h.f x := hh_upper x hx
+        -- We have -f x ≤ h.f x, so -h.f x ≤ -(-f) x = f x
+        simp only [neg_h]
+        -- From -f x ≤ h.f x, we get -h.f x ≤ f x by negating and reversing
+        have : -h.f x ≤ f x := by
+          have h_neg : -h.f x ≤ -(-f) x := by linarith [h_ineq]
+          simp at h_neg
+          exact h_neg
+        exact this
+      -- Show (-h).integral = -h.integral
+      have h_integral_neg : neg_h.integral = -h.integral := by
+        unfold PiecewiseConstantFunction.integral
+        simp only [neg_h]
+        -- Show: ∑ J : h.T, (-h.c J) * |J|ₗ = -∑ J : h.T, h.c J * |J|ₗ
+        rw [← Finset.sum_neg_distrib]
+        congr 1
+        ext J
+        ring
+      -- Show neg_h is in the lower set for f
+      have h_neg_in_set : -h.integral ∈ { R | ∃ g: PiecewiseConstantFunction I, g.integral = R ∧ ∀ x ∈ I.toSet, g.f x ≤ f x } := by
+        use neg_h, h_integral_neg, h_neg_lower
+      -- We want: -sSup (lower set) ≤ h.integral
+      -- Which is: sSup (lower set) ≥ -h.integral, i.e., -h.integral ≤ sSup (lower set)
+      -- Since -h.integral is in the lower set, use le_csSup
+      have h_lower_nonempty : ({ R | ∃ g: PiecewiseConstantFunction I, g.integral = R ∧ ∀ x ∈ I.toSet, g.f x ≤ f x } : Set ℝ).Nonempty := by
+        -- Use constant function -M
+        let g_const : PiecewiseConstantFunction I := {
+          f := fun _ => -M
+          T := {I}
+          c := fun _ => -M
+          disjoint := by simp [Set.pairwiseDisjoint_singleton]
+          cover := by simp
+          const := by intro J x hx; rfl
+        }
+        use g_const.integral, g_const, rfl
+        intro x hx
+        have h_abs : |f x| ≤ M := hM x hx
+        rw [abs_le] at h_abs
+        linarith [h_abs.1]
+      have h_bdd : BddAbove ({ R | ∃ g: PiecewiseConstantFunction I, g.integral = R ∧ ∀ x ∈ I.toSet, g.f x ≤ f x } : Set ℝ) := by
+        -- The set is bounded above by M * |I|ₗ (from constant function M)
+        -- Use bddAbove_def: show there exists an upper bound
+        rw [bddAbove_def]
+        -- Construct constant function M as upper bound
+        let g_const : PiecewiseConstantFunction I := {
+          f := fun _ => M
+          T := {I}
+          c := fun _ => M
+          disjoint := by simp [Set.pairwiseDisjoint_singleton]
+          cover := by simp
+          const := by intro J x hx; rfl
+        }
+        -- Show g_const.integral = M * |I|ₗ
+        have g_const_integral : g_const.integral = M * |I|ₗ := by
+          unfold PiecewiseConstantFunction.integral
+          simp [g_const, Finset.sum_singleton]
+        -- Use M * |I|ₗ as the upper bound
+        use M * |I|ₗ
+        -- Show every element in the set is ≤ M * |I|ₗ
+        intro R hR
+        obtain ⟨g, rfl, hg_lower⟩ := hR
+        -- We have: ∀ x ∈ I.toSet, g.f x ≤ f x
+        -- Since |f x| ≤ M, we have -M ≤ f x ≤ M
+        -- Therefore: g.f x ≤ f x ≤ M, so g.f x ≤ M pointwise
+        have h_pointwise : ∀ x ∈ I.toSet, g.f x ≤ g_const.f x := by
+          intro x hx
+          -- We have g.f x ≤ f x from hg_lower
+          -- And f x ≤ M from boundedness
+          have h_abs : |f x| ≤ M := hM x hx
+          rw [abs_le] at h_abs
+          -- We have -M ≤ f x ≤ M
+          -- From g.f x ≤ f x and f x ≤ M, we get g.f x ≤ M
+          simp [g_const]
+          have h_g_f : g.f x ≤ f x := hg_lower x hx
+          have h_f_M : f x ≤ M := h_abs.2
+          linarith
+        -- Convert to PiecewiseConstantOn and apply integral_mono
+        have g_agrees : g.agreesWith g.f := fun x hx => rfl
+        have g_const_agrees : g_const.agreesWith g_const.f := fun x hx => rfl
+        have g_pc : PiecewiseConstantOn g.f I := ⟨g, g_agrees⟩
+        have g_const_pc : PiecewiseConstantOn g_const.f I := ⟨g_const, g_const_agrees⟩
+        -- Apply integral_mono: g.integral ≤ g_const.integral
+        have h_mono : g_pc.integral ≤ g_const_pc.integral :=
+          PiecewiseConstantFunction.integral_mono g_pc g_const_pc h_pointwise
+        -- Convert back to PiecewiseConstantFunction integrals
+        have g_eq : g_pc.integral = g.integral := by
+          exact PiecewiseConstantOn.integral_eq g.f g_pc g g_agrees
+        have g_const_eq : g_const_pc.integral = g_const.integral := by
+          exact PiecewiseConstantOn.integral_eq g_const.f g_const_pc g_const g_const_agrees
+        rw [g_eq, g_const_eq, g_const_integral] at h_mono
+        exact h_mono
+      -- Apply le_csSup: -h.integral ≤ sSup (lower set)
+      have h_le_sup : -h.integral ≤ sSup { R | ∃ g: PiecewiseConstantFunction I, g.integral = R ∧ ∀ x ∈ I.toSet, g.f x ≤ f x } :=
+        le_csSup h_bdd h_neg_in_set
+      -- Therefore: -sSup (lower set) ≤ h.integral
+      linarith
 
 /-- Exercise 1.1.22 -/
 lemma RiemannIntegrableOn.iff_darbouxIntegrable {f:ℝ → ℝ} {I: BoundedInterval} (hbound: ∃ M, ∀ x ∈ I, |f x| ≤ M) : RiemannIntegrableOn f I ↔ DarbouxIntegrableOn f I := by sorry
