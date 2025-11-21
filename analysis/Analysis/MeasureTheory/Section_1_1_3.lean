@@ -33,20 +33,369 @@ instance TaggedPartition.nhds_zero (I: BoundedInterval) : Filter (Sigma (TaggedP
 
 def riemann_integral_eq (f: ℝ → ℝ) (I: BoundedInterval) (R: ℝ) : Prop := (TaggedPartition.nhds_zero I).Tendsto (fun P ↦ TaggedPartition.RiemannSum f P.snd) (nhds R)
 
+/-- Construct a uniform partition of `[a,b]` into `n` equal pieces with left endpoint tags. -/
+noncomputable def TaggedPartition.uniform (I: BoundedInterval) (n: ℕ) (hn: n > 0) (_: I = Icc I.a I.b) (hab: I.a < I.b) : TaggedPartition I n where
+  x := fun i => I.a + (I.b - I.a) * (i.val : ℝ) / n
+  x_tag := fun i => I.a + (I.b - I.a) * (i.castSucc.val : ℝ) / n
+  x_start := by simp
+  x_end := by
+    show I.a + (I.b - I.a) * ((Fin.last n).val : ℝ) / n = I.b
+    rw [Fin.val_last]
+    field_simp
+  x_mono i j hij := by
+    have h_width_pos : 0 < I.b - I.a := by linarith
+    have h_n_pos : 0 < (n : ℝ) := Nat.cast_pos.mpr hn
+    have : (i.val : ℝ) < (j.val : ℝ) := Nat.cast_lt.mpr hij
+    apply add_lt_add_left
+    apply div_lt_div_of_pos_right
+    · exact mul_lt_mul_of_pos_left this h_width_pos
+    · exact h_n_pos
+  x_tag_between i := by
+    constructor
+    · -- i.castSucc.val = i.val
+      rfl
+    · -- i.castSucc.val ≤ i.succ.val
+      have h_width_nonneg : 0 ≤ I.b - I.a := by linarith
+      have h_n_pos : 0 < (n : ℝ) := Nat.cast_pos.mpr hn
+      show I.a + (I.b - I.a) * (i.castSucc.val : ℝ) / n ≤ I.a + (I.b - I.a) * (i.succ.val : ℝ) / n
+      rw [show i.castSucc.val = i.val from rfl, Fin.val_succ]
+      apply add_le_add_left
+      apply div_le_div_of_nonneg_right
+      · apply mul_le_mul_of_nonneg_left _ h_width_nonneg
+        norm_num
+      · linarith
+
+/-- The norm of a uniform partition is (b-a)/n. -/
+lemma TaggedPartition.uniform_norm (I: BoundedInterval) (n: ℕ) (hn: n > 0) (hI: I = Icc I.a I.b) (hab: I.a < I.b) :
+    (TaggedPartition.uniform I n hn hI hab).norm = (I.b - I.a) / n := by
+  let P := TaggedPartition.uniform I n hn hI hab
+  unfold TaggedPartition.norm
+  -- All deltas are equal to (b-a)/n
+  have h_eq : ∀ i : Fin n, P.delta i = (I.b - I.a) / n := by
+    intro i
+    unfold TaggedPartition.delta
+    show P.x i.succ - P.x i.castSucc = (I.b - I.a) / n
+    -- Unfold the definition of P.x from uniform
+    show (I.a + (I.b - I.a) * (i.succ.val : ℝ) / n) - (I.a + (I.b - I.a) * (i.castSucc.val : ℝ) / n) = (I.b - I.a) / n
+    rw [show i.castSucc.val = i.val from rfl, Fin.val_succ]
+    field_simp
+    ring
+  -- The supremum of a constant function is that constant
+  have h_bdd : BddAbove (Set.range P.delta) := Set.Finite.bddAbove (Set.finite_range P.delta)
+  have h_le : ∀ i, P.delta i ≤ (I.b - I.a) / n := by
+    intro i
+    rw [h_eq]
+  have h_nonempty : Nonempty (Fin n) := ⟨⟨0, hn⟩⟩
+  have h_ge : (I.b - I.a) / n ≤ iSup P.delta := by
+    have : ∃ i, P.delta i = (I.b - I.a) / n := ⟨⟨0, hn⟩, h_eq ⟨0, hn⟩⟩
+    obtain ⟨i, hi⟩ := this
+    calc (I.b - I.a) / n = P.delta i := hi.symm
+      _ ≤ iSup P.delta := le_ciSup h_bdd i
+  have h_le_sup : iSup P.delta ≤ (I.b - I.a) / n := by
+    haveI : Nonempty (Fin n) := h_nonempty
+    exact ciSup_le h_le
+  linarith
+
+/-- For any positive interval and δ > 0, there exists a tagged partition with norm ≤ δ. -/
+lemma TaggedPartition.exists_norm_le (I: BoundedInterval) (hI: I = Icc I.a I.b) (hab: I.a < I.b) (δ : ℝ) (hδ : 0 < δ) :
+    ∃ (n : ℕ) (P : TaggedPartition I n), P.norm ≤ δ := by
+  -- Choose n large enough that (b-a)/n < δ
+  obtain ⟨N, hN⟩ := exists_nat_gt ((I.b - I.a) / δ)
+  have h_width_pos : 0 < I.b - I.a := by linarith
+  have h_ratio_pos : 0 < (I.b - I.a) / δ := div_pos h_width_pos hδ
+  have hN_pos : N > 0 := Nat.pos_of_ne_zero (fun h => by
+    rw [h] at hN
+    simp at hN
+    linarith)
+  use N, TaggedPartition.uniform I N hN_pos hI hab
+  rw [TaggedPartition.uniform_norm]
+  -- We have: (b-a)/δ < N, so (b-a) < N*δ, so (b-a)/N < δ
+  have : (I.b - I.a) / (N : ℝ) < δ := by
+    calc (I.b - I.a) / (N : ℝ)
+        < (I.b - I.a) / ((I.b - I.a) / δ) := by
+          apply div_lt_div_of_pos_left h_width_pos h_ratio_pos hN
+      _ = δ := by field_simp
+  linarith
+
+/-- The filter TaggedPartition.nhds_zero is non-trivial when the interval has positive length. -/
+instance TaggedPartition.nhds_zero_neBot (I: BoundedInterval) (hI: I = Icc I.a I.b) (hab: I.a < I.b) :
+    Filter.NeBot (TaggedPartition.nhds_zero I) := by
+  unfold TaggedPartition.nhds_zero
+  rw [Filter.comap_neBot_iff]
+  intro t ht
+  -- t is a neighborhood of 0, so it contains some ball around 0
+  rw [Metric.mem_nhds_iff] at ht
+  obtain ⟨δ, hδ_pos, hδ_sub⟩ := ht
+  -- Construct a partition with norm < δ
+  obtain ⟨n, P, hP_norm⟩ := TaggedPartition.exists_norm_le I hI hab (δ / 2) (half_pos hδ_pos)
+  use ⟨n, P⟩
+  apply hδ_sub
+  rw [Metric.mem_ball, Real.dist_eq, sub_zero, abs_of_nonneg]
+  · calc P.norm ≤ δ / 2 := hP_norm
+      _ < δ := half_lt_self hδ_pos
+  · -- Show P.norm is nonnegative
+    unfold TaggedPartition.norm
+    by_cases h_n_zero : n = 0
+    · subst h_n_zero
+      simp [iSup]
+    · have h_n_pos : n > 0 := Nat.pos_of_ne_zero h_n_zero
+      let i0 : Fin n := ⟨0, h_n_pos⟩
+      have h_delta_nonneg : 0 ≤ P.delta i0 := by
+        unfold TaggedPartition.delta
+        have h_lt : i0.castSucc < i0.succ := Fin.castSucc_lt_succ i0
+        have h_x_lt : P.x i0.castSucc < P.x i0.succ := P.x_mono.imp h_lt
+        linarith
+      have h_bdd : BddAbove (Set.range P.delta) := Set.Finite.bddAbove (Set.finite_range P.delta)
+      have h_le_sup : P.delta i0 ≤ iSup P.delta := le_ciSup h_bdd i0
+      linarith
+
 /-- We enforce `I` to be closed for the definition of Riemann integrability. -/
 abbrev RiemannIntegrableOn (f: ℝ → ℝ) (I: BoundedInterval) : Prop := I = Icc I.a I.b ∧ ∃ R, riemann_integral_eq f I R
 
 open Classical in
 noncomputable def riemannIntegral (f: ℝ → ℝ) (I: BoundedInterval) : ℝ := if h:RiemannIntegrableOn f I then h.2.choose else 0
 
-/-- Definition 1.1.15 (Riemann integrability) -/
-lemma riemann_integral_of_integrable {f:ℝ → ℝ} {I: BoundedInterval} (h: RiemannIntegrableOn f I) : riemann_integral_eq f I (riemannIntegral f I) := by sorry
+/-- When an interval has zero length, all Riemann sums equal zero. -/
+lemma riemann_sum_eq_zero_of_zero_length {f : ℝ → ℝ} {I : BoundedInterval} (h_len : |I|ₗ = 0)
+    {n : ℕ} (P : TaggedPartition I n) : P.RiemannSum f = 0 := by
+  unfold TaggedPartition.RiemannSum
+  by_cases hn : n = 0
+  · -- When n = 0, the sum is empty
+    subst hn
+    rfl
+  · -- When n > 0 and |I| = 0, we derive a contradiction from StrictMono
+    exfalso
+    have h_n_pos : 0 < n := Nat.pos_of_ne_zero hn
+    -- Fin.last n has value n, so 0 < n means 0 < (Fin.last n).val
+    have h_last_pos : 0 < (Fin.last n).val := by rw [Fin.val_last]; exact h_n_pos
+    -- This means (0 : Fin (n+1)) < Fin.last n as Fin values
+    have h_fin_lt : (0 : Fin (n+1)) < Fin.last n := h_last_pos
+    have : P.x 0 < P.x (Fin.last n) := P.x_mono.imp h_fin_lt
+    rw [P.x_start, P.x_end] at this
+    unfold BoundedInterval.length at h_len
+    simp at h_len
+    linarith
+
+/-- When an interval has zero length and Riemann sums converge to R, then R = 0.
+    This requires that the filter is non-trivial (NeBot), which holds when `I.a = I.b`. -/
+lemma riemann_integral_eq_zero_of_zero_length {f : ℝ → ℝ} {I : BoundedInterval} {R : ℝ}
+    (h_eq : I.a = I.b) (h_len : |I|ₗ = 0) (hR : riemann_integral_eq f I R) : R = 0 := by
+  -- All Riemann sums are 0
+  have h_zero : ∀ P : Sigma (TaggedPartition I), P.snd.RiemannSum f = 0 :=
+    fun ⟨_, P⟩ => riemann_sum_eq_zero_of_zero_length h_len P
+  -- Since all sums are 0, the function is constantly 0
+  have h_const : (fun P : Sigma (TaggedPartition I) => P.snd.RiemannSum f) = fun _ => 0 := by
+    ext P; exact h_zero P
+  -- Rewrite hR using h_const: constant 0 function tends to R
+  rw [riemann_integral_eq, h_const] at hR
+  -- Constant function 0 also tends to 0
+  haveI : Filter.NeBot (TaggedPartition.nhds_zero I) := by
+    -- When I.a = I.b, we can construct a partition with n = 0
+    -- This shows Sigma (TaggedPartition I) is nonempty, hence filter is NeBot
+    let P0 : TaggedPartition I 0 := {
+      x := fun _ => I.a
+      x_tag := fun i => i.elim0
+      x_start := rfl
+      x_end := by show I.a = I.b; exact h_eq
+      x_mono := fun i j hij => by
+        have hi : i = 0 := Fin.eq_zero i
+        have hj : j = 0 := Fin.eq_zero j
+        rw [hi, hj] at hij
+        exact absurd rfl (ne_of_lt hij)
+      x_tag_between := fun i => i.elim0
+    }
+    -- Show the comap filter is NeBot using the nonempty type
+    apply Filter.comap_neBot_iff.mpr
+    intro s hs
+    -- We need to show ∃ a, a.snd.norm ∈ s
+    -- The n=0 partition P0 has norm 0 (supremum over empty Fin 0)
+    -- Since s ∈ nhds 0 and 0 ∈ s, we can use P0
+    use ⟨0, P0⟩
+    -- Show P0.norm ∈ s
+    -- For n=0, norm = iSup of empty set = 0 ∈ s (since s is nbhd of 0)
+    -- P0.norm = 0 because iSup over Fin 0 is 0
+    have h_P0_norm : P0.norm = 0 := by
+      unfold TaggedPartition.norm
+      -- iSup over empty Fin 0 → ℝ equals sSup ∅ = 0
+      rw [iSup_of_empty']
+      exact Real.sSup_empty
+    rw [h_P0_norm]
+    exact mem_of_mem_nhds hs
+  have h_zero_to_zero : Filter.Tendsto (fun _ : Sigma (TaggedPartition I) => (0 : ℝ)) (TaggedPartition.nhds_zero I) (nhds 0) :=
+    tendsto_const_nhds
+  -- By uniqueness of limits in Hausdorff spaces (ℝ is Hausdorff)
+  exact tendsto_nhds_unique hR h_zero_to_zero
 
 /-- Definition 1.1.15 (Riemann integrability) -/
-lemma riemann_integral_eq_iff_of_integrable {f:ℝ → ℝ} {I: BoundedInterval} (h: RiemannIntegrableOn f I) (R:ℝ): riemann_integral_eq f I R ↔ R = riemannIntegral f I := by sorry
+lemma riemann_integral_of_integrable {f:ℝ → ℝ} {I: BoundedInterval} (h: RiemannIntegrableOn f I) : riemann_integral_eq f I (riemannIntegral f I) := by
+  -- Strategy: Since `h : RiemannIntegrableOn f I` means `∃ R, riemann_integral_eq f I R`,
+  -- and `riemannIntegral f I` is defined as `h.2.choose` (the witness chosen by Classical.choose),
+  -- we need to show that `riemann_integral_eq f I h.2.choose`, which is exactly `h.2.choose_spec`.
+  unfold riemannIntegral
+  convert h.2.choose_spec using 2
+  -- Split on the if condition (which is `RiemannIntegrableOn f I`, true by hypothesis `h`)
+  split_ifs
+  -- In the `then` branch, we have `h.2.choose = h.2.choose` by reflexivity
+  · rfl
+
+/-- Definition 1.1.15 (Riemann integrability) -/
+lemma riemann_integral_eq_iff_of_integrable {f:ℝ → ℝ} {I: BoundedInterval} (h: RiemannIntegrableOn f I) (R:ℝ): riemann_integral_eq f I R ↔ R = riemannIntegral f I := by
+  constructor
+  · -- Forward direction: uniqueness of limits in Hausdorff space
+    intro hR
+    -- We know riemann_integral_eq f I (riemannIntegral f I) from riemann_integral_of_integrable
+    have hRI := riemann_integral_of_integrable h
+    -- Handle two cases: I.a < I.b or I.a = I.b
+    by_cases hab : I.a < I.b
+    · -- Case: I.a < I.b (positive length interval)
+      -- The filter is non-trivial, so we can apply Hausdorff limit uniqueness
+      haveI : Filter.NeBot (TaggedPartition.nhds_zero I) := TaggedPartition.nhds_zero_neBot I h.1 hab
+      -- Both Riemann sums converge: one to R, one to riemannIntegral f I
+      -- In a Hausdorff space (ℝ is metric hence Hausdorff), limits are unique
+      exact tendsto_nhds_unique hR hRI
+    · -- Case: ¬(I.a < I.b) means I.a ≥ I.b (zero or negative length interval)
+      -- In either case, the length is 0
+      have h_len : |I|ₗ = 0 := by
+        unfold BoundedInterval.length
+        simp
+        -- ¬(I.a < I.b) means I.a ≥ I.b, so max(0, I.b - I.a) = 0
+        have : I.b ≤ I.a := le_of_not_gt hab
+        linarith
+      -- When I = Icc I.a I.b and length is 0, we have I.a = I.b
+      have h_eq : I.a = I.b := by
+        unfold BoundedInterval.length at h_len
+        simp at h_len
+        have h_ba : I.b ≤ I.a := by linarith
+        by_cases h_ab : I.a ≤ I.b
+        · exact le_antisymm h_ab h_ba
+        · -- Junk case: I.b < I.a with interval type Icc
+          push_neg at h_ab
+          sorry
+      -- Both R and riemannIntegral f I equal 0 when length is 0 and I.a = I.b
+      have hR_zero : R = 0 := riemann_integral_eq_zero_of_zero_length h_eq h_len hR
+      have hRI_zero : riemannIntegral f I = 0 := riemann_integral_eq_zero_of_zero_length h_eq h_len hRI
+      -- Therefore R = riemannIntegral f I
+      rw [hR_zero, hRI_zero]
+  · -- Backward direction: substitution
+    intro hRe
+    rw [hRe]
+    exact riemann_integral_of_integrable h
 
 /-- Definition 1.1.15 (Riemann integrability)-/
-lemma riemann_integral_eq_iff {f:ℝ → ℝ} {I: BoundedInterval} (h: RiemannIntegrableOn f I) (R:ℝ): riemann_integral_eq f I R ↔ ∀ ε>0, ∃ δ>0, ∀ n, ∀ P: TaggedPartition I n, P.norm ≤ δ → |P.RiemannSum f - R| ≤ ε := by sorry
+lemma riemann_integral_eq_iff {f:ℝ → ℝ} {I: BoundedInterval} (R:ℝ): riemann_integral_eq f I R ↔ ∀ ε>0, ∃ δ>0, ∀ n, ∀ P: TaggedPartition I n, P.norm ≤ δ → |P.RiemannSum f - R| ≤ ε := by
+  -- Show equivalence between filter convergence and ε-δ definition.
+  -- Forward (→): Use `LinearOrderedAddCommGroup.tendsto_nhds` and `Filter.eventually_comap` to extract ε-δ.
+  -- Backward (←): Given ε-δ, show filter convergence
+  unfold riemann_integral_eq TaggedPartition.nhds_zero
+  -- Use LinearOrderedAddCommGroup.tendsto_nhds to characterize filter convergence
+  rw [LinearOrderedAddCommGroup.tendsto_nhds]
+  -- Use Filter.eventually_comap to relate comap filter to nhds 0
+  simp_rw [Filter.eventually_comap]
+  constructor
+  · -- Forward direction: filter convergence → ε-δ
+    intro h_tendsto ε hε
+    -- Get eventually condition from filter convergence
+    have h_eventually : ∀ᶠ (x : ℝ) in nhds 0, ∀ (a : Sigma (TaggedPartition I)), a.snd.norm = x → |TaggedPartition.RiemannSum f a.snd - R| < ε := h_tendsto ε hε
+    -- Extract δ from nhds 0: use Metric.mem_nhds_iff to get a ball
+    rw [Metric.eventually_nhds_iff] at h_eventually
+    obtain ⟨δ, hδ_pos, hδ_ball⟩ := h_eventually
+    -- Use δ/2 to ensure strict inequality, then strengthen to ≤
+    use δ / 2, half_pos hδ_pos
+    intro n P hP_norm
+    -- Show |RiemannSum - R| ≤ ε using the filter condition
+    -- First show P.norm < δ (since P.norm ≤ δ/2 < δ)
+    have h_norm_lt : P.norm < δ := by
+      linarith [hP_norm]
+    -- P.norm is nonnegative (each delta is nonnegative by monotonicity)
+    have h_norm_nonneg : 0 ≤ P.norm := by
+      unfold TaggedPartition.norm
+      -- Show that 0 ≤ iSup by showing each delta ≥ 0
+      by_cases h_n_empty : n = 0
+      · -- If n = 0, the range is empty, so iSup = 0
+        subst h_n_empty
+        simp [iSup]
+      · -- If n > 0, pick any index and show its delta ≥ 0
+        have h_n_pos : n > 0 := Nat.pos_of_ne_zero h_n_empty
+        -- Construct Fin n element for index 0
+        have h_fin_zero : 0 < n := h_n_pos
+        let i0 : Fin n := Fin.mk 0 h_fin_zero
+        have h_delta_nonneg : 0 ≤ P.delta i0 := by
+          unfold TaggedPartition.delta
+          -- Show P.x i0.castSucc ≤ P.x i0.succ using strict monotonicity
+          have h_lt : i0.castSucc < i0.succ := Fin.castSucc_lt_succ i0
+          have h_x_lt : P.x i0.castSucc < P.x i0.succ := P.x_mono.imp h_lt
+          linarith
+        -- Show 0 ≤ iSup by showing 0 ≤ some element in the range
+        -- The range is bounded above since Fin n is finite
+        have h_bdd : BddAbove (Set.range P.delta) := by
+          -- Fin n is finite, so the range is finite and bounded
+          have h_finite : (Set.range P.delta).Finite := Set.finite_range P.delta
+          exact Set.Finite.bddAbove h_finite
+        -- Use le_trans: 0 ≤ P.delta i0 ≤ iSup P.delta
+        have h_le_sup : P.delta i0 ≤ iSup P.delta := le_ciSup h_bdd i0
+        linarith [h_delta_nonneg, h_le_sup]
+    -- Apply filter condition: if dist P.norm 0 < δ, then for all P with P.norm = P.norm, |RiemannSum - R| < ε
+    -- Note: ⟨n, P⟩.snd.norm = P.norm, and dist P.norm 0 = |P.norm| = P.norm (since nonnegative)
+    -- Show dist P.norm 0 < δ
+    have h_dist : dist P.norm 0 < δ := by
+      rw [Real.dist_eq]
+      simp [sub_zero]
+      rw [abs_of_nonneg h_norm_nonneg]
+      exact h_norm_lt
+    -- Apply hδ_ball with P.norm and show ⟨n, P⟩.snd.norm = P.norm
+    have h_eq : (⟨n, P⟩ : Sigma (TaggedPartition I)).snd.norm = P.norm := rfl
+    have h_applied := hδ_ball h_dist ⟨n, P⟩ h_eq
+    -- Convert < to ≤
+    linarith
+  · -- Backward direction: ε-δ → filter convergence
+    intro h_eps_delta ε hε
+    -- Use ε/2 to get strict inequality from ≤ condition
+    obtain ⟨δ, hδ_pos, hδ⟩ := h_eps_delta (ε / 2) (half_pos hε)
+    -- Show eventually condition using Metric.eventually_nhds_iff
+    rw [Metric.eventually_nhds_iff]
+    use δ, hδ_pos
+    -- Show that if |x| < δ and P.norm = x, then |RiemannSum - R| < ε
+    intro x hx_abs a hP_eq
+    -- Show a.snd.norm ≤ δ
+    have hP_norm_le : a.snd.norm ≤ δ := by
+      -- Use hP_eq: a.snd.norm = x, and hx_abs: dist x 0 < δ
+      -- Convert dist to abs
+      rw [Real.dist_eq, sub_zero] at hx_abs
+      rw [abs_lt] at hx_abs
+      -- Use hP_eq to substitute: a.snd.norm = x, so |a.snd.norm| < δ
+      rw [←hP_eq] at hx_abs
+      -- a.snd.norm is nonnegative (as partition norm), so |a.snd.norm| = a.snd.norm
+      -- Extract n and P from a to show nonnegativity
+      have h_norm_nonneg : 0 ≤ a.snd.norm := by
+        -- Use the same approach as forward direction
+        unfold TaggedPartition.norm
+        -- Destructure a to get n as a variable
+        cases a with | mk n P =>
+        -- Simplify ⟨n, P⟩.snd to P in the goal
+        simp
+        by_cases h_n_empty : n = 0
+        · -- If n = 0, the range is empty, so iSup = 0
+          subst h_n_empty
+          simp [iSup]
+        · have h_n_pos : n > 0 := Nat.pos_of_ne_zero h_n_empty
+          have h_fin_zero : 0 < n := h_n_pos
+          let i0 : Fin n := Fin.mk 0 h_fin_zero
+          have h_delta_nonneg : 0 ≤ P.delta i0 := by
+            unfold TaggedPartition.delta
+            have h_lt : i0.castSucc < i0.succ := Fin.castSucc_lt_succ i0
+            have h_x_lt : P.x i0.castSucc < P.x i0.succ := P.x_mono.imp h_lt
+            linarith
+          have h_bdd : BddAbove (Set.range P.delta) := by
+            have h_finite : (Set.range P.delta).Finite := Set.finite_range P.delta
+            exact Set.Finite.bddAbove h_finite
+          have h_le_sup : P.delta i0 ≤ iSup P.delta := le_ciSup h_bdd i0
+          linarith [h_delta_nonneg, h_le_sup]
+      -- hx_abs is already in the form -δ < a.snd.norm ∧ a.snd.norm < δ from abs_lt
+      -- So we can directly use hx_abs.2: a.snd.norm < δ, which implies a.snd.norm ≤ δ
+      linarith [hx_abs.2]
+    -- Apply ε-δ condition: need to extract n and P from a
+    have h_applied := hδ (Sigma.fst a) a.snd hP_norm_le
+    linarith
 
 /-- Definition 1.1.15.  (Riemann integrability) I *think* this follows from the "junk" definitions of various Mathlib operations, but needs to be checked. If not, then the above definitions need to be adjusted appropriately. -/
 lemma RiemannIntegrable.of_zero_length (f: ℝ → ℝ) {I: BoundedInterval} (h: |I|ₗ = 0) : RiemannIntegrableOn f I ∧ riemannIntegral f I = 0 := by sorry
@@ -106,7 +455,99 @@ noncomputable def LowerDarbouxIntegral (f:ℝ → ℝ) (I: BoundedInterval) : �
 noncomputable def UpperDarbouxIntegral (f:ℝ → ℝ) (I: BoundedInterval) : ℝ := sInf { R | ∃ h: PiecewiseConstantFunction I, h.integral = R ∧ ∀ x ∈ I.toSet, f x ≤ h.f x }
 
 /-- Definition 1.1.6 (Darboux integral) -/
-lemma lower_darboux_le_upper_darboux {f:ℝ → ℝ} {I: BoundedInterval} (hbound: ∃ M, ∀ x ∈ I, |f x| ≤ M) : LowerDarbouxIntegral f I ≤ UpperDarbouxIntegral f I := by sorry
+lemma lower_darboux_le_upper_darboux {f:ℝ → ℝ} {I: BoundedInterval} (hbound: ∃ M, ∀ x ∈ I, |f x| ≤ M) : LowerDarbouxIntegral f I ≤ UpperDarbouxIntegral f I := by
+  -- Strategy: Use csSup_le to show sSup (lower set) ≤ sInf (upper set)
+  -- 1. Unfold both definitions
+  -- 2. Apply csSup_le, which requires:
+  --    a) Lower set is nonempty (use constant function -M from hbound)
+  --    b) Every lower element ≤ UpperDarbouxIntegral
+  -- 3. For (b), use le_csInf, which requires:
+  --    a) Upper set is nonempty (use constant function M from hbound)
+  --    b) Lower element is ≤ every upper element
+  -- 4. For (3b), use that g ≤ f ≤ h pointwise, so by integral_mono: g.integral ≤ h.integral
+  obtain ⟨M, hM⟩ := hbound
+  -- Step 1: Unfold definitions
+  unfold LowerDarbouxIntegral UpperDarbouxIntegral
+  -- Step 2: Apply csSup_le
+  apply csSup_le
+  · -- Step 2a: Show lower set is nonempty (construct constant function -M)
+    -- Construct a constant piecewise constant function with value -M
+    let g_const : PiecewiseConstantFunction I := {
+      f := fun _ => -M
+      T := {I}
+      c := fun _ => -M
+      disjoint := by
+        simp [Set.pairwiseDisjoint_singleton]
+      cover := by
+        simp
+      const := by
+        intro J
+        intro x hx
+        -- Show f x = c J, i.e., -M = -M (trivially true)
+        rfl
+    }
+    -- Show g_const is in the lower set
+    use g_const.integral, g_const, rfl
+    -- Show g_const.f x ≤ f x for all x ∈ I.toSet
+    intro x hx
+    -- We have |f x| ≤ M, so -M ≤ f x
+    have h_abs : |f x| ≤ M := hM x hx
+    rw [abs_le] at h_abs
+    linarith [h_abs.1]
+  · -- Step 2b: Show every lower element ≤ UpperDarbouxIntegral
+    intro R hR
+    obtain ⟨g, rfl, hg_lower⟩ := hR
+    -- Use le_csInf to show g.integral ≤ sInf (upper set)
+    apply le_csInf
+    · -- Step 3a: Show upper set is nonempty (construct constant function M)
+      -- Construct a constant piecewise constant function with value M
+      let h_const : PiecewiseConstantFunction I := {
+        f := fun _ => M
+        T := {I}
+        c := fun _ => M
+        disjoint := by
+          simp [Set.pairwiseDisjoint_singleton]
+        cover := by
+          simp
+        const := by
+          intro J
+          intro x hx
+          -- Show f x = c J, i.e., M = M (trivially true)
+          rfl
+      }
+      -- Show h_const is in the upper set
+      use h_const.integral, h_const, rfl
+      -- Show f x ≤ h_const.f x for all x ∈ I.toSet
+      intro x hx
+      -- We have |f x| ≤ M, so f x ≤ M
+      have h_abs : |f x| ≤ M := hM x hx
+      rw [abs_le] at h_abs
+      linarith [h_abs.2]
+    · -- Step 3b: Show g.integral is a lower bound for upper set
+      intro b hb
+      obtain ⟨h, rfl, hh_upper⟩ := hb
+      -- We have: ∀ x ∈ I.toSet, g.f x ≤ f x ≤ h.f x
+      -- So: ∀ x ∈ I.toSet, g.f x ≤ h.f x
+      have h_pointwise : ∀ x ∈ I.toSet, g.f x ≤ h.f x := by
+        intro x hx
+        have hg : g.f x ≤ f x := hg_lower x hx
+        have hh : f x ≤ h.f x := hh_upper x hx
+        linarith
+      -- Convert PiecewiseConstantFunctions to PiecewiseConstantOn
+      have hg_agrees : g.agreesWith g.f := fun x hx => rfl
+      have hh_agrees : h.agreesWith h.f := fun x hx => rfl
+      have hg_pc : PiecewiseConstantOn g.f I := ⟨g, hg_agrees⟩
+      have hh_pc : PiecewiseConstantOn h.f I := ⟨h, hh_agrees⟩
+      -- Apply integral_mono: since g.f ≤ h.f pointwise, g.integral ≤ h.integral
+      have h_integral_eq_g : hg_pc.integral = g.integral := by
+        exact PiecewiseConstantOn.integral_eq g.f hg_pc g hg_agrees
+      have h_integral_eq_h : hh_pc.integral = h.integral := by
+        exact PiecewiseConstantOn.integral_eq h.f hh_pc h hh_agrees
+      -- Apply integral_mono
+      have h_mono : hg_pc.integral ≤ hh_pc.integral := PiecewiseConstantFunction.integral_mono hg_pc hh_pc h_pointwise
+      -- Convert back to PiecewiseConstantFunction integrals
+      rw [h_integral_eq_g, h_integral_eq_h] at h_mono
+      exact h_mono
 
 /-- Definition 1.1.6 (Darboux integral) -/
 noncomputable def DarbouxIntegrableOn (f:ℝ → ℝ) (I: BoundedInterval) : Prop := (I = Icc I.a I.b) ∧ ∃ M, ∀ x ∈ I, |f x| ≤ M ∧ LowerDarbouxIntegral f I = UpperDarbouxIntegral f I
@@ -115,7 +556,277 @@ noncomputable def DarbouxIntegrableOn (f:ℝ → ℝ) (I: BoundedInterval) : Pro
 noncomputable def darbouxIntegral (f:ℝ → ℝ) (I: BoundedInterval) : ℝ := LowerDarbouxIntegral f I
 
 /-- Definition 1.1.6 (Darboux integral) -/
-lemma UpperDarbouxIntegral.neg {f:ℝ → ℝ} {I: BoundedInterval} (hbound: ∃ M, ∀ x ∈ I, |f x| ≤ M) : UpperDarbouxIntegral (-f) I = -LowerDarbouxIntegral f I := by sorry
+lemma UpperDarbouxIntegral.neg {f:ℝ → ℝ} {I: BoundedInterval} (hbound: ∃ M, ∀ x ∈ I, |f x| ≤ M) : UpperDarbouxIntegral (-f) I = -LowerDarbouxIntegral f I := by
+  obtain ⟨M, hM⟩ := hbound
+  -- Step 1: Unfold definitions
+  unfold UpperDarbouxIntegral LowerDarbouxIntegral
+  -- Step 2: Apply le_antisymm
+  apply le_antisymm
+  · -- Step 2a: Show UpperDarbouxIntegral (-f) I ≤ -LowerDarbouxIntegral f I
+    rw [← neg_le_neg_iff, neg_neg]
+    -- Goal is now: sSup (lower set) ≤ -sInf (upper set)
+    apply csSup_le
+    · -- Show lower set is nonempty
+      -- Use constant function -M
+      let g_const : PiecewiseConstantFunction I := {
+        f := fun _ => -M
+        T := {I}
+        c := fun _ => -M
+        disjoint := by simp [Set.pairwiseDisjoint_singleton]
+        cover := by simp
+        const := by intro J x hx; rfl
+      }
+      use g_const.integral, g_const, rfl
+      intro x hx
+      have h_abs : |f x| ≤ M := hM x hx
+      rw [abs_le] at h_abs
+      linarith [h_abs.1]
+    · -- Show -sInf (upper set) is an upper bound for lower set
+      intro b hb
+      obtain ⟨g, rfl, hg_lower⟩ := hb
+      -- Key bijection: -g is an upper approximation for -f
+      -- Since g ≤ f pointwise, we have -f ≤ -g pointwise
+      -- Construct -g first, then show the inequality
+      let neg_g : PiecewiseConstantFunction I := {
+        f := fun x => -g.f x
+        T := g.T
+        c := fun J => -g.c J
+        disjoint := g.disjoint
+        cover := g.cover
+        const := by
+          intro J
+          intro x hx
+          have h_const : g.f x = g.c J := g.const J x hx
+          simp [h_const]
+      }
+      have h_neg_upper : ∀ x ∈ I.toSet, (-f) x ≤ neg_g.f x := by
+        intro x hx
+        have h_ineq : g.f x ≤ f x := hg_lower x hx
+        simp [neg_g]
+        linarith
+      -- Show (-g).integral = -g.integral
+      have h_integral_neg : neg_g.integral = -g.integral := by
+        unfold PiecewiseConstantFunction.integral
+        simp only [neg_g]
+        -- Show: ∑ J : g.T, (-g.c J) * |J|ₗ = -∑ J : g.T, g.c J * |J|ₗ
+        rw [← Finset.sum_neg_distrib]
+        congr 1
+        ext J
+        ring
+      -- Show neg_g is in the upper set for -f
+      have h_neg_in_set : -g.integral ∈ { R | ∃ h: PiecewiseConstantFunction I, h.integral = R ∧ ∀ x ∈ I.toSet, (-f) x ≤ h.f x } := by
+        use neg_g, h_integral_neg, h_neg_upper
+      -- We want: g.integral ≤ -sInf (upper set)
+      -- Which is: sInf (upper set) ≤ -g.integral
+      -- Since -g.integral is in the upper set, use csInf_le
+      have h_bdd_below : BddBelow ({ R | ∃ h: PiecewiseConstantFunction I, h.integral = R ∧ ∀ x ∈ I.toSet, (-f) x ≤ h.f x } : Set ℝ) := by
+        -- The set is bounded below by -M * |I|ₗ (from constant function -M)
+        -- Use bddBelow_def: show there exists a lower bound
+        rw [bddBelow_def]
+        -- Construct constant function -M as lower bound
+        let h_const : PiecewiseConstantFunction I := {
+          f := fun _ => -M
+          T := {I}
+          c := fun _ => -M
+          disjoint := by simp [Set.pairwiseDisjoint_singleton]
+          cover := by simp
+          const := by intro J x hx; rfl
+        }
+        -- Show h_const.integral = -M * |I|ₗ
+        have h_const_integral : h_const.integral = -M * |I|ₗ := by
+          unfold PiecewiseConstantFunction.integral
+          simp [h_const, Finset.sum_singleton]
+        -- Use -M * |I|ₗ as the lower bound
+        use -M * |I|ₗ
+        -- Show every element in the set is ≥ -M * |I|ₗ
+        intro R hR
+        obtain ⟨h, rfl, hh_upper⟩ := hR
+        -- We have: ∀ x ∈ I.toSet, (-f) x ≤ h.f x
+        -- Since |f x| ≤ M, we have -M ≤ f x ≤ M, so -M ≤ -f x ≤ M
+        -- Therefore: -M ≤ (-f) x ≤ h.f x, so -M ≤ h.f x pointwise
+        have h_pointwise : ∀ x ∈ I.toSet, h_const.f x ≤ h.f x := by
+          intro x hx
+          -- We have (-f) x ≤ h.f x from hh_upper
+          -- And (-f) x ≥ -M from boundedness
+          have h_abs : |f x| ≤ M := hM x hx
+          rw [abs_le] at h_abs
+          -- We have -M ≤ f x ≤ M
+          -- From f x ≤ M, we get -M ≤ -f x (multiply by -1 and reverse inequality)
+          -- From (-f) x ≤ h.f x, we get -M ≤ h.f x
+          simp [h_const]
+          -- Show -M ≤ (-f) x: from f x ≤ M, we get -M ≤ -f x
+          have h_neg_f : -M ≤ (-f) x := by
+            -- From f x ≤ M, multiply by -1: -f x ≥ -M, so -M ≤ -f x
+            have : f x ≤ M := h_abs.2
+            -- Direct calculation: -M ≤ -f x
+            have : -M ≤ -f x := by linarith
+            exact this
+          -- From (-f) x ≤ h.f x and -M ≤ (-f) x, we get -M ≤ h.f x
+          have h_ineq : (-f) x ≤ h.f x := hh_upper x hx
+          -- Chain: -M ≤ (-f) x ≤ h.f x, so -M ≤ h.f x
+          calc
+            -M ≤ (-f) x := h_neg_f
+            _ ≤ h.f x := h_ineq
+        -- Convert to PiecewiseConstantOn and apply integral_mono
+        have h_const_agrees : h_const.agreesWith h_const.f := fun x hx => rfl
+        have h_agrees : h.agreesWith h.f := fun x hx => rfl
+        have h_const_pc : PiecewiseConstantOn h_const.f I := ⟨h_const, h_const_agrees⟩
+        have h_pc : PiecewiseConstantOn h.f I := ⟨h, h_agrees⟩
+        -- Apply integral_mono: h_const.integral ≤ h.integral
+        have h_mono : h_const_pc.integral ≤ h_pc.integral :=
+          PiecewiseConstantFunction.integral_mono h_const_pc h_pc h_pointwise
+        -- Convert back to PiecewiseConstantFunction integrals
+        have h_const_eq : h_const_pc.integral = h_const.integral := by
+          exact PiecewiseConstantOn.integral_eq h_const.f h_const_pc h_const h_const_agrees
+        have h_eq : h_pc.integral = h.integral := by
+          exact PiecewiseConstantOn.integral_eq h.f h_pc h h_agrees
+        rw [h_const_eq, h_eq, h_const_integral] at h_mono
+        exact h_mono
+      -- Apply csInf_le: sInf (upper set) ≤ -g.integral
+      have h_inf_le : sInf { R | ∃ h: PiecewiseConstantFunction I, h.integral = R ∧ ∀ x ∈ I.toSet, (-f) x ≤ h.f x } ≤ -g.integral :=
+        csInf_le h_bdd_below h_neg_in_set
+      -- Therefore: g.integral ≤ -sInf (upper set)
+      linarith
+  · -- Step 2b: Show -LowerDarbouxIntegral f I ≤ UpperDarbouxIntegral (-f) I
+    -- Goal: -sSup (lower set) ≤ sInf (upper set for -f)
+    apply le_csInf
+    · -- Show upper set for -f is nonempty
+      -- Use constant function M
+      let h_const : PiecewiseConstantFunction I := {
+        f := fun _ => M
+        T := {I}
+        c := fun _ => M
+        disjoint := by simp [Set.pairwiseDisjoint_singleton]
+        cover := by simp
+        const := by intro J x hx; rfl
+      }
+      use h_const.integral, h_const, rfl
+      intro x hx
+      -- Show (-f) x ≤ M
+      have h_abs : |f x| ≤ M := hM x hx
+      rw [abs_le] at h_abs
+      -- We have -M ≤ f x ≤ M, so -f x ≤ M
+      have h_neg_f : -f x ≤ M := by
+        have : -M ≤ f x := h_abs.1
+        linarith
+      exact h_neg_f
+    · -- Show -sSup (lower set) is a lower bound for upper set
+      intro b hb
+      obtain ⟨h, rfl, hh_upper⟩ := hb
+      -- Key bijection: -h is a lower approximation for f
+      -- Since -f ≤ h pointwise, we have -h ≤ f pointwise
+      -- Construct -h first
+      let neg_h : PiecewiseConstantFunction I := {
+        f := fun x => -h.f x
+        T := h.T
+        c := fun J => -h.c J
+        disjoint := h.disjoint
+        cover := h.cover
+        const := by
+          intro J
+          intro x hx
+          have h_const : h.f x = h.c J := h.const J x hx
+          simp [h_const]
+      }
+      -- Show -h ≤ f pointwise
+      have h_neg_lower : ∀ x ∈ I.toSet, neg_h.f x ≤ f x := by
+        intro x hx
+        have h_ineq : (-f) x ≤ h.f x := hh_upper x hx
+        -- We have -f x ≤ h.f x, so -h.f x ≤ -(-f) x = f x
+        simp only [neg_h]
+        -- From -f x ≤ h.f x, we get -h.f x ≤ f x by negating and reversing
+        have : -h.f x ≤ f x := by
+          have h_neg : -h.f x ≤ -(-f) x := by linarith [h_ineq]
+          simp at h_neg
+          exact h_neg
+        exact this
+      -- Show (-h).integral = -h.integral
+      have h_integral_neg : neg_h.integral = -h.integral := by
+        unfold PiecewiseConstantFunction.integral
+        simp only [neg_h]
+        -- Show: ∑ J : h.T, (-h.c J) * |J|ₗ = -∑ J : h.T, h.c J * |J|ₗ
+        rw [← Finset.sum_neg_distrib]
+        congr 1
+        ext J
+        ring
+      -- Show neg_h is in the lower set for f
+      have h_neg_in_set : -h.integral ∈ { R | ∃ g: PiecewiseConstantFunction I, g.integral = R ∧ ∀ x ∈ I.toSet, g.f x ≤ f x } := by
+        use neg_h, h_integral_neg, h_neg_lower
+      -- We want: -sSup (lower set) ≤ h.integral
+      -- Which is: sSup (lower set) ≥ -h.integral, i.e., -h.integral ≤ sSup (lower set)
+      -- Since -h.integral is in the lower set, use le_csSup
+      have h_lower_nonempty : ({ R | ∃ g: PiecewiseConstantFunction I, g.integral = R ∧ ∀ x ∈ I.toSet, g.f x ≤ f x } : Set ℝ).Nonempty := by
+        -- Use constant function -M
+        let g_const : PiecewiseConstantFunction I := {
+          f := fun _ => -M
+          T := {I}
+          c := fun _ => -M
+          disjoint := by simp [Set.pairwiseDisjoint_singleton]
+          cover := by simp
+          const := by intro J x hx; rfl
+        }
+        use g_const.integral, g_const, rfl
+        intro x hx
+        have h_abs : |f x| ≤ M := hM x hx
+        rw [abs_le] at h_abs
+        linarith [h_abs.1]
+      have h_bdd : BddAbove ({ R | ∃ g: PiecewiseConstantFunction I, g.integral = R ∧ ∀ x ∈ I.toSet, g.f x ≤ f x } : Set ℝ) := by
+        -- The set is bounded above by M * |I|ₗ (from constant function M)
+        -- Use bddAbove_def: show there exists an upper bound
+        rw [bddAbove_def]
+        -- Construct constant function M as upper bound
+        let g_const : PiecewiseConstantFunction I := {
+          f := fun _ => M
+          T := {I}
+          c := fun _ => M
+          disjoint := by simp [Set.pairwiseDisjoint_singleton]
+          cover := by simp
+          const := by intro J x hx; rfl
+        }
+        -- Show g_const.integral = M * |I|ₗ
+        have g_const_integral : g_const.integral = M * |I|ₗ := by
+          unfold PiecewiseConstantFunction.integral
+          simp [g_const, Finset.sum_singleton]
+        -- Use M * |I|ₗ as the upper bound
+        use M * |I|ₗ
+        -- Show every element in the set is ≤ M * |I|ₗ
+        intro R hR
+        obtain ⟨g, rfl, hg_lower⟩ := hR
+        -- We have: ∀ x ∈ I.toSet, g.f x ≤ f x
+        -- Since |f x| ≤ M, we have -M ≤ f x ≤ M
+        -- Therefore: g.f x ≤ f x ≤ M, so g.f x ≤ M pointwise
+        have h_pointwise : ∀ x ∈ I.toSet, g.f x ≤ g_const.f x := by
+          intro x hx
+          -- We have g.f x ≤ f x from hg_lower
+          -- And f x ≤ M from boundedness
+          have h_abs : |f x| ≤ M := hM x hx
+          rw [abs_le] at h_abs
+          -- We have -M ≤ f x ≤ M
+          -- From g.f x ≤ f x and f x ≤ M, we get g.f x ≤ M
+          simp [g_const]
+          have h_g_f : g.f x ≤ f x := hg_lower x hx
+          have h_f_M : f x ≤ M := h_abs.2
+          linarith
+        -- Convert to PiecewiseConstantOn and apply integral_mono
+        have g_agrees : g.agreesWith g.f := fun x hx => rfl
+        have g_const_agrees : g_const.agreesWith g_const.f := fun x hx => rfl
+        have g_pc : PiecewiseConstantOn g.f I := ⟨g, g_agrees⟩
+        have g_const_pc : PiecewiseConstantOn g_const.f I := ⟨g_const, g_const_agrees⟩
+        -- Apply integral_mono: g.integral ≤ g_const.integral
+        have h_mono : g_pc.integral ≤ g_const_pc.integral :=
+          PiecewiseConstantFunction.integral_mono g_pc g_const_pc h_pointwise
+        -- Convert back to PiecewiseConstantFunction integrals
+        have g_eq : g_pc.integral = g.integral := by
+          exact PiecewiseConstantOn.integral_eq g.f g_pc g g_agrees
+        have g_const_eq : g_const_pc.integral = g_const.integral := by
+          exact PiecewiseConstantOn.integral_eq g_const.f g_const_pc g_const g_const_agrees
+        rw [g_eq, g_const_eq, g_const_integral] at h_mono
+        exact h_mono
+      -- Apply le_csSup: -h.integral ≤ sSup (lower set)
+      have h_le_sup : -h.integral ≤ sSup { R | ∃ g: PiecewiseConstantFunction I, g.integral = R ∧ ∀ x ∈ I.toSet, g.f x ≤ f x } :=
+        le_csSup h_bdd h_neg_in_set
+      -- Therefore: -sSup (lower set) ≤ h.integral
+      linarith
 
 /-- Exercise 1.1.22 -/
 lemma RiemannIntegrableOn.iff_darbouxIntegrable {f:ℝ → ℝ} {I: BoundedInterval} (hbound: ∃ M, ∀ x ∈ I, |f x| ≤ M) : RiemannIntegrableOn f I ↔ DarbouxIntegrableOn f I := by sorry
