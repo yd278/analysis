@@ -71,6 +71,8 @@ theorem LowerUnsignedLebesgueIntegral.sum_of_reflect_eq {d:ℕ} {f g: EuclideanS
 /-- Definition 1.3.13 (Unsigned Lebesgue integral).  For Lean purposes it is convenient to assign a "junk" value to this integral when f is not unsigned measurable. -/
 noncomputable def UnsignedLebesgueIntegral {d:ℕ} (f: EuclideanSpace' d → EReal): EReal := LowerUnsignedLebesgueIntegral f
 
+noncomputable def UnsignedMeasurable.integ {d:ℕ} (f: EuclideanSpace' d → EReal) (_: UnsignedMeasurable f) : EReal := UnsignedLebesgueIntegral f
+
 /-- Exercise 1.3.11 -/
 theorem LowerUnsignedLebesgueIntegral.eq_upperIntegral {d:ℕ} {f: EuclideanSpace' d → EReal} (hf: UnsignedMeasurable f) (hbound: EReal.BoundedFunction f) (hsupp: FiniteMeasureSupport f) :
     LowerUnsignedLebesgueIntegral f = UpperUnsignedLebesgueIntegral f := by sorry
@@ -112,11 +114,11 @@ theorem UnsignedLebesgueIntegral.unique {d:ℕ} (integ: (EuclideanSpace' d → E
 
 /-- Exercise 1.3.15 (Translation invariance)-/
 theorem UnsignedLebesgueIntegral.trans {d:ℕ} {f: EuclideanSpace' d → EReal} (hf: UnsignedMeasurable f) (a: EuclideanSpace' d) :
-    UnsignedLebesgueIntegral (fun x ↦ f (x + a)) = UnsignedLebesgueIntegral f := by sorry
+    UnsignedLebesgueIntegral (fun x ↦ f (x + a)) = hf.integ := by sorry
 
 /-- Exercise 1.3.16 (Linear change of variables)-/
 theorem UnsignedLebesgueIntegral.comp_linear {d:ℕ} {f: EuclideanSpace' d → EReal} (hf: UnsignedMeasurable f) (A: EuclideanSpace' d →ₗ[ℝ] EuclideanSpace' d) (hA: A.det ≠ 0) :
-    UnsignedLebesgueIntegral (fun x ↦ f (A x)) = |A.det|⁻¹ * UnsignedLebesgueIntegral f := by sorry
+    UnsignedLebesgueIntegral (fun x ↦ f (A x)) = |A.det|⁻¹ * hf.integ := by sorry
 
 /-- Exercise 1.3.17 (Compatibility with the Riemann integrable)-/
 theorem RiemannIntegral.eq_UnsignedLebesgueIntegral {I: BoundedInterval} {f: ℝ → ℝ} (hf: RiemannIntegrableOn f I) :
@@ -124,7 +126,7 @@ theorem RiemannIntegral.eq_UnsignedLebesgueIntegral {I: BoundedInterval} {f: ℝ
 
 /-- Lemma 1.3.15 (Markov's inequality) -/
 theorem UnsignedLebesgueIntegral.markov_inequality {d:ℕ} {f: EuclideanSpace' d → EReal} (hf: UnsignedMeasurable f) {t:ℝ} (ht: 0 < t) :
-    Lebesgue_measure { x | f x ≥ t } ≤ (UnsignedLebesgueIntegral f) / (t:EReal) := by
+    Lebesgue_measure { x | f x ≥ t } ≤ hf.integ / (t:EReal) := by
   sorry
 
 /-- Exercise 1.3.18 (ii) -/
@@ -135,4 +137,4 @@ theorem UnsignedLebesgueIntegral.ae_finite_no_converse : ∃ (d:ℕ) (f: Euclide
 
 /-- Exercise 1.3.18 (ii) -/
 theorem UnsignedLebesgueIntegral.eq_zero_aeZero {d:ℕ} {f: EuclideanSpace' d → EReal} (hf: UnsignedMeasurable f) :
-     (UnsignedLebesgueIntegral f = 0) ↔ (AlmostAlways (fun x ↦ f x = 0)) := by sorry
+     hf.integ = 0 ↔ AlmostAlways (fun x ↦ f x = 0) := by sorry
