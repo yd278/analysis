@@ -33,7 +33,6 @@ def Ex_1_2_2b : Decidable ( ∀ f: ℕ → ℝ → ℝ, ∀ F: ℝ → ℝ, (∃
   -- the first line of this construction should be either `apply isTrue` or `apply isFalse`, depending on whether you believe the given statement to be true or false.
   sorry
 
--- theorem Jordan_inner_eq {d:ℕ} {E: Set (EuclideanSpace' d)} (hE: Bornology.IsBounded E) : Jordan_inner_measure E = sInf (((fun S: Finset (Box d) ↦ S.sum Box.volume)) '' { S | E ⊆ ⋃ B ∈ S, B.toSet }) := by
 theorem Jordan_outer_eq {d:ℕ} {E: Set (EuclideanSpace' d)} (hE: Bornology.IsBounded E) : Jordan_outer_measure E = sInf (((fun S: Finset (Box d) ↦ ∑ B ∈ S, |B|ᵥ)) '' { S | E ⊆ ⋃ B ∈ S, B.toSet }) := by
   -- Strategy: Show equality via two inequalities (le_antisymm)
   apply le_antisymm
