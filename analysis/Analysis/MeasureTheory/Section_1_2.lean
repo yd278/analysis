@@ -354,7 +354,41 @@ open Classical in
     (mapping elements of X to 1 and others to 0) diverges to ⊤ in EReal. -/
 lemma hasSum_indicator_top_of_infinite (X : Set ℕ) (hX : ¬X.Finite) :
     HasSum (fun n => if n ∈ X then (1 : EReal) else 0) ⊤ := by
-  sorry
+  -- Strategy: Show that finite sums grow unboundedly.
+  -- For any n, we can find n elements in X (since X is infinite),
+  -- so there exists a finite sum ≥ n. This proves convergence to ⊤.
+
+  unfold HasSum
+  rw [EReal.tendsto_nhds_top_iff_real]
+  intro r
+
+  -- For any real bound r, we need to show eventually sums exceed r
+  -- Choose n > r (using ceiling), then find n elements in X
+  obtain ⟨n, hn⟩ := exists_nat_gt r
+
+  -- Since X is infinite, we can extract a finite subset with exactly n elements
+  have hX_inf : X.Infinite := hX
+  obtain ⟨F, hF_sub, hF_card⟩ := Set.Infinite.exists_subset_card_eq hX_inf n
+
+  -- Show that eventually (in the atTop filter), finite sums are ≥ n
+  apply Filter.eventually_atTop.mpr
+  use F
+  intro s hFs
+
+  -- For any finset s containing F, we have ∑ i ∈ s, (indicator) ≥ n
+  calc (r : EReal) < (n : EReal) := EReal.coe_lt_coe_iff.mpr hn
+       _ = ↑F.card := by rw [hF_card]
+       _ = ∑ i ∈ F, (1 : EReal) := by
+           rw [Finset.sum_const, nsmul_one]
+       _ = ∑ i ∈ F, if i ∈ X then (1 : EReal) else 0 := by
+           apply Finset.sum_congr rfl
+           intro i hi
+           rw [if_pos]
+           exact hF_sub (Finset.mem_coe.mpr hi)
+       _ ≤ ∑ i ∈ s, if i ∈ X then (1 : EReal) else 0 := by
+           apply Finset.sum_le_sum_of_subset_of_nonneg hFs
+           intro i _ _
+           split_ifs <;> norm_num
 
 open Classical in
 /-- In dimension 0, the Lebesgue outer measure is 1 for non-empty sets and 0 for the empty set.
@@ -402,10 +436,15 @@ lemma Lebesgue_outer_measure_of_dim_zero {E: Set (EuclideanSpace' 0)} :
           intro n
           simp only [S, h_box_vol, EReal.coe_one]
         simp_rw [h_vol_eq]
-        -- Need: ∑' (_ : {0}), (1 : EReal) = 1
-        -- This should follow from tsum over a singleton set, but requires EReal library support
-        -- Mathematically: summing 1 once gives 1
-        sorry
+        -- ∑' (_ : {0}), (1 : EReal) = 1 using tsum over finite type
+        rw [tsum_fintype]
+        -- Now we have ∑ x ∈ Finset.univ, (1 : EReal) where Finset.univ has card 1
+        simp only [Finset.sum_const]
+        -- Show Finset.univ.card • 1 = 1 by showing card = 1
+        have h_card : Fintype.card X = 1 := Set.card_singleton 0
+        simp only [Fintype.card] at h_card
+        rw [h_card]
+        norm_num
 
     -- Lower bound: show 1 ≤ sInf (every cover has sum ≥ 1)
     · apply le_sInf
@@ -710,9 +749,6 @@ theorem Lebesgue_outer_measure_le_Jordan {d:ℕ} {E: Set (EuclideanSpace' d)} (h
   -- Check if we need special handling for d = 0
   by_cases hd : d = 0
   · subst hd
-    -- Challenge: Cannot use Box.volume_eq_zero_of_empty because:
-    --   - That lemma requires B.toSet = ∅
-    --   - But for d=0, Set.univ.pi over Fin 0 is NEVER empty (always {default})
     sorry
 
   have hd_pos : 0 < d := Nat.pos_of_ne_zero hd
