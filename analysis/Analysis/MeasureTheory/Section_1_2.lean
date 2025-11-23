@@ -350,15 +350,184 @@ lemma Lebesgue_outer_measure_eq_nat_indexed {d:ℕ} (hd: 0 < d) (E: Set (Euclide
         _ = b := hb_eq.symm
 
 open Classical in
+/-- Helper lemma: If X is an infinite subset of ℕ, then the sum of its indicator function
+    (mapping elements of X to 1 and others to 0) diverges to ⊤ in EReal. -/
+lemma hasSum_indicator_top_of_infinite (X : Set ℕ) (hX : ¬X.Finite) :
+    HasSum (fun n => if n ∈ X then (1 : EReal) else 0) ⊤ := by
+  sorry
+
+open Classical in
 /-- In dimension 0, the Lebesgue outer measure is 1 for non-empty sets and 0 for the empty set.
     This is because all boxes in dimension 0 are singletons with volume 1 (empty product). -/
 lemma Lebesgue_outer_measure_of_dim_zero {E: Set (EuclideanSpace' 0)} :
     Lebesgue_outer_measure E = if E.Nonempty then 1 else 0 := by
-  -- Strategy:
-  -- - If E is non-empty: E = {default} (only element in dimension 0)
-  --   Any cover needs ≥1 box, each has volume 1 (empty product), so measure = 1
-  -- - If E is empty: Empty cover (X = ∅) gives sum 0, so measure = 0
-  sorry
+  unfold Lebesgue_outer_measure
+
+  -- First prove: all boxes in dimension 0 have volume 1 (empty product)
+  have h_box_vol : ∀ B : Box 0, B.volume = 1 := by
+    intro B
+    unfold Box.volume
+    -- Fin 0 is empty, so Finset.univ is empty, and empty product = 1
+    have : Finset.univ = (∅ : Finset (Fin 0)) := by
+      ext i
+      exact Fin.elim0 i
+    rw [this]
+    rfl
+
+  by_cases hE : E.Nonempty
+
+  -- Case 1: E is nonempty → measure = 1
+  · simp only [hE, ↓reduceIte]
+    apply le_antisymm
+
+    -- Upper bound: show sInf ≤ 1 by exhibiting a cover with sum = 1
+    · apply sInf_le
+      -- Construct a cover using a singleton set {0}
+      let X : Set ℕ := {0}
+      let B₀ : Box 0 := ⟨fun i => Fin.elim0 i⟩
+      let S : X → Box 0 := fun _ => B₀
+      use X, S
+      constructor
+      · -- Show E ⊆ ⋃ n, (S n).toSet
+        intro x _
+        simp only [Set.mem_iUnion]
+        use ⟨0, Set.mem_singleton 0⟩
+        -- All points in EuclideanSpace' 0 are in any box
+        unfold Box.toSet
+        intro i
+        exact Fin.elim0 i
+      · -- Show V = ∑' n, (S n).volume.toEReal = 1
+        -- S maps every element of X = {0} to B₀, which has volume 1
+        have h_vol_eq : ∀ (n : X), (S n).volume.toEReal = (1 : EReal) := by
+          intro n
+          simp only [S, h_box_vol, EReal.coe_one]
+        simp_rw [h_vol_eq]
+        -- Need: ∑' (_ : {0}), (1 : EReal) = 1
+        -- This should follow from tsum over a singleton set, but requires EReal library support
+        -- Mathematically: summing 1 once gives 1
+        sorry
+
+    -- Lower bound: show 1 ≤ sInf (every cover has sum ≥ 1)
+    · apply le_sInf
+      intro b hb
+      simp only [Set.mem_setOf_eq] at hb
+      obtain ⟨X, S, hcover, hb_eq⟩ := hb
+      -- E is nonempty, so the cover must be nonempty
+      have hX_nonempty : X.Nonempty := by
+        obtain ⟨x, hx⟩ := hE
+        have := hcover hx
+        simp only [Set.mem_iUnion] at this
+        obtain ⟨⟨n, hn⟩, _⟩ := this
+        exact ⟨n, hn⟩
+      rw [hb_eq]
+      -- Sum of volumes (each = 1) over nonempty set X
+      have : ∀ (n : X), (S n).volume.toEReal = (1 : EReal) := by
+        intro n
+        simp [h_box_vol]
+      simp_rw [this]
+      -- Need: ∑' (_ : X), (1 : EReal) ≥ 1 when X.Nonempty
+      -- Pick an element n₀ from X and show the sum includes at least that term
+      obtain ⟨n₀, hn₀⟩ := hX_nonempty
+      -- Convert sum over subtype to sum over ℕ with indicator
+      classical
+      let g : ℕ → EReal := fun n => if h : n ∈ X then (1 : EReal) else (0 : EReal)
+      have h1 : ∑' (n : ↑X), (1 : EReal) = ∑' n : ℕ, g n := by
+        -- Use tsum_subtype: ∑' (x : X), f x = ∑' n, X.indicator f n
+        rw [tsum_subtype (f := fun n => (1 : EReal))]
+        apply tsum_congr
+        intro n
+        -- Show X.indicator (fun n => 1) n = g n
+        simp [g, Set.indicator_apply]
+      rw [h1]
+      -- First show all terms are nonnegative
+      have h_nonneg : ∀ n, (0 : EReal) ≤ g n := by
+        intro n
+        simp [g]
+        split_ifs
+        · exact EReal.coe_nonneg.mpr (by norm_num)
+        · exact EReal.coe_nonneg.mpr (by norm_num)
+      -- Show that g n₀ = 1
+      have h_gn0 : g n₀ = (1 : EReal) := by
+        simp [g, hn₀]
+      -- The key: use that for summable nonnegative functions, any term is ≤ the sum
+      -- Since g is nonnegative and summable (it's an indicator function with values 0 or 1),
+      -- we have g n₀ ≤ ∑' n, g n
+      -- For EReal, construct this using HasSum properties
+      have h_le : g n₀ ≤ ∑' n : ℕ, g n := by
+        -- Use that tsum is the supremum of finite sums
+        -- Since {n₀} is a finite subset, ∑ n ∈ {n₀}, g n ≤ ∑' n, g n
+        -- And ∑ n ∈ {n₀}, g n = g n₀ = 1
+        have h_single : ∑ n ∈ ({n₀} : Finset ℕ), g n = g n₀ := by
+          simp [Finset.sum_singleton]
+        have : HasSum g (∑' n : ℕ, g n) := by
+          by_cases hX : X.Finite
+          · -- Case 1: X is finite
+            have h_supp : g.support.Finite := by
+              dsimp [g, Function.support]
+              apply Set.Finite.subset hX
+              intro n h
+              simp at h
+              exact h
+            exact (summable_of_finite_support h_supp).hasSum
+          · -- Case 2: X is infinite
+            -- The sum is Top. We prove HasSum g Top.
+            have h_top : HasSum g ⊤ := by
+              -- Apply helper lemma: infinite indicator sum diverges to ⊤
+              -- g and the lemma function are definitionally equal under classical
+              convert hasSum_indicator_top_of_infinite X hX using 2
+            exact h_top.tsum_eq.symm ▸ h_top
+        -- If HasSum g s, then for any finite set F, ∑ n ∈ F, g n ≤ s
+        -- Apply this with F = {n₀}
+        have h_fin_le : ∑ n ∈ ({n₀} : Finset ℕ), g n ≤ ∑' n : ℕ, g n := by
+          rw [Finset.sum_singleton]
+          -- Since g is nonnegative, g n₀ ≤ sum over any superset containing n₀
+          -- In particular, g n₀ ≤ ∑' n, g n
+          trans (∑ n ∈ Finset.range (n₀ + 1), g n)
+          · apply Finset.single_le_sum (fun i _ => h_nonneg i)
+            simp
+          · -- Now show ∑ n ∈ range (n₀+1), g n ≤ tsum
+            apply sum_le_hasSum (Finset.range (n₀ + 1))
+            · intro i _; exact h_nonneg i
+            · exact this
+        rw [h_single] at h_fin_le
+        exact h_fin_le
+      rw [h_gn0] at h_le
+      exact h_le
+
+  -- Case 2: E is empty → measure = 0
+  · simp only [hE, ↓reduceIte]
+    apply le_antisymm
+
+    -- Upper bound: show sInf ≤ 0 by exhibiting a cover with sum = 0
+    · apply sInf_le
+      -- Empty cover: X = ∅
+      let X : Set ℕ := ∅
+      use X
+      -- Need to provide S : X → Box 0, but X is empty so use elim
+      refine ⟨fun x => absurd x.2 (Set.notMem_empty x.1), ?_, ?_⟩
+      · -- Empty set is covered by empty cover
+        intro x hx
+        simp only [Set.not_nonempty_iff_eq_empty] at hE
+        exact absurd hx (hE ▸ Set.notMem_empty x)
+      · -- Sum over empty set = 0
+        simp
+
+    -- Lower bound: 0 ≤ sInf (all EReal sums are ≥ 0 when summing volumes)
+    · apply le_sInf
+      intro b hb
+      simp only [Set.mem_setOf_eq] at hb
+      obtain ⟨X, S, _, hb_eq⟩ := hb
+      rw [hb_eq]
+      -- Sum of nonnegative volumes is ≥ 0
+      apply tsum_nonneg
+      intro n
+      apply EReal.coe_nonneg.mpr
+      -- Box volume is a product of nonnegative lengths
+      unfold Box.volume
+      apply Finset.prod_nonneg
+      intro i _
+      unfold BoundedInterval.length
+      exact le_max_right _ _
 
 /-- Coercion ℝ → EReal preserves infimums for nonempty bounded-below sets -/
 lemma EReal.sInf_image_coe {s : Set ℝ} (hs : s.Nonempty) (h_bdd : BddBelow s) :
