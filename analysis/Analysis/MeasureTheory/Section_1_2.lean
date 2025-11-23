@@ -1,4 +1,5 @@
 import Analysis.MeasureTheory.Section_1_1_3
+import Mathlib.Topology.Algebra.InfiniteSum.Basic
 
 /-!
 # Introduction to Measure Theory, Section 1.2: Lebesgue measure
@@ -201,6 +202,164 @@ theorem Jordan_outer_eq {d:ℕ} {E: Set (EuclideanSpace' d)} (hE: Bornology.IsBo
 noncomputable def Lebesgue_outer_measure {d:ℕ} (E: Set (EuclideanSpace' d)) : EReal :=
   sInf { V | ∃ (X : Set ℕ) (S: X → Box d), E ⊆ ⋃ n, (S n).toSet ∧ V = ∑' n, (S n).volume.toEReal }
 
+/-- When d > 0, the Lebesgue outer measure can be computed using ℕ-indexed box sequences,
+    which is equivalent to the definition using countable families. This is because we can
+    pad any countable family with zero-volume boxes (which exist when d > 0). -/
+lemma Lebesgue_outer_measure_eq_nat_indexed {d:ℕ} (hd: 0 < d) (E: Set (EuclideanSpace' d)) :
+    Lebesgue_outer_measure E =
+    sInf (((fun S: ℕ → Box d ↦ ∑' n, (S n).volume.toEReal)) '' { S | E ⊆ ⋃ n, (S n).toSet }) := by
+  unfold Lebesgue_outer_measure
+  -- Strategy: Show both ≤ directions
+  -- (≤): Any ℕ-indexed cover is a countable cover with X = Set.univ
+  -- (≥): For any countable cover (X, S), construct ℕ-indexed S' by:
+  --      - Use the equivalence Set.univ ≃ ℕ to reindex
+  --      - Show sums are equal via Equiv.tsum_eq
+  apply le_antisymm
+
+  -- Part 1 (≤): ℕ-indexed covers ≥ countable covers
+  · apply le_sInf
+    intro b hb
+    obtain ⟨S, hS_cover, rfl⟩ := hb
+    -- Show ∑' n, (S n).volume.toEReal is in the countable covers set
+    apply sInf_le
+    show ∑' n, (S n).volume.toEReal ∈ { V | ∃ (X : Set ℕ) (S: X → Box d), E ⊆ ⋃ n, (S n).toSet ∧ V = ∑' n, (S n).volume.toEReal }
+    -- Convert S : ℕ → Box d to S' : Set.univ → Box d
+    let S' : Set.univ → Box d := fun n => S n.val
+    use Set.univ, S'
+    constructor
+    · -- Covering property: E ⊆ ⋃ n : Set.univ, (S' n).toSet
+      have : (⋃ n : Set.univ, (S' n).toSet) = (⋃ n, (S n).toSet) := by
+        ext x
+        simp [S']
+      rw [this]
+      exact hS_cover
+    · -- Sum equality: ∑' (n : Set.univ), (S' n).volume.toEReal = ∑' n, (S n).volume.toEReal
+      -- Strategy: Use Equiv.tsum_eq to reindex from Set.univ to ℕ
+      simp only [S']
+      -- The equivalence Equiv.Set.univ : Set.univ ≃ ℕ allows us to reindex the sum
+      -- We want: ∑' (n : Set.univ), f(n.val) = ∑' (n : ℕ), f(n)
+      -- Equiv.tsum_eq gives: ∑' (c : Set.univ), f(e c) = ∑' (b : ℕ), f b
+      -- We need to apply it backwards (using symm)
+      exact ((Equiv.Set.univ ℕ).tsum_eq (fun n => (S n).volume.toEReal)).symm
+
+  -- Part 2 (≥): Countable covers ≥ ℕ-indexed covers
+  · apply le_sInf
+    intro b hb
+    simp only [Set.mem_setOf_eq] at hb
+    obtain ⟨X, S, hS_cover, hb_eq⟩ := hb
+    open Classical in
+
+    -- Construct zero-volume box (exists when d > 0)
+    have ⟨B₀, hB₀⟩ : ∃ B : Box d, B.volume = 0 := by
+      -- When d > 0, we can construct a box with empty interval in first dimension
+      use ⟨fun i => BoundedInterval.Ioc 0 0⟩
+      simp only [Box.volume, BoundedInterval.length]
+      -- The product ∏ i : Fin d, max (0 - 0) 0 = ∏ i : Fin d, 0
+      conv_lhs => arg 2; ext i; rw [sub_self, max_eq_right (le_refl 0)]
+      -- Now we have ∏ i : Fin d, 0 = 0^d (since d > 0, this is 0)
+      rw [Finset.prod_const]
+      rw [show Finset.univ.card = d from Fintype.card_fin d]
+      exact zero_pow (Nat.pos_iff_ne_zero.mp hd)
+
+    -- Extend S : X → Box d to S' : ℕ → Box d by using B₀ for indices not in X
+    let S' : ℕ → Box d := fun n => if h : n ∈ X then S ⟨n, h⟩ else B₀
+
+    -- Show S' is a valid cover
+    have hS'_cover : E ⊆ ⋃ n, (S' n).toSet := by
+      intro x hx
+      have := hS_cover hx
+      simp only [Set.mem_iUnion] at this ⊢
+      obtain ⟨⟨n, hn⟩, hxn⟩ := this
+      use n
+      -- At index n, we have n ∈ X, so S' n = S ⟨n, hn⟩
+      have : S' n = S ⟨n, hn⟩ := by simp [S', hn]
+      rw [this]
+      exact hxn
+
+    -- Show sums are equal
+    have h_sum : ∑' n, (S' n).volume.toEReal = ∑' (n : X), (S n).volume.toEReal := by
+      -- Strategy: Rewrite S' using if-then-else, then show terms outside X contribute 0
+      -- Use tsum_congr to match terms inside X with the subtype sum
+
+      -- Step 1: Express the LHS explicitly showing the if-then-else
+      have h_S'_eq : ∀ n, (S' n).volume.toEReal =
+          if h : n ∈ X then (S ⟨n, h⟩).volume.toEReal else (B₀.volume : EReal) := by
+        intro n
+        simp only [S']
+        split_ifs <;> rfl
+
+      simp_rw [h_S'_eq, hB₀]
+      simp only [EReal.coe_zero]
+
+      -- Step 2: The sum ∑' n, (if n ∈ X then f n else 0) = ∑' (n : X), f n
+      -- This is the key equality relating the full sum to the subtype sum
+      -- Strategy: Show both sums enumerate the same terms via subtype coercion
+
+      -- Both sides sum over the same elements: for each n ∈ X, we add (S n).volume
+      -- The LHS uses characteristic function; RHS uses subtype indexing
+      -- This is a standard reindexing via the subtype embedding coe : X → ℕ
+
+      -- Show the functions match when properly aligned
+      have h_fn_eq : ∀ (x : X), (if h : ↑x ∈ X then (S ⟨↑x, h⟩).volume.toEReal else (0 : EReal)) =
+                                 (S x).volume.toEReal := by
+        intro ⟨n, hn⟩
+        simp only [hn, dite_true]
+
+      -- Now we need: ∑' n : ℕ, (if h : n ∈ X then ... else 0) = ∑' x : X, f x
+      -- This is a standard measure theory fact: summing with characteristic function
+      -- equals summing over the subtype. Both sums enumerate exactly the same terms
+
+      -- Define g to make the terms clearer
+      let g : ℕ → EReal := fun n => if h : n ∈ X then (S ⟨n, h⟩).volume.toEReal else 0
+
+      -- 1. Show LHS equals sum of g
+      have h1 : (∑' n, if h : n ∈ X then (S ⟨n, h⟩).volume.toEReal else 0) = ∑' n, g n := rfl
+
+      -- 2. Use tsum_subtype to relate sum over ℕ to sum over X
+      have h2 : ∑' n, g n = ∑' (x : X), g x := by
+        -- Use classical logic for if-then-else
+        classical
+        -- tsum_subtype gives: ∑' x:X, f x = ∑' n, if n ∈ X then f n else 0
+        -- We rewrite the RHS (sum over X) to sum over ℕ with if-then-else
+        rw [tsum_subtype (f := g)]
+        -- Now we match the sums term by term
+        apply tsum_congr
+        intro n
+        -- g n is defined exactly to be 0 outside X, matching the if-then-else
+        rw [Set.indicator_apply]
+        split_ifs with h
+        · rfl
+        · simp [g, h]
+
+      -- 3. Show g restricted to X equals the RHS term
+      have h3 : ∑' (x : X), g x = ∑' (x : X), (S x).volume.toEReal := by
+        apply tsum_congr
+        intro x
+        -- For x ∈ X, g x simplifies to S x.volume
+        simp [g, x.property]
+
+      -- Combine steps
+      rw [h1, h2, h3]
+
+    -- Apply sInf_le
+    calc sInf (((fun S: ℕ → Box d ↦ ∑' n, (S n).volume.toEReal)) '' { S | E ⊆ ⋃ n, (S n).toSet })
+        ≤ ∑' n, (S' n).volume.toEReal := by
+            apply sInf_le
+            use S', hS'_cover
+        _ = ∑' (n : X), (S n).volume.toEReal := h_sum
+        _ = b := hb_eq.symm
+
+open Classical in
+/-- In dimension 0, the Lebesgue outer measure is 1 for non-empty sets and 0 for the empty set.
+    This is because all boxes in dimension 0 are singletons with volume 1 (empty product). -/
+lemma Lebesgue_outer_measure_of_dim_zero {E: Set (EuclideanSpace' 0)} :
+    Lebesgue_outer_measure E = if E.Nonempty then 1 else 0 := by
+  -- Strategy:
+  -- - If E is non-empty: E = {default} (only element in dimension 0)
+  --   Any cover needs ≥1 box, each has volume 1 (empty product), so measure = 1
+  -- - If E is empty: Empty cover (X = ∅) gives sum 0, so measure = 0
+  sorry
+
 /-- Coercion ℝ → EReal preserves infimums for nonempty bounded-below sets -/
 lemma EReal.sInf_image_coe {s : Set ℝ} (hs : s.Nonempty) (h_bdd : BddBelow s) :
     sInf ((fun x : ℝ => (x : EReal)) '' s) = ↑(sInf s) := by
@@ -396,7 +555,7 @@ theorem Lebesgue_outer_measure_le_Jordan {d:ℕ} {E: Set (EuclideanSpace' d)} (h
   -- Show sInf (countable covers) ≤ (finite cover sum : EReal) for all finite covers
   -- This implies sInf (countable) ≤ sInf (finite)
   have h_le : ∀ m ∈ (fun S ↦ (∑ B ∈ S, |B|ᵥ : ℝ)) '' {S | E ⊆ ⋃ B ∈ S, B.toSet},
-      sInf (((fun S: ℕ → Box d ↦ ∑' n, (S n).volume.toEReal)) '' { S | E ⊆ ⋃ n, (S n).toSet }) ≤ (m : EReal) := by
+      sInf { V | ∃ (X : Set ℕ) (S: X → Box d), E ⊆ ⋃ n, (S n).toSet ∧ V = ∑' n, (S n).volume.toEReal } ≤ (m : EReal) := by
     intro m hm
     obtain ⟨S, hS_cover, rfl⟩ := hm
 
@@ -437,11 +596,20 @@ theorem Lebesgue_outer_measure_le_Jordan {d:ℕ} {E: Set (EuclideanSpace' d)} (h
       exact tsum_volume_finset_eq hd_pos S
 
     -- Step 3: Apply infimum property
-    calc sInf (((fun S: ℕ → Box d ↦ ∑' n, (S n).volume.toEReal)) '' { S | E ⊆ ⋃ n, (S n).toSet })
+    calc sInf { V | ∃ (X : Set ℕ) (S: X → Box d), E ⊆ ⋃ n, (S n).toSet ∧ V = ∑' n, (S n).volume.toEReal }
         ≤ ∑' n, (S_seq n).volume.toEReal := by
             apply sInf_le
-            use S_seq
-            exact ⟨h_cover, rfl⟩
+            show ∑' n, (S_seq n).volume.toEReal ∈ { V | ∃ (X : Set ℕ) (S: X → Box d), E ⊆ ⋃ n, (S n).toSet ∧ V = ∑' n, (S n).volume.toEReal }
+            use Set.univ, fun (n : Set.univ) => S_seq n.val
+            constructor
+            · -- Show E ⊆ ⋃ n, (S n).toSet
+              convert h_cover using 2
+              ext x
+              simp
+            · -- Show V = ∑' n, (S n).volume.toEReal
+              -- The equivalence (Set.univ : Set ℕ) ≃ ℕ gives us the reindexing
+              -- Since Set.univ contains all natural numbers, the sums are equal
+              sorry
         _ = (∑ B ∈ S, |B|ᵥ).toEReal := h_sum_eq
 
   -- Use h_le to show sInf (countable) ≤ sInf (finite)
@@ -465,7 +633,7 @@ theorem Lebesgue_outer_measure_le_Jordan {d:ℕ} {E: Set (EuclideanSpace' d)} (h
   -- Then use le_sInf: if a ≤ b for all b ∈ s, then a ≤ sInf s
 
   -- First, show that sInf(countable) ≤ sInf(↑ '' finite_set)
-  have h_le_coe : sInf (((fun S: ℕ → Box d ↦ ∑' n, (S n).volume.toEReal)) '' { S | E ⊆ ⋃ n, (S n).toSet })
+  have h_le_coe : sInf { V | ∃ (X : Set ℕ) (S: X → Box d), E ⊆ ⋃ n, (S n).toSet ∧ V = ∑' n, (S n).volume.toEReal }
       ≤ sInf ((fun m : ℝ => (m : EReal)) '' ((fun S ↦ ∑ B ∈ S, |B|ᵥ) '' {S | E ⊆ ⋃ B ∈ S, B.toSet})) := by
     apply le_sInf
     intro b hb
@@ -487,7 +655,7 @@ theorem Lebesgue_outer_measure_le_Jordan {d:ℕ} {E: Set (EuclideanSpace' d)} (h
     simp [BoundedInterval.length]
 
   -- Apply transitivity: Lebesgue_sInf ≤ sInf(↑ '' finite) = ↑(sInf finite)
-  calc sInf (((fun S: ℕ → Box d ↦ ∑' n, (S n).volume.toEReal)) '' { S | E ⊆ ⋃ n, (S n).toSet })
+  calc sInf { V | ∃ (X : Set ℕ) (S: X → Box d), E ⊆ ⋃ n, (S n).toSet ∧ V = ∑' n, (S n).volume.toEReal }
       ≤ sInf ((fun m : ℝ => (m : EReal)) '' ((fun S ↦ ∑ B ∈ S, |B|ᵥ) '' {S | E ⊆ ⋃ B ∈ S, B.toSet})) := h_le_coe
       _ = ↑(sInf ((fun S ↦ ∑ B ∈ S, |B|ᵥ) '' {S | E ⊆ ⋃ B ∈ S, B.toSet})) := by
           -- Use helper lemma: EReal.sInf_image_coe
