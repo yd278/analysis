@@ -35,8 +35,6 @@ noncomputable def set_dist {X:Type*} [PseudoMetricSpace X] (A B: Set X) : ℝ :=
 -- Start of Helpers about Box Infrastructure, for lemma 1.2.5: Lebesgue_outer_measure.union_of_separated
 -- ========================================================================
 
-/-! ### Helper lemmas for sqrt inequalities -/
-
 /-- The square root function is subadditive: √(x + y) ≤ √x + √y for non-negative reals.
     This follows from the fact that (√x + √y)² = x + y + 2√(xy) ≥ x + y. -/
 lemma Real.sqrt_add_le_add_sqrt {x y : ℝ} (hx : 0 ≤ x) (hy : 0 ≤ y) :
@@ -79,7 +77,6 @@ lemma Real.sqrt_sum_le_sum_sqrt {ι : Type*} [Fintype ι] [DecidableEq ι] (f : 
               apply add_le_add_left
               exact ih
 
-/-! ### Box diameter properties -/
 
 /-- The diameter of a box is the supremum of Euclidean distances between points in the box -/
 noncomputable def Box.diameter {d:ℕ} (B: Box d) : ℝ :=
