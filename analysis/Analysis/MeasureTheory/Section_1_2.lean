@@ -1016,11 +1016,19 @@ theorem Countable.Lebesgue_measure {d:ℕ} (hd : 0 < d) {E: Set (EuclideanSpace'
 
   exact le_antisymm h_le h_ge
 
-example {R:ℝ} (hR: 0 < R) : Lebesgue_outer_measure (Real.equiv_EuclideanSpace' '' (Set.Icc (-R) R ∩ Set.range (fun q:ℚ ↦ (q:ℝ)))) = 0 := by
-  sorry
+example {R:ℝ} : Lebesgue_outer_measure (Real.equiv_EuclideanSpace' '' (Set.Icc (-R) R ∩ Set.range (fun q:ℚ ↦ (q:ℝ)))) = 0 := by
+  apply Countable.Lebesgue_measure (by omega : 0 < 1)
+  apply Set.Countable.image
+  -- The intersection is countable because the right side is countable
+  have : (Set.Icc (-R) R ∩ Set.range (fun q:ℚ ↦ (q:ℝ))).Countable := by
+    apply Set.Countable.mono (Set.inter_subset_right)
+    exact Set.countable_range (fun q:ℚ => (q:ℝ))
+  exact this
 
-example {R:ℝ} (hR: 0 < R) : Lebesgue_outer_measure (Real.equiv_EuclideanSpace' '' (Set.range (fun q:ℚ ↦ (q:ℝ)))) = 0 := by
-  sorry
+example : Lebesgue_outer_measure (Real.equiv_EuclideanSpace' '' (Set.range (fun q:ℚ ↦ (q:ℝ)))) = 0 := by
+  apply Countable.Lebesgue_measure (by omega : 0 < 1)
+  apply Set.Countable.image
+  exact Set.countable_range (fun q:ℚ => (q:ℝ))
 
 def LebesgueMeasurable {d:ℕ} (E: Set (EuclideanSpace' d)) : Prop :=
   ∀ ε > 0, ∃ U: Set (EuclideanSpace' d), IsOpen U ∧ E ⊆ U ∧ Lebesgue_outer_measure (U \ E) ≤ ε
