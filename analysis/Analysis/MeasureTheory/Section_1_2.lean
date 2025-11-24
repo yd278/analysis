@@ -735,21 +735,82 @@ lemma tsum_volume_finset_eq {d : ℕ} (hd : 0 < d) (S : Finset (Box d)) :
 
 
 theorem Lebesgue_outer_measure_le_Jordan {d:ℕ} {E: Set (EuclideanSpace' d)} (hE: Bornology.IsBounded E) : Lebesgue_outer_measure E ≤ Jordan_outer_measure E := by
-  -- Strategy: Use Jordan_outer_eq to rewrite Jordan outer measure as infimum over finite box covers.
-  -- Then apply le_csInf: show Lebesgue outer measure is a lower bound for all finite cover sums.
-  -- For any finite cover S : Finset (Box d), convert it to countable sequence S_seq : ℕ → Box d
-  -- (enumerate S, pad with zero-volume boxes). Show:
-  --   1. E ⊆ ⋃ n, (S_seq n).toSet (covering preserved)
-  --   2. ∑' n, (S_seq n).volume.toEReal = ∑ B ∈ S, |B|ᵥ (via tsum_eq_sum)
-  --   3. Apply infimum property: Lebesgue ≤ tsum = finite sum
+  -- Strategy: Handle d = 0 separately using Lebesgue_outer_measure_of_dim_zero. For d > 0:
+  -- Express Jordan outer measure as infimum over finite covers via Jordan_outer_eq.
+  -- Show Lebesgue outer measure (infimum over countable covers) ≤ Jordan by proving
+  -- Lebesgue ≤ each finite cover sum: convert finite cover S to countable sequence S_seq
+  -- (enumerate via toList, pad with zeros), show S_seq is a countable cover with same sum,
+  -- then apply infimum properties to conclude Lebesgue ≤ Jordan.
 
-  -- For d = 0: Fin 0 is empty, so ∏ over Fin 0 = 1 for any box
-  -- However, Box.toSet for d=0 is Set.univ.pi over empty index set = singleton {default}
-
-  -- Check if we need special handling for d = 0
   by_cases hd : d = 0
   · subst hd
-    sorry
+    -- Use the characterization of Lebesgue_outer_measure for d = 0
+    rw [Lebesgue_outer_measure_of_dim_zero]
+    by_cases hE_ne : E.Nonempty
+    · -- Case: E is nonempty, so Lebesgue_outer_measure E = 1
+      simp only [hE_ne, ↓reduceIte]
+      -- Need to show (1 : EReal) ≤ ↑(Jordan_outer_measure E)
+      -- Any elementary set containing nonempty E must be nonempty, hence has measure ≥ 1
+      have h : (1 : ℝ) ≤ Jordan_outer_measure E := by
+        unfold Jordan_outer_measure
+        apply le_csInf
+        · -- Show the set is nonempty
+          obtain ⟨A, hA, hE_sub_A⟩ := IsElementary.contains_bounded hE
+          exact ⟨hA.measure, A, hA, hE_sub_A, rfl⟩
+        · -- Show 1 is a lower bound for all measures in the set
+          intro m hm
+          obtain ⟨A, hA, hE_sub_A, rfl⟩ := hm
+          -- A contains E, which is nonempty, so A is nonempty
+          have hA_ne : A.Nonempty := hE_ne.mono hE_sub_A
+          -- In dimension 0, any nonempty elementary set has measure ≥ 1
+          -- This is because elementary sets are finite unions of boxes, and each box has volume 1
+          obtain ⟨S, hS_disj, hA_eq⟩ := hA.partition
+          -- Find a nonempty box in the partition
+          have : ∃ B ∈ S, B.toSet.Nonempty := by
+            by_contra h
+            push_neg at h
+            -- h says: ∀ B, B ∈ S → B.toSet = ∅
+            have hA_empty : A = ∅ := by
+              rw [hA_eq]
+              ext x
+              simp only [Set.mem_iUnion, Set.mem_empty_iff_false, iff_false]
+              intro ⟨B, hB, hx⟩
+              rw [h B hB] at hx
+              exact hx
+            exact Set.Nonempty.ne_empty hA_ne hA_empty
+          obtain ⟨B, hB_in_S, hB_ne⟩ := this
+          -- All boxes in dimension 0 have volume 1
+          have h_vol : |B|ᵥ = 1 := by
+            unfold Box.volume
+            have : Finset.univ = (∅ : Finset (Fin 0)) := by ext i; exact Fin.elim0 i
+            rw [this]
+            rfl
+          -- The measure is the sum of volumes, which includes at least one box with volume 1
+          have h_measure : hA.measure = ∑ B' ∈ S, |B'|ᵥ := hA.measure_eq hS_disj hA_eq
+          -- Each box has volume ≥ 0 (as a product of nonnegative lengths)
+          have h_vol_nonneg : ∀ B' : Box 0, 0 ≤ |B'|ᵥ := by
+            intro B'
+            unfold Box.volume
+            apply Finset.prod_nonneg
+            intro i _
+            unfold BoundedInterval.length
+            exact le_max_right _ _
+          -- The sum includes B with volume 1, so the total is ≥ 1
+          calc hA.measure
+            = ∑ B' ∈ S, |B'|ᵥ := h_measure
+            _ ≥ |B|ᵥ := by
+                classical
+                rw [←Finset.sum_erase_add _ _ hB_in_S]
+                simp only [le_add_iff_nonneg_left]
+                apply Finset.sum_nonneg
+                intro B' _
+                exact h_vol_nonneg B'
+            _ = 1 := h_vol
+      exact EReal.coe_le_coe_iff.mpr h
+    · -- Case: E is empty, so Lebesgue_outer_measure E = 0
+      simp only [hE_ne, ↓reduceIte]
+      -- Need to show (0 : EReal) ≤ ↑(Jordan_outer_measure E), which follows from nonnegativity
+      exact EReal.coe_nonneg.mpr (Jordan_outer_measure_nonneg E)
 
   have hd_pos : 0 < d := Nat.pos_of_ne_zero hd
 
@@ -812,9 +873,7 @@ theorem Lebesgue_outer_measure_le_Jordan {d:ℕ} {E: Set (EuclideanSpace' d)} (h
               ext x
               simp
             · -- Show V = ∑' n, (S n).volume.toEReal
-              -- The equivalence (Set.univ : Set ℕ) ≃ ℕ gives us the reindexing
-              -- Since Set.univ contains all natural numbers, the sums are equal
-              sorry
+              exact ((Equiv.Set.univ ℕ).tsum_eq (fun n => (S_seq n).volume.toEReal)).symm
         _ = (∑ B ∈ S, |B|ᵥ).toEReal := h_sum_eq
 
   -- Use h_le to show sInf (countable) ≤ sInf (finite)
