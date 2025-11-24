@@ -25,11 +25,96 @@ Users of the companion who have completed the exercises in this section are welc
 -/
 
 /-- Proposition 4.4.1 (Interspersing of integers by rationals) / Exercise 4.4.1 -/
+lemma Rat.between_int_pos (x:ℚ) (hx : x > 0) : ∃! n : ℤ, n ≤ x ∧ x < n + 1 := by
+  have hab := x.num_div_den
+  have hbnz := x.den_ne_zero
+  set az := x.num
+  have haz : az > 0 := by exact num_pos.mpr hx
+  set b := x.den
+  have hbp : b > 0 := by grind
+  qify at hbp
+  obtain ⟨a,(hpos|hneg)⟩ := Int.eq_nat_or_neg az 
+  pick_goal 2; simp[hneg] at haz; contradiction;
+  set c := a % b with hc
+  symm at hc
+  rw[Nat.mod_eq_iff] at hc
+  simp[hbnz] at hc
+  obtain ⟨hcb, ⟨d, hbcd⟩ ⟩ := hc 
+  simp[hpos] at hab 
+  apply existsUnique_of_exists_of_unique  
+  . 
+    use d; simp
+    rw[← hab] 
+    split_ands
+    . 
+      have : a >= d * b := by
+        rw[mul_comm]
+        linarith
+      qify at this
+      exact (le_div_iff₀ hbp).mpr this
+    . 
+      have : a < (d + 1 ) * b := by
+        ring_nf
+        simpa[mul_comm,hbcd]
+      qify at this
+      exact (div_lt_iff₀ hbp).mpr this
+  rintro y1 y2 ⟨hy11,hy12⟩ ⟨hy21,hy22⟩  
+  have : y1 < y2 + 1 := by qify; grind
+  have : y2 < y1 + 1 := by qify; grind
+  grind
+
 theorem Rat.between_int (x:ℚ) : ∃! n:ℤ, n ≤ x ∧ x < n+1 := by
-  sorry
+  obtain ( hpos|hzero|hneg) := lt_trichotomy 0 x
+  . 
+    apply between_int_pos
+    assumption
+  . 
+    symm at hzero
+    use 0; simp[hzero]
+    intro y hy hyp
+    have : 0 < y + 1 := by 
+      qify; assumption
+    grind
+  
+  set x' := -x
+  have hx' : x = -x' := by simp[x']
+  have hpos : x' > 0 := by grind
+  obtain ⟨n', ⟨hn'le,hn'gt⟩ , huni⟩ := between_int_pos x' hpos 
+  rw[le_iff_lt_or_eq] at hn'le
+  obtain (hn'lt | hn'eq) := hn'le 
+  . 
+    use -(n' + 1)
+    simp[hx']
+    split_ands
+    . grind
+    . grind
+    intro y hyle hlty
+    specialize huni (-(1+y))
+    suffices hy : -(1 + y) = n' from by simp[← hy]
+    apply huni
+    split_ands
+    . rw[add_comm]; simp; grind
+    simp
+    apply le_neg_of_le_neg at hyle
+    have : n' < -y := by
+      qify; grind
+    rw[Int.lt_iff_add_one_le] at this
+    qify at this
+    grind
+  simp[x'] at hn'eq
+  use -n'
+  simp[hn'eq]
+  intro y hy hyp
+  have: y <= -n' := by qify; grind
+  have: -n' < y + 1 := by qify; grind
+  linarith
 
 theorem Nat.exists_gt (x:ℚ) : ∃ n:ℕ, n > x := by
-  sorry
+  obtain ⟨l,⟨hl1,hl2⟩ ,huni⟩ := Rat.between_int x
+  have : (l+1).toNat ≥ (l+1) := by simp
+  use (l+1).toNat 
+  qify at this
+  grind
 
 /-- Proposition 4.4.3 (Interspersing of rationals) -/
 theorem Rat.exists_between_rat {x y:ℚ} (h: x < y) : ∃ z:ℚ, x < z ∧ z < y := by
@@ -46,20 +131,48 @@ theorem Rat.exists_between_rat {x y:ℚ} (h: x < y) : ∃ z:ℚ, x < z ∧ z < y
 
 /-- Exercise 4.4.2 -/
 theorem Nat.no_infinite_descent : ¬ ∃ a:ℕ → ℕ, ∀ n, a (n+1) < a n := by
-  sorry
+  by_contra h
+  obtain ⟨a,ha⟩ := h 
+  have hcon : ∀ n k : ℕ, a n ≥ k := by
+    intro n k
+    induction' k with p hind generalizing n
+    . simp
+    specialize hind (n+1)
+    specialize ha n
+    grind
+  specialize hcon 0 (a 0 + 1)
+  omega
 
 def Int.infinite_descent : Decidable (∃ a:ℕ → ℤ, ∀ n, a (n+1) < a n) := by
   -- the first line of this construction should be either `apply isTrue` or `apply isFalse`.
-  sorry
+  apply isTrue
+  use fun n ↦ -(n:ℤ)
+  simp
 
 #check even_iff_exists_two_mul
 #check odd_iff_exists_bit1
 
 theorem Nat.even_or_odd'' (n:ℕ) : Even n ∨ Odd n := by
-  sorry
+  set c := n % 2 with hc
+  rw[Nat.mod_eq_iff] at hc
+  simp at hc
+  obtain ⟨hlt ,⟨k,hk⟩ ⟩ := hc
+  by_cases hc1 : c = 1
+  . 
+    change n = 2 * k + c at hk
+    simp [hc1] at hk
+    right
+    exact odd_iff.mpr hc1
+  . have hc0 : c = 0 := by omega
+    left
+    exact even_iff.mpr hc0
 
 theorem Nat.not_even_and_odd (n:ℕ) : ¬ (Even n ∧ Odd n) := by
-  sorry
+  by_contra h
+  obtain ⟨he,ho⟩ := h 
+  rw[even_iff] at he
+  rw[odd_iff] at ho
+  simp[he] at ho
 
 #check Nat.rec
 
@@ -87,10 +200,20 @@ theorem Rat.not_exist_sqrt_two : ¬ ∃ x:ℚ, x^2 = 2 := by
       choose q hpos hq using hPp.2
       have : q^2 = 2 * k^2 := by linarith
       use q; constructor
-      . sorry
+      . apply lt_of_pow_lt_pow_left' 2
+        simp[this]; ring_nf
+        have :k > 0 := by
+          by_contra hk;simp at hk
+          simp[hk] at this; simp[this] at hpos
+        rw[mul_lt_mul_left];simp
+        simp[this]
       exact ⟨ hpos, k, by linarith [hPp.1], this ⟩
     have h1 : Odd (p^2) := by
-      sorry
+      rw[odd_iff_exists_bit1] at hp ⊢ 
+      obtain ⟨b,rfl⟩ := hp
+      ring_nf
+      use ( b * 2 + b ^ 2 * 2)
+      ring
     have h2 : Even (p^2) := by
       choose q hpos hq using hPp.2
       rw [even_iff_exists_two_mul]
