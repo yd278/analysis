@@ -140,6 +140,88 @@ lemma Real.sqrt_sum_le_sum_sqrt {ι : Type*} [Fintype ι] [DecidableEq ι] (f : 
               apply add_le_add_left
               exact ih
 
+/-- Extract the left and right endpoints of a BoundedInterval.
+    Returns (a, b) where a is the left endpoint and b is the right endpoint. -/
+def BoundedInterval.endpoints (I : BoundedInterval) : ℝ × ℝ :=
+  match I with
+  | Ioo a b => (a, b)
+  | Icc a b => (a, b)
+  | Ioc a b => (a, b)
+  | Ico a b => (a, b)
+
+/-- Compute the midpoint of a BoundedInterval. -/
+noncomputable def BoundedInterval.midpoint (I : BoundedInterval) : ℝ :=
+  let (a, b) := I.endpoints
+  (a + b) / 2
+
+/-- Bisect a BoundedInterval into left and right halves using closed intervals.
+    Left half: [a, m], Right half: [m, b], where m is the midpoint.
+    Using closed intervals ensures coverage (union equals original) while
+    maintaining measure-theoretic properties (overlap has measure zero). -/
+noncomputable def BoundedInterval.bisect (I : BoundedInterval) : BoundedInterval × BoundedInterval :=
+  let (a, b) := I.endpoints
+  let m := I.midpoint
+  (Icc a m, Icc m b)
+
+/-- Helper: max distributes over division by 2 -/
+lemma max_div_two (x : ℝ) : max x 0 / 2 = max (x / 2) 0 := by
+  by_cases hx : 0 ≤ x
+  · simp [max_eq_left hx, max_eq_left (div_nonneg hx (by norm_num : (0:ℝ) < 2).le)]
+  · push_neg at hx
+    simp [max_eq_right (le_of_lt hx), max_eq_right (by linarith : x / 2 ≤ 0)]
+
+/-- The left half of bisection has half the original length -/
+lemma BoundedInterval.bisect_fst_length (I : BoundedInterval) :
+    |(I.bisect.fst)|ₗ = |I|ₗ / 2 := by
+  unfold bisect midpoint endpoints length
+  cases I with
+  | Ioo a b =>
+    simp only [BoundedInterval.a, BoundedInterval.b]
+    -- Goal: max ((a + b) / 2 - a) 0 = max (b - a) 0 / 2
+    have h : (a + b) / 2 - a = (b - a) / 2 := by ring
+    rw [h, max_div_two]
+  | Icc a b =>
+    simp only [BoundedInterval.a, BoundedInterval.b]
+    have h : (a + b) / 2 - a = (b - a) / 2 := by ring
+    rw [h, max_div_two]
+  | Ioc a b =>
+    simp only [BoundedInterval.a, BoundedInterval.b]
+    have h : (a + b) / 2 - a = (b - a) / 2 := by ring
+    rw [h, max_div_two]
+  | Ico a b =>
+    simp only [BoundedInterval.a, BoundedInterval.b]
+    have h : (a + b) / 2 - a = (b - a) / 2 := by ring
+    rw [h, max_div_two]
+
+/-- The right half of bisection has half the original length -/
+lemma BoundedInterval.bisect_snd_length (I : BoundedInterval) :
+    |(I.bisect.snd)|ₗ = |I|ₗ / 2 := by
+  unfold bisect midpoint endpoints length
+  cases I with
+  | Ioo a b =>
+    simp only [BoundedInterval.a, BoundedInterval.b]
+    -- Goal: max (b - (a + b) / 2) 0 = max (b - a) 0 / 2
+    have h : b - (a + b) / 2 = (b - a) / 2 := by ring
+    rw [h, max_div_two]
+  | Icc a b =>
+    simp only [BoundedInterval.a, BoundedInterval.b]
+    have h : b - (a + b) / 2 = (b - a) / 2 := by ring
+    rw [h, max_div_two]
+  | Ioc a b =>
+    simp only [BoundedInterval.a, BoundedInterval.b]
+    have h : b - (a + b) / 2 = (b - a) / 2 := by ring
+    rw [h, max_div_two]
+  | Ico a b =>
+    simp only [BoundedInterval.a, BoundedInterval.b]
+    have h : b - (a + b) / 2 = (b - a) / 2 := by ring
+    rw [h, max_div_two]
+
+/-- Bisecting preserves total length -/
+lemma BoundedInterval.bisect_length_sum (I : BoundedInterval) :
+    |(I.bisect.fst)|ₗ + |(I.bisect.snd)|ₗ = |I|ₗ := by
+  rw [bisect_fst_length, bisect_snd_length]
+  ring
+
 namespace Box
 
 /-- The diameter of a box is the supremum of Euclidean distances between points in the box -/
@@ -457,15 +539,135 @@ lemma not_intersects_both_of_diameter_lt {d:ℕ} (B: Box d) (E F : Set (Euclidea
   -- But we assumed B.diameter < set_dist E F
   linarith
 
+open Classical in
+/-- Decidable equality for boxes, needed for Finset operations -/
+noncomputable instance {d:ℕ} : DecidableEq (Box d) := instDecidableEqOfLawfulBEq
+
 /-- Subdivide a box by bisecting each coordinate axis, producing 2^d sub-boxes.
-    Each sub-box is formed by taking one half-interval from each coordinate. -/
-def subdivide {d:ℕ} (B: Box d) : Finset (Box d) :=
-  sorry
+    Each sub-box is formed by taking one half-interval from each coordinate.
+    We use Finset.univ (all possible d-bit patterns) to enumerate all 2^d combinations. -/
+noncomputable def subdivide {d:ℕ} (B: Box d) : Finset (Box d) :=
+  -- For each choice ∈ Fin d → Bool (which half to take for each coordinate),
+  -- construct a sub-box by taking the left half (if false) or right half (if true)
+  Finset.univ.image fun (choice : Fin d → Bool) =>
+    { side := fun i =>
+        let (left, right) := (B.side i).bisect
+        if choice i then right else left }
+
+/-- Distributive law: product of sums over Fin d equals sum over boolean choices of products.
+    This is the key identity: ∏ᵢ (aᵢ + bᵢ) = ∑_{c : Fin d → Bool} ∏ᵢ (if cᵢ then bᵢ else aᵢ) -/
+lemma Fin.prod_add_eq_sum_prod_choice (d : ℕ) (a b : Fin d → ℝ) :
+    ∏ i, (a i + b i) = ∑ c : Fin d → Bool, ∏ i, (if c i then b i else a i) := by
+  induction d with
+  | zero =>
+    -- Empty product = 1, sum over unique function = 1
+    simp only [Finset.univ_eq_empty, Finset.prod_empty]
+    -- There's exactly one function Fin 0 → Bool
+    have : (Finset.univ : Finset (Fin 0 → Bool)).card = 1 := by simp
+    rw [Finset.card_eq_one] at this
+    obtain ⟨f, hf⟩ := this
+    rw [hf, Finset.sum_singleton, Finset.prod_empty]
+  | succ d ih =>
+    -- Use the equivalence (Fin (d+1) → Bool) ≃ Bool × (Fin d → Bool)
+    -- Split the product: ∏ i, (a i + b i) = (a 0 + b 0) * ∏ i : Fin d, (a i.succ + b i.succ)
+    rw [Fin.prod_univ_succ]
+    -- Apply IH to the tail
+    let a' : Fin d → ℝ := fun i => a i.succ
+    let b' : Fin d → ℝ := fun i => b i.succ
+    have h_tail : ∏ i : Fin d, (a i.succ + b i.succ) = ∏ i, (a' i + b' i) := rfl
+    rw [h_tail, ih a' b']
+    -- Distribute: (a 0 + b 0) * (∑ c', ...) = a 0 * (∑ c', ...) + b 0 * (∑ c', ...)
+    rw [add_mul, Finset.mul_sum, Finset.mul_sum]
+    -- Use bijection: (Fin (d+1) → Bool) ≃ Bool × (Fin d → Bool)
+    -- Sum over Fin (d+1) → Bool = Sum over {c | c 0 = false} + Sum over {c | c 0 = true}
+    symm
+    rw [← Finset.sum_filter_add_sum_filter_not Finset.univ (fun c : Fin (d+1) → Bool => c 0)]
+    -- Now show each part equals the corresponding sum
+    congr 1
+    · -- c 0 = true case: ∑_{c : c 0 = true} ∏ i, ... = b 0 * ∑ c', ∏ i, ...
+      trans ∑ c' : Fin d → Bool, b 0 * ∏ i, (if c' i then b' i else a' i)
+      · -- Show the filtered sum equals sum over Fin d → Bool
+        apply Finset.sum_bij' (fun c _ => fun i => c i.succ) (fun c' _ => Fin.cons true c')
+        · intro c hc; simp
+        · intro c' _; simp [Finset.mem_filter]
+        · intro c hc
+          simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hc
+          rw [Fin.prod_univ_succ]
+          simp only [hc, ↓reduceIte, a', b']
+          congr 1
+          apply Finset.prod_congr rfl
+          intro i _
+          simp [Fin.cons_succ]
+        · intro c' _
+          funext i
+          simp [Fin.cons_succ]
+        · intro c hc
+          simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hc
+          funext i
+          cases' i using Fin.cases with i
+          · exact hc.symm
+          · simp [Fin.cons_succ]
+      · -- Both are b 0 * (∑ c', ∏ i, ...)
+        rfl
+    · -- c 0 = false case: ∑_{c : c 0 = false} ∏ i, ... = a 0 * ∑ c', ∏ i, ...
+      trans ∑ c' : Fin d → Bool, a 0 * ∏ i, (if c' i then b' i else a' i)
+      · apply Finset.sum_bij' (fun c _ => fun i => c i.succ) (fun c' _ => Fin.cons false c')
+        · intro c hc; simp
+        · intro c' _; simp [Finset.mem_filter]
+        · intro c hc
+          simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hc
+          rw [Fin.prod_univ_succ]
+          simp only [hc, Bool.false_eq_true, ↓reduceIte, a', b']
+          congr 1
+          apply Finset.prod_congr rfl
+          intro i _
+          simp [Fin.cons_succ]
+        · intro c' _
+          funext i
+          simp [Fin.cons_succ]
+        · intro c hc
+          simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hc
+          funext i
+          cases' i using Fin.cases with i
+          · simp at hc; exact hc.symm
+          · simp [Fin.cons_succ]
+      · rfl
 
 /-- The volume of a subdivided box equals the sum of its sub-box volumes -/
 lemma volume_subdivide {d:ℕ} (B: Box d) :
     ∑ B' ∈ B.subdivide, |B'|ᵥ = |B|ᵥ := by
-  sorry
+  unfold subdivide Box.volume
+  -- First establish equality for each coordinate
+  have h_sum : ∀ i, |(B.side i)|ₗ = |(B.side i).bisect.fst|ₗ + |(B.side i).bisect.snd|ₗ := by
+    intro i
+    exact (BoundedInterval.bisect_length_sum (B.side i)).symm
+  -- Rewrite RHS using bisect_length_sum
+  have h_rhs : ∏ i, |(B.side i)|ₗ =
+      ∏ i, (|(B.side i).bisect.fst|ₗ + |(B.side i).bisect.snd|ₗ) := by
+    apply Finset.prod_congr rfl
+    intro i _
+    exact h_sum i
+  rw [h_rhs]
+  -- Apply distributive lemma
+  rw [Fin.prod_add_eq_sum_prod_choice d
+    (fun i => |(B.side i).bisect.fst|ₗ)
+    (fun i => |(B.side i).bisect.snd|ₗ)]
+  -- LHS: ∑ B' ∈ image f, |B'|ᵥ where f(c) constructs box from choice c
+  -- RHS: ∑ c, ∏ i, (if c i then |bisect.snd|ₗ else |bisect.fst|ₗ)
+  -- Use sum_image' to handle potential collisions in the image
+  rw [Finset.sum_image']
+  -- Now show each term is equal
+  apply Finset.sum_congr rfl
+  intro c _
+  -- Show that for this particular c, the inner sum (over j's mapping to same box)
+  -- times the product equals just the product (since volume only depends on box)
+  simp only []
+  apply Finset.prod_congr rfl
+  intro i _
+  -- The side of the constructed box at coordinate i is:
+  -- if c i then bisect.snd else bisect.fst
+  -- So its length is if c i then |bisect.snd|ₗ else |bisect.fst|ₗ
+  split_ifs <;> rfl
 
 /-- Each sub-box of a subdivision has diameter at most the original diameter divided by √2.
     This follows because each side is halved, reducing the diagonal by a factor related to √2. -/
@@ -585,9 +787,26 @@ lemma exists_cover_close {d:ℕ} (hd: 0 < d)
   exact ⟨S, hS_cover, le_of_lt hv_lt⟩
 
 /-- Refine a cover so that all boxes have diameter less than a given threshold.
-    This is done by repeatedly subdividing boxes that are too large. -/
-def refine_cover_to_diameter {d:ℕ} (S: ℕ → Box d) (r: ℝ) (hr: 0 < r) : ℕ → Box d :=
-  sorry
+    This is done by subdividing boxes that are too large.
+    We use Nat.unpair to encode: each index maps to (original_box_index, sub_box_index).
+    If the original box has diameter < r, we return it for all sub_box_indices.
+    Otherwise, we subdivide it once and return the appropriate sub-box. -/
+noncomputable def refine_cover_to_diameter {d:ℕ} (S: ℕ → Box d) (r: ℝ) (_: 0 < r) : ℕ → Box d :=
+  fun n =>
+    let (box_idx, sub_idx) := n.unpair
+    let B := S box_idx
+    if B.diameter < r then
+      B  -- Box is already small enough, return it
+    else
+      -- Box needs subdivision; subdivide and take the sub_idx-th element
+      -- We use Finset.toList and take modulo the size to handle wrapping
+      let subs := B.subdivide.toList
+      if h : subs.length > 0 then
+        let idx := sub_idx % subs.length
+        have h_idx : idx < subs.length := Nat.mod_lt _ h
+        subs.get ⟨idx, h_idx⟩
+      else
+        B  -- Fallback (shouldn't happen if subdivide is non-empty)
 
 /-- The refined cover still covers the same region -/
 lemma refine_cover_preserves_union {d:ℕ} (S: ℕ → Box d) (r: ℝ) (hr: 0 < r) :

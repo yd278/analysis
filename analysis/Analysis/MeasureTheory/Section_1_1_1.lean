@@ -1297,7 +1297,39 @@ lemma IsElementary.measure_of_union {d:ℕ} {E F: Set (EuclideanSpace' d)}
 lemma IsElementary.measure_of_union' {d:ℕ} {S: Finset (Set (EuclideanSpace' d))}
 (hE: ∀ E ∈ S, IsElementary E) :
   (IsElementary.union' hE).measure ≤ ∑ E:S, (hE E.val E.property).measure := by
-  sorry
+  -- Strategy: Induction on S mirroring measure_of_disjUnion' but with inequality
+  classical
+  induction S using Finset.induction_on with
+  | empty =>
+    -- Base case: S = ∅, both sides are 0
+    have h_set_eq := IsElementary.union'_empty_eq (d := d)
+    have h_measure_eq : (IsElementary.union' hE).measure = (IsElementary.empty d).measure :=
+      IsElementary.measure_eq_of_set_eq (IsElementary.union' hE) (IsElementary.empty d) h_set_eq
+    simp [IsElementary.measure_of_empty]
+  | @insert a S' ha_notin ih =>
+    -- Extract hypotheses for S' and element a
+    have hE_S' : ∀ E ∈ S', IsElementary E := fun E hE_mem => hE E (Finset.mem_insert_of_mem hE_mem)
+    have hE_a : IsElementary a := hE a (Finset.mem_insert_self _ _)
+    -- Show the union over insert a S' equals a ∪ (union over S')
+    have h_union_split : ⋃ E ∈ insert a S', E = a ∪ (⋃ E ∈ S', E) := by
+      ext x; simp [Set.mem_iUnion, Set.mem_union, Finset.mem_insert]
+    -- Apply the two-set subadditivity lemma
+    let hE_rest : IsElementary (⋃ E ∈ S', E) := IsElementary.union' hE_S'
+    have h_two_set : (hE_a.union hE_rest).measure ≤ hE_a.measure + hE_rest.measure :=
+      IsElementary.measure_of_union hE_a hE_rest
+    -- Equate the union witness measure with the two-set union measure
+    have h_measure_eq : (IsElementary.union' hE).measure = (hE_a.union hE_rest).measure :=
+      IsElementary.measure_eq_of_set_eq (IsElementary.union' hE) (hE_a.union hE_rest) h_union_split
+    -- Split the sum into measure of a plus sum over S'
+    have h_sum_split := IsElementary.sum_insert_split ha_notin hE
+    -- Apply inductive hypothesis
+    have h_ih : hE_rest.measure ≤ ∑ E : S', (hE_S' E.val E.property).measure := ih hE_S'
+    have h_ih_adjusted : hE_rest.measure ≤ ∑ E : S', (hE E.val (Finset.mem_insert_of_mem E.property)).measure :=
+      h_ih
+    -- Combine: (union' hE).measure = (hE_a.union hE_rest).measure ≤ hE_a.measure + hE_rest.measure
+    --          ≤ hE_a.measure + ∑ E:S', ... = ∑ E:(insert a S'), ...
+    rw [h_measure_eq, h_sum_split]
+    linarith [h_two_set, h_ih_adjusted]
 
 /-- Helper: Translation preserves interval length -/
 lemma BoundedInterval.length_of_translate (I: BoundedInterval) (c: ℝ) :

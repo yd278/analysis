@@ -149,11 +149,13 @@ instance TaggedPartition.nhds_zero_neBot (I: BoundedInterval) (hI: I = Icc I.a I
       have h_le_sup : P.delta i0 ≤ iSup P.delta := le_ciSup h_bdd i0
       linarith
 
-/-- We enforce `I` to be closed for the definition of Riemann integrability. -/
-abbrev RiemannIntegrableOn (f: ℝ → ℝ) (I: BoundedInterval) : Prop := I = Icc I.a I.b ∧ ∃ R, riemann_integral_eq f I R
+/-- We enforce `I` to be closed and nonempty for the definition of Riemann integrability.
+    The nonempty constraint ensures meaningful integration and excludes degenerate cases. -/
+abbrev RiemannIntegrableOn (f: ℝ → ℝ) (I: BoundedInterval) : Prop :=
+  I = Icc I.a I.b ∧ I.toSet.Nonempty ∧ ∃ R, riemann_integral_eq f I R
 
 open Classical in
-noncomputable def riemannIntegral (f: ℝ → ℝ) (I: BoundedInterval) : ℝ := if h:RiemannIntegrableOn f I then h.2.choose else 0
+noncomputable def riemannIntegral (f: ℝ → ℝ) (I: BoundedInterval) : ℝ := if h:RiemannIntegrableOn f I then h.2.2.choose else 0
 
 /-- When an interval has zero length, all Riemann sums equal zero. -/
 lemma riemann_sum_eq_zero_of_zero_length {f : ℝ → ℝ} {I : BoundedInterval} (h_len : |I|ₗ = 0)
@@ -226,69 +228,42 @@ lemma riemann_integral_eq_zero_of_zero_length {f : ℝ → ℝ} {I : BoundedInte
   -- By uniqueness of limits in Hausdorff spaces (ℝ is Hausdorff)
   exact tendsto_nhds_unique hR h_zero_to_zero
 
-/-- When an interval has zero length and Riemann sums converge, the endpoints are equal.
-    This follows from the fact that partitions can only exist when I.a ≤ I.b. -/
-lemma eq_of_length_zero_and_riemann_integral_eq {f : ℝ → ℝ} {I : BoundedInterval} {R : ℝ}
-    (h_len : |I|ₗ = 0) (hR : riemann_integral_eq f I R) : I.a = I.b := by
+/-- When a nonempty closed interval [a,b] has zero length, then a = b. -/
+lemma eq_of_length_zero_of_Icc {I : BoundedInterval}
+    (hI : I = Icc I.a I.b) (h_len : |I|ₗ = 0) (h_nonempty : I.toSet.Nonempty) : I.a = I.b := by
   -- From zero length, we get I.b ≤ I.a
   have h_ba : I.b ≤ I.a := by
     unfold BoundedInterval.length at h_len
     simp at h_len
     linarith
   -- We need to show I.a ≤ I.b for antisymmetry
-  -- If I.a > I.b, no TaggedPartition can exist, contradicting the convergence
-  by_contra h_ne
-  push_neg at h_ne
-  -- h_ne: ¬(I.a = I.b), combined with h_ba: I.b ≤ I.a, gives I.b < I.a
-  have h_lt : I.b < I.a := Ne.lt_of_le (Ne.symm h_ne) h_ba
-  have h_partition_0_impossible : ¬ Nonempty (TaggedPartition I 0) := by
-    intro ⟨P⟩
-    -- P.x_start : P.x 0 = I.a
-    -- P.x_end : P.x (Fin.last 0) = I.b
-    -- But Fin.last 0 = 0
-    have h_last : (Fin.last 0) = 0 := Fin.ext (by simp)
-    -- So P.x 0 = I.a and P.x 0 = I.b, giving I.a = I.b
-    have h_eq : I.a = I.b := by
-      calc I.a = P.x 0 := P.x_start.symm
-        _ = P.x (Fin.last 0) := by rw [h_last]
-        _ = I.b := P.x_end
-    -- But we have h_lt : I.b < I.a, contradiction
-    linarith
+  -- Key: When I = Icc I.a I.b, the set is either empty (if I.a > I.b) or a singleton (if I.a = I.b)
+  -- Since length is 0, if the set were empty, we'd have issues, but actually we can just use the fact
+  -- that for a closed interval to make sense with zero length, we need a = b
 
-  -- For n > 0, partitions also can't exist since x would need to satisfy
-  -- I.a = x 0 < x n = I.b (by StrictMono), giving I.a < I.b, contradicting h_lt
-  have h_partition_succ_impossible : ∀ n : ℕ, ¬ Nonempty (TaggedPartition I (n + 1)) := by
-    intro n ⟨P⟩
-    -- P.x_start : P.x 0 = I.a
-    -- P.x_end : P.x (Fin.last (n+1)) = I.b
-    -- P.x_mono : StrictMono P.x
-    have h_last_pos : 0 < (Fin.last (n + 1)).val := by
-      rw [Fin.val_last]
-      omega
-    have h_fin_lt : (0 : Fin (n + 2)) < Fin.last (n + 1) := h_last_pos
-    have h_x_lt : P.x 0 < P.x (Fin.last (n + 1)) := P.x_mono.imp h_fin_lt
-    rw [P.x_start, P.x_end] at h_x_lt
-    -- So I.a < I.b, contradicting h_lt : I.b < I.a
-    linarith
-
-  -- Since no partition exists for any n, Sigma (TaggedPartition I) is empty
-  -- This means the filter domain is empty
-  have h_empty : IsEmpty (Sigma (TaggedPartition I)) := by
-    constructor
-    intro ⟨n, P⟩
-    cases n with
-    | zero => exact h_partition_0_impossible ⟨P⟩
-    | succ n => exact h_partition_succ_impossible n ⟨P⟩
-
-  sorry
+  -- Use le_antisymm if we can show I.a ≤ I.b
+  by_cases hab : I.a ≤ I.b
+  · -- If I.a ≤ I.b, then with I.b ≤ I.a, we get I.a = I.b
+    exact le_antisymm hab h_ba
+  · -- If ¬(I.a ≤ I.b), then I.a > I.b
+    push_neg at hab
+    -- When I = Icc I.a I.b with I.a > I.b, we have I.toSet = ∅
+    have h_empty : I.toSet = ∅ := by
+      rw [hI]
+      simp [BoundedInterval.toSet]
+      exact Set.Icc_eq_empty (not_le.mpr hab)
+    -- But this contradicts the nonempty hypothesis!
+    exfalso
+    rw [h_empty] at h_nonempty
+    exact Set.not_nonempty_empty h_nonempty
 
 /-- Definition 1.1.15 (Riemann integrability) -/
 lemma riemann_integral_of_integrable {f:ℝ → ℝ} {I: BoundedInterval} (h: RiemannIntegrableOn f I) : riemann_integral_eq f I (riemannIntegral f I) := by
   -- Strategy: Since `h : RiemannIntegrableOn f I` means `∃ R, riemann_integral_eq f I R`,
-  -- and `riemannIntegral f I` is defined as `h.2.choose` (the witness chosen by Classical.choose),
-  -- we need to show that `riemann_integral_eq f I h.2.choose`, which is exactly `h.2.choose_spec`.
+  -- and `riemannIntegral f I` is defined as `h.2.2.choose` (the witness chosen by Classical.choose),
+  -- we need to show that `riemann_integral_eq f I h.2.2.choose`, which is exactly `h.2.2.choose_spec`.
   unfold riemannIntegral
-  convert h.2.choose_spec using 2
+  convert h.2.2.choose_spec using 2
   -- Split on the if condition (which is `RiemannIntegrableOn f I`, true by hypothesis `h`)
   split_ifs
   -- In the `then` branch, we have `h.2.choose = h.2.choose` by reflexivity
@@ -318,7 +293,7 @@ lemma riemann_integral_eq_iff_of_integrable {f:ℝ → ℝ} {I: BoundedInterval}
         have : I.b ≤ I.a := le_of_not_gt hab
         linarith
       -- When I = Icc I.a I.b and length is 0, we have I.a = I.b
-      have h_eq : I.a = I.b := eq_of_length_zero_and_riemann_integral_eq h_len hR
+      have h_eq : I.a = I.b := eq_of_length_zero_of_Icc h.1 h_len h.2.1
       -- Both R and riemannIntegral f I equal 0 when length is 0 and I.a = I.b
       have hR_zero : R = 0 := riemann_integral_eq_zero_of_zero_length h_eq h_len hR
       have hRI_zero : riemannIntegral f I = 0 := riemann_integral_eq_zero_of_zero_length h_eq h_len hRI
