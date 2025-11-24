@@ -163,6 +163,48 @@ noncomputable def BoundedInterval.bisect (I : BoundedInterval) : BoundedInterval
   let m := I.midpoint
   (Icc a m, Icc m b)
 
+/-- Bisecting an interval gives distinct sub-intervals unless the interval is degenerate -/
+lemma BoundedInterval.bisect_fst_ne_snd (I : BoundedInterval) :
+    I.bisect.fst ≠ I.bisect.snd ∨ I.a = I.b := by
+  unfold bisect midpoint endpoints
+  cases I with
+  | Ioo a b =>
+    simp only [BoundedInterval.a, BoundedInterval.b]
+    by_cases hab : a = b
+    · right; exact hab
+    · left
+      intro h
+      have ha : a = (a + b) / 2 := congrArg BoundedInterval.a h
+      have hb : (a + b) / 2 = b := congrArg BoundedInterval.b h
+      exact hab (by linarith)
+  | Icc a b =>
+    simp only [BoundedInterval.a, BoundedInterval.b]
+    by_cases hab : a = b
+    · right; exact hab
+    · left
+      intro h
+      have ha : a = (a + b) / 2 := congrArg BoundedInterval.a h
+      have hb : (a + b) / 2 = b := congrArg BoundedInterval.b h
+      exact hab (by linarith)
+  | Ioc a b =>
+    simp only [BoundedInterval.a, BoundedInterval.b]
+    by_cases hab : a = b
+    · right; exact hab
+    · left
+      intro h
+      have ha : a = (a + b) / 2 := congrArg BoundedInterval.a h
+      have hb : (a + b) / 2 = b := congrArg BoundedInterval.b h
+      exact hab (by linarith)
+  | Ico a b =>
+    simp only [BoundedInterval.a, BoundedInterval.b]
+    by_cases hab : a = b
+    · right; exact hab
+    · left
+      intro h
+      have ha : a = (a + b) / 2 := congrArg BoundedInterval.a h
+      have hb : (a + b) / 2 = b := congrArg BoundedInterval.b h
+      exact hab (by linarith)
+
 /-- Helper: max distributes over division by 2 -/
 lemma max_div_two (x : ℝ) : max x 0 / 2 = max (x / 2) 0 := by
   by_cases hx : 0 ≤ x
@@ -560,114 +602,217 @@ lemma Fin.prod_add_eq_sum_prod_choice (d : ℕ) (a b : Fin d → ℝ) :
     ∏ i, (a i + b i) = ∑ c : Fin d → Bool, ∏ i, (if c i then b i else a i) := by
   induction d with
   | zero =>
-    -- Empty product = 1, sum over unique function = 1
+    -- Empty product = 1, and there's exactly one function Fin 0 → Bool
     simp only [Finset.univ_eq_empty, Finset.prod_empty]
-    -- There's exactly one function Fin 0 → Bool
-    have : (Finset.univ : Finset (Fin 0 → Bool)).card = 1 := by simp
-    rw [Finset.card_eq_one] at this
-    obtain ⟨f, hf⟩ := this
-    rw [hf, Finset.sum_singleton, Finset.prod_empty]
+    have h_card : (Finset.univ : Finset (Fin 0 → Bool)).card = 1 := by simp
+    rw [Finset.card_eq_one] at h_card
+    obtain ⟨f, hf⟩ := h_card
+    simp only [hf, Finset.sum_singleton]
   | succ d ih =>
-    -- Use the equivalence (Fin (d+1) → Bool) ≃ Bool × (Fin d → Bool)
-    -- Split the product: ∏ i, (a i + b i) = (a 0 + b 0) * ∏ i : Fin d, (a i.succ + b i.succ)
+    -- Split off first coordinate: ∏_{i:Fin(d+1)} = (first term) * ∏_{i:Fin d}
     rw [Fin.prod_univ_succ]
     -- Apply IH to the tail
     let a' : Fin d → ℝ := fun i => a i.succ
     let b' : Fin d → ℝ := fun i => b i.succ
     have h_tail : ∏ i : Fin d, (a i.succ + b i.succ) = ∏ i, (a' i + b' i) := rfl
     rw [h_tail, ih a' b']
-    -- Distribute: (a 0 + b 0) * (∑ c', ...) = a 0 * (∑ c', ...) + b 0 * (∑ c', ...)
-    rw [add_mul, Finset.mul_sum, Finset.mul_sum]
-    -- Use bijection: (Fin (d+1) → Bool) ≃ Bool × (Fin d → Bool)
-    -- Sum over Fin (d+1) → Bool = Sum over {c | c 0 = false} + Sum over {c | c 0 = true}
+    -- Distribute: (a 0 + b 0) * (∑ c', ...) = b 0 * (∑ c', ...) + a 0 * (∑ c', ...)
+    rw [add_comm (a 0) (b 0), add_mul, Finset.mul_sum, Finset.mul_sum]
+    -- Split RHS sum by first bit: ∑_c = ∑_{c 0 = true} + ∑_{c 0 = false}
     symm
     rw [← Finset.sum_filter_add_sum_filter_not Finset.univ (fun c : Fin (d+1) → Bool => c 0)]
-    -- Now show each part equals the corresponding sum
+    -- Now: (∑_{c 0 = true} ...) + (∑_{c 0 = false} ...) = b 0 * (...) + a 0 * (...)
     congr 1
-    · -- c 0 = true case: ∑_{c : c 0 = true} ∏ i, ... = b 0 * ∑ c', ∏ i, ...
-      trans ∑ c' : Fin d → Bool, b 0 * ∏ i, (if c' i then b' i else a' i)
-      · -- Show the filtered sum equals sum over Fin d → Bool
-        apply Finset.sum_bij' (fun c _ => fun i => c i.succ) (fun c' _ => Fin.cons true c')
-        · intro c hc; simp
-        · intro c' _; simp [Finset.mem_filter]
-        · intro c hc
-          simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hc
-          rw [Fin.prod_univ_succ]
-          simp only [hc, ↓reduceIte, a', b']
-          congr 1
-          apply Finset.prod_congr rfl
-          intro i _
-          simp [Fin.cons_succ]
+    · -- c 0 = true case
+      have h_factor : ∀ c ∈ Finset.filter (fun c : Fin (d+1) → Bool => c 0) Finset.univ,
+          ∏ i, (if c i then b i else a i) =
+          b 0 * ∏ i : Fin d, (if c i.succ then b' i else a' i) := by
+        intro c hc
+        rw [Fin.prod_univ_succ]
+        simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hc
+        simp only [hc, ↓reduceIte, a', b']
+      rw [Finset.sum_congr rfl h_factor, ← Finset.mul_sum]
+      -- Now goal is: b 0 * (∑ c ∈ filter, ∏...) = b 0 * (∑ c' ∈ univ, ∏...)
+      -- Need to show the sums are equal, then multiply by b 0
+      have h_sum_eq : ∑ c ∈ Finset.filter (fun c : Fin (d+1) → Bool => c 0) Finset.univ,
+          ∏ i : Fin d, (if c i.succ then b' i else a' i) =
+          ∑ c' : Fin d → Bool, ∏ i, (if c' i then b' i else a' i) := by
+        symm
+        refine Finset.sum_bij (fun (c' : Fin d → Bool) _ => Fin.cons true c') ?_ ?_ ?_ ?_
         · intro c' _
+          simp only [Finset.mem_filter, Finset.mem_univ, Fin.cons_zero, true_and]
+        · intro c₁ _ c₂ _ heq
+          simp only at heq
           funext i
-          simp [Fin.cons_succ]
+          have h : (Fin.cons true c₁ : Fin (d+1) → Bool) i.succ =
+                   (Fin.cons true c₂ : Fin (d+1) → Bool) i.succ := by rw [heq]
+          simp only [Fin.cons_succ] at h
+          exact h
         · intro c hc
           simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hc
-          funext i
-          cases' i using Fin.cases with i
-          · exact hc.symm
-          · simp [Fin.cons_succ]
-      · -- Both are b 0 * (∑ c', ∏ i, ...)
-        rfl
-    · -- c 0 = false case: ∑_{c : c 0 = false} ∏ i, ... = a 0 * ∑ c', ∏ i, ...
-      trans ∑ c' : Fin d → Bool, a 0 * ∏ i, (if c' i then b' i else a' i)
-      · apply Finset.sum_bij' (fun c _ => fun i => c i.succ) (fun c' _ => Fin.cons false c')
-        · intro c hc; simp
-        · intro c' _; simp [Finset.mem_filter]
-        · intro c hc
-          simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hc
-          rw [Fin.prod_univ_succ]
-          simp only [hc, Bool.false_eq_true, ↓reduceIte, a', b']
-          congr 1
-          apply Finset.prod_congr rfl
-          intro i _
-          simp [Fin.cons_succ]
+          refine ⟨fun i => c i.succ, Finset.mem_univ _, ?_⟩
+          funext i; cases' i using Fin.cases with i
+          · simp only [Fin.cons_zero]; exact hc.symm
+          · simp only [Fin.cons_succ]
         · intro c' _
+          apply Finset.prod_congr rfl; intro i _
+          simp only [Fin.cons_succ]
+      rw [h_sum_eq, Finset.mul_sum]
+    · -- c 0 = false case
+      have h_factor : ∀ c ∈ Finset.filter (fun c : Fin (d+1) → Bool => ¬c 0) Finset.univ,
+          ∏ i, (if c i then b i else a i) =
+          a 0 * ∏ i : Fin d, (if c i.succ then b' i else a' i) := by
+        intro c hc
+        rw [Fin.prod_univ_succ]
+        simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hc
+        simp only [Bool.eq_false_iff.mpr hc, Bool.false_eq_true, ↓reduceIte, a', b']
+      rw [Finset.sum_congr rfl h_factor, ← Finset.mul_sum]
+      have h_sum_eq : ∑ c ∈ Finset.filter (fun c : Fin (d+1) → Bool => ¬c 0) Finset.univ,
+          ∏ i : Fin d, (if c i.succ then b' i else a' i) =
+          ∑ c' : Fin d → Bool, ∏ i, (if c' i then b' i else a' i) := by
+        symm
+        refine Finset.sum_bij (fun (c' : Fin d → Bool) _ => Fin.cons false c') ?_ ?_ ?_ ?_
+        · intro c' _
+          simp only [Finset.mem_filter, Finset.mem_univ, Fin.cons_zero]
+          trivial
+        · intro c₁ _ c₂ _ heq
+          simp only at heq
           funext i
-          simp [Fin.cons_succ]
+          have h : (Fin.cons false c₁ : Fin (d+1) → Bool) i.succ =
+                   (Fin.cons false c₂ : Fin (d+1) → Bool) i.succ := by rw [heq]
+          simp only [Fin.cons_succ] at h
+          exact h
         · intro c hc
           simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hc
-          funext i
-          cases' i using Fin.cases with i
-          · simp at hc; exact hc.symm
-          · simp [Fin.cons_succ]
-      · rfl
+          refine ⟨fun i => c i.succ, Finset.mem_univ _, ?_⟩
+          funext i; cases' i using Fin.cases with i
+          · simp only [Fin.cons_zero]; exact (Bool.eq_false_iff.mpr hc).symm
+          · simp only [Fin.cons_succ]
+        · intro c' _
+          apply Finset.prod_congr rfl; intro i _
+          simp only [Fin.cons_succ]
+      rw [h_sum_eq, Finset.mul_sum]
 
 /-- The volume of a subdivided box equals the sum of its sub-box volumes -/
 lemma volume_subdivide {d:ℕ} (B: Box d) :
     ∑ B' ∈ B.subdivide, |B'|ᵥ = |B|ᵥ := by
   unfold subdivide Box.volume
-  -- First establish equality for each coordinate
+  -- Establish that each coordinate's length splits into two halves
   have h_sum : ∀ i, |(B.side i)|ₗ = |(B.side i).bisect.fst|ₗ + |(B.side i).bisect.snd|ₗ := by
-    intro i
-    exact (BoundedInterval.bisect_length_sum (B.side i)).symm
-  -- Rewrite RHS using bisect_length_sum
-  have h_rhs : ∏ i, |(B.side i)|ₗ =
-      ∏ i, (|(B.side i).bisect.fst|ₗ + |(B.side i).bisect.snd|ₗ) := by
-    apply Finset.prod_congr rfl
-    intro i _
-    exact h_sum i
-  rw [h_rhs]
-  -- Apply distributive lemma
-  rw [Fin.prod_add_eq_sum_prod_choice d
-    (fun i => |(B.side i).bisect.fst|ₗ)
-    (fun i => |(B.side i).bisect.snd|ₗ)]
-  -- LHS: ∑ B' ∈ image f, |B'|ᵥ where f(c) constructs box from choice c
-  -- RHS: ∑ c, ∏ i, (if c i then |bisect.snd|ₗ else |bisect.fst|ₗ)
-  -- Use sum_image' to handle potential collisions in the image
-  rw [Finset.sum_image']
-  -- Now show each term is equal
-  apply Finset.sum_congr rfl
-  intro c _
-  -- Show that for this particular c, the inner sum (over j's mapping to same box)
-  -- times the product equals just the product (since volume only depends on box)
-  simp only []
-  apply Finset.prod_congr rfl
-  intro i _
-  -- The side of the constructed box at coordinate i is:
-  -- if c i then bisect.snd else bisect.fst
-  -- So its length is if c i then |bisect.snd|ₗ else |bisect.fst|ₗ
-  split_ifs <;> rfl
+    intro i; exact (BoundedInterval.bisect_length_sum (B.side i)).symm
+  -- Rewrite RHS using the sum identity
+  have h_rhs : ∏ i, |(B.side i)|ₗ = ∏ i, (|(B.side i).bisect.fst|ₗ + |(B.side i).bisect.snd|ₗ) := by
+    apply Finset.prod_congr rfl; intro i _; exact h_sum i
+  rw [h_rhs, Fin.prod_add_eq_sum_prod_choice d _ _]
+  -- The mapping from choice to box
+  let g : (Fin d → Bool) → Box d := fun c =>
+    { side := fun i => let (l, r) := (B.side i).bisect; if c i then r else l }
+  -- Key: volume of g c equals the product of half-lengths
+  have h_vol_eq : ∀ c : Fin d → Bool, |g c|ᵥ =
+      ∏ i, (if c i then |(B.side i).bisect.snd|ₗ else |(B.side i).bisect.fst|ₗ) := by
+    intro c; unfold Box.volume; apply Finset.prod_congr rfl; intro i _
+    simp only [g]; split_ifs <;> rfl
+  -- Two choices give same product when they map to same box
+  have h_prod_eq : ∀ c₁ c₂ : Fin d → Bool, g c₁ = g c₂ →
+      (∏ i, (if c₁ i then |(B.side i).bisect.snd|ₗ else |(B.side i).bisect.fst|ₗ)) =
+      (∏ i, (if c₂ i then |(B.side i).bisect.snd|ₗ else |(B.side i).bisect.fst|ₗ)) := by
+    intro c₁ c₂ heq
+    apply Finset.prod_congr rfl; intro i _
+    have hside : (g c₁).side i = (g c₂).side i := congrArg (·.side i) heq
+    simp only [g] at hside
+    cases hc₁ : c₁ i <;> cases hc₂ : c₂ i <;> simp only [hc₁, hc₂, ↓reduceIte, Bool.false_eq_true] at hside ⊢
+    -- true/false case: hside : bisect.snd = bisect.fst
+    · rw [congrArg BoundedInterval.length hside]
+    -- false/true case: hside : bisect.fst = bisect.snd
+    · rw [congrArg BoundedInterval.length hside]
+  -- Use sum_image' which handles non-injective maps
+  let h_func : (Fin d → Bool) → ℝ := fun c =>
+    ∏ i, (if c i then |(B.side i).bisect.snd|ₗ else |(B.side i).bisect.fst|ₗ)
+  have h_fiber : ∀ c ∈ Finset.univ, |g c|ᵥ = ∑ j ∈ Finset.univ with g j = g c, h_func j := by
+    intro c _
+    rw [h_vol_eq c]
+    have h_fib_eq : ∀ j ∈ Finset.univ, g j = g c → h_func j = h_func c := by
+      intro j _ hgj; exact h_prod_eq j c hgj
+    -- Goal: h_func c = ∑ j with g j = g c, h_func j
+    -- All elements in fiber have value h_func c, so sum = card * h_func c
+    conv_rhs => rw [show ∑ j ∈ Finset.univ with g j = g c, h_func j =
+        ∑ j ∈ Finset.univ.filter (fun j => g j = g c), h_func j from rfl]
+    rw [Finset.sum_eq_card_nsmul (fun x hx => by
+      rw [Finset.mem_filter] at hx; exact h_fib_eq x hx.1 hx.2)]
+    rw [nsmul_eq_mul]
+    -- Need: h_func c = card * h_func c. Holds when card = 1 OR h_func c = 0.
+    by_cases h_card : (Finset.univ.filter (fun j => g j = g c)).card = 1
+    · simp only [h_card, Nat.cast_one, one_mul]; rfl
+    · -- Card ≠ 1, and card ≥ 1 (since c is in fiber), so card > 1
+      have h_card_pos : 0 < (Finset.univ.filter (fun j => g j = g c)).card := by
+        apply Finset.card_pos.mpr; use c
+        simp only [Finset.mem_filter, Finset.mem_univ, true_and]
+      have h_card_gt : 1 < (Finset.univ.filter (fun j => g j = g c)).card := by omega
+      obtain ⟨c₁, hc₁, c₂, hc₂, hne⟩ := Finset.one_lt_card.mp h_card_gt
+      rw [Finset.mem_filter] at hc₁ hc₂
+      -- c₁ and c₂ differ at some coordinate
+      have ⟨i, hi_ne⟩ : ∃ i, c₁ i ≠ c₂ i := by
+        by_contra h; push_neg at h; exact hne (funext h)
+      -- At that coordinate, g c₁ = g c₂ implies bisect.fst = bisect.snd
+      have hside : (g c₁).side i = (g c₂).side i := congrArg (·.side i) (hc₁.2.trans hc₂.2.symm)
+      simp only [g] at hside
+      -- Extract bisect equality from hside by case analysis on c₁ i and c₂ i
+      have h_bisect_eq : (B.side i).bisect.fst = (B.side i).bisect.snd := by
+        cases hc₁i : c₁ i <;> cases hc₂i : c₂ i <;>
+        simp only [hc₁i, hc₂i, Bool.false_eq_true, ↓reduceIte] at hside hi_ne
+        · exact (hi_ne rfl).elim  -- false/false case: contradiction
+        · exact hside             -- false/true case: hside : fst = snd
+        · exact hside.symm        -- true/false case: hside : snd = fst
+        · exact (hi_ne rfl).elim  -- true/true case: contradiction
+      -- When fst = snd, the interval is degenerate (point), so length = 0
+      have h_len_zero : |(B.side i).bisect.snd|ₗ = 0 := by
+        rw [← h_bisect_eq]
+        -- bisect.fst = bisect.snd means Icc a m = Icc m b, so a = m = b
+        unfold BoundedInterval.bisect BoundedInterval.midpoint BoundedInterval.endpoints at h_bisect_eq
+        cases hI : B.side i with
+        | Ioo a b =>
+          simp only [hI] at h_bisect_eq
+          have ha : a = (a + b) / 2 := congrArg BoundedInterval.a h_bisect_eq
+          have hb : (a + b) / 2 = b := congrArg BoundedInterval.b h_bisect_eq
+          have hab : a = b := by linarith
+          simp only [BoundedInterval.length, BoundedInterval.bisect, BoundedInterval.midpoint,
+            BoundedInterval.endpoints, BoundedInterval.b, BoundedInterval.a, hab]
+          ring_nf; simp
+        | Icc a b =>
+          simp only [hI] at h_bisect_eq
+          have ha : a = (a + b) / 2 := congrArg BoundedInterval.a h_bisect_eq
+          have hb : (a + b) / 2 = b := congrArg BoundedInterval.b h_bisect_eq
+          have hab : a = b := by linarith
+          simp only [BoundedInterval.length, BoundedInterval.bisect, BoundedInterval.midpoint,
+            BoundedInterval.endpoints, BoundedInterval.b, BoundedInterval.a, hab]
+          ring_nf; simp
+        | Ioc a b =>
+          simp only [hI] at h_bisect_eq
+          have ha : a = (a + b) / 2 := congrArg BoundedInterval.a h_bisect_eq
+          have hb : (a + b) / 2 = b := congrArg BoundedInterval.b h_bisect_eq
+          have hab : a = b := by linarith
+          simp only [BoundedInterval.length, BoundedInterval.bisect, BoundedInterval.midpoint,
+            BoundedInterval.endpoints, BoundedInterval.b, BoundedInterval.a, hab]
+          ring_nf; simp
+        | Ico a b =>
+          simp only [hI] at h_bisect_eq
+          have ha : a = (a + b) / 2 := congrArg BoundedInterval.a h_bisect_eq
+          have hb : (a + b) / 2 = b := congrArg BoundedInterval.b h_bisect_eq
+          have hab : a = b := by linarith
+          simp only [BoundedInterval.length, BoundedInterval.bisect, BoundedInterval.midpoint,
+            BoundedInterval.endpoints, BoundedInterval.b, BoundedInterval.a, hab]
+          ring_nf; simp
+      -- h_func c has a zero factor at coordinate i, so the product is 0
+      have h_len_fst_zero : |(B.side i).bisect.fst|ₗ = 0 := by rw [h_bisect_eq]; exact h_len_zero
+      have h_prod_zero : h_func c = 0 := by
+        apply Finset.prod_eq_zero (Finset.mem_univ i)
+        cases hci : c i
+        · simp only [Bool.false_eq_true, ↓reduceIte]; exact h_len_fst_zero
+        · simp only [↓reduceIte]; exact h_len_zero
+      simp only [h_prod_zero, mul_zero]
+      -- Goal: h_func c = 0, which is exactly h_prod_zero
+      exact h_prod_zero
+  rw [Finset.sum_image' h_func h_fiber]
 
 /-- Each sub-box of a subdivision has diameter at most the original diameter divided by √2.
     This follows because each side is halved, reducing the diagonal by a factor related to √2. -/
