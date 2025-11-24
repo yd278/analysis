@@ -177,12 +177,68 @@ lemma Box.dist_le_diameter {d:ℕ} (B: Box d) {x y: EuclideanSpace' d}
   · -- The set is bounded above
     use (∑ i : Fin d, |B.side i|ₗ)
     intro r ⟨z, hz, w, hw, hr⟩
-    sorry
+    -- dist z w is bounded by sum of side lengths
+    rw [hr]
+    -- z, w ∈ B.toSet means ∀ i, z i ∈ B.side i and w i ∈ B.side i
+    have hz_coord : ∀ i, z i ∈ (B.side i).toSet := by
+      intro i; exact hz i (Set.mem_univ i)
+    have hw_coord : ∀ i, w i ∈ (B.side i).toSet := by
+      intro i; exact hw i (Set.mem_univ i)
+    -- For each coordinate, the difference is bounded by the side length
+    have coord_bound : ∀ i, |(z - w) i| ≤ |B.side i|ₗ := by
+      intro i
+      have hz_i := hz_coord i
+      have hw_i := hw_coord i
+      -- All interval types have the same bound: |z i - w i| ≤ max (b - a) 0
+      cases h_side : B.side i with
+      | Ioo a b =>
+          simp [BoundedInterval.toSet, h_side] at hz_i hw_i
+          simp [BoundedInterval.length]
+          left
+          rw [abs_sub_le_iff]
+          constructor <;> linarith [hz_i.1, hz_i.2, hw_i.1, hw_i.2]
+      | Icc a b =>
+          simp [BoundedInterval.toSet, h_side] at hz_i hw_i
+          simp [BoundedInterval.length]
+          left
+          rw [abs_sub_le_iff]
+          constructor <;> linarith [hz_i.1, hz_i.2, hw_i.1, hw_i.2]
+      | Ioc a b =>
+          simp [BoundedInterval.toSet, h_side] at hz_i hw_i
+          simp [BoundedInterval.length]
+          left
+          rw [abs_sub_le_iff]
+          constructor <;> linarith [hz_i.1, hz_i.2, hw_i.1, hw_i.2]
+      | Ico a b =>
+          simp [BoundedInterval.toSet, h_side] at hz_i hw_i
+          simp [BoundedInterval.length]
+          left
+          rw [abs_sub_le_iff]
+          constructor <;> linarith [hz_i.1, hz_i.2, hw_i.1, hw_i.2]
+    -- Now prove that √(∑ (z i - w i)²) ≤ ∑ |B.side i|ₗ
+    have sqrt_sum_le : (∑ i, (z i - w i) ^ 2).sqrt ≤ ∑ i, |(z i - w i)| := by
+      -- ℓ² ≤ ℓ¹ norm: √(∑ xᵢ²) ≤ ∑ |xᵢ|
+      calc (∑ i, (z i - w i) ^ 2).sqrt
+          = (∑ i, |(z i - w i)| ^ 2).sqrt := by
+              congr 1; congr 1; ext i; rw [sq_abs]
+        _ ≤ ∑ i, (|(z i - w i)| ^ 2).sqrt := by
+              apply Real.sqrt_sum_le_sum_sqrt
+              intro i; exact sq_nonneg _
+        _ = ∑ i, |(z i - w i)| := by
+              congr 1; ext i
+              rw [Real.sqrt_sq_eq_abs, abs_of_nonneg (abs_nonneg _)]
+    calc √(∑ i, (z i - w i) ^ 2)
+        ≤ ∑ i, |(z i - w i)| := sqrt_sum_le
+      _ = ∑ i, |(z - w) i| := by rfl
+      _ ≤ ∑ i, |B.side i|ₗ := by
+          apply Finset.sum_le_sum
+          intro i _
+          exact coord_bound i
   · -- √(∑ (x i - y i)²) is in the set
     exact ⟨x, hx, y, hy, rfl⟩
 
 /-- Diameter is bounded by √d times the maximum side length -/
-lemma Box.diameter_bound_by_sides {d:ℕ} (B: Box d) (hd: 0 < d) :
+lemma Box.diameter_bound_by_sides {d:ℕ} (B: Box d) :
     B.diameter ≤ Real.sqrt d * (⨆ i, |B.side i|ₗ) := by
   unfold Box.diameter
   by_cases h : B.toSet.Nonempty
@@ -191,11 +247,106 @@ lemma Box.diameter_bound_by_sides {d:ℕ} (B: Box d) (hd: 0 < d) :
       exact ⟨√(∑ i, (x i - x i)^2), x, hx, x, hx, rfl⟩
     · intro r ⟨x, hx, y, hy, hr⟩
       -- √(∑ i, (x i - y i)²) ≤ √(d * max²) = √d * max
-      sorry
+      rw [hr]
+      let max_side := ⨆ i, |B.side i|ₗ
+      -- Each coordinate difference is bounded by the maximum side length
+      have coord_bound : ∀ i, |(x - y) i| ≤ max_side := by
+        intro i
+        have hx_i : x i ∈ (B.side i).toSet := hx i (Set.mem_univ i)
+        have hy_i : y i ∈ (B.side i).toSet := hy i (Set.mem_univ i)
+        -- |x i - y i| ≤ |B.side i|ₗ ≤ max_side
+        have bound_by_side : |(x - y) i| ≤ |B.side i|ₗ := by
+          cases h_side : B.side i with
+          | Ioo a b =>
+              simp [BoundedInterval.toSet, h_side] at hx_i hy_i
+              simp [BoundedInterval.length]
+              left
+              rw [abs_sub_le_iff]
+              constructor <;> linarith [hx_i.1, hx_i.2, hy_i.1, hy_i.2]
+          | Icc a b =>
+              simp [BoundedInterval.toSet, h_side] at hx_i hy_i
+              simp [BoundedInterval.length]
+              left
+              rw [abs_sub_le_iff]
+              constructor <;> linarith [hx_i.1, hx_i.2, hy_i.1, hy_i.2]
+          | Ioc a b =>
+              simp [BoundedInterval.toSet, h_side] at hx_i hy_i
+              simp [BoundedInterval.length]
+              left
+              rw [abs_sub_le_iff]
+              constructor <;> linarith [hx_i.1, hx_i.2, hy_i.1, hy_i.2]
+          | Ico a b =>
+              simp [BoundedInterval.toSet, h_side] at hx_i hy_i
+              simp [BoundedInterval.length]
+              left
+              rw [abs_sub_le_iff]
+              constructor <;> linarith [hx_i.1, hx_i.2, hy_i.1, hy_i.2]
+        calc |(x - y) i|
+            ≤ |B.side i|ₗ := bound_by_side
+          _ ≤ max_side := by
+              show |B.side i|ₗ ≤ ⨆ j, |B.side j|ₗ
+              apply le_ciSup _ i
+              -- The set is bounded above
+              refine ⟨∑ j : Fin d, |B.side j|ₗ, ?_⟩
+              intro r ⟨j, hj⟩
+              simp only at hj
+              rw [← hj]
+              -- |B.side j|ₗ ≤ sum of all sides
+              have single_le : ∀ j : Fin d, |B.side j|ₗ ≤ ∑ k : Fin d, |B.side k|ₗ := by
+                intro j'
+                calc |B.side j'|ₗ
+                    = ∑ k ∈ ({j'} : Finset (Fin d)), |B.side k|ₗ := by simp
+                  _ ≤ ∑ k ∈ Finset.univ, |B.side k|ₗ := by
+                      apply Finset.sum_le_sum_of_subset_of_nonneg
+                      · intro x _; simp
+                      · intro k _ _; simp [BoundedInterval.length]
+                  _ = ∑ k : Fin d, |B.side k|ₗ := rfl
+              exact single_le j
+      -- Now: (x i - y i)² ≤ max_side² for each i
+      have sq_bound : ∀ i, (x i - y i)^2 ≤ max_side^2 := by
+        intro i
+        have := coord_bound i
+        calc (x i - y i)^2
+            ≤ |(x i - y i)|^2 := by rw [← sq_abs]
+          _ = |(x - y) i|^2 := by rfl
+          _ ≤ max_side^2 := by
+              apply sq_le_sq'
+              · linarith [abs_nonneg ((x - y) i)]
+              · exact this
+      -- Sum: ∑ i, (x i - y i)² ≤ d * max_side²
+      have sum_bound : ∑ i, (x i - y i)^2 ≤ d * max_side^2 := by
+        calc ∑ i, (x i - y i)^2
+            ≤ ∑ i : Fin d, max_side^2 := by
+                apply Finset.sum_le_sum
+                intro i _
+                exact sq_bound i
+          _ = Finset.card (Finset.univ : Finset (Fin d)) * max_side^2 := by
+                rw [Finset.sum_const, nsmul_eq_mul]
+          _ = d * max_side^2 := by
+                rw [Finset.card_fin]
+      -- Apply sqrt to both sides
+      calc √(∑ i, (x i - y i)^2)
+          ≤ √(d * max_side^2) := by
+              apply Real.sqrt_le_sqrt
+              exact sum_bound
+        _ = √d * √(max_side^2) := by
+              rw [Real.sqrt_mul (Nat.cast_nonneg d)]
+        _ = √d * max_side := by
+              rw [Real.sqrt_sq (by
+                -- max_side ≥ 0
+                apply Real.iSup_nonneg
+                intro i
+                -- BoundedInterval.length is max (b - a) 0, which is always ≥ 0
+                simp [BoundedInterval.length])]
   · rw [Set.not_nonempty_iff_eq_empty] at h
     rw [h]
     simp [sSup]
-    sorry
+    apply mul_nonneg
+    · exact Real.sqrt_nonneg _
+    · apply Real.iSup_nonneg
+      intro i
+      -- BoundedInterval.length is max (b - a) 0, which is always ≥ 0
+      simp [BoundedInterval.length]
 
 /-- Subdivide a box into 2^d equal sub-boxes by bisecting each side.
     This function enumerates the 2^d sub-boxes by treating each natural number < 2^d
