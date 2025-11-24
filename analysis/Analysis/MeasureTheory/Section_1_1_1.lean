@@ -564,6 +564,20 @@ lemma Box.volume_eq_zero_of_empty {d:ℕ} (B: Box d) (h: B.toSet = ∅) : |B|ᵥ
     | Ico a b, hi => simp [BoundedInterval.set_Ico] at hi; simp; exact le_of_not_gt (Set.Ico_eq_empty_iff.1 hi)
   simp [BoundedInterval.length, max_eq_right (sub_nonpos.2 h_le)]
 
+/-- A box with all degenerate sides [x, x] has volume 0 when d > 0 -/
+lemma Box.volume_singleton {d:ℕ} (hd : 0 < d) (x : EuclideanSpace' d) :
+    |⟨fun i => BoundedInterval.Icc (x i) (x i)⟩|ᵥ = 0 := by
+  unfold Box.volume BoundedInterval.length
+  -- All sides have length 0
+  have h_sides : ∀ i : Fin d, max ((x i) - (x i)) 0 = 0 := by
+    intro i
+    simp [sub_self]
+  -- Product contains at least one 0 (at index 0), so the product is 0
+  let i₀ : Fin d := ⟨0, hd⟩
+  calc ∏ i : Fin d, max ((x i) - (x i)) 0
+      = ∏ i : Fin d, (0 : ℝ) := by simp only [h_sides]
+    _ = 0 := Finset.prod_eq_zero (Finset.mem_univ i₀) rfl
+
 @[simp]
 theorem Box.volume_of_interval (I:BoundedInterval) : |(I:Box 1)|ᵥ = |I|ₗ := by
   simp [Box.volume]

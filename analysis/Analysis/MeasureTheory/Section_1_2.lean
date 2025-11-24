@@ -1,5 +1,6 @@
 import Analysis.MeasureTheory.Section_1_1_3
 import Mathlib.Topology.Algebra.InfiniteSum.Basic
+import Mathlib.Data.Set.Countable
 
 /-!
 # Introduction to Measure Theory, Section 1.2: Lebesgue measure
@@ -930,7 +931,90 @@ example {R:ℝ} (hR: 0 < R) : Jordan_outer_measure (Real.equiv_EuclideanSpace' '
   sorry
 
 theorem Countable.Lebesgue_measure {d:ℕ} (hd : 0 < d) {E: Set (EuclideanSpace' d)} (hE: E.Countable) : Lebesgue_outer_measure E = 0 := by
-  sorry
+  unfold Lebesgue_outer_measure
+  -- Strategy: Cover E with singleton boxes, each with volume 0
+
+  -- Get an enumeration: E ⊆ range f for some f : ℕ → EuclideanSpace' d
+  haveI : Nonempty (EuclideanSpace' d) := inferInstance
+  obtain ⟨f, hf⟩ := Set.countable_iff_exists_subset_range.mp hE
+
+  -- Construct singleton box for each f(n)
+  let singleton_box : ℕ → Box d := fun n => ⟨fun i => BoundedInterval.Icc (f n i) (f n i)⟩
+
+  -- Show E is covered by these boxes
+  have h_cover : E ⊆ ⋃ n, (singleton_box n).toSet := by
+    calc E ⊆ Set.range f := hf
+       _ ⊆ ⋃ n, (singleton_box n).toSet := by
+         intro x hx
+         obtain ⟨n, rfl⟩ := hx
+         simp [Set.mem_iUnion]
+         use n
+         unfold Box.toSet
+         intro i
+         simp [BoundedInterval.toSet]
+         exact ⟨le_refl _, le_refl _⟩
+
+  -- Each singleton box has volume 0
+  have h_vol : ∀ n, (singleton_box n).volume = 0 := by
+    intro n
+    exact Box.volume_singleton hd (f n)
+
+  -- Sum of volumes is 0
+  have h_sum : ∑' n, (singleton_box n).volume.toEReal = 0 := by
+    simp only [h_vol]
+    simp [EReal.coe_zero, tsum_zero]
+
+  -- Apply this cover to show the infimum is at most 0
+  have h_le : sInf { V | ∃ (X : Set ℕ) (S: X → Box d), E ⊆ ⋃ n, (S n).toSet ∧ V = ∑' n, (S n).volume.toEReal } ≤ 0 := by
+    apply csInf_le
+    · -- Show the set is bounded below by 0
+      use 0
+      intro V ⟨X, S, _, hV⟩
+      rw [hV]
+      -- Box volumes are non-negative, so their sum is non-negative
+      apply tsum_nonneg
+      intro n
+      exact EReal.coe_nonneg.mpr (by
+        unfold Box.volume
+        apply Finset.prod_nonneg
+        intro i _
+        unfold BoundedInterval.length
+        exact le_max_right _ _)
+    · -- Show 0 is in the set (via our singleton cover)
+      use Set.univ
+      use fun (n : Set.univ) => singleton_box n.val
+      refine ⟨?_, ?_⟩
+      · -- E ⊆ ⋃ n : Set.univ, (singleton_box n.val).toSet
+        intro x hx
+        simp only [Set.mem_iUnion]
+        have : x ∈ ⋃ n, (singleton_box n).toSet := h_cover hx
+        simp only [Set.mem_iUnion] at this
+        obtain ⟨n, hn⟩ := this
+        exact ⟨⟨n, Set.mem_univ n⟩, hn⟩
+      · -- ∑' n : Set.univ, (singleton_box n.val).volume.toEReal = 0
+        simp only [h_vol, EReal.coe_zero, tsum_zero]
+
+  -- Show the infimum is at least 0
+  have h_ge : 0 ≤ sInf { V | ∃ (X : Set ℕ) (S: X → Box d), E ⊆ ⋃ n, (S n).toSet ∧ V = ∑' n, (S n).volume.toEReal } := by
+    apply le_csInf
+    · -- Show the set is nonempty (we have the singleton cover)
+      use 0
+      use Set.univ
+      use fun (n : Set.univ) => singleton_box n.val
+      exact ⟨h_cover.trans (by intro x; simp only [Set.mem_iUnion]; intro ⟨n, hn⟩; exact ⟨⟨n, Set.mem_univ n⟩, hn⟩), by simp only [h_vol, EReal.coe_zero, tsum_zero]⟩
+    · -- Show all elements are ≥ 0
+      intro V ⟨X, S, _, hV⟩
+      rw [hV]
+      apply tsum_nonneg
+      intro n
+      exact EReal.coe_nonneg.mpr (by
+        unfold Box.volume
+        apply Finset.prod_nonneg
+        intro i _
+        unfold BoundedInterval.length
+        exact le_max_right _ _)
+
+  exact le_antisymm h_le h_ge
 
 example {R:ℝ} (hR: 0 < R) : Lebesgue_outer_measure (Real.equiv_EuclideanSpace' '' (Set.Icc (-R) R ∩ Set.range (fun q:ℚ ↦ (q:ℝ)))) = 0 := by
   sorry
