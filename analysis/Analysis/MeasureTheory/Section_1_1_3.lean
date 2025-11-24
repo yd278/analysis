@@ -268,8 +268,7 @@ lemma riemann_integral_eq_iff_of_integrable {f:ℝ → ℝ} {I: BoundedInterval}
         have h_ba : I.b ≤ I.a := by linarith
         by_cases h_ab : I.a ≤ I.b
         · exact le_antisymm h_ab h_ba
-        · -- Junk case: I.b < I.a with interval type Icc
-          push_neg at h_ab
+        · push_neg at h_ab
           sorry
       -- Both R and riemannIntegral f I equal 0 when length is 0 and I.a = I.b
       have hR_zero : R = 0 := riemann_integral_eq_zero_of_zero_length h_eq h_len hR

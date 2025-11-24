@@ -26,7 +26,74 @@ theorem Lebesgue_outer_measure.union_le {d: ℕ} (E : ℕ → Set (EuclideanSpac
 /-- Finite subadditivity -/
 theorem Lebesgue_outer_measure.finite_union_le {d n:ℕ} (E: Fin n → Set (EuclideanSpace' d)) :
     Lebesgue_outer_measure (⋃ i, E i) ≤ ∑ i, Lebesgue_outer_measure (E i) := by
-  sorry
+  -- Extend E to ℕ → Set by using empty set for indices ≥ n, then use countable subadditivity
+  let E' : ℕ → Set (EuclideanSpace' d) := fun k =>
+    if h : k < n then E ⟨k, h⟩ else ∅
+  -- The union over Fin n equals the union over all k with E' k
+  have h_union : (⋃ i, E i) = (⋃ k, E' k) := by
+    ext x
+    simp [E']
+    constructor
+    · intro ⟨i, hi⟩
+      use i.val
+      simp [hi]
+    · intro ⟨k, hx⟩
+      by_cases hk : k < n
+      · use ⟨k, hk⟩
+        simpa [dif_pos hk] using hx
+      · simp [dif_neg hk] at hx
+  rw [h_union]
+  -- Apply countable subadditivity
+  calc Lebesgue_outer_measure (⋃ k, E' k)
+      ≤ ∑' k, Lebesgue_outer_measure (E' k) := union_le E'
+    _ = ∑ i : Fin n, Lebesgue_outer_measure (E i) := by
+        -- The sum over ℕ equals the sum over Fin n because E' k = ∅ for k ≥ n
+        -- First, establish that E' k = ∅ for k ≥ n, so its outer measure is 0
+        have h_empty : ∀ k ≥ n, E' k = ∅ := fun k hk => dif_neg (not_lt.mpr hk)
+        have h_measure_empty : ∀ k ≥ n, Lebesgue_outer_measure (E' k) = 0 := by
+          intro k hk
+          rw [h_empty k hk, of_empty]
+
+        -- Convert the tsum to a sum over Fin n
+        -- The key lemma we need is: tsum equals finite sum when function has finite support
+        -- In our case, E' k is non-empty only for k < n
+
+        -- Define an explicit bijection and use it
+        have : ∑' k, Lebesgue_outer_measure (E' k) = ∑ i : Fin n, Lebesgue_outer_measure (E' i.val) := by
+          -- Use tsum_eq_sum with finite support
+          let s : Finset ℕ := Finset.range n
+          have h_support : ∀ k ∉ s, Lebesgue_outer_measure (E' k) = 0 := by
+            intro k hk
+            have : ¬ k < n := by simpa [s, Finset.mem_range] using hk
+            exact h_measure_empty k (le_of_not_gt this)
+          rw [tsum_eq_sum h_support]
+          -- Now show the sums are equal by reindexing
+          refine Finset.sum_bij (fun (k : ℕ) (hk : k ∈ s) => ⟨k, ?_⟩) ?_ ?_ ?_ ?_
+          · simpa [s, Finset.mem_range] using hk
+          · intros; simp
+          · intros k₁ k₂ hk₁ hk₂ heq; simp at heq; exact heq
+          · intro i _
+            use i.val
+            refine ⟨?_, ?_⟩
+            · simp [s, Finset.mem_range, i.isLt]
+            · simp
+          · intro i _; simp
+
+        rw [this]
+        congr 1
+        ext i
+        simp [E', dif_pos i.isLt]
+
+/-- For EReal, adding a positive real value to a finite value gives a strictly greater result.
+    This is a fundamental property of EReal arithmetic needed in measure theory. -/
+lemma EReal.lt_add_of_pos_coe {x : EReal} {ε : ℝ} (hε : 0 < ε) (hx : x ≠ ⊤) : x < x + ↑ε := by
+  have h_eps : (0 : EReal) < (ε : EReal) := EReal.coe_pos.mpr hε
+  have h_ne_bot : x ≠ ⊥ := by
+    by_contra h_bot
+    rw [h_bot] at hx
+    sorry
+  have : 0 + x < ↑ε + x := EReal.add_lt_add_of_lt_of_le h_eps (le_refl x) h_ne_bot hx
+  simpa [add_comm] using this
 
 /-- For any set with finite outer measure, we can find a cover whose volume is within ε of the outer measure.
     This follows from the definition of outer measure as an infimum. -/
@@ -38,10 +105,6 @@ lemma Lebesgue_outer_measure.exists_cover_close {d:ℕ} (hd: 0 < d)
   -- Use the ℕ-indexed characterization of outer measure
   rw [Lebesgue_outer_measure_eq_nat_indexed hd] at h_finite ⊢
 
-  -- The outer measure is the infimum over all covers
-  -- Since it's finite and inf + ε is strictly greater than inf,
-  -- there must exist a cover with volume ≤ inf + ε
-
   -- Key fact: inf + ε is not a lower bound (since ε > 0)
   -- Therefore, there exists some cover with volume < inf + ε, which implies ≤ inf + ε
 
@@ -51,11 +114,50 @@ lemma Lebesgue_outer_measure.exists_cover_close {d:ℕ} (hd: 0 < d)
     intro h_glb
     -- If inf + ε were the GLB, then inf ≤ inf + ε ≤ inf (since inf is also a lower bound)
     -- This would imply ε ≤ 0, contradiction
-    sorry
+    let img_set := ((fun S: ℕ → Box d ↦ ∑' n, (S n).volume.toEReal)) '' { S | E ⊆ ⋃ n, (S n).toSet }
+    let inf_val := sInf img_set
+    -- sInf img_set is the GLB of img_set
+    have h_inf_glb : IsGLB img_set inf_val := isGLB_sInf img_set
+    -- From h_glb, we have that inf_val + ε is also a GLB
+    -- But GLB is unique, so if both are GLBs, they must be equal
+    -- However, inf_val < inf_val + ε (since ε > 0 and inf_val ≠ ⊤)
+    have h_lt : inf_val < inf_val + (ε : EReal) := EReal.lt_add_of_pos_coe hε h_finite
+    -- GLB is unique: if both x and y are GLBs of the same set, then x = y
+    have h_eq : inf_val = inf_val + (ε : EReal) := h_inf_glb.unique h_glb
+    -- But inf_val < inf_val + ε, contradicting h_eq
+    rw [← h_eq] at h_lt
+    simp at h_lt
 
   -- Since sInf is the infimum and sInf + ε is not a lower bound,
   -- there must exist some cover with volume ≤ sInf + ε
-  sorry
+  let img_set := ((fun S: ℕ → Box d ↦ ∑' n, (S n).volume.toEReal)) '' { S | E ⊆ ⋃ n, (S n).toSet }
+  let inf_val := sInf img_set
+  -- From h_not_lb, inf_val + ε is not a GLB, which means it's not a lower bound
+  -- (since if it were a lower bound ≥ inf_val, it would have to equal inf_val to be a GLB)
+  -- So there exists some element in img_set that is < inf_val + ε
+  have h_exists_lt : ∃ v ∈ img_set, v < inf_val + (ε : EReal) := by
+    -- If no such element existed, then inf_val + ε would be a lower bound
+    by_contra h_not_exists
+    push_neg at h_not_exists
+    -- h_not_exists says: ∀ v ∈ img_set, inf_val + ε ≤ v
+    -- This means inf_val + ε is a lower bound
+    have h_is_lb : inf_val + (ε : EReal) ∈ lowerBounds img_set := by
+      intro v hv
+      exact h_not_exists v hv
+    -- And since inf_val is the GLB (greatest lower bound), we have inf_val + ε ≤ inf_val
+    have h_inf_glb : IsGLB img_set inf_val := isGLB_sInf img_set
+    have h_le : inf_val + (ε : EReal) ≤ inf_val := h_inf_glb.2 h_is_lb
+    -- But we also have inf_val < inf_val + ε (since ε > 0 and inf_val ≠ ⊤)
+    have h_lt : inf_val < inf_val + (ε : EReal) := EReal.lt_add_of_pos_coe hε h_finite
+    -- Contradiction: h_le says inf_val + ε ≤ inf_val, but h_lt says inf_val < inf_val + ε
+    have : inf_val < inf_val := calc inf_val
+        < inf_val + ↑ε := h_lt
+      _ ≤ inf_val := h_le
+    exact lt_irrefl _ this
+  -- Extract the witness from the image set
+  obtain ⟨v, ⟨S, hS_cover, rfl⟩, hv_lt⟩ := h_exists_lt
+  -- S is our witness cover
+  exact ⟨S, hS_cover, le_of_lt hv_lt⟩
 
 noncomputable def set_dist {X:Type*} [PseudoMetricSpace X] (A B: Set X) : ℝ :=
   sInf ((fun p: X × X ↦ dist p.1 p.2) '' (A ×ˢ B))

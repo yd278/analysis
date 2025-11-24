@@ -7,9 +7,26 @@ A companion to (the introduction to) Section 1.2.2 of the book "An introduction 
 
 -/
 
-/-- Lemma 1.2.13(i) (Every open set is Lebesgue measurable). This lemma requires proof. -/
+/-- Lemma 1.2.13(i) (Every open set is Lebesgue measurable). -/
 theorem IsOpen.measurable {d:ℕ} {E: Set (EuclideanSpace' d)} (hE: IsOpen E) : LebesgueMeasurable E := by
-  sorry
+  -- Strategy: For any ε > 0, choose U = E itself
+  -- Since E is already open, U \ E = E \ E = ∅, and m*(∅) = 0 ≤ ε
+  intro ε hε
+  -- Witness: U = E
+  use E
+  constructor
+  · -- E is open (given)
+    exact hE
+  constructor
+  · -- E ⊆ E (reflexivity)
+    rfl
+  · -- Show m*(E \ E) ≤ ε
+    have h_empty : E \ E = ∅ := Set.diff_self
+    rw [h_empty]
+    have h_zero : Lebesgue_outer_measure (∅ : Set (EuclideanSpace' d)) = 0 :=
+      Lebesgue_outer_measure.of_empty d
+    rw [h_zero]
+    exact le_of_lt hε
 
 /-- Lemma 1.2.13(ii) (Every closed set is Lebesgue measurable). This lemma requires proof. -/
 theorem IsClosed.measurable {d:ℕ} {E: Set (EuclideanSpace' d)} (hE: IsClosed E) : LebesgueMeasurable E := by
