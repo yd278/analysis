@@ -106,14 +106,15 @@ lemma Real.sqrt_sum_le_sum_sqrt {ι : Type*} [Fintype ι] [DecidableEq ι] (f : 
               apply add_le_add_left
               exact ih
 
+namespace Box
 
 /-- The diameter of a box is the supremum of Euclidean distances between points in the box -/
-noncomputable def Box.diameter {d:ℕ} (B: Box d) : ℝ :=
+noncomputable def diameter {d:ℕ} (B: Box d) : ℝ :=
   sSup { r | ∃ x ∈ B.toSet, ∃ y ∈ B.toSet, r = √(∑ i, (x i - y i)^2) }
 
 /-- Diameter is always nonnegative -/
-lemma Box.diameter_nonneg {d:ℕ} (B: Box d) : 0 ≤ B.diameter := by
-  unfold Box.diameter
+lemma diameter_nonneg {d:ℕ} (B: Box d) : 0 ≤ B.diameter := by
+  unfold diameter
   by_cases h : B.toSet.Nonempty
   · obtain ⟨x, hx⟩ := h
     apply le_csSup
@@ -189,16 +190,16 @@ lemma Box.diameter_nonneg {d:ℕ} (B: Box d) : 0 ≤ B.diameter := by
     simp [sSup]
 
 /-- Empty box has diameter 0 -/
-lemma Box.diameter_of_empty {d:ℕ} (B: Box d) (h: B.toSet = ∅) :
+lemma diameter_of_empty {d:ℕ} (B: Box d) (h: B.toSet = ∅) :
     B.diameter = 0 := by
-  unfold Box.diameter
+  unfold diameter
   simp [h, sSup]
 
 /-- Any two points in a box have Euclidean distance at most the diameter -/
-lemma Box.dist_le_diameter {d:ℕ} (B: Box d) {x y: EuclideanSpace' d}
+lemma dist_le_diameter {d:ℕ} (B: Box d) {x y: EuclideanSpace' d}
     (hx: x ∈ B.toSet) (hy: y ∈ B.toSet) :
     √(∑ i, (x i - y i)^2) ≤ B.diameter := by
-  unfold Box.diameter
+  unfold diameter
   apply le_csSup
   · -- The set is bounded above
     use (∑ i : Fin d, |B.side i|ₗ)
@@ -264,9 +265,9 @@ lemma Box.dist_le_diameter {d:ℕ} (B: Box d) {x y: EuclideanSpace' d}
     exact ⟨x, hx, y, hy, rfl⟩
 
 /-- Diameter is bounded by √d times the maximum side length -/
-lemma Box.diameter_bound_by_sides {d:ℕ} (B: Box d) :
+lemma diameter_bound_by_sides {d:ℕ} (B: Box d) :
     B.diameter ≤ Real.sqrt d * (⨆ i, |B.side i|ₗ) := by
-  unfold Box.diameter
+  unfold diameter
   by_cases h : B.toSet.Nonempty
   · apply csSup_le
     · obtain ⟨x, hx⟩ := h
@@ -377,7 +378,7 @@ lemma Box.diameter_bound_by_sides {d:ℕ} (B: Box d) :
 
 /-- If a box intersects two sets, any two points (one from each set)
     in the box have distance at most the diameter -/
-lemma Box.diameter_ge_dist_of_intersects {d:ℕ} (B: Box d) (E F : Set (EuclideanSpace' d))
+lemma diameter_ge_dist_of_intersects {d:ℕ} (B: Box d) (E F : Set (EuclideanSpace' d))
     (hE : (B.toSet ∩ E).Nonempty) (hF : (B.toSet ∩ F).Nonempty) :
     set_dist E F ≤ B.diameter := by
   obtain ⟨x, hx_box, hx_E⟩ := hE
@@ -397,7 +398,7 @@ lemma Box.diameter_ge_dist_of_intersects {d:ℕ} (B: Box d) (E F : Set (Euclidea
       exact ⟨Set.mem_prod.mpr ⟨hx_E, hy_F⟩, rfl⟩
   -- dist x y ≤ B.diameter (by dist_le_diameter)
   have h_le_diam : √(∑ i, (x i - y i)^2) ≤ B.diameter :=
-    Box.dist_le_diameter B hx_box hy_box
+    dist_le_diameter B hx_box hy_box
   -- Note: For EuclideanSpace' d, dist x y = √(∑ i, (x i - y i)^2)
   have h_eq : dist x y = √(∑ i, (x i - y i)^2) := by
     simp only [EuclideanSpace.dist_eq]
@@ -413,35 +414,39 @@ lemma Box.diameter_ge_dist_of_intersects {d:ℕ} (B: Box d) (E F : Set (Euclidea
 
 /-- If B.diameter < set_dist E F, then B cannot intersect both E and F.
     This is the core geometric fact needed for finite additivity of separated sets. -/
-lemma Box.not_intersects_both_of_diameter_lt {d:ℕ} (B: Box d) (E F : Set (EuclideanSpace' d))
+lemma not_intersects_both_of_diameter_lt {d:ℕ} (B: Box d) (E F : Set (EuclideanSpace' d))
     (h : B.diameter < set_dist E F) :
     ¬((B.toSet ∩ E).Nonempty ∧ (B.toSet ∩ F).Nonempty) := by
   intro ⟨hE, hF⟩
   -- If B intersects both, then set_dist E F ≤ B.diameter
-  have := Box.diameter_ge_dist_of_intersects B E F hE hF
+  have := diameter_ge_dist_of_intersects B E F hE hF
   -- But we assumed B.diameter < set_dist E F
   linarith
 
 /-- Subdivide a box by bisecting each coordinate axis, producing 2^d sub-boxes.
     Each sub-box is formed by taking one half-interval from each coordinate. -/
-def Box.subdivide {d:ℕ} (B: Box d) : Finset (Box d) :=
+def subdivide {d:ℕ} (B: Box d) : Finset (Box d) :=
   sorry
 
 /-- The volume of a subdivided box equals the sum of its sub-box volumes -/
-lemma Box.volume_subdivide {d:ℕ} (B: Box d) :
+lemma volume_subdivide {d:ℕ} (B: Box d) :
     ∑ B' ∈ B.subdivide, |B'|ᵥ = |B|ᵥ := by
   sorry
 
 /-- Each sub-box of a subdivision has diameter at most the original diameter divided by √2.
     This follows because each side is halved, reducing the diagonal by a factor related to √2. -/
-lemma Box.subdivide_diameter_bound {d:ℕ} (B: Box d) :
+lemma subdivide_diameter_bound {d:ℕ} (B: Box d) :
     ∀ B' ∈ B.subdivide, B'.diameter ≤ B.diameter / Real.sqrt 2 := by
   sorry
 
 /-- The union of all sub-boxes equals the original box -/
-lemma Box.subdivide_covers {d:ℕ} (B: Box d) :
+lemma subdivide_covers {d:ℕ} (B: Box d) :
     (⋃ B' ∈ B.subdivide, B'.toSet) = B.toSet := by
   sorry
+
+end Box
+
+namespace Lebesgue_outer_measure
 
 /-- Refine a cover so that all boxes have diameter less than a given threshold.
     This is done by repeatedly subdividing boxes that are too large. -/
@@ -482,6 +487,8 @@ lemma partition_disjoint {d:ℕ} {E F: Set (EuclideanSpace' d)} (S: ℕ → Box 
   -- This contradicts Box.not_intersects_both_of_diameter_lt
   have := Box.not_intersects_both_of_diameter_lt (S n) E F h_diam_n
   exact this ⟨hE, hF⟩
+
+end Lebesgue_outer_measure
 
 -- ========================================================================
 -- End of Helpers
@@ -543,29 +550,29 @@ theorem Lebesgue_outer_measure.union_of_separated {d:ℕ} (hd: 0 < d) {E F : Set
         obtain ⟨r, hr_pos, hr_lt⟩ := hr
 
         -- Refine cover to have all diameters < r < dist(E,F)
-        let S' := refine_cover_to_diameter S r hr_pos
+        let S' := Lebesgue_outer_measure.refine_cover_to_diameter S r hr_pos
 
         -- Key properties of refined cover:
         have hS'_diam : ∀ n, (S' n).diameter < set_dist E F := by
           intro n
           calc (S' n).diameter
-              < r := refine_cover_diameter_bound S r hr_pos n
+              < r := Lebesgue_outer_measure.refine_cover_diameter_bound S r hr_pos n
             _ < set_dist E F := hr_lt
 
         have hS'_cover : E ∪ F ⊆ ⋃ n, (S' n).toSet := by
           calc E ∪ F
               ⊆ ⋃ n, (S n).toSet := hS_cover
-            _ ⊆ ⋃ n, (S' n).toSet := refine_cover_preserves_union S r hr_pos
+            _ ⊆ ⋃ n, (S' n).toSet := Lebesgue_outer_measure.refine_cover_preserves_union S r hr_pos
 
         have hS'_vol : ∑' n, (S' n).volume.toEReal ≤ ∑' n, (S n).volume.toEReal := by
-          exact refine_cover_volume_bound S r hr_pos
+          exact Lebesgue_outer_measure.refine_cover_volume_bound S r hr_pos
 
         -- Partition indices into E-intersecting and F-intersecting
-        let I_E := intersecting_indices S' E
-        let I_F := intersecting_indices S' F
+        let I_E := Lebesgue_outer_measure.intersecting_indices S' E
+        let I_F := Lebesgue_outer_measure.intersecting_indices S' F
 
         -- These index sets are disjoint (key geometric fact!)
-        have h_disj : Disjoint I_E I_F := partition_disjoint S' hsep hS'_diam
+        have h_disj : Disjoint I_E I_F := Lebesgue_outer_measure.partition_disjoint S' hsep hS'_diam
 
         -- Cover E with boxes indexed by I_E
         have hE_cover : E ⊆ ⋃ n ∈ I_E, (S' n).toSet := by
