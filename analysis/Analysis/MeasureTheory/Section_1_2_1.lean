@@ -32,8 +32,54 @@ noncomputable def set_dist {X:Type*} [PseudoMetricSpace X] (A B: Set X) : ℝ :=
   sInf ((fun p: X × X ↦ dist p.1 p.2) '' (A ×ˢ B))
 
 -- ========================================================================
--- Start of Helpers about Box Infrastructure
+-- Start of Helpers about Box Infrastructure, for lemma 1.2.5: Lebesgue_outer_measure.union_of_separated
 -- ========================================================================
+
+/-! ### Helper lemmas for sqrt inequalities -/
+
+/-- The square root function is subadditive: √(x + y) ≤ √x + √y for non-negative reals.
+    This follows from the fact that (√x + √y)² = x + y + 2√(xy) ≥ x + y. -/
+lemma Real.sqrt_add_le_add_sqrt {x y : ℝ} (hx : 0 ≤ x) (hy : 0 ≤ y) :
+    √(x + y) ≤ √x + √y := by
+  by_cases hxy : x + y = 0
+  · simp [hxy]
+    exact add_nonneg (Real.sqrt_nonneg _) (Real.sqrt_nonneg _)
+  · rw [Real.sqrt_le_left (by positivity)]
+    have : x + y ≤ (√x + √y) ^ 2 := by
+      calc x + y
+          = (√x) ^ 2 + (√y) ^ 2 := by
+              rw [Real.sq_sqrt hx, Real.sq_sqrt hy]
+        _ ≤ (√x) ^ 2 + (√y) ^ 2 + 2 * √x * √y := by
+              apply le_add_of_nonneg_right
+              apply mul_nonneg; apply mul_nonneg
+              · norm_num
+              · exact Real.sqrt_nonneg _
+              · exact Real.sqrt_nonneg _
+        _ = (√x + √y) ^ 2 := by ring
+    exact this
+
+/-- The square root function is subadditive over finite sums: √(∑ᵢ xᵢ) ≤ ∑ᵢ √xᵢ
+    for non-negative terms. This is a consequence of the concavity of sqrt. -/
+lemma Real.sqrt_sum_le_sum_sqrt {ι : Type*} [Fintype ι] [DecidableEq ι] (f : ι → ℝ)
+    (hf : ∀ i, 0 ≤ f i) :
+    √(∑ i, f i) ≤ ∑ i, √(f i) := by
+  -- Proof by induction on the Finset
+  let s := (Finset.univ : Finset ι)
+  show √(∑ i ∈ s, f i) ≤ ∑ i ∈ s, √(f i)
+  induction s using Finset.induction with
+  | empty => simp
+  | insert i s hi ih =>
+      simp [Finset.sum_insert hi]
+      calc √(f i + ∑ x ∈ s, f x)
+          ≤ √(f i) + √(∑ x ∈ s, f x) := by
+              apply Real.sqrt_add_le_add_sqrt (hf i)
+              apply Finset.sum_nonneg
+              intro j _; exact hf j
+        _ ≤ √(f i) + ∑ x ∈ s, √(f x) := by
+              apply add_le_add_left
+              exact ih
+
+/-! ### Box diameter properties -/
 
 /-- The diameter of a box is the supremum of Euclidean distances between points in the box -/
 noncomputable def Box.diameter {d:ℕ} (B: Box d) : ℝ :=
@@ -58,47 +104,52 @@ lemma Box.diameter_nonneg {d:ℕ} (B: Box d) : 0 ≤ B.diameter := by
       -- For each coordinate, the difference is bounded by the side length
       have coord_bound : ∀ i, |(y - z) i| ≤ |B.side i|ₗ := by
         intro i
-        simp
         have hy_i := hy_coord i
         have hz_i := hz_coord i
+        -- All interval types have the same bound: |y i - z i| ≤ max (b - a) 0
+        -- This is because both y i and z i are in [a,b] (or (a,b) with open endpoints)
         cases h_side : B.side i with
         | Ioo a b =>
             simp [BoundedInterval.toSet, h_side] at hy_i hz_i
             simp [BoundedInterval.length]
-            by_cases h_ord : b ≥ a
-            · have : |y i - z i| ≤ b - a := by nlinarith [abs_sub_le_iff.mpr ⟨by linarith, by linarith⟩]
-              linarith
-            · linarith
+            left
+            rw [abs_sub_le_iff]
+            constructor <;> linarith [hy_i.1, hy_i.2, hz_i.1, hz_i.2]
         | Icc a b =>
             simp [BoundedInterval.toSet, h_side] at hy_i hz_i
             simp [BoundedInterval.length]
-            by_cases h_ord : b ≥ a
-            · have : |y i - z i| ≤ b - a := by nlinarith [abs_sub_le_iff.mpr ⟨by linarith, by linarith⟩]
-              linarith
-            · linarith
+            left
+            rw [abs_sub_le_iff]
+            constructor <;> linarith [hy_i.1, hy_i.2, hz_i.1, hz_i.2]
         | Ioc a b =>
             simp [BoundedInterval.toSet, h_side] at hy_i hz_i
             simp [BoundedInterval.length]
-            by_cases h_ord : b ≥ a
-            · have : |y i - z i| ≤ b - a := by nlinarith [abs_sub_le_iff.mpr ⟨by linarith, by linarith⟩]
-              linarith
-            · linarith
+            left
+            rw [abs_sub_le_iff]
+            constructor <;> linarith [hy_i.1, hy_i.2, hz_i.1, hz_i.2]
         | Ico a b =>
             simp [BoundedInterval.toSet, h_side] at hy_i hz_i
             simp [BoundedInterval.length]
-            by_cases h_ord : b ≥ a
-            · have : |y i - z i| ≤ b - a := by nlinarith [abs_sub_le_iff.mpr ⟨by linarith, by linarith⟩]
-              linarith
-            · linarith
+            left
+            rw [abs_sub_le_iff]
+            constructor <;> linarith [hy_i.1, hy_i.2, hz_i.1, hz_i.2]
       -- Now prove that √(∑ (y i - z i)²) ≤ ∑ |B.side i|ₗ
       -- We use: √(∑ xᵢ²) ≤ ∑ √(xᵢ²) = ∑ |xᵢ| (subadditivity of sqrt)
       have sqrt_sum_le : (∑ i, (y i - z i) ^ 2).sqrt ≤ ∑ i, |(y i - z i)| := by
-        by_cases h_d : d = 0
-        · subst h_d; simp
-        · sorry
+        -- ℓ² ≤ ℓ¹ norm: √(∑ xᵢ²) ≤ ∑ |xᵢ|
+        calc (∑ i, (y i - z i) ^ 2).sqrt
+            = (∑ i, |(y i - z i)| ^ 2).sqrt := by
+                congr 1; congr 1; ext i; rw [sq_abs]
+          _ ≤ ∑ i, (|(y i - z i)| ^ 2).sqrt := by
+                -- Apply sqrt subadditivity lemma
+                apply Real.sqrt_sum_le_sum_sqrt
+                intro i; exact sq_nonneg _
+          _ = ∑ i, |(y i - z i)| := by
+                congr 1; ext i
+                rw [Real.sqrt_sq_eq_abs, abs_of_nonneg (abs_nonneg _)]
       calc √(∑ i, (y i - z i) ^ 2)
           ≤ ∑ i, |(y i - z i)| := sqrt_sum_le
-        _ = ∑ i, |(y - z) i| := by congr 1; ext i; simp [Pi.sub_apply]
+        _ = ∑ i, |(y - z) i| := by rfl
         _ ≤ ∑ i, |B.side i|ₗ := by
             apply Finset.sum_le_sum
             intro i _
@@ -137,8 +188,7 @@ lemma Box.diameter_bound_by_sides {d:ℕ} (B: Box d) (hd: 0 < d) :
   by_cases h : B.toSet.Nonempty
   · apply csSup_le
     · obtain ⟨x, hx⟩ := h
-      use √(∑ i, (x i - x i)^2), x, hx, x, hx
-      simp
+      exact ⟨√(∑ i, (x i - x i)^2), x, hx, x, hx, rfl⟩
     · intro r ⟨x, hx, y, hy, hr⟩
       -- √(∑ i, (x i - y i)²) ≤ √(d * max²) = √d * max
       sorry
