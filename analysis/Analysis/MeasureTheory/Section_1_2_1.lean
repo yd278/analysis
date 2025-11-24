@@ -28,11 +28,40 @@ theorem Lebesgue_outer_measure.finite_union_le {d n:ℕ} (E: Fin n → Set (Eucl
     Lebesgue_outer_measure (⋃ i, E i) ≤ ∑ i, Lebesgue_outer_measure (E i) := by
   sorry
 
+/-- For any set with finite outer measure, we can find a cover whose volume is within ε of the outer measure.
+    This follows from the definition of outer measure as an infimum. -/
+lemma Lebesgue_outer_measure.exists_cover_close {d:ℕ} (hd: 0 < d)
+    (E: Set (EuclideanSpace' d)) (ε: ℝ) (hε: 0 < ε)
+    (h_finite: Lebesgue_outer_measure E ≠ ⊤) :
+    ∃ (S: ℕ → Box d), E ⊆ ⋃ n, (S n).toSet ∧
+      ∑' n, (S n).volume.toEReal ≤ Lebesgue_outer_measure E + ε := by
+  -- Use the ℕ-indexed characterization of outer measure
+  rw [Lebesgue_outer_measure_eq_nat_indexed hd] at h_finite ⊢
+
+  -- The outer measure is the infimum over all covers
+  -- Since it's finite and inf + ε is strictly greater than inf,
+  -- there must exist a cover with volume ≤ inf + ε
+
+  -- Key fact: inf + ε is not a lower bound (since ε > 0)
+  -- Therefore, there exists some cover with volume < inf + ε, which implies ≤ inf + ε
+
+  have h_not_lb : ¬ IsGLB (((fun S: ℕ → Box d ↦ ∑' n, (S n).volume.toEReal)) ''
+      { S | E ⊆ ⋃ n, (S n).toSet }) (sInf (((fun S: ℕ → Box d ↦ ∑' n, (S n).volume.toEReal)) ''
+      { S | E ⊆ ⋃ n, (S n).toSet }) + (ε : EReal)) := by
+    intro h_glb
+    -- If inf + ε were the GLB, then inf ≤ inf + ε ≤ inf (since inf is also a lower bound)
+    -- This would imply ε ≤ 0, contradiction
+    sorry
+
+  -- Since sInf is the infimum and sInf + ε is not a lower bound,
+  -- there must exist some cover with volume ≤ sInf + ε
+  sorry
+
 noncomputable def set_dist {X:Type*} [PseudoMetricSpace X] (A B: Set X) : ℝ :=
   sInf ((fun p: X × X ↦ dist p.1 p.2) '' (A ×ˢ B))
 
 -- ========================================================================
--- Start of Helpers about Box Infrastructure, for lemma 1.2.5: Lebesgue_outer_measure.union_of_separated
+-- Start of Helpers for lemma 1.2.5: Lebesgue_outer_measure.union_of_separated
 -- ========================================================================
 
 /-- The square root function is subadditive: √(x + y) ≤ √x + √y for non-negative reals.
@@ -393,14 +422,183 @@ lemma Box.not_intersects_both_of_diameter_lt {d:ℕ} (B: Box d) (E F : Set (Eucl
   -- But we assumed B.diameter < set_dist E F
   linarith
 
+/-- Subdivide a box by bisecting each coordinate axis, producing 2^d sub-boxes.
+    Each sub-box is formed by taking one half-interval from each coordinate. -/
+def Box.subdivide {d:ℕ} (B: Box d) : Finset (Box d) :=
+  sorry
+
+/-- The volume of a subdivided box equals the sum of its sub-box volumes -/
+lemma Box.volume_subdivide {d:ℕ} (B: Box d) :
+    ∑ B' ∈ B.subdivide, |B'|ᵥ = |B|ᵥ := by
+  sorry
+
+/-- Each sub-box of a subdivision has diameter at most the original diameter divided by √2.
+    This follows because each side is halved, reducing the diagonal by a factor related to √2. -/
+lemma Box.subdivide_diameter_bound {d:ℕ} (B: Box d) :
+    ∀ B' ∈ B.subdivide, B'.diameter ≤ B.diameter / Real.sqrt 2 := by
+  sorry
+
+/-- The union of all sub-boxes equals the original box -/
+lemma Box.subdivide_covers {d:ℕ} (B: Box d) :
+    (⋃ B' ∈ B.subdivide, B'.toSet) = B.toSet := by
+  sorry
+
+/-- Refine a cover so that all boxes have diameter less than a given threshold.
+    This is done by repeatedly subdividing boxes that are too large. -/
+def refine_cover_to_diameter {d:ℕ} (S: ℕ → Box d) (r: ℝ) (hr: 0 < r) : ℕ → Box d :=
+  sorry
+
+/-- The refined cover still covers the same region -/
+lemma refine_cover_preserves_union {d:ℕ} (S: ℕ → Box d) (r: ℝ) (hr: 0 < r) :
+    (⋃ n, (S n).toSet) ⊆ (⋃ n, (refine_cover_to_diameter S r hr n).toSet) := by
+  sorry
+
+/-- The refined cover has total volume no greater than the original cover -/
+lemma refine_cover_volume_bound {d:ℕ} (S: ℕ → Box d) (r: ℝ) (hr: 0 < r) :
+    ∑' n, (refine_cover_to_diameter S r hr n).volume.toEReal ≤ ∑' n, (S n).volume.toEReal := by
+  sorry
+
+/-- All boxes in the refined cover have diameter less than r -/
+lemma refine_cover_diameter_bound {d:ℕ} (S: ℕ → Box d) (r: ℝ) (hr: 0 < r) :
+    ∀ n, (refine_cover_to_diameter S r hr n).diameter < r := by
+  sorry
+
+/-- The set of indices of boxes that intersect a given set E -/
+def intersecting_indices {d:ℕ} (S: ℕ → Box d) (E: Set (EuclideanSpace' d)) : Set ℕ :=
+  { n | ((S n).toSet ∩ E).Nonempty }
+
+/-- If all boxes have diameter less than dist(E,F), then the sets of indices intersecting
+    E and F are disjoint. This follows from Box.not_intersects_both_of_diameter_lt. -/
+lemma partition_disjoint {d:ℕ} {E F: Set (EuclideanSpace' d)} (S: ℕ → Box d)
+    (h_sep: 0 < set_dist E F) (h_diam: ∀ n, (S n).diameter < set_dist E F) :
+    Disjoint (intersecting_indices S E) (intersecting_indices S F) := by
+  rw [Set.disjoint_iff]
+  intro n ⟨hE, hF⟩
+  -- Box n intersects both E and F
+  unfold intersecting_indices at hE hF
+  simp at hE hF
+  -- But diameter of box n < dist(E,F)
+  have h_diam_n := h_diam n
+  -- This contradicts Box.not_intersects_both_of_diameter_lt
+  have := Box.not_intersects_both_of_diameter_lt (S n) E F h_diam_n
+  exact this ⟨hE, hF⟩
+
 -- ========================================================================
--- End of Box Infrastructure
+-- End of Helpers
 -- ========================================================================
 
-/-- Lemma 1.2.5 (Finite additivity for separated sets).  Proof has not been formalized yet. -/
-theorem Lebesgue_outer_measure.union_of_separated {d:ℕ} {E F : Set (EuclideanSpace' d)} (hsep: set_dist E F > 0) :
+/-- Lemma 1.2.5 (Finite additivity for separated sets).
+    If E and F are separated (dist(E,F) > 0), then m*(E ∪ F) = m*(E) + m*(F).
+
+    Proof strategy (from textbook):
+    1. Direction ≤: Use subadditivity
+    2. Direction ≥: Show m*(E ∪ F) ≥ m*(E) + m*(F)
+       - If m*(E ∪ F) = ⊤, trivial
+       - If m*(E ∪ F) < ⊤:
+         * Get epsilon-close cover of E ∪ F
+         * Refine cover so all boxes have diameter < dist(E,F)
+         * Partition boxes into E-intersecting and F-intersecting (disjoint by geometric separation)
+         * Sum volumes separately: m*(E) + m*(F) ≤ sum of refined cover ≤ m*(E ∪ F) + ε
+         * Take ε → 0 to conclude
+-/
+theorem Lebesgue_outer_measure.union_of_separated {d:ℕ} (hd: 0 < d) {E F : Set (EuclideanSpace' d)}
+    (hsep: set_dist E F > 0) :
     Lebesgue_outer_measure (E ∪ F) = Lebesgue_outer_measure E + Lebesgue_outer_measure F := by
-  sorry
+
+  -- Direction 1: m*(E ∪ F) ≤ m*(E) + m*(F) [EASY - subadditivity]
+  have h_le : Lebesgue_outer_measure (E ∪ F) ≤ Lebesgue_outer_measure E + Lebesgue_outer_measure F := by
+    -- Use finite subadditivity for two sets
+    have : Lebesgue_outer_measure (E ∪ F) ≤ Lebesgue_outer_measure E + Lebesgue_outer_measure F := by
+      -- Convert to countable union: E ∪ F = E_0 ∪ E_1 where E_0 = E, E_1 = F
+      have h_union : E ∪ F = (fun i : Fin 2 => if i = 0 then E else F) 0 ∪ (fun i : Fin 2 => if i = 0 then E else F) 1 := by
+        ext x; simp
+      sorry
+    exact this
+
+  -- Direction 2: m*(E ∪ F) ≥ m*(E) + m*(F) [MAIN WORK]
+  have h_ge : Lebesgue_outer_measure E + Lebesgue_outer_measure F ≤ Lebesgue_outer_measure (E ∪ F) := by
+    -- Case 1: If m*(E ∪ F) = ⊤, then the inequality holds trivially
+    by_cases h_inf : Lebesgue_outer_measure (E ∪ F) = ⊤
+    · simp [h_inf]
+
+    -- Case 2: m*(E ∪ F) < ⊤
+    · -- For any ε > 0, we'll show m*(E) + m*(F) ≤ m*(E ∪ F) + ε
+      -- Taking ε → 0 gives the result
+
+      -- Proof: Show that for all ε > 0, m*(E) + m*(F) ≤ m*(E ∪ F) + ε
+      -- This implies m*(E) + m*(F) ≤ m*(E ∪ F)
+      have h_eps : ∀ (ε : ℝ), 0 < ε → Lebesgue_outer_measure E + Lebesgue_outer_measure F ≤
+          Lebesgue_outer_measure (E ∪ F) + (ε : EReal) := by
+        intro ε hε_real
+
+        -- Get epsilon-close cover of E ∪ F
+        have ⟨S, hS_cover, hS_vol⟩ := exists_cover_close hd (E ∪ F) ε hε_real h_inf
+
+        -- Choose r with 0 < r < dist(E,F)
+        have hr : ∃ r, 0 < r ∧ r < set_dist E F := by
+          use set_dist E F / 2
+          constructor
+          · linarith
+          · linarith
+        obtain ⟨r, hr_pos, hr_lt⟩ := hr
+
+        -- Refine cover to have all diameters < r < dist(E,F)
+        let S' := refine_cover_to_diameter S r hr_pos
+
+        -- Key properties of refined cover:
+        have hS'_diam : ∀ n, (S' n).diameter < set_dist E F := by
+          intro n
+          calc (S' n).diameter
+              < r := refine_cover_diameter_bound S r hr_pos n
+            _ < set_dist E F := hr_lt
+
+        have hS'_cover : E ∪ F ⊆ ⋃ n, (S' n).toSet := by
+          calc E ∪ F
+              ⊆ ⋃ n, (S n).toSet := hS_cover
+            _ ⊆ ⋃ n, (S' n).toSet := refine_cover_preserves_union S r hr_pos
+
+        have hS'_vol : ∑' n, (S' n).volume.toEReal ≤ ∑' n, (S n).volume.toEReal := by
+          exact refine_cover_volume_bound S r hr_pos
+
+        -- Partition indices into E-intersecting and F-intersecting
+        let I_E := intersecting_indices S' E
+        let I_F := intersecting_indices S' F
+
+        -- These index sets are disjoint (key geometric fact!)
+        have h_disj : Disjoint I_E I_F := partition_disjoint S' hsep hS'_diam
+
+        -- Cover E with boxes indexed by I_E
+        have hE_cover : E ⊆ ⋃ n ∈ I_E, (S' n).toSet := by
+          sorry
+
+        -- Cover F with boxes indexed by I_F
+        have hF_cover : F ⊆ ⋃ n ∈ I_F, (S' n).toSet := by
+          sorry
+
+        -- By definition of outer measure:
+        -- m*(E) ≤ sum over I_E and m*(F) ≤ sum over I_F
+        have hE_bound : Lebesgue_outer_measure E ≤ ∑' (n : I_E), (S' n).volume.toEReal := by
+          sorry
+
+        have hF_bound : Lebesgue_outer_measure F ≤ ∑' (n : I_F), (S' n).volume.toEReal := by
+          sorry
+
+        -- Sum the bounds
+        calc Lebesgue_outer_measure E + Lebesgue_outer_measure F
+            ≤ (∑' (n : I_E), (S' n).volume.toEReal) + (∑' (n : I_F), (S' n).volume.toEReal) := by
+                sorry  -- EReal addition
+          _ ≤ ∑' n, (S' n).volume.toEReal := by
+                -- Since I_E and I_F are disjoint subsets of ℕ
+                sorry
+          _ ≤ ∑' n, (S n).volume.toEReal := hS'_vol
+          _ ≤ Lebesgue_outer_measure (E ∪ F) + (ε : EReal) := hS_vol
+
+      -- From h_eps, conclude the inequality holds
+      -- If for all ε > 0, a ≤ b + ε, then a ≤ b
+      sorry
+
+  -- Combine both directions
+  exact le_antisymm h_le h_ge
 
 example : set_dist (Ico 0 1).toSet (Icc 1 2).toSet = 0 := by sorry
 
