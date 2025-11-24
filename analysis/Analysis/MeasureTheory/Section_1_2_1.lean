@@ -348,93 +348,53 @@ lemma Box.diameter_bound_by_sides {d:ℕ} (B: Box d) :
       -- BoundedInterval.length is max (b - a) 0, which is always ≥ 0
       simp [BoundedInterval.length]
 
-/-- Subdivide a box into 2^d equal sub-boxes by bisecting each side.
-    This function enumerates the 2^d sub-boxes by treating each natural number < 2^d
-    as a d-bit binary string, where bit i indicates which half (low/high) to take for dimension i. -/
-noncomputable def Box.subdivide {d:ℕ} (B: Box d) : Finset (Box d) :=
-  open Classical in
-  -- Generate all 2^d combinations of (low half, high half) for each dimension
-  Finset.image (fun (bits : Fin (2^d)) =>
-    { side := fun i =>
-        let mid := (B.side i).a + ((B.side i).b - (B.side i).a) / 2
-        -- Extract bit i from bits.val to decide low/high half
-        if (bits.val / 2^i.val) % 2 = 0
-        then match B.side i with
-          | Ioo a _ => Ioo a mid
-          | Icc a _ => Icc a mid
-          | Ioc a _ => Ioc a mid
-          | Ico a _ => Ico a mid
-        else match B.side i with
-          | Ioo _ b => Ioo mid b
-          | Icc _ b => Icc mid b
-          | Ioc _ b => Ioc mid b
-          | Ico _ b => Ico mid b
-    : Box d })
-  Finset.univ
 
-/-- Subdivision covers the original box -/
-lemma Box.subdivide_covers {d:ℕ} (B: Box d) :
-    B.toSet = ⋃ B' ∈ B.subdivide, B'.toSet := by
-  sorry
+/-- If a box intersects two sets, any two points (one from each set)
+    in the box have distance at most the diameter -/
+lemma Box.diameter_ge_dist_of_intersects {d:ℕ} (B: Box d) (E F : Set (EuclideanSpace' d))
+    (hE : (B.toSet ∩ E).Nonempty) (hF : (B.toSet ∩ F).Nonempty) :
+    set_dist E F ≤ B.diameter := by
+  obtain ⟨x, hx_box, hx_E⟩ := hE
+  obtain ⟨y, hy_box, hy_F⟩ := hF
+  -- set_dist E F ≤ dist x y (by definition of set_dist as infimum)
+  have h_dist : set_dist E F ≤ dist x y := by
+    unfold set_dist
+    apply csInf_le
+    · -- Bounded below by 0
+      use 0
+      intro r ⟨p, hp, hr⟩
+      rw [← hr]
+      exact dist_nonneg
+    · -- The distance from x to y is in the set
+      simp only [Set.mem_image]
+      use (x, y)
+      exact ⟨Set.mem_prod.mpr ⟨hx_E, hy_F⟩, rfl⟩
+  -- dist x y ≤ B.diameter (by dist_le_diameter)
+  have h_le_diam : √(∑ i, (x i - y i)^2) ≤ B.diameter :=
+    Box.dist_le_diameter B hx_box hy_box
+  -- Note: For EuclideanSpace' d, dist x y = √(∑ i, (x i - y i)^2)
+  have h_eq : dist x y = √(∑ i, (x i - y i)^2) := by
+    simp only [EuclideanSpace.dist_eq]
+    congr 1
+    congr 1
+    ext i
+    rw [Real.dist_eq, sq_abs]
+  -- Combine
+  calc set_dist E F
+      ≤ dist x y := h_dist
+    _ = √(∑ i, (x i - y i)^2) := h_eq
+    _ ≤ B.diameter := h_le_diam
 
-/-- Sub-boxes have disjoint interiors -/
-lemma Box.subdivide_almost_disjoint {d:ℕ} (B: Box d) :
-    ∀ B₁ ∈ B.subdivide, ∀ B₂ ∈ B.subdivide, B₁ ≠ B₂ →
-      (interior B₁.toSet) ∩ (interior B₂.toSet) = ∅ := by
-  sorry
-
-/-- Volume is preserved under subdivision: sum of sub-box volumes equals original volume -/
-lemma Box.volume_subdivide {d:ℕ} (B: Box d) :
-    ∑ B' ∈ B.subdivide, |B'|ᵥ = |B|ᵥ := by
-  unfold Box.subdivide Box.volume
-  -- Each dimension is halved, giving volume_sub = volume / 2^d for each sub-box
-  -- We have 2^d sub-boxes, so total = 2^d * (volume / 2^d) = volume
-  sorry
-
-/-- Diameter of sub-boxes is at most half the diameter of the original box -/
-lemma Box.subdivide_diameter_bound {d:ℕ} (B: Box d) (B': Box d)
-    (hB': B' ∈ B.subdivide) :
-    B'.diameter ≤ B.diameter / 2 := by
-  -- Each side is halved, so maximum distance is approximately halved
-  sorry
-
-/-- Subdivide repeatedly until all boxes have diameter at most δ.
-    Uses well-founded recursion on the number of subdivisions needed. -/
-noncomputable def Box.subdivide_to_diameter {d:ℕ} (B: Box d) (δ: ℝ) (hδ: 0 < δ) :
-    Finset (Box d) :=
-  if h : B.diameter ≤ δ then
-    {B}  -- Already small enough
-  else
-    -- Subdivide and recursively subdivide each piece
-    -- Note: This requires a termination proof showing diameter decreases
-    have : B.diameter / 2 < B.diameter := by
-      apply div_two_lt_of_pos
-      by_contra h_neg
-      push_neg at h_neg
-      have : B.diameter ≤ 0 := h_neg
-      have : 0 ≤ B.diameter := Box.diameter_nonneg B
-      have : B.diameter = 0 := le_antisymm ‹B.diameter ≤ 0› ‹0 ≤ B.diameter›
-      exact h (this.symm ▸ (le_of_lt hδ))
-    sorry  -- Recursive subdivision needs well-founded recursion setup
-
-/-- All boxes in subdivide_to_diameter have diameter at most δ -/
-lemma Box.subdivide_to_diameter_diameter_bound {d:ℕ} (B: Box d)
-    (δ: ℝ) (hδ: 0 < δ) (B': Box d)
-    (hB': B' ∈ B.subdivide_to_diameter δ hδ) :
-    B'.diameter ≤ δ := by
-  sorry
-
-/-- subdivide_to_diameter covers the original box -/
-lemma Box.subdivide_to_diameter_covers {d:ℕ} (B: Box d)
-    (δ: ℝ) (hδ: 0 < δ) :
-    B.toSet = ⋃ B' ∈ B.subdivide_to_diameter δ hδ, B'.toSet := by
-  sorry
-
-/-- Volume is preserved under repeated subdivision -/
-lemma Box.volume_subdivide_to_diameter {d:ℕ} (B: Box d)
-    (δ: ℝ) (hδ: 0 < δ) :
-    ∑ B' ∈ B.subdivide_to_diameter δ hδ, |B'|ᵥ = |B|ᵥ := by
-  sorry
+/-- If B.diameter < set_dist E F, then B cannot intersect both E and F.
+    This is the core geometric fact needed for finite additivity of separated sets. -/
+lemma Box.not_intersects_both_of_diameter_lt {d:ℕ} (B: Box d) (E F : Set (EuclideanSpace' d))
+    (h : B.diameter < set_dist E F) :
+    ¬((B.toSet ∩ E).Nonempty ∧ (B.toSet ∩ F).Nonempty) := by
+  intro ⟨hE, hF⟩
+  -- If B intersects both, then set_dist E F ≤ B.diameter
+  have := Box.diameter_ge_dist_of_intersects B E F hE hF
+  -- But we assumed B.diameter < set_dist E F
+  linarith
 
 -- ========================================================================
 -- End of Box Infrastructure
