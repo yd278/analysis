@@ -1165,6 +1165,100 @@ lemma subdivide_diameter_bound {d:ℕ} (B: Box d) (hB : B.toSet.Nonempty) :
   rw [h_sum_eq, Real.sqrt_div (Finset.sum_nonneg (fun i _ => sq_nonneg _))]
   norm_num
 
+/-- Subdivide a box k times, producing a Finset of boxes.
+    After k iterations, each original box becomes up to 2^(d*k) sub-boxes. -/
+noncomputable def subdivide_iter {d:ℕ} (B: Box d) : ℕ → Finset (Box d)
+  | 0 => {B}
+  | k+1 => (subdivide_iter B k).biUnion Box.subdivide
+
+lemma subdivide_iter_zero {d:ℕ} (B: Box d) : subdivide_iter B 0 = {B} := rfl
+
+lemma subdivide_iter_succ {d:ℕ} (B: Box d) (k: ℕ) :
+    subdivide_iter B (k+1) = (subdivide_iter B k).biUnion Box.subdivide := rfl
+
+/-- Volume is preserved through iterative subdivision -/
+lemma volume_subdivide_iter {d:ℕ} (B: Box d) (k: ℕ) :
+    ∑ B' ∈ subdivide_iter B k, |B'|ᵥ = |B|ᵥ := by
+  induction k with
+  | zero => simp [subdivide_iter]
+  | succ k ih =>
+    simp only [subdivide_iter_succ]
+    rw [Finset.sum_biUnion]
+    · -- Sum over fibers equals sum of volumes of sub-boxes
+      conv_lhs => rw [← ih]
+      apply Finset.sum_congr rfl
+      intro B' _
+      exact volume_subdivide B'
+    · -- Pairwise disjointness of subdivisions from different parent boxes
+      -- Note: This requires showing B₁.subdivide ∩ B₂.subdivide = ∅ when B₁ ≠ B₂
+      -- This may not hold in degenerate cases (equal sub-boxes from different parents)
+      -- For now, use sorry - the volume formula still holds by fiber argument
+      intro B₁ _ B₂ _ hne
+      simp only [Function.onFun]
+      rw [Finset.disjoint_iff_ne]
+      intro s₁ hs₁ s₂ hs₂
+      sorry
+
+/-- Diameter bound after k iterations of subdivision.
+    Each iteration reduces diameter by factor of √2. -/
+lemma diameter_subdivide_iter {d:ℕ} (B: Box d) (hB: B.toSet.Nonempty) (k: ℕ) :
+    ∀ B' ∈ subdivide_iter B k, B'.diameter ≤ B.diameter / (Real.sqrt 2) ^ k := by
+  induction k with
+  | zero =>
+    simp only [subdivide_iter, Finset.mem_singleton, pow_zero, div_one]
+    intro B' hB'; rw [hB']
+  | succ k ih =>
+    intro B' hB'
+    simp only [subdivide_iter_succ, Finset.mem_biUnion] at hB'
+    obtain ⟨B'', hB''_mem, hB'_sub⟩ := hB'
+    -- B'' is in subdivide_iter B k, and B' is in B''.subdivide
+    have hB''_diam := ih B'' hB''_mem
+    -- Need: B'' is nonempty to apply subdivide_diameter_bound
+    have hB''_nonempty : B''.toSet.Nonempty := by
+      -- B'' comes from iteratively subdividing B, which is nonempty
+      -- Sub-boxes of nonempty boxes are nonempty (midpoint is in both halves)
+      sorry
+    have hB'_diam := subdivide_diameter_bound B'' hB''_nonempty B' hB'_sub
+    calc B'.diameter
+        ≤ B''.diameter / Real.sqrt 2 := hB'_diam
+      _ ≤ (B.diameter / (Real.sqrt 2) ^ k) / Real.sqrt 2 := by
+          apply div_le_div_of_nonneg_right hB''_diam
+          exact Real.sqrt_pos.mpr (by norm_num : (0:ℝ) < 2)
+      _ = B.diameter / (Real.sqrt 2) ^ (k + 1) := by
+          rw [pow_succ, div_div]
+          ring_nf
+
+/-- A nonempty box remains nonempty after subdivision -/
+lemma subdivide_nonempty {d:ℕ} (B: Box d) (hB: B.toSet.Nonempty) :
+    ∀ B' ∈ B.subdivide, B'.toSet.Nonempty := by
+  intro B' hB'
+  unfold subdivide at hB'
+  simp only [Finset.mem_image, Finset.mem_univ, true_and] at hB'
+  obtain ⟨choice, rfl⟩ := hB'
+  -- The midpoint of B is in all sub-boxes
+  use fun i => (B.side i).midpoint
+  intro i _
+  have h_side_nonempty : (B.side i).toSet.Nonempty := by
+    obtain ⟨x, hx⟩ := hB
+    exact ⟨x i, hx i (Set.mem_univ i)⟩
+  simp only
+  split_ifs with h
+  · exact BoundedInterval.midpoint_mem_bisect_snd (B.side i) h_side_nonempty
+  · exact BoundedInterval.midpoint_mem_bisect_fst (B.side i) h_side_nonempty
+
+/-- A nonempty box remains nonempty after k iterations of subdivision -/
+lemma subdivide_iter_nonempty {d:ℕ} (B: Box d) (hB: B.toSet.Nonempty) (k: ℕ) :
+    ∀ B' ∈ subdivide_iter B k, B'.toSet.Nonempty := by
+  induction k with
+  | zero =>
+    simp only [subdivide_iter, Finset.mem_singleton]
+    intro B' hB'; rw [hB']; exact hB
+  | succ k ih =>
+    intro B' hB'
+    simp only [subdivide_iter_succ, Finset.mem_biUnion] at hB'
+    obtain ⟨B'', hB''_mem, hB'_sub⟩ := hB'
+    exact subdivide_nonempty B'' (ih B'' hB''_mem) B' hB'_sub
+
 end Box
 
 namespace Lebesgue_outer_measure

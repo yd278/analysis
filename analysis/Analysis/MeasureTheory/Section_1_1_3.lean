@@ -495,7 +495,7 @@ lemma TaggedPartition.uniform_delta {I: BoundedInterval} {n: ℕ} (hn: n > 0) (h
   ring
 
 /-- For any x in [a,b], find the subinterval index containing x -/
-noncomputable def findSubintervalIndex (lo hi : ℝ) (n : ℕ) (hn : n > 0) (x : ℝ) (hx : lo ≤ x ∧ x ≤ hi) : Fin n :=
+noncomputable def findSubintervalIndex (lo hi : ℝ) (n : ℕ) (hn : n > 0) (x : ℝ) (_hx : lo ≤ x ∧ x ≤ hi) : Fin n :=
   let k := min (Nat.floor ((x - lo) / ((hi - lo) / n))) (n - 1)
   ⟨k, by omega⟩
 
@@ -533,14 +533,17 @@ lemma findSubintervalIndex_spec (lo hi : ℝ) (n : ℕ) (hn : n > 0) (hlohi : lo
           rw [hΔ_def]
           field_simp [h_ne]
         rw [h_ratio]
-        exact Nat.floor_natCast n
+        rw [Nat.floor_natCast (R := ℝ)]
+        omega
       rw [h_k_eq]
       have h_cast : (↑(n - 1) + 1 : ℝ) = n := by
         rw [Nat.cast_sub (Nat.one_le_of_lt hn)]
         ring
       rw [h_cast, h_at_end]
-      calc hi = lo + (hi - lo) := by ring
-           _ = lo + n * Δ := by rw [hΔ_def]; field_simp [h_ne]
+      have h_eq : hi = lo + (n : ℝ) * Δ := by
+        calc hi = lo + (hi - lo) := by ring
+             _ = lo + n * Δ := by rw [hΔ_def]; field_simp [h_ne]
+      linarith [h_eq]
     · -- If x < hi, use floor property
       have h_x_lt_hi : x < hi := lt_of_le_of_ne hx.2 h_at_end
       -- When x < hi, floor((x-lo)/Δ) ≤ n - 1, so k = floor
@@ -556,13 +559,14 @@ lemma findSubintervalIndex_spec (lo hi : ℝ) (n : ℕ) (hn : n > 0) (hlohi : lo
         simp only [hk_def]
         exact Nat.min_eq_left h_floor_le_n_sub_1
       have h_lt_floor : (x - lo) / Δ < ↑(Nat.floor ((x - lo) / Δ)) + 1 := Nat.lt_floor_add_one _
-      calc x = lo + (x - lo) := by ring
-           _ = lo + ((x - lo) / Δ) * Δ := by field_simp
-           _ < lo + (↑(Nat.floor ((x - lo) / Δ)) + 1) * Δ := by
-               apply add_lt_add_left
-               apply mul_lt_mul_of_pos_right h_lt_floor hΔ_pos
-           _ = lo + (↑k + 1) * Δ := by rw [h_k_eq_floor]
-           _ ≤ lo + (↑k + 1) * Δ := le_refl _
+      have h_lt : x < lo + (↑k + 1) * Δ := by
+        calc x = lo + (x - lo) := by ring
+             _ = lo + ((x - lo) / Δ) * Δ := by field_simp
+             _ < lo + (↑(Nat.floor ((x - lo) / Δ)) + 1) * Δ := by
+                 apply add_lt_add_left
+                 apply mul_lt_mul_of_pos_right h_lt_floor hΔ_pos
+             _ = lo + (↑k + 1) * Δ := by rw [h_k_eq_floor]
+      linarith [h_lt]
 
 /-- Definition 1.1.15 -/
 theorem RiemannIntegrable.bounded {f: ℝ → ℝ} {I: BoundedInterval} (h: RiemannIntegrableOn f I) : ∃ M, ∀ x ∈ I, |f x| ≤ M := by
@@ -573,7 +577,7 @@ theorem RiemannIntegrable.bounded {f: ℝ → ℝ} {I: BoundedInterval} (h: Riem
     use |f I.a|
     intro x hx
     rw [hIcc] at hx
-    simp only [BoundedInterval.toSet, BoundedInterval.set_Icc, Set.mem_Icc] at hx
+    simp [BoundedInterval.toSet, Set.mem_Icc] at hx
     have hxa : x = I.a := le_antisymm (by linarith [hx.1, hx.2, hab]) hx.1
     rw [hxa]
   · -- Positive-length case
@@ -624,7 +628,7 @@ theorem RiemannIntegrable.bounded {f: ℝ → ℝ} {I: BoundedInterval} (h: Riem
     -- Find which subinterval contains x₀
     have hx₀_in' : I.a ≤ x₀ ∧ x₀ ≤ I.b := by
       rw [hIcc] at hx₀_in
-      simp only [BoundedInterval.toSet, BoundedInterval.set_Icc, Set.mem_Icc] at hx₀_in
+      simp [BoundedInterval.toSet, Set.mem_Icc] at hx₀_in
       exact hx₀_in
     let k := findSubintervalIndex I.a I.b N hN_pos x₀ hx₀_in'
     -- x₀ is in the k-th subinterval of the partition
@@ -641,7 +645,7 @@ theorem RiemannIntegrable.bounded {f: ℝ → ℝ} {I: BoundedInterval} (h: Riem
       · have h_succ : (k.succ.val : ℝ) = k.val + 1 := by simp [Fin.val_succ]
         calc x₀ ≤ I.a + (k.val + 1) * ((I.b - I.a) / N) := h_x₀_in_k.2
              _ = I.a + (I.b - I.a) * (k.val + 1) / N := by ring
-             _ = I.a + (I.b - I.a) * k.succ.val / N := by rw [← h_succ]; ring
+             _ = I.a + (I.b - I.a) * k.succ.val / N := by rw [← h_succ]
              _ = P.x k.succ := (h_P_x k.succ).symm
     -- Construct P₂ by changing tag k to x₀
     let P₂ := P.changeTag k x₀ h_x₀_bracket
