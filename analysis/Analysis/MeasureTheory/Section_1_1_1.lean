@@ -158,6 +158,46 @@ lemma Icc_ne_Ico {a₁ b₁ a₂ b₂ : ℝ} (ha₁b₁ : a₁ ≤ b₁) (ha₂b
   simp [Set.mem_Ico] at this
   linarith
 
+/-- Extract that a < b from nonempty Ioo -/
+private lemma nonempty_Ioo_strictness {a b : ℝ} (h : (Ioo a b).toSet.Nonempty) : a < b := by
+  obtain ⟨x, hx⟩ := h
+  simp [toSet] at hx
+  exact hx.1.trans hx.2
+
+/-- Extract that a < b from nonempty Ioc -/
+private lemma nonempty_Ioc_strictness {a b : ℝ} (h : (Ioc a b).toSet.Nonempty) : a < b := by
+  obtain ⟨x, hx⟩ := h
+  simp [toSet] at hx
+  exact hx.1.trans_le hx.2
+
+/-- Extract that a < b from nonempty Ico -/
+private lemma nonempty_Ico_strictness {a b : ℝ} (h : (Ico a b).toSet.Nonempty) : a < b := by
+  obtain ⟨x, hx⟩ := h
+  simp [toSet] at hx
+  exact hx.1.trans_lt hx.2
+
+/-- Extract that a ≤ b from nonempty Icc -/
+private lemma nonempty_Icc_order {a b : ℝ} (h : (Icc a b).toSet.Nonempty) : a ≤ b := by
+  obtain ⟨x, hx⟩ := h
+  simp [toSet] at hx
+  exact hx.1.trans hx.2
+
+/-- Extract equal endpoints from equal Icc sets -/
+private lemma endpoints_of_Icc_eq {a₁ b₁ a₂ b₂ : ℝ}
+    (h_closure : Set.Icc a₁ b₁ = Set.Icc a₂ b₂) (ha₁b₁ : a₁ ≤ b₁) (ha₂b₂ : a₂ ≤ b₂) :
+    a₁ = a₂ ∧ b₁ = b₂ := by
+  constructor
+  · have h₁ : a₁ ∈ Set.Icc a₁ b₁ := by simp [Set.mem_Icc, ha₁b₁]
+    rw [h_closure] at h₁; simp [Set.mem_Icc] at h₁
+    have h₂ : a₂ ∈ Set.Icc a₂ b₂ := by simp [Set.mem_Icc, ha₂b₂]
+    rw [← h_closure] at h₂; simp [Set.mem_Icc] at h₂
+    linarith
+  · have h₁ : b₁ ∈ Set.Icc a₁ b₁ := by simp [Set.mem_Icc, ha₁b₁]
+    rw [h_closure] at h₁; simp [Set.mem_Icc] at h₁
+    have h₂ : b₂ ∈ Set.Icc a₂ b₂ := by simp [Set.mem_Icc, ha₂b₂]
+    rw [← h_closure] at h₂; simp [Set.mem_Icc] at h₂
+    linarith
+
 /-- BoundedInterval.toSet is injective for non-empty intervals -/
 lemma toSet_injective_of_nonempty {I J : BoundedInterval}
     (hI : I.toSet.Nonempty) (hJ : J.toSet.Nonempty) (h_eq : I.toSet = J.toSet) :
@@ -167,228 +207,67 @@ lemma toSet_injective_of_nonempty {I J : BoundedInterval}
   | Ioo a₁ b₁ =>
     cases J with
     | Ioo a₂ b₂ =>
-      -- Ioo a₁ b₁ = Ioo a₂ b₂: use that Set.Ioo is injective
-      have : Set.Ioo a₁ b₁ = Set.Ioo a₂ b₂ := h_eq
-      -- For non-empty open intervals, closures are equal closed intervals
-      have h_closure : closure (Set.Ioo a₁ b₁) = closure (Set.Ioo a₂ b₂) := by
-        rw [this]
-      -- Closure of nonempty Ioo a b is Icc a b (when a < b)
-      obtain ⟨x, hx⟩ := hI
-      simp [BoundedInterval.toSet] at hx
-      have ha₁b₁ : a₁ < b₁ := hx.1.trans hx.2
-      obtain ⟨y, hy⟩ := hJ
-      simp [BoundedInterval.toSet] at hy
-      have ha₂b₂ : a₂ < b₂ := hy.1.trans hy.2
-      -- Use closure_Ioo from mathlib
+      -- Ioo a₁ b₁ = Ioo a₂ b₂: use closure to extract endpoints
+      have ha₁b₁ := nonempty_Ioo_strictness hI
+      have ha₂b₂ := nonempty_Ioo_strictness hJ
+      have h_set_eq : Set.Ioo a₁ b₁ = Set.Ioo a₂ b₂ := h_eq
+      have h_closure : closure (Set.Ioo a₁ b₁) = closure (Set.Ioo a₂ b₂) := by rw [h_set_eq]
       rw [closure_Ioo ha₁b₁.ne, closure_Ioo ha₂b₂.ne] at h_closure
-      -- Now Set.Icc a₁ b₁ = Set.Icc a₂ b₂ implies a₁ = a₂ and b₁ = b₂
-      have ha : a₁ = a₂ := by
-        -- Show a₁ ≤ a₂ and a₂ ≤ a₁
-        have h₁ : a₁ ∈ Set.Icc a₁ b₁ := by simp [Set.mem_Icc, ha₁b₁.le]
-        rw [h_closure] at h₁
-        simp [Set.mem_Icc] at h₁
-        have h₂ : a₂ ∈ Set.Icc a₂ b₂ := by simp [Set.mem_Icc, ha₂b₂.le]
-        rw [← h_closure] at h₂
-        simp [Set.mem_Icc] at h₂
-        linarith
-      have hb : b₁ = b₂ := by
-        -- Show b₁ ≤ b₂ and b₂ ≤ b₁
-        have h₁ : b₁ ∈ Set.Icc a₁ b₁ := by simp [Set.mem_Icc, ha₁b₁.le]
-        rw [h_closure] at h₁
-        simp [Set.mem_Icc] at h₁
-        have h₂ : b₂ ∈ Set.Icc a₂ b₂ := by simp [Set.mem_Icc, ha₂b₂.le]
-        rw [← h_closure] at h₂
-        simp [Set.mem_Icc] at h₂
-        linarith
+      obtain ⟨ha, hb⟩ := endpoints_of_Icc_eq h_closure ha₁b₁.le ha₂b₂.le
       rw [ha, hb]
     | Icc a₂ b₂ =>
-      -- Ioo vs Icc: Use helper lemma
-      obtain ⟨x, hx⟩ := hI
-      simp [BoundedInterval.toSet] at hx
-      have ha₁b₁ : a₁ < b₁ := hx.1.trans hx.2
-      obtain ⟨y, hy⟩ := hJ
-      simp [BoundedInterval.toSet] at hy
-      have ha₂b₂ : a₂ ≤ b₂ := hy.1.trans hy.2
-      exact absurd h_eq (Ioo_ne_Icc ha₁b₁ ha₂b₂)
+      exact absurd h_eq (Ioo_ne_Icc (nonempty_Ioo_strictness hI) (nonempty_Icc_order hJ))
     | Ioc a₂ b₂ =>
-      -- Ioo vs Ioc: Use helper lemma
-      obtain ⟨x, hx⟩ := hI
-      simp [BoundedInterval.toSet] at hx
-      have ha₁b₁ : a₁ < b₁ := hx.1.trans hx.2
-      obtain ⟨y, hy⟩ := hJ
-      simp [BoundedInterval.toSet] at hy
-      have ha₂b₂ : a₂ < b₂ := hy.1.trans_le hy.2
-      exact absurd h_eq (Ioo_ne_Ioc ha₁b₁ ha₂b₂)
+      exact absurd h_eq (Ioo_ne_Ioc (nonempty_Ioo_strictness hI) (nonempty_Ioc_strictness hJ))
     | Ico a₂ b₂ =>
-      -- Ioo vs Ico: Use helper lemma
-      obtain ⟨x, hx⟩ := hI
-      simp [BoundedInterval.toSet] at hx
-      have ha₁b₁ : a₁ < b₁ := hx.1.trans hx.2
-      obtain ⟨y, hy⟩ := hJ
-      simp [BoundedInterval.toSet] at hy
-      have ha₂b₂ : a₂ < b₂ := hy.1.trans_lt hy.2
-      exact absurd h_eq (Ioo_ne_Ico ha₁b₁ ha₂b₂)
+      exact absurd h_eq (Ioo_ne_Ico (nonempty_Ioo_strictness hI) (nonempty_Ico_strictness hJ))
   | Icc a₁ b₁ =>
     cases J with
     | Ioo a₂ b₂ =>
-      -- Icc vs Ioo: Use helper lemma (symmetric)
-      obtain ⟨x, hx⟩ := hI
-      simp [BoundedInterval.toSet] at hx
-      have ha₁b₁ : a₁ ≤ b₁ := hx.1.trans hx.2
-      obtain ⟨y, hy⟩ := hJ
-      simp [BoundedInterval.toSet] at hy
-      have ha₂b₂ : a₂ < b₂ := hy.1.trans hy.2
-      exact absurd h_eq.symm (Ioo_ne_Icc ha₂b₂ ha₁b₁)
+      exact absurd h_eq.symm (Ioo_ne_Icc (nonempty_Ioo_strictness hJ) (nonempty_Icc_order hI))
     | Icc a₂ b₂ =>
-      -- Icc a₁ b₁ = Icc a₂ b₂: directly use set equality (Icc is already closed)
-      have : Set.Icc a₁ b₁ = Set.Icc a₂ b₂ := h_eq
-      obtain ⟨x, hx⟩ := hI
-      simp [BoundedInterval.toSet] at hx
-      have ha₁b₁ : a₁ ≤ b₁ := hx.1.trans hx.2
-      obtain ⟨y, hy⟩ := hJ
-      simp [BoundedInterval.toSet] at hy
-      have ha₂b₂ : a₂ ≤ b₂ := hy.1.trans hy.2
-      -- Extract endpoints using membership
-      have ha : a₁ = a₂ := by
-        have h₁ : a₁ ∈ Set.Icc a₁ b₁ := by simp [Set.mem_Icc, ha₁b₁]
-        rw [this] at h₁; simp [Set.mem_Icc] at h₁
-        have h₂ : a₂ ∈ Set.Icc a₂ b₂ := by simp [Set.mem_Icc, ha₂b₂]
-        rw [← this] at h₂; simp [Set.mem_Icc] at h₂
-        linarith
-      have hb : b₁ = b₂ := by
-        have h₁ : b₁ ∈ Set.Icc a₁ b₁ := by simp [Set.mem_Icc, ha₁b₁]
-        rw [this] at h₁; simp [Set.mem_Icc] at h₁
-        have h₂ : b₂ ∈ Set.Icc a₂ b₂ := by simp [Set.mem_Icc, ha₂b₂]
-        rw [← this] at h₂; simp [Set.mem_Icc] at h₂
-        linarith
+      -- Icc a₁ b₁ = Icc a₂ b₂: directly extract endpoints
+      have ha₁b₁ := nonempty_Icc_order hI
+      have ha₂b₂ := nonempty_Icc_order hJ
+      obtain ⟨ha, hb⟩ := endpoints_of_Icc_eq h_eq ha₁b₁ ha₂b₂
       rw [ha, hb]
     | Ioc a₂ b₂ =>
-      -- Icc vs Ioc: Use helper lemma
-      obtain ⟨x, hx⟩ := hI
-      simp [BoundedInterval.toSet] at hx
-      have ha₁b₁ : a₁ ≤ b₁ := hx.1.trans hx.2
-      obtain ⟨y, hy⟩ := hJ
-      simp [BoundedInterval.toSet] at hy
-      have ha₂b₂ : a₂ < b₂ := hy.1.trans_le hy.2
-      exact absurd h_eq (Icc_ne_Ioc ha₁b₁ ha₂b₂)
+      exact absurd h_eq (Icc_ne_Ioc (nonempty_Icc_order hI) (nonempty_Ioc_strictness hJ))
     | Ico a₂ b₂ =>
-      -- Icc vs Ico: Use helper lemma
-      obtain ⟨x, hx⟩ := hI
-      simp [BoundedInterval.toSet] at hx
-      have ha₁b₁ : a₁ ≤ b₁ := hx.1.trans hx.2
-      obtain ⟨y, hy⟩ := hJ
-      simp [BoundedInterval.toSet] at hy
-      have ha₂b₂ : a₂ < b₂ := hy.1.trans_lt hy.2
-      exact absurd h_eq (Icc_ne_Ico ha₁b₁ ha₂b₂)
+      exact absurd h_eq (Icc_ne_Ico (nonempty_Icc_order hI) (nonempty_Ico_strictness hJ))
   | Ioc a₁ b₁ =>
     cases J with
     | Ioo a₂ b₂ =>
-      -- Ioc vs Ioo: Use helper lemma (symmetric)
-      obtain ⟨x, hx⟩ := hI
-      simp [BoundedInterval.toSet] at hx
-      have ha₁b₁ : a₁ < b₁ := hx.1.trans_le hx.2
-      obtain ⟨y, hy⟩ := hJ
-      simp [BoundedInterval.toSet] at hy
-      have ha₂b₂ : a₂ < b₂ := hy.1.trans hy.2
-      exact absurd h_eq.symm (Ioo_ne_Ioc ha₂b₂ ha₁b₁)
+      exact absurd h_eq.symm (Ioo_ne_Ioc (nonempty_Ioo_strictness hJ) (nonempty_Ioc_strictness hI))
     | Icc a₂ b₂ =>
-      -- Ioc vs Icc: Use helper lemma (symmetric)
-      obtain ⟨x, hx⟩ := hI
-      simp [BoundedInterval.toSet] at hx
-      have ha₁b₁ : a₁ < b₁ := hx.1.trans_le hx.2
-      obtain ⟨y, hy⟩ := hJ
-      simp [BoundedInterval.toSet] at hy
-      have ha₂b₂ : a₂ ≤ b₂ := hy.1.trans hy.2
-      exact absurd h_eq.symm (Icc_ne_Ioc ha₂b₂ ha₁b₁)
+      exact absurd h_eq.symm (Icc_ne_Ioc (nonempty_Icc_order hJ) (nonempty_Ioc_strictness hI))
     | Ioc a₂ b₂ =>
       -- Ioc a₁ b₁ = Ioc a₂ b₂: use closure like Ioo
-      have : Set.Ioc a₁ b₁ = Set.Ioc a₂ b₂ := h_eq
-      obtain ⟨x, hx⟩ := hI
-      simp [BoundedInterval.toSet] at hx
-      have ha₁b₁ : a₁ < b₁ := hx.1.trans_le hx.2
-      obtain ⟨y, hy⟩ := hJ
-      simp [BoundedInterval.toSet] at hy
-      have ha₂b₂ : a₂ < b₂ := hy.1.trans_le hy.2
-      -- Closure of Ioc a b is Icc a b (for a < b)
-      have h_closure : closure (Set.Ioc a₁ b₁) = closure (Set.Ioc a₂ b₂) := by rw [this]
+      have ha₁b₁ := nonempty_Ioc_strictness hI
+      have ha₂b₂ := nonempty_Ioc_strictness hJ
+      have h_set_eq : Set.Ioc a₁ b₁ = Set.Ioc a₂ b₂ := h_eq
+      have h_closure : closure (Set.Ioc a₁ b₁) = closure (Set.Ioc a₂ b₂) := by rw [h_set_eq]
       rw [closure_Ioc ha₁b₁.ne, closure_Ioc ha₂b₂.ne] at h_closure
-      -- Now use Icc equality to extract endpoints
-      have ha : a₁ = a₂ := by
-        have h₁ : a₁ ∈ Set.Icc a₁ b₁ := by simp [Set.mem_Icc, ha₁b₁.le]
-        rw [h_closure] at h₁; simp [Set.mem_Icc] at h₁
-        have h₂ : a₂ ∈ Set.Icc a₂ b₂ := by simp [Set.mem_Icc, ha₂b₂.le]
-        rw [← h_closure] at h₂; simp [Set.mem_Icc] at h₂
-        linarith
-      have hb : b₁ = b₂ := by
-        have h₁ : b₁ ∈ Set.Icc a₁ b₁ := by simp [Set.mem_Icc, ha₁b₁.le]
-        rw [h_closure] at h₁; simp [Set.mem_Icc] at h₁
-        have h₂ : b₂ ∈ Set.Icc a₂ b₂ := by simp [Set.mem_Icc, ha₂b₂.le]
-        rw [← h_closure] at h₂; simp [Set.mem_Icc] at h₂
-        linarith
+      obtain ⟨ha, hb⟩ := endpoints_of_Icc_eq h_closure ha₁b₁.le ha₂b₂.le
       rw [ha, hb]
     | Ico a₂ b₂ =>
-      -- Ioc vs Ico: Use helper lemma
-      obtain ⟨x, hx⟩ := hI
-      simp [BoundedInterval.toSet] at hx
-      have ha₁b₁ : a₁ < b₁ := hx.1.trans_le hx.2
-      obtain ⟨y, hy⟩ := hJ
-      simp [BoundedInterval.toSet] at hy
-      have ha₂b₂ : a₂ < b₂ := hy.1.trans_lt hy.2
-      exact absurd h_eq (Ioc_ne_Ico ha₁b₁ ha₂b₂)
+      exact absurd h_eq (Ioc_ne_Ico (nonempty_Ioc_strictness hI) (nonempty_Ico_strictness hJ))
   | Ico a₁ b₁ =>
     cases J with
     | Ioo a₂ b₂ =>
-      -- Ico vs Ioo: Use helper lemma (symmetric)
-      obtain ⟨x, hx⟩ := hI
-      simp [BoundedInterval.toSet] at hx
-      have ha₁b₁ : a₁ < b₁ := hx.1.trans_lt hx.2
-      obtain ⟨y, hy⟩ := hJ
-      simp [BoundedInterval.toSet] at hy
-      have ha₂b₂ : a₂ < b₂ := hy.1.trans hy.2
-      exact absurd h_eq.symm (Ioo_ne_Ico ha₂b₂ ha₁b₁)
+      exact absurd h_eq.symm (Ioo_ne_Ico (nonempty_Ioo_strictness hJ) (nonempty_Ico_strictness hI))
     | Icc a₂ b₂ =>
-      -- Ico vs Icc: Use helper lemma (symmetric)
-      obtain ⟨x, hx⟩ := hI
-      simp [BoundedInterval.toSet] at hx
-      have ha₁b₁ : a₁ < b₁ := hx.1.trans_lt hx.2
-      obtain ⟨y, hy⟩ := hJ
-      simp [BoundedInterval.toSet] at hy
-      have ha₂b₂ : a₂ ≤ b₂ := hy.1.trans hy.2
-      exact absurd h_eq.symm (Icc_ne_Ico ha₂b₂ ha₁b₁)
+      exact absurd h_eq.symm (Icc_ne_Ico (nonempty_Icc_order hJ) (nonempty_Ico_strictness hI))
     | Ioc a₂ b₂ =>
-      -- Ico vs Ioc: Use helper lemma (symmetric)
-      obtain ⟨x, hx⟩ := hI
-      simp [BoundedInterval.toSet] at hx
-      have ha₁b₁ : a₁ < b₁ := hx.1.trans_lt hx.2
-      obtain ⟨y, hy⟩ := hJ
-      simp [BoundedInterval.toSet] at hy
-      have ha₂b₂ : a₂ < b₂ := hy.1.trans_le hy.2
-      exact absurd h_eq.symm (Ioc_ne_Ico ha₂b₂ ha₁b₁)
+      exact absurd h_eq.symm (Ioc_ne_Ico (nonempty_Ioc_strictness hJ) (nonempty_Ico_strictness hI))
     | Ico a₂ b₂ =>
       -- Ico a₁ b₁ = Ico a₂ b₂: use closure like Ioo
-      have : Set.Ico a₁ b₁ = Set.Ico a₂ b₂ := h_eq
-      obtain ⟨x, hx⟩ := hI
-      simp [BoundedInterval.toSet] at hx
-      have ha₁b₁ : a₁ < b₁ := hx.1.trans_lt hx.2
-      obtain ⟨y, hy⟩ := hJ
-      simp [BoundedInterval.toSet] at hy
-      have ha₂b₂ : a₂ < b₂ := hy.1.trans_lt hy.2
-      -- Closure of Ico a b is Icc a b (for a < b)
-      have h_closure : closure (Set.Ico a₁ b₁) = closure (Set.Ico a₂ b₂) := by rw [this]
+      have ha₁b₁ := nonempty_Ico_strictness hI
+      have ha₂b₂ := nonempty_Ico_strictness hJ
+      have h_set_eq : Set.Ico a₁ b₁ = Set.Ico a₂ b₂ := h_eq
+      have h_closure : closure (Set.Ico a₁ b₁) = closure (Set.Ico a₂ b₂) := by rw [h_set_eq]
       rw [closure_Ico ha₁b₁.ne, closure_Ico ha₂b₂.ne] at h_closure
-      -- Now use Icc equality to extract endpoints
-      have ha : a₁ = a₂ := by
-        have h₁ : a₁ ∈ Set.Icc a₁ b₁ := by simp [Set.mem_Icc, ha₁b₁.le]
-        rw [h_closure] at h₁; simp [Set.mem_Icc] at h₁
-        have h₂ : a₂ ∈ Set.Icc a₂ b₂ := by simp [Set.mem_Icc, ha₂b₂.le]
-        rw [← h_closure] at h₂; simp [Set.mem_Icc] at h₂
-        linarith
-      have hb : b₁ = b₂ := by
-        have h₁ : b₁ ∈ Set.Icc a₁ b₁ := by simp [Set.mem_Icc, ha₁b₁.le]
-        rw [h_closure] at h₁; simp [Set.mem_Icc] at h₁
-        have h₂ : b₂ ∈ Set.Icc a₂ b₂ := by simp [Set.mem_Icc, ha₂b₂.le]
-        rw [← h_closure] at h₂; simp [Set.mem_Icc] at h₂
-        linarith
+      obtain ⟨ha, hb⟩ := endpoints_of_Icc_eq h_closure ha₁b₁.le ha₂b₂.le
       rw [ha, hb]
 
 end BoundedInterval
@@ -684,6 +563,20 @@ lemma Box.volume_eq_zero_of_empty {d:ℕ} (B: Box d) (h: B.toSet = ∅) : |B|ᵥ
     | Ioc a b, hi => simp [BoundedInterval.set_Ioc] at hi; simp; exact le_of_not_gt (Set.Ioc_eq_empty_iff.1 hi)
     | Ico a b, hi => simp [BoundedInterval.set_Ico] at hi; simp; exact le_of_not_gt (Set.Ico_eq_empty_iff.1 hi)
   simp [BoundedInterval.length, max_eq_right (sub_nonpos.2 h_le)]
+
+/-- A box with all degenerate sides [x, x] has volume 0 when d > 0 -/
+lemma Box.volume_singleton {d:ℕ} (hd : 0 < d) (x : EuclideanSpace' d) :
+    |⟨fun i => BoundedInterval.Icc (x i) (x i)⟩|ᵥ = 0 := by
+  unfold Box.volume BoundedInterval.length
+  -- All sides have length 0
+  have h_sides : ∀ i : Fin d, max ((x i) - (x i)) 0 = 0 := by
+    intro i
+    simp [sub_self]
+  -- Product contains at least one 0 (at index 0), so the product is 0
+  let i₀ : Fin d := ⟨0, hd⟩
+  calc ∏ i : Fin d, max ((x i) - (x i)) 0
+      = ∏ i : Fin d, (0 : ℝ) := by simp only [h_sides]
+    _ = 0 := Finset.prod_eq_zero (Finset.mem_univ i₀) rfl
 
 @[simp]
 theorem Box.volume_of_interval (I:BoundedInterval) : |(I:Box 1)|ᵥ = |I|ₗ := by
@@ -1404,7 +1297,39 @@ lemma IsElementary.measure_of_union {d:ℕ} {E F: Set (EuclideanSpace' d)}
 lemma IsElementary.measure_of_union' {d:ℕ} {S: Finset (Set (EuclideanSpace' d))}
 (hE: ∀ E ∈ S, IsElementary E) :
   (IsElementary.union' hE).measure ≤ ∑ E:S, (hE E.val E.property).measure := by
-  sorry
+  -- Strategy: Induction on S mirroring measure_of_disjUnion' but with inequality
+  classical
+  induction S using Finset.induction_on with
+  | empty =>
+    -- Base case: S = ∅, both sides are 0
+    have h_set_eq := IsElementary.union'_empty_eq (d := d)
+    have h_measure_eq : (IsElementary.union' hE).measure = (IsElementary.empty d).measure :=
+      IsElementary.measure_eq_of_set_eq (IsElementary.union' hE) (IsElementary.empty d) h_set_eq
+    simp [IsElementary.measure_of_empty]
+  | @insert a S' ha_notin ih =>
+    -- Extract hypotheses for S' and element a
+    have hE_S' : ∀ E ∈ S', IsElementary E := fun E hE_mem => hE E (Finset.mem_insert_of_mem hE_mem)
+    have hE_a : IsElementary a := hE a (Finset.mem_insert_self _ _)
+    -- Show the union over insert a S' equals a ∪ (union over S')
+    have h_union_split : ⋃ E ∈ insert a S', E = a ∪ (⋃ E ∈ S', E) := by
+      ext x; simp [Set.mem_iUnion, Set.mem_union, Finset.mem_insert]
+    -- Apply the two-set subadditivity lemma
+    let hE_rest : IsElementary (⋃ E ∈ S', E) := IsElementary.union' hE_S'
+    have h_two_set : (hE_a.union hE_rest).measure ≤ hE_a.measure + hE_rest.measure :=
+      IsElementary.measure_of_union hE_a hE_rest
+    -- Equate the union witness measure with the two-set union measure
+    have h_measure_eq : (IsElementary.union' hE).measure = (hE_a.union hE_rest).measure :=
+      IsElementary.measure_eq_of_set_eq (IsElementary.union' hE) (hE_a.union hE_rest) h_union_split
+    -- Split the sum into measure of a plus sum over S'
+    have h_sum_split := IsElementary.sum_insert_split ha_notin hE
+    -- Apply inductive hypothesis
+    have h_ih : hE_rest.measure ≤ ∑ E : S', (hE_S' E.val E.property).measure := ih hE_S'
+    have h_ih_adjusted : hE_rest.measure ≤ ∑ E : S', (hE E.val (Finset.mem_insert_of_mem E.property)).measure :=
+      h_ih
+    -- Combine: (union' hE).measure = (hE_a.union hE_rest).measure ≤ hE_a.measure + hE_rest.measure
+    --          ≤ hE_a.measure + ∑ E:S', ... = ∑ E:(insert a S'), ...
+    rw [h_measure_eq, h_sum_split]
+    linarith [h_two_set, h_ih_adjusted]
 
 /-- Helper: Translation preserves interval length -/
 lemma BoundedInterval.length_of_translate (I: BoundedInterval) (c: ℝ) :
