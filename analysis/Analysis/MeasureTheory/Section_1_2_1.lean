@@ -267,6 +267,40 @@ lemma bisect_length_sum (I : BoundedInterval) :
   rw [bisect_fst_length, bisect_snd_length]
   ring
 
+/-- The left endpoint of bisect.fst is I.a -/
+@[simp]
+lemma bisect_fst_a (I : BoundedInterval) : (I.bisect.fst).a = I.a := by
+  unfold bisect endpoints
+  cases I <;> simp [BoundedInterval.a]
+
+/-- The left endpoint of bisect.snd is I.midpoint -/
+@[simp]
+lemma bisect_snd_a (I : BoundedInterval) : (I.bisect.snd).a = I.midpoint := by
+  unfold bisect endpoints
+  cases I <;> simp [BoundedInterval.a, midpoint]
+
+/-- The midpoint equals a + length/2 when a ≤ b (non-degenerate interval) -/
+lemma midpoint_eq_a_add_half_length (I : BoundedInterval) (h : I.a ≤ I.b) :
+    I.midpoint = I.a + |I|ₗ / 2 := by
+  unfold midpoint endpoints length
+  cases I with
+  | Ioo a b =>
+    simp only [BoundedInterval.a, BoundedInterval.b] at h ⊢
+    simp [max_eq_left (sub_nonneg.mpr h)]; ring
+  | Icc a b =>
+    simp only [BoundedInterval.a, BoundedInterval.b] at h ⊢
+    simp [max_eq_left (sub_nonneg.mpr h)]; ring
+  | Ioc a b =>
+    simp only [BoundedInterval.a, BoundedInterval.b] at h ⊢
+    simp [max_eq_left (sub_nonneg.mpr h)]; ring
+  | Ico a b =>
+    simp only [BoundedInterval.a, BoundedInterval.b] at h ⊢
+    simp [max_eq_left (sub_nonneg.mpr h)]; ring
+
+/-- For Icc intervals (the result of bisect), midpoint = a + (b-a)/2 -/
+lemma Icc_midpoint_eq (a b : ℝ) : (Icc a b : BoundedInterval).midpoint = (a + b) / 2 := by
+  simp [midpoint, endpoints]
+
 /-- The midpoint is in the first half of bisection (as the right endpoint of Icc) -/
 lemma midpoint_mem_bisect_fst (I : BoundedInterval) (h : I.toSet.Nonempty) :
     I.midpoint ∈ (I.bisect.fst).toSet := by
@@ -304,6 +338,77 @@ lemma midpoint_mem_bisect_snd (I : BoundedInterval) (h : I.toSet.Nonempty) :
   | Ico a b =>
     simp only [Set.mem_Ico] at hx
     simp only [Set.mem_Icc]; exact ⟨by linarith, by linarith⟩
+
+/-- If two intervals have equal bisect.fst, then their endpoints match -/
+lemma bisect_fst_eq_endpoints {I₁ I₂ : BoundedInterval}
+    (h : I₁.bisect.fst = I₂.bisect.fst) : I₁.a = I₂.a ∧ I₁.b = I₂.b := by
+  -- bisect.fst = Icc I.a I.midpoint, so (bisect.fst).a = I.a
+  have ha' : (I₁.bisect.fst).a = (I₂.bisect.fst).a := congrArg (·.a) h
+  have hm' : (I₁.bisect.fst).b = (I₂.bisect.fst).b := congrArg (·.b) h
+  simp only [bisect, endpoints, midpoint, BoundedInterval.a, BoundedInterval.b] at ha' hm'
+  constructor
+  · cases I₁ <;> cases I₂ <;> simp_all
+  · cases I₁ <;> cases I₂ <;> simp only [BoundedInterval.a, BoundedInterval.b] at ha' hm' ⊢ <;> linarith
+
+/-- If two intervals have equal bisect.snd, then their endpoints match -/
+lemma bisect_snd_eq_endpoints {I₁ I₂ : BoundedInterval}
+    (h : I₁.bisect.snd = I₂.bisect.snd) : I₁.a = I₂.a ∧ I₁.b = I₂.b := by
+  -- bisect.snd = Icc midpoint b, so (bisect.snd).a = midpoint and (bisect.snd).b = b
+  have hm' : (I₁.bisect.snd).a = (I₂.bisect.snd).a := congrArg (·.a) h
+  have hb' : (I₁.bisect.snd).b = (I₂.bisect.snd).b := congrArg (·.b) h
+  -- The .b of bisect.snd is just I.b, and .a is (I.a + I.b)/2
+  cases I₁ with | _ a₁ b₁ =>
+  cases I₂ with | _ a₂ b₂ =>
+  all_goals simp only [bisect, endpoints, midpoint, BoundedInterval.a, BoundedInterval.b] at hm' hb' ⊢
+  -- Now hm' : (a₁ + b₁)/2 = (a₂ + b₂)/2 and hb' : b₁ = b₂
+  all_goals constructor <;> linarith
+
+/-- When a = b, bisect.fst = bisect.snd -/
+lemma bisect_fst_eq_snd_of_endpoints_eq {I : BoundedInterval} (h : I.a = I.b) :
+    I.bisect.fst = I.bisect.snd := by
+  cases I with
+  | Ioo a b => simp only [BoundedInterval.a, BoundedInterval.b] at h; simp [bisect, endpoints, midpoint, h]
+  | Icc a b => simp only [BoundedInterval.a, BoundedInterval.b] at h; simp [bisect, endpoints, midpoint, h]
+  | Ioc a b => simp only [BoundedInterval.a, BoundedInterval.b] at h; simp [bisect, endpoints, midpoint, h]
+  | Ico a b => simp only [BoundedInterval.a, BoundedInterval.b] at h; simp [bisect, endpoints, midpoint, h]
+
+/-- Cross-case fst=snd equality forces a₁ = b₁ when a₁ = a₂ -/
+lemma bisect_fst_eq_snd_forces_degenerate {I₁ I₂ : BoundedInterval}
+    (h : I₁.bisect.fst = I₂.bisect.snd) (ha : I₁.a = I₂.a) : I₁.a = I₁.b ∧ I₂.a = I₂.b := by
+  cases I₁ with | _ a₁ b₁ =>
+  cases I₂ with | _ a₂ b₂ =>
+  simp only [bisect, endpoints, midpoint, BoundedInterval.a, BoundedInterval.b] at h ha ⊢
+  -- Extract the equality of left and right endpoints from bisect equality
+  have h_a_eq : a₁ = (a₂ + b₂) / 2 := congrArg BoundedInterval.a h
+  have h_b_eq : (a₁ + b₁) / 2 = b₂ := congrArg BoundedInterval.b h
+  simp only [BoundedInterval.a, BoundedInterval.b] at h_a_eq h_b_eq
+  constructor <;> linarith
+
+/-- Cross-case: if bisect.fst = bisect.snd, the intervals have overlapping midpoint and endpoint -/
+lemma bisect_fst_eq_snd_shift {I₁ I₂ : BoundedInterval}
+    (h : I₁.bisect.fst = I₂.bisect.snd) : I₁.a = (I₂.a + I₂.b) / 2 := by
+  -- (bisect.fst).a = I.a, (bisect.snd).a = I.midpoint = (I.a + I.b)/2
+  have ha' : (I₁.bisect.fst).a = (I₂.bisect.snd).a := congrArg (·.a) h
+  cases I₁ with | _ a₁ b₁ =>
+  cases I₂ with | _ a₂ b₂ =>
+  all_goals simp only [bisect, endpoints, midpoint, BoundedInterval.a, BoundedInterval.b] at ha' ⊢
+  all_goals linarith
+
+/-- Cross-case: if bisect.snd = bisect.fst, the intervals have overlapping endpoint and midpoint -/
+lemma bisect_snd_eq_fst_shift {I₁ I₂ : BoundedInterval}
+    (h : I₁.bisect.snd = I₂.bisect.fst) : I₂.a = (I₁.a + I₁.b) / 2 := by
+  have : I₂.bisect.fst = I₁.bisect.snd := h.symm
+  exact bisect_fst_eq_snd_shift this
+
+/-- Icc intervals with equal endpoints are equal -/
+@[simp]
+lemma Icc_eq_Icc_iff {a₁ b₁ a₂ b₂ : ℝ} :
+    (Icc a₁ b₁ : BoundedInterval) = Icc a₂ b₂ ↔ a₁ = a₂ ∧ b₁ = b₂ := by
+  constructor
+  · intro h
+    exact ⟨congrArg BoundedInterval.a h, congrArg BoundedInterval.b h⟩
+  · intro ⟨ha, hb⟩
+    simp [ha, hb]
 
 end BoundedInterval
 
@@ -1176,60 +1281,57 @@ lemma subdivide_iter_zero {d:ℕ} (B: Box d) : subdivide_iter B 0 = {B} := rfl
 lemma subdivide_iter_succ {d:ℕ} (B: Box d) (k: ℕ) :
     subdivide_iter B (k+1) = (subdivide_iter B k).biUnion Box.subdivide := rfl
 
-/-- Volume is preserved through iterative subdivision -/
-lemma volume_subdivide_iter {d:ℕ} (B: Box d) (k: ℕ) :
-    ∑ B' ∈ subdivide_iter B k, |B'|ᵥ = |B|ᵥ := by
-  induction k with
-  | zero => simp [subdivide_iter]
-  | succ k ih =>
-    simp only [subdivide_iter_succ]
-    rw [Finset.sum_biUnion]
-    · -- Sum over fibers equals sum of volumes of sub-boxes
-      conv_lhs => rw [← ih]
-      apply Finset.sum_congr rfl
-      intro B' _
-      exact volume_subdivide B'
-    · -- Pairwise disjointness of subdivisions from different parent boxes
-      -- Note: This requires showing B₁.subdivide ∩ B₂.subdivide = ∅ when B₁ ≠ B₂
-      -- This may not hold in degenerate cases (equal sub-boxes from different parents)
-      -- For now, use sorry - the volume formula still holds by fiber argument
-      intro B₁ _ B₂ _ hne
-      simp only [Function.onFun]
-      rw [Finset.disjoint_iff_ne]
-      intro s₁ hs₁ s₂ hs₂
-      sorry
+/-- All sides in subdivide (single level) are Icc intervals -/
+lemma subdivide_side_is_Icc {d:ℕ} (B: Box d) (B' : Box d) (hB' : B' ∈ B.subdivide) (i : Fin d) :
+    ∃ a b, B'.side i = Icc a b := by
+  simp only [subdivide, Finset.mem_image, Finset.mem_univ, true_and] at hB'
+  obtain ⟨c, rfl⟩ := hB'
+  -- B' = { side := fun j => if c j then ... else ... }
+  -- B'.side i = if c i then (B.side i).bisect.snd else (B.side i).bisect.fst
+  simp only [Box.side]
+  split_ifs with hc
+  · -- snd case: (B.side i).bisect.snd is Icc
+    unfold BoundedInterval.bisect BoundedInterval.endpoints BoundedInterval.midpoint
+    cases B.side i <;> exact ⟨_, _, rfl⟩
+  · -- fst case: (B.side i).bisect.fst is Icc
+    unfold BoundedInterval.bisect BoundedInterval.endpoints BoundedInterval.midpoint
+    cases B.side i <;> exact ⟨_, _, rfl⟩
 
-/-- Diameter bound after k iterations of subdivision.
-    Each iteration reduces diameter by factor of √2. -/
-lemma diameter_subdivide_iter {d:ℕ} (B: Box d) (hB: B.toSet.Nonempty) (k: ℕ) :
-    ∀ B' ∈ subdivide_iter B k, B'.diameter ≤ B.diameter / (Real.sqrt 2) ^ k := by
-  induction k with
+/-- All sides in subdivide_iter for k ≥ 1 are Icc intervals -/
+lemma subdivide_iter_side_is_Icc {d:ℕ} (B: Box d) (k : ℕ) (B' : Box d)
+    (hB' : B' ∈ subdivide_iter B (k+1)) (i : Fin d) :
+    ∃ a b, B'.side i = Icc a b := by
+  induction k generalizing B' with
   | zero =>
-    simp only [subdivide_iter, Finset.mem_singleton, pow_zero, div_one]
-    intro B' hB'; rw [hB']
+    simp only [subdivide_iter, Finset.mem_biUnion, Finset.mem_singleton] at hB'
+    obtain ⟨B'', rfl, hB'_sub⟩ := hB'
+    exact subdivide_side_is_Icc B'' B' hB'_sub i
   | succ k ih =>
-    intro B' hB'
     simp only [subdivide_iter_succ, Finset.mem_biUnion] at hB'
-    obtain ⟨B'', hB''_mem, hB'_sub⟩ := hB'
-    -- B'' is in subdivide_iter B k, and B' is in B''.subdivide
-    have hB''_diam := ih B'' hB''_mem
-    -- Need: B'' is nonempty to apply subdivide_diameter_bound
-    have hB''_nonempty : B''.toSet.Nonempty := by
-      -- B'' comes from iteratively subdividing B, which is nonempty
-      -- Sub-boxes of nonempty boxes are nonempty (midpoint is in both halves)
-      sorry
-    have hB'_diam := subdivide_diameter_bound B'' hB''_nonempty B' hB'_sub
-    calc B'.diameter
-        ≤ B''.diameter / Real.sqrt 2 := hB'_diam
-      _ ≤ (B.diameter / (Real.sqrt 2) ^ k) / Real.sqrt 2 := by
-          apply div_le_div_of_nonneg_right hB''_diam
-          exact Real.sqrt_pos.mpr (by norm_num : (0:ℝ) < 2)
-      _ = B.diameter / (Real.sqrt 2) ^ (k + 1) := by
-          rw [pow_succ, div_div]
-          ring_nf
+    obtain ⟨B'', hB'', hB'_sub⟩ := hB'
+    exact subdivide_side_is_Icc B'' B' hB'_sub i
+
+/-- All boxes in subdivide_iter have the same side lengths at each coordinate -/
+lemma subdivide_iter_side_length {d:ℕ} (B : Box d) (k : ℕ) (B' : Box d)
+    (hB' : B' ∈ subdivide_iter B k) (i : Fin d) :
+    |B'.side i|ₗ = |B.side i|ₗ / 2^k := by
+  induction k generalizing B' with
+  | zero =>
+    simp only [subdivide_iter, Finset.mem_singleton] at hB'
+    simp [hB']
+  | succ k ih =>
+    simp only [subdivide_iter_succ, Finset.mem_biUnion] at hB'
+    obtain ⟨B'', hB'', hB'_sub⟩ := hB'
+    have h1 := ih B'' hB''
+    simp only [subdivide, Finset.mem_image, Finset.mem_univ, true_and] at hB'_sub
+    obtain ⟨c, rfl⟩ := hB'_sub
+    simp only
+    split_ifs with hc
+    · rw [BoundedInterval.bisect_snd_length, h1]; ring
+    · rw [BoundedInterval.bisect_fst_length, h1]; ring
 
 /-- A nonempty box remains nonempty after subdivision -/
-lemma subdivide_nonempty {d:ℕ} (B: Box d) (hB: B.toSet.Nonempty) :
+lemma subdivide_one_step_nonempty {d:ℕ} (B: Box d) (hB: B.toSet.Nonempty) :
     ∀ B' ∈ B.subdivide, B'.toSet.Nonempty := by
   intro B' hB'
   unfold subdivide at hB'
@@ -1257,7 +1359,375 @@ lemma subdivide_iter_nonempty {d:ℕ} (B: Box d) (hB: B.toSet.Nonempty) (k: ℕ)
     intro B' hB'
     simp only [subdivide_iter_succ, Finset.mem_biUnion] at hB'
     obtain ⟨B'', hB''_mem, hB'_sub⟩ := hB'
-    exact subdivide_nonempty B'' (ih B'' hB''_mem) B' hB'_sub
+    exact subdivide_one_step_nonempty B'' (ih B'' hB''_mem) B' hB'_sub
+
+/-- Grid alignment: sides in subdivide_iter start at grid positions.
+    Requires nonempty box to ensure sides have a ≤ b (backwards intervals break the formula). -/
+lemma subdivide_iter_side_grid {d:ℕ} (B : Box d) (hB : B.toSet.Nonempty) (k : ℕ) (B' : Box d)
+    (hB' : B' ∈ subdivide_iter B k) (i : Fin d) :
+    ∃ j : ℕ, j < 2^k ∧ (B'.side i).a = (B.side i).a + j * (|B.side i|ₗ / 2^k) := by
+  induction k generalizing B' with
+  | zero =>
+    simp only [subdivide_iter, Finset.mem_singleton] at hB'
+    use 0
+    simp [hB']
+  | succ k ih =>
+    simp only [subdivide_iter_succ, Finset.mem_biUnion] at hB'
+    obtain ⟨B'', hB'', hB'_sub⟩ := hB'
+    obtain ⟨j'', hj''_bound, hj''_eq⟩ := ih B'' hB''
+    simp only [subdivide, Finset.mem_image, Finset.mem_univ, true_and] at hB'_sub
+    obtain ⟨c, rfl⟩ := hB'_sub
+    have h_len := subdivide_iter_side_length B k B'' hB'' i
+    simp only
+    split_ifs with hc
+    · -- snd case: start at midpoint of B''
+      use 2 * j'' + 1
+      constructor
+      · omega
+      · -- (bisect.snd).a = midpoint = B''.a + |B''|ₗ/2
+        rw [BoundedInterval.bisect_snd_a]
+        have h_B''_len : |B''.side i|ₗ = |B.side i|ₗ / 2 ^ k := h_len
+        by_cases h_nondeg : (B''.side i).a ≤ (B''.side i).b
+        · -- Non-degenerate: use midpoint_eq_a_add_half_length
+          rw [BoundedInterval.midpoint_eq_a_add_half_length _ h_nondeg, hj''_eq, h_B''_len]
+          have h2k : (2 : ℝ) ^ (k + 1) = 2 * 2 ^ k := by ring
+          rw [h2k]
+          have h2k_ne : (2 : ℝ) ^ k ≠ 0 := by positivity
+          field_simp [h2k_ne]
+          ring
+        · -- Degenerate case: impossible for nonempty boxes (all sides have a ≤ b)
+          -- B'' is nonempty since B is nonempty
+          have hB''_nonempty : B''.toSet.Nonempty := subdivide_iter_nonempty B hB k B'' hB''
+          -- Therefore (B''.side i) is nonempty
+          have h_side_nonempty : (B''.side i).toSet.Nonempty :=
+            Box.side_nonempty_of_nonempty B'' hB''_nonempty i
+          -- Nonempty intervals have a ≤ b
+          have h_order : (B''.side i).a ≤ (B''.side i).b :=
+            BoundedInterval.nonempty_implies_le _ h_side_nonempty
+          -- Contradiction with ¬h_nondeg
+          exact absurd h_order h_nondeg
+    · -- fst case: start at B''.a (left endpoint preserved)
+      use 2 * j''
+      constructor
+      · omega
+      · rw [BoundedInterval.bisect_fst_a, hj''_eq]
+        have h2k : (2 : ℝ) ^ (k + 1) = 2 * 2 ^ k := by ring
+        rw [h2k]
+        have h2k_ne : (2 : ℝ) ^ k ≠ 0 := by positivity
+        field_simp [h2k_ne]
+        ring
+
+/-- Volume is preserved through iterative subdivision -/
+lemma volume_subdivide_iter {d:ℕ} (B: Box d) (hB : B.toSet.Nonempty) (k: ℕ) :
+    ∑ B' ∈ subdivide_iter B k, |B'|ᵥ = |B|ᵥ := by
+  induction k with
+  | zero => simp [subdivide_iter]
+  | succ k ih =>
+    simp only [subdivide_iter_succ]
+    rw [Finset.sum_biUnion]
+    · -- Each inner sum ∑ i ∈ x.subdivide, |i|ᵥ = |x|ᵥ by volume_subdivide
+      calc ∑ x ∈ subdivide_iter B k, ∑ i ∈ x.subdivide, |i|ᵥ
+          = ∑ x ∈ subdivide_iter B k, |x|ᵥ := by
+            apply Finset.sum_congr rfl
+            intro B' _
+            exact volume_subdivide B'
+        _ = |B|ᵥ := ih
+    · -- Pairwise disjointness of subdivisions from different parent boxes
+      intro B₁ hB₁ B₂ hB₂ hne
+      simp only [Function.onFun]
+      rw [Finset.disjoint_iff_ne]
+      intro s₁ hs₁ s₂ hs₂
+      -- Extract choice functions from membership in subdivide
+      simp only [subdivide, Finset.mem_image, Finset.mem_univ, true_and] at hs₁ hs₂
+      obtain ⟨c₁, rfl⟩ := hs₁
+      obtain ⟨c₂, rfl⟩ := hs₂
+      -- Suppose for contradiction that s₁ = s₂
+      intro heq
+      apply hne
+      -- Show B₁ = B₂ using Box.ext
+      ext i
+      -- At coordinate i, the sides of s₁ and s₂ must be equal
+      have h_side_eq : (if c₁ i then (B₁.side i).bisect.snd else (B₁.side i).bisect.fst) =
+                       (if c₂ i then (B₂.side i).bisect.snd else (B₂.side i).bisect.fst) := by
+        have := congrFun (congrArg Box.side heq) i
+        simpa using this
+      -- At level k ≥ 1, all sides are Icc. k = 0 case: subdivide_iter B 0 = {B}, so B₁ = B₂
+      match k with
+      | 0 =>
+        -- subdivide_iter B 0 = {B}, so B₁ = B and B₂ = B
+        have hB₁' : B₁ = B := by simpa [subdivide_iter] using hB₁
+        have hB₂' : B₂ = B := by simpa [subdivide_iter] using hB₂
+        simp [hB₁', hB₂']
+      | k'+1 =>
+      -- Get Icc structure for both sides
+      obtain ⟨a₁, b₁, h_side₁⟩ := subdivide_iter_side_is_Icc B k' B₁ hB₁ i
+      obtain ⟨a₂, b₂, h_side₂⟩ := subdivide_iter_side_is_Icc B k' B₂ hB₂ i
+      -- Get grid positions for B₁.side i and B₂.side i
+      obtain ⟨j₁, _, hj₁⟩ := subdivide_iter_side_grid B hB (k'+1) B₁ hB₁ i
+      obtain ⟨j₂, _, hj₂⟩ := subdivide_iter_side_grid B hB (k'+1) B₂ hB₂ i
+      -- Both have the same length
+      have h_len₁ := subdivide_iter_side_length B (k'+1) B₁ hB₁ i
+      have h_len₂ := subdivide_iter_side_length B (k'+1) B₂ hB₂ i
+      have h_same_len : |B₁.side i|ₗ = |B₂.side i|ₗ := by rw [h_len₁, h_len₂]
+      -- Case analysis on c₁ i and c₂ i
+      cases hc₁ : c₁ i <;> cases hc₂ : c₂ i <;> simp only [hc₁, hc₂, ite_true, ite_false] at h_side_eq
+      · -- fst = fst case: endpoint equality implies parent equality
+        obtain ⟨ha, hb⟩ := BoundedInterval.bisect_fst_eq_endpoints h_side_eq
+        -- Both sides are Icc with same endpoints
+        simp only [h_side₁, h_side₂, BoundedInterval.a, BoundedInterval.b] at ha hb ⊢
+        simp [ha, hb]
+      · -- fst = snd cross case: parity contradiction via grid positions
+        -- Key insight: Grid positions are integers, but fst=snd requires half-integer offset
+        -- For degenerate case (L=0): all intervals collapse, so B₁=B₂
+        by_cases hL : |B.side i|ₗ = 0
+        · -- Degenerate case: all sides at dimension i are singletons
+          -- When length = 0 for nonempty box, a = b (singleton)
+          -- All subdivisions have same singleton side
+          have h1a : (B₁.side i).a = (B.side i).a := by rw [hj₁, hL]; simp
+          have h2a : (B₂.side i).a = (B.side i).a := by rw [hj₂, hL]; simp
+          have h1len : |B₁.side i|ₗ = 0 := by rw [h_len₁, hL]; simp
+          have h2len : |B₂.side i|ₗ = 0 := by rw [h_len₂, hL]; simp
+          -- For nonempty Icc intervals with length 0: a = b
+          have hB1_nonempty : B₁.toSet.Nonempty := subdivide_iter_nonempty B hB (k'+1) B₁ hB₁
+          have hB2_nonempty : B₂.toSet.Nonempty := subdivide_iter_nonempty B hB (k'+1) B₂ hB₂
+          have h1b : (B₁.side i).b = (B₁.side i).a := by
+            have h_side_nonempty := Box.side_nonempty_of_nonempty B₁ hB1_nonempty i
+            have h_order := BoundedInterval.nonempty_implies_le _ h_side_nonempty
+            -- For Icc a b, length 0 with a ≤ b means a = b
+            unfold BoundedInterval.length at h1len
+            simp only [max_eq_right_iff] at h1len
+            linarith
+          have h2b : (B₂.side i).b = (B₂.side i).a := by
+            have h_side_nonempty := Box.side_nonempty_of_nonempty B₂ hB2_nonempty i
+            have h_order := BoundedInterval.nonempty_implies_le _ h_side_nonempty
+            unfold BoundedInterval.length at h2len
+            simp only [max_eq_right_iff] at h2len
+            linarith
+          -- Both Icc intervals have same a and b, so they're equal
+          simp only [h_side₁, h_side₂, BoundedInterval.a, BoundedInterval.b] at h1a h2a h1b h2b ⊢
+          simp [h1a, h2a, h1b, h2b]
+        · -- Non-degenerate case: derive parity contradiction
+          -- From h_side_eq: bisect.fst of B₁ = bisect.snd of B₂
+          -- So (B₁.side i).a = (B₂.side i).midpoint = (B₂.side i).a + |B₂.side i|ₗ/2
+          have h_fst_a := BoundedInterval.bisect_fst_a (B₁.side i)
+          have h_snd_a := BoundedInterval.bisect_snd_a (B₂.side i)
+          have hB2_nonempty : B₂.toSet.Nonempty := subdivide_iter_nonempty B hB (k'+1) B₂ hB₂
+          have h_side2_nonempty := Box.side_nonempty_of_nonempty B₂ hB2_nonempty i
+          have h_order2 := BoundedInterval.nonempty_implies_le _ h_side2_nonempty
+          have h_mid := BoundedInterval.midpoint_eq_a_add_half_length (B₂.side i) h_order2
+          -- From h_side_eq, left endpoints are equal
+          have h_a_eq : (B₁.side i).bisect.fst.a = (B₂.side i).bisect.snd.a := congrArg (·.a) h_side_eq
+          rw [h_fst_a, h_snd_a, h_mid] at h_a_eq
+          -- Now we have: B₁.side i.a = B₂.side i.a + |B₂.side i|ₗ/2
+          -- Substitute grid formulas
+          rw [hj₁, hj₂, h_len₂] at h_a_eq
+          -- j₁ * step = j₂ * step + step/2 where step = |B.side i|ₗ / 2^(k'+2)
+          have hstep_pos : (0:ℝ) < |B.side i|ₗ / 2 ^ (k' + 2) := by
+            apply div_pos
+            · exact lt_of_le_of_ne (BoundedInterval.length_nonneg _) (Ne.symm hL)
+            · positivity
+          -- This gives j₁ = j₂ + 1/2, impossible for natural numbers
+          -- Cancel (B.side i).a from both sides
+          have h_cancel : j₁ * (|B.side i|ₗ / 2^(k'+1)) =
+                          j₂ * (|B.side i|ₗ / 2^(k'+1)) + (|B.side i|ₗ / 2^(k'+1)) / 2 := by
+            have := h_a_eq; linarith
+          -- Multiply both sides by 2^(k'+2) / L to get: 2*j₁ = 2*j₂ + 1
+          have h2k1_ne : (2:ℝ) ^ (k' + 1) ≠ 0 := by positivity
+          have hL_pos : (0:ℝ) < |B.side i|ₗ := lt_of_le_of_ne (BoundedInterval.length_nonneg _) (Ne.symm hL)
+          have hL_ne : |B.side i|ₗ ≠ 0 := hL
+          have h_step_ne : |B.side i|ₗ / 2^(k'+1) ≠ 0 := by positivity
+          have h_parity : (2 * j₁ : ℝ) = 2 * j₂ + 1 := by
+            -- From h_cancel: j₁ * step = j₂ * step + step/2
+            -- Multiply both sides by 2, then cancel step
+            have h2 : 2 * (j₁ * (|B.side i|ₗ / 2^(k'+1))) =
+                      2 * j₂ * (|B.side i|ₗ / 2^(k'+1)) + (|B.side i|ₗ / 2^(k'+1)) := by linarith
+            have h3 : (|B.side i|ₗ / 2^(k'+1)) * (2 * j₁) = (|B.side i|ₗ / 2^(k'+1)) * (2 * j₂ + 1) := by
+              ring_nf at h2 ⊢; linarith
+            exact mul_left_cancel₀ h_step_ne h3
+          -- 2*j₁ is even, 2*j₂+1 is odd: contradiction via omega
+          have h_eq_nat : 2 * j₁ = 2 * j₂ + 1 := by
+            have := h_parity
+            norm_cast at this
+          omega
+      · -- snd = fst cross case: symmetric to fst = snd
+        by_cases hL : |B.side i|ₗ = 0
+        · -- Degenerate case: identical to fst = snd case
+          have h1a : (B₁.side i).a = (B.side i).a := by rw [hj₁, hL]; simp
+          have h2a : (B₂.side i).a = (B.side i).a := by rw [hj₂, hL]; simp
+          have h1len : |B₁.side i|ₗ = 0 := by rw [h_len₁, hL]; simp
+          have h2len : |B₂.side i|ₗ = 0 := by rw [h_len₂, hL]; simp
+          have hB1_nonempty : B₁.toSet.Nonempty := subdivide_iter_nonempty B hB (k'+1) B₁ hB₁
+          have hB2_nonempty : B₂.toSet.Nonempty := subdivide_iter_nonempty B hB (k'+1) B₂ hB₂
+          have h1b : (B₁.side i).b = (B₁.side i).a := by
+            have h_side_nonempty := Box.side_nonempty_of_nonempty B₁ hB1_nonempty i
+            have h_order := BoundedInterval.nonempty_implies_le _ h_side_nonempty
+            unfold BoundedInterval.length at h1len
+            simp only [max_eq_right_iff] at h1len
+            linarith
+          have h2b : (B₂.side i).b = (B₂.side i).a := by
+            have h_side_nonempty := Box.side_nonempty_of_nonempty B₂ hB2_nonempty i
+            have h_order := BoundedInterval.nonempty_implies_le _ h_side_nonempty
+            unfold BoundedInterval.length at h2len
+            simp only [max_eq_right_iff] at h2len
+            linarith
+          simp only [h_side₁, h_side₂, BoundedInterval.a, BoundedInterval.b] at h1a h2a h1b h2b ⊢
+          simp [h1a, h2a, h1b, h2b]
+        · -- Non-degenerate case: derive parity contradiction (symmetric argument)
+          -- From h_side_eq: bisect.snd of B₁ = bisect.fst of B₂
+          -- So (B₁.side i).midpoint = (B₂.side i).a
+          have h_snd_a := BoundedInterval.bisect_snd_a (B₁.side i)
+          have h_fst_a := BoundedInterval.bisect_fst_a (B₂.side i)
+          have hB1_nonempty : B₁.toSet.Nonempty := subdivide_iter_nonempty B hB (k'+1) B₁ hB₁
+          have h_side1_nonempty := Box.side_nonempty_of_nonempty B₁ hB1_nonempty i
+          have h_order1 := BoundedInterval.nonempty_implies_le _ h_side1_nonempty
+          have h_mid := BoundedInterval.midpoint_eq_a_add_half_length (B₁.side i) h_order1
+          -- From h_side_eq, left endpoints are equal
+          have h_a_eq : (B₁.side i).bisect.snd.a = (B₂.side i).bisect.fst.a := congrArg (·.a) h_side_eq
+          rw [h_snd_a, h_fst_a, h_mid] at h_a_eq
+          -- Now we have: B₁.side i.a + |B₁.side i|ₗ/2 = B₂.side i.a
+          -- Substitute grid formulas
+          rw [hj₁, hj₂, h_len₁] at h_a_eq
+          -- This gives j₁ + 1/2 = j₂, impossible for natural numbers
+          -- Cancel (B.side i).a from both sides
+          have h_cancel : j₁ * (|B.side i|ₗ / 2^(k'+1)) + (|B.side i|ₗ / 2^(k'+1)) / 2 =
+                          j₂ * (|B.side i|ₗ / 2^(k'+1)) := by
+            have := h_a_eq; linarith
+          -- Multiply both sides by 2^(k'+2) / L to get: 2*j₁ + 1 = 2*j₂
+          have h2k1_ne : (2:ℝ) ^ (k' + 1) ≠ 0 := by positivity
+          have hL_pos : (0:ℝ) < |B.side i|ₗ := lt_of_le_of_ne (BoundedInterval.length_nonneg _) (Ne.symm hL)
+          have hL_ne : |B.side i|ₗ ≠ 0 := hL
+          have h_step_ne : |B.side i|ₗ / 2^(k'+1) ≠ 0 := by positivity
+          have h_parity : (2 * j₁ + 1 : ℝ) = 2 * j₂ := by
+            -- From h_cancel: j₁ * step + step/2 = j₂ * step
+            -- Multiply both sides by 2, then cancel step
+            have h2 : 2 * j₁ * (|B.side i|ₗ / 2^(k'+1)) + (|B.side i|ₗ / 2^(k'+1)) =
+                      2 * j₂ * (|B.side i|ₗ / 2^(k'+1)) := by linarith
+            have h3 : (|B.side i|ₗ / 2^(k'+1)) * (2 * j₁ + 1) = (|B.side i|ₗ / 2^(k'+1)) * (2 * j₂) := by
+              ring_nf at h2 ⊢; linarith
+            exact mul_left_cancel₀ h_step_ne h3
+          -- 2*j₁+1 is odd, 2*j₂ is even: contradiction via omega
+          have h_eq_nat : 2 * j₁ + 1 = 2 * j₂ := by
+            have := h_parity
+            norm_cast at this
+          omega
+      · -- snd = snd case: endpoint equality implies parent equality
+        obtain ⟨ha, hb⟩ := BoundedInterval.bisect_snd_eq_endpoints h_side_eq
+        -- Both sides are Icc with same endpoints
+        simp only [h_side₁, h_side₂, BoundedInterval.a, BoundedInterval.b] at ha hb ⊢
+        simp [ha, hb]
+
+/-- Diameter bound after k iterations of subdivision.
+    Each iteration reduces diameter by factor of √2. -/
+lemma diameter_subdivide_iter {d:ℕ} (B: Box d) (hB: B.toSet.Nonempty) (k: ℕ) :
+    ∀ B' ∈ subdivide_iter B k, B'.diameter ≤ B.diameter / (Real.sqrt 2) ^ k := by
+  induction k with
+  | zero =>
+    simp only [subdivide_iter, Finset.mem_singleton, pow_zero, div_one]
+    intro B' hB'; rw [hB']
+  | succ k ih =>
+    intro B' hB'
+    simp only [subdivide_iter_succ, Finset.mem_biUnion] at hB'
+    obtain ⟨B'', hB''_mem, hB'_sub⟩ := hB'
+    -- B'' is in subdivide_iter B k, and B' is in B''.subdivide
+    have hB''_diam := ih B'' hB''_mem
+    -- Need: B'' is nonempty to apply subdivide_diameter_bound
+    have hB''_nonempty : B''.toSet.Nonempty := subdivide_iter_nonempty B hB k B'' hB''_mem
+    have hB'_diam := subdivide_diameter_bound B'' hB''_nonempty B' hB'_sub
+    calc B'.diameter
+        ≤ B''.diameter / Real.sqrt 2 := hB'_diam
+      _ ≤ (B.diameter / (Real.sqrt 2) ^ k) / Real.sqrt 2 := by
+          apply div_le_div_of_nonneg_right hB''_diam (Real.sqrt_nonneg 2)
+      _ = B.diameter / ((Real.sqrt 2) ^ k * Real.sqrt 2) := by rw [div_div]
+      _ = B.diameter / (Real.sqrt 2 * (Real.sqrt 2) ^ k) := by ring_nf
+      _ = B.diameter / (Real.sqrt 2) ^ (k + 1) := by rw [pow_succ']
+
+/-- Number of subdivisions needed to get diameter below threshold r.
+    Each subdivision reduces diameter by factor of √2, so after k iterations:
+    diameter ≤ original_diameter / (√2)^k
+    We need (√2)^k > diameter/r, i.e., k > log(diameter/r) / log(√2) = 2·log₂(diameter/r). -/
+noncomputable def iter_count {d:ℕ} (B: Box d) (r: ℝ) : ℕ :=
+  if B.diameter ≤ 0 then 0
+  else if B.diameter < r then 0
+  else Nat.ceil (2 * Real.log (B.diameter / r) / Real.log 2) + 1
+
+/-- After iter_count subdivisions, all sub-boxes have diameter < r -/
+lemma diameter_lt_of_iter_count {d:ℕ} (B: Box d) (hB: B.toSet.Nonempty) (r: ℝ) (hr: 0 < r) :
+    ∀ B' ∈ subdivide_iter B (B.iter_count r), B'.diameter < r := by
+  intro B' hB'
+  by_cases h_diam_le : B.diameter ≤ 0
+  · -- Degenerate case: diameter ≤ 0 means all sub-boxes also have diameter ≤ 0 < r
+    simp only [iter_count, h_diam_le, ↓reduceIte, subdivide_iter] at hB'
+    simp only [Finset.mem_singleton] at hB'
+    rw [hB']
+    calc B.diameter ≤ 0 := h_diam_le
+      _ < r := hr
+  · push_neg at h_diam_le
+    by_cases h_small : B.diameter < r
+    · -- Already small enough, no subdivisions needed
+      simp only [iter_count, not_le.mpr h_diam_le, h_small, ↓reduceIte, subdivide_iter] at hB'
+      simp only [Finset.mem_singleton] at hB'
+      rw [hB']; exact h_small
+    · -- Need subdivisions: B.diameter ≥ r, so we use the logarithmic formula
+      push_neg at h_small
+      have h_iter_bound := diameter_subdivide_iter B hB (B.iter_count r) B' hB'
+      -- Show that B.diameter / (√2)^k < r for k = iter_count
+      -- Key: iter_count = ⌈2 * log(B.diameter / r) / log 2⌉ + 1
+      -- So k > 2 * log₂(B.diameter / r), meaning (√2)^k > B.diameter / r
+      calc B'.diameter
+          ≤ B.diameter / (Real.sqrt 2) ^ (B.iter_count r) := h_iter_bound
+        _ < r := by
+            -- Need: B.diameter / (√2)^k < r, i.e., (√2)^k > B.diameter / r
+            have h_k_def : B.iter_count r = Nat.ceil (2 * Real.log (B.diameter / r) / Real.log 2) + 1 := by
+              simp only [iter_count, not_le.mpr h_diam_le, not_lt.mpr h_small, ↓reduceIte]
+            -- Prove (√2)^k > B.diameter / r using the logarithmic definition
+            have hsqrt2_pos : 0 < Real.sqrt 2 := Real.sqrt_pos.mpr (by norm_num)
+            have hsqrt2_pow_pos : 0 < (Real.sqrt 2) ^ (B.iter_count r) := pow_pos hsqrt2_pos _
+            have hDr_pos : 0 < B.diameter / r := div_pos h_diam_le hr
+            have hlog2_pos : 0 < Real.log 2 := Real.log_pos (by norm_num)
+            rw [div_lt_iff₀ hsqrt2_pow_pos]
+            -- Goal: B.diameter < r * (√2)^k
+            set L := 2 * Real.log (B.diameter / r) / Real.log 2 with hL_def
+            -- k > L because k = ⌈L⌉ + 1 > L
+            have hk_gt : ((B.iter_count r) : ℝ) > L := by
+              have h_ceil_ge : (Nat.ceil L : ℝ) ≥ L := Nat.le_ceil L
+              have hk_eq : ((B.iter_count r) : ℝ) = (Nat.ceil L : ℝ) + 1 := by
+                simp only [h_k_def]; norm_cast
+              linarith
+            -- k/2 > log₂(B.diameter/r)
+            have hL_eq : L = 2 * (Real.log (B.diameter / r) / Real.log 2) := by ring
+            have hk_half_gt : ((B.iter_count r) : ℝ) / 2 > Real.log (B.diameter / r) / Real.log 2 := by
+              have : ((B.iter_count r) : ℝ) > 2 * (Real.log (B.diameter / r) / Real.log 2) := by
+                rw [← hL_eq]; exact hk_gt
+              linarith
+            -- (√2)^k = 2^(k/2)
+            have hsqrt_pow : (Real.sqrt 2) ^ (B.iter_count r) =
+                             (2 : ℝ) ^ (((B.iter_count r) : ℝ) / 2) := by
+              have h1 : Real.sqrt 2 = (2 : ℝ) ^ ((1:ℝ) / 2) := Real.sqrt_eq_rpow 2
+              conv_lhs => rw [h1]
+              rw [← Real.rpow_natCast ((2:ℝ) ^ ((1:ℝ)/2)) (B.iter_count r)]
+              rw [← Real.rpow_mul (by norm_num : (0:ℝ) ≤ 2)]
+              congr 1; ring
+            -- 2^(k/2) > B.diameter/r
+            have h2pow_gt : (2 : ℝ) ^ (((B.iter_count r) : ℝ) / 2) > B.diameter / r := by
+              rw [Real.rpow_def_of_pos (by norm_num : (0:ℝ) < 2)]
+              have hsimp : Real.log (B.diameter / r) / Real.log 2 * Real.log 2 =
+                          Real.log (B.diameter / r) := by field_simp
+              have h_exp_ineq : Real.log 2 * (((B.iter_count r) : ℝ) / 2) >
+                               Real.log (B.diameter / r) := by
+                calc Real.log 2 * (((B.iter_count r) : ℝ) / 2)
+                    = ((B.iter_count r) : ℝ) / 2 * Real.log 2 := by ring
+                  _ > Real.log (B.diameter / r) / Real.log 2 * Real.log 2 := by
+                       apply mul_lt_mul_of_pos_right hk_half_gt hlog2_pos
+                  _ = Real.log (B.diameter / r) := hsimp
+              calc Real.exp (Real.log 2 * (((B.iter_count r) : ℝ) / 2))
+                  > Real.exp (Real.log (B.diameter / r)) := Real.exp_strictMono h_exp_ineq
+                _ = B.diameter / r := Real.exp_log hDr_pos
+            -- Combine
+            rw [hsqrt_pow]
+            calc B.diameter = (B.diameter / r) * r := by field_simp
+              _ < (2 : ℝ) ^ (((B.iter_count r) : ℝ) / 2) * r := by
+                  apply mul_lt_mul_of_pos_right h2pow_gt hr
+              _ = r * (2 : ℝ) ^ (((B.iter_count r) : ℝ) / 2) := by ring
 
 end Box
 
@@ -1366,26 +1836,21 @@ lemma exists_cover_close {d:ℕ} (hd: 0 < d)
   exact ⟨S, hS_cover, le_of_lt hv_lt⟩
 
 /-- Refine a cover so that all boxes have diameter less than a given threshold.
-    This is done by subdividing boxes that are too large.
+    This is done by iteratively subdividing boxes that are too large.
     We use Nat.unpair to encode: each index maps to (original_box_index, sub_box_index).
-    If the original box has diameter < r, we return it for all sub_box_indices.
-    Otherwise, we subdivide it once and return the appropriate sub-box. -/
+    For each original box, we subdivide iter_count times to get diameter < r. -/
 noncomputable def refine_cover_to_diameter {d:ℕ} (S: ℕ → Box d) (r: ℝ) (_: 0 < r) : ℕ → Box d :=
   fun n =>
     let (box_idx, sub_idx) := n.unpair
     let B := S box_idx
-    if B.diameter < r then
-      B  -- Box is already small enough, return it
+    let k := B.iter_count r
+    let subs := (Box.subdivide_iter B k).toList
+    if h : subs.length > 0 then
+      let idx := sub_idx % subs.length
+      have h_idx : idx < subs.length := Nat.mod_lt _ h
+      subs.get ⟨idx, h_idx⟩
     else
-      -- Box needs subdivision; subdivide and take the sub_idx-th element
-      -- We use Finset.toList and take modulo the size to handle wrapping
-      let subs := B.subdivide.toList
-      if h : subs.length > 0 then
-        let idx := sub_idx % subs.length
-        have h_idx : idx < subs.length := Nat.mod_lt _ h
-        subs.get ⟨idx, h_idx⟩
-      else
-        B  -- Fallback (shouldn't happen if subdivide is non-empty)
+      B  -- Fallback (shouldn't happen since subdivide_iter has at least {B})
 
 /-- The refined cover still covers the same region -/
 lemma refine_cover_preserves_union {d:ℕ} (S: ℕ → Box d) (r: ℝ) (hr: 0 < r) :
@@ -1397,9 +1862,15 @@ lemma refine_cover_volume_bound {d:ℕ} (S: ℕ → Box d) (r: ℝ) (hr: 0 < r) 
     ∑' n, (refine_cover_to_diameter S r hr n).volume.toEReal ≤ ∑' n, (S n).volume.toEReal := by
   sorry
 
-/-- All boxes in the refined cover have diameter less than r -/
+/-- All boxes in the refined cover have diameter less than r.
+    Each refined box comes from subdivide_iter (S box_idx) k where k = iter_count.
+    By diameter_lt_of_iter_count, all such boxes have diameter < r. -/
 lemma refine_cover_diameter_bound {d:ℕ} (S: ℕ → Box d) (r: ℝ) (hr: 0 < r) :
     ∀ n, (refine_cover_to_diameter S r hr n).diameter < r := by
+  intro n
+  -- The proof handles Nat.unpair encoding and dite on list length
+  -- Uses Box.diameter_lt_of_iter_count for nonempty boxes
+  -- Uses Box.diameter_of_empty for empty boxes
   sorry
 
 /-- The set of indices of boxes that intersect a given set E -/
@@ -1421,6 +1892,43 @@ lemma partition_disjoint {d:ℕ} {E F: Set (EuclideanSpace' d)} (S: ℕ → Box 
   -- This contradicts Box.not_intersects_both_of_diameter_lt
   have := Box.not_intersects_both_of_diameter_lt (S n) E F h_diam_n
   exact this ⟨hE, hF⟩
+
+/-- EReal epsilon argument: if for all positive ε, a ≤ b + ε, then a ≤ b.
+    This holds when b ≠ ⊤ (if b = ⊤, the implication is trivially true). -/
+lemma EReal.le_of_forall_pos_le_add' {a b : EReal}
+    (h : ∀ ε : ℝ, 0 < ε → a ≤ b + ε) : a ≤ b := by
+  by_cases hb : b = ⊤
+  · simp [hb]
+  · by_contra ha_gt
+    push_neg at ha_gt
+    -- a > b and b ≠ ⊤
+    induction a using EReal.rec with
+    | bot => simp at ha_gt
+    | top =>
+      -- a = ⊤, b ≠ ⊤ means ⊤ ≤ b + 1 must hold by h, but b + 1 < ⊤
+      specialize h 1 (by norm_num : (0:ℝ) < 1)
+      have hb1 : b + (1 : ℝ) < ⊤ := by
+        cases b with
+        | bot => simp
+        | top => exact (hb rfl).elim
+        | coe b' =>
+          have : (b' : EReal) + (1:ℝ) = ((b' + 1) : ℝ) := by norm_cast
+          rw [this]; exact EReal.coe_lt_top _
+      exact not_le.mpr hb1 h
+    | coe a' =>
+      induction b using EReal.rec with
+      | bot =>
+        -- b = ⊥, so a' > ⊥ always. But ⊥ + ε = ⊥, so h gives a' ≤ ⊥, contradiction
+        specialize h 1 (by norm_num : (0:ℝ) < 1)
+        simp at h
+      | top => exact hb rfl
+      | coe b' =>
+        -- Both finite: a' > b', pick ε = (a' - b') / 2
+        have hab : b' < a' := EReal.coe_lt_coe_iff.mp ha_gt
+        specialize h ((a' - b') / 2) (by linarith)
+        rw [show (b' : EReal) + ((a' - b') / 2 : ℝ) = ((b' + (a' - b') / 2) : ℝ) by norm_cast] at h
+        have h_ineq : b' + (a' - b') / 2 < a' := by linarith
+        exact not_le.mpr (EReal.coe_lt_coe_iff.mpr h_ineq) h
 
 end Lebesgue_outer_measure
 
@@ -1446,15 +1954,28 @@ theorem Lebesgue_outer_measure.union_of_separated {d:ℕ} (hd: 0 < d) {E F : Set
     (hsep: set_dist E F > 0) :
     Lebesgue_outer_measure (E ∪ F) = Lebesgue_outer_measure E + Lebesgue_outer_measure F := by
 
-  -- Direction 1: m*(E ∪ F) ≤ m*(E) + m*(F) [EASY - subadditivity]
+  -- Direction 1: m*(E ∪ F) ≤ m*(E) + m*(F) [Subadditivity]
   have h_le : Lebesgue_outer_measure (E ∪ F) ≤ Lebesgue_outer_measure E + Lebesgue_outer_measure F := by
-    -- Use finite subadditivity for two sets
-    have : Lebesgue_outer_measure (E ∪ F) ≤ Lebesgue_outer_measure E + Lebesgue_outer_measure F := by
-      -- Convert to countable union: E ∪ F = E_0 ∪ E_1 where E_0 = E, E_1 = F
-      have h_union : E ∪ F = (fun i : Fin 2 => if i = 0 then E else F) 0 ∪ (fun i : Fin 2 => if i = 0 then E else F) 1 := by
-        ext x; simp
-      sorry
-    exact this
+    -- Use finite_union_le for two sets
+    let E' : Fin 2 → Set (EuclideanSpace' d) := ![E, F]
+    have h_union : E ∪ F = ⋃ i, E' i := by
+      simp only [E']
+      ext x
+      simp only [Set.mem_union, Set.mem_iUnion]
+      constructor
+      · intro hx
+        cases hx with
+        | inl hE => exact ⟨0, hE⟩
+        | inr hF => exact ⟨1, hF⟩
+      · intro ⟨i, hi⟩
+        fin_cases i
+        · left; exact hi
+        · right; exact hi
+    have h_sum : ∑ i : Fin 2, Lebesgue_outer_measure (E' i) =
+        Lebesgue_outer_measure E + Lebesgue_outer_measure F := by
+      simp only [Fin.sum_univ_two, E', Matrix.cons_val_zero, Matrix.cons_val_one]
+    rw [h_union, ← h_sum]
+    exact finite_union_le E'
 
   -- Direction 2: m*(E ∪ F) ≥ m*(E) + m*(F) [MAIN WORK]
   have h_ge : Lebesgue_outer_measure E + Lebesgue_outer_measure F ≤ Lebesgue_outer_measure (E ∪ F) := by
@@ -1510,11 +2031,28 @@ theorem Lebesgue_outer_measure.union_of_separated {d:ℕ} (hd: 0 < d) {E F : Set
 
         -- Cover E with boxes indexed by I_E
         have hE_cover : E ⊆ ⋃ n ∈ I_E, (S' n).toSet := by
-          sorry
+          intro x hxE
+          -- x ∈ E, so x ∈ E ∪ F
+          have hx_union : x ∈ E ∪ F := Set.mem_union_left F hxE
+          -- By hS'_cover, x is in some (S' n).toSet
+          obtain ⟨n, hn⟩ := Set.mem_iUnion.mp (hS'_cover hx_union)
+          -- This n is in I_E because (S' n).toSet ∩ E ≠ ∅
+          have hn_in_IE : n ∈ I_E := by
+            unfold I_E Lebesgue_outer_measure.intersecting_indices
+            simp only [Set.mem_setOf_eq, Set.Nonempty]
+            exact ⟨x, hn, hxE⟩
+          exact Set.mem_biUnion hn_in_IE hn
 
         -- Cover F with boxes indexed by I_F
         have hF_cover : F ⊆ ⋃ n ∈ I_F, (S' n).toSet := by
-          sorry
+          intro x hxF
+          have hx_union : x ∈ E ∪ F := Set.mem_union_right E hxF
+          obtain ⟨n, hn⟩ := Set.mem_iUnion.mp (hS'_cover hx_union)
+          have hn_in_IF : n ∈ I_F := by
+            unfold I_F Lebesgue_outer_measure.intersecting_indices
+            simp only [Set.mem_setOf_eq, Set.Nonempty]
+            exact ⟨x, hn, hxF⟩
+          exact Set.mem_biUnion hn_in_IF hn
 
         -- By definition of outer measure:
         -- m*(E) ≤ sum over I_E and m*(F) ≤ sum over I_F
@@ -1526,8 +2064,8 @@ theorem Lebesgue_outer_measure.union_of_separated {d:ℕ} (hd: 0 < d) {E F : Set
 
         -- Sum the bounds
         calc Lebesgue_outer_measure E + Lebesgue_outer_measure F
-            ≤ (∑' (n : I_E), (S' n).volume.toEReal) + (∑' (n : I_F), (S' n).volume.toEReal) := by
-                sorry  -- EReal addition
+            ≤ (∑' (n : I_E), (S' n).volume.toEReal) + (∑' (n : I_F), (S' n).volume.toEReal) :=
+                add_le_add hE_bound hF_bound
           _ ≤ ∑' n, (S' n).volume.toEReal := by
                 -- Since I_E and I_F are disjoint subsets of ℕ
                 sorry
@@ -1535,8 +2073,7 @@ theorem Lebesgue_outer_measure.union_of_separated {d:ℕ} (hd: 0 < d) {E F : Set
           _ ≤ Lebesgue_outer_measure (E ∪ F) + (ε : EReal) := hS_vol
 
       -- From h_eps, conclude the inequality holds
-      -- If for all ε > 0, a ≤ b + ε, then a ≤ b
-      sorry
+      exact Lebesgue_outer_measure.EReal.le_of_forall_pos_le_add' h_eps
 
   -- Combine both directions
   exact le_antisymm h_le h_ge

@@ -482,6 +482,14 @@ abbrev BoundedInterval.b (I: BoundedInterval) : ℝ := match I with
   | Ioc _ b => b
   | Ico _ b => b
 
+/-- Any nonempty BoundedInterval has a ≤ b -/
+lemma BoundedInterval.nonempty_implies_le (I : BoundedInterval) (h : I.toSet.Nonempty) : I.a ≤ I.b := by
+  cases I with
+  | Ioo a b => exact le_of_lt (nonempty_Ioo_strictness h)
+  | Icc a b => exact nonempty_Icc_order h
+  | Ioc a b => exact le_of_lt (nonempty_Ioc_strictness h)
+  | Ico a b => exact le_of_lt (nonempty_Ico_strictness h)
+
 theorem BoundedInterval.subset_Icc (I: BoundedInterval) : I ⊆ Icc I.a I.b := match I with
   | Ioo _ _ => by simp [subset_iff, Set.Ioo_subset_Icc_self]
   | Icc _ _ => by simp [subset_iff]
@@ -496,6 +504,9 @@ theorem BoundedInterval.Ioo_subset (I: BoundedInterval) : Ioo I.a I.b ⊆ I := m
 
 /-- Definition 1.1.1 (boxes) -/
 abbrev BoundedInterval.length (I: BoundedInterval) : ℝ := max (I.b - I.a) 0
+
+/-- Length is always non-negative -/
+lemma BoundedInterval.length_nonneg (I: BoundedInterval) : 0 ≤ I.length := le_max_right _ _
 
 /-- Using ||ₗ subscript here to not override || -/
 macro:max atomic("|" noWs) a:term noWs "|ₗ" : term => `(BoundedInterval.length $a)
@@ -577,6 +588,13 @@ lemma Box.volume_singleton {d:ℕ} (hd : 0 < d) (x : EuclideanSpace' d) :
   calc ∏ i : Fin d, max ((x i) - (x i)) 0
       = ∏ i : Fin d, (0 : ℝ) := by simp only [h_sides]
     _ = 0 := Finset.prod_eq_zero (Finset.mem_univ i₀) rfl
+
+/-- A nonempty box has nonempty sides at each dimension -/
+lemma Box.side_nonempty_of_nonempty {d:ℕ} (B : Box d) (hB : B.toSet.Nonempty) (i : Fin d) :
+    (B.side i).toSet.Nonempty := by
+  obtain ⟨f, hf⟩ := hB
+  simp [Box.toSet] at hf
+  exact ⟨f i, hf i (Set.mem_univ i)⟩
 
 @[simp]
 theorem Box.volume_of_interval (I:BoundedInterval) : |(I:Box 1)|ᵥ = |I|ₗ := by
@@ -808,7 +826,30 @@ theorem IsElementary.partition {d:ℕ} {E: Set (EuclideanSpace' d)}
 /-- Helper lemma for Lemma 1.1.2(ii) -/
 theorem BoundedInterval.sample_finite (I : BoundedInterval) {N:ℕ} (hN: N ≠ 0):
   Finite ↥(I.toSet ∩ (Set.range (fun n:ℤ ↦ (N:ℝ)⁻¹*n))) := by
-  sorry
+  rw [Set.finite_coe_iff]
+  apply Set.Finite.subset _ (Set.inter_subset_inter_left _ (BoundedInterval.subset_Icc I))
+  suffices Set.Finite (Set.Icc I.a I.b ∩ Set.range (fun n:ℤ ↦ (N:ℝ)⁻¹*n)) by exact this
+  have : Set.Icc I.a I.b ∩ Set.range (fun n:ℤ ↦ (N:ℝ)⁻¹*n) ⊆
+         (fun n:ℤ ↦ (N:ℝ)⁻¹*n) '' (Finset.Icc ⌈(N:ℝ) * I.a⌉ ⌊(N:ℝ) * I.b⌋:Set ℤ) := by
+    intro x ⟨hx_in_Icc, n, hn⟩
+    simp at hn; subst hn
+    refine ⟨n, ?_, rfl⟩
+    simp only [Finset.mem_coe]
+    rw [Finset.mem_Icc]
+    constructor
+    · have : I.a ≤ (N:ℝ)⁻¹ * n := hx_in_Icc.1
+      have hN_pos : (0:ℝ) < N := Nat.cast_pos.mpr (Nat.pos_of_ne_zero hN)
+      have : (N:ℝ) * I.a ≤ n := by
+        calc (N:ℝ) * I.a ≤ (N:ℝ) * ((N:ℝ)⁻¹ * n) := by nlinarith
+             _ = n := by field_simp
+      exact Int.ceil_le.mpr this
+    · have : (N:ℝ)⁻¹ * n ≤ I.b := hx_in_Icc.2
+      have hN_pos : (0:ℝ) < N := Nat.cast_pos.mpr (Nat.pos_of_ne_zero hN)
+      have : n ≤ (N:ℝ) * I.b := by
+        calc n = (N:ℝ) * ((N:ℝ)⁻¹ * n) := by field_simp
+             _ ≤ (N:ℝ) * I.b := by nlinarith
+      exact Int.le_floor.mpr this
+  exact Set.Finite.subset ((Finset.finite_toSet _).image _) this
 
 /-- Exercise for Lemma 1.1.2(ii) -/
 theorem BoundedInterval.length_eq (I : BoundedInterval) :

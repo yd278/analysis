@@ -772,8 +772,9 @@ noncomputable def LowerDarbouxIntegral (f:ℝ → ℝ) (I: BoundedInterval) : �
 /-- Definition 1.1.6 (Darboux integral) -/
 noncomputable def UpperDarbouxIntegral (f:ℝ → ℝ) (I: BoundedInterval) : ℝ := sInf { R | ∃ h: PiecewiseConstantFunction I, h.integral = R ∧ ∀ x ∈ I.toSet, f x ≤ h.f x }
 
+namespace PiecewiseConstantFunction
 /-- Helper: Construct a constant piecewise constant function with a given value -/
-def PiecewiseConstantFunction.mkConst (I: BoundedInterval) (c: ℝ) : PiecewiseConstantFunction I where
+def mkConst (I: BoundedInterval) (c: ℝ) : PiecewiseConstantFunction I where
   f := fun _ => c
   T := {I}
   c := fun _ => c
@@ -782,13 +783,13 @@ def PiecewiseConstantFunction.mkConst (I: BoundedInterval) (c: ℝ) : PiecewiseC
   const := by intro J x hx; rfl
 
 /-- Helper: The integral of a constant piecewise constant function -/
-lemma PiecewiseConstantFunction.integral_mkConst (I: BoundedInterval) (c: ℝ) :
+lemma integral_mkConst (I: BoundedInterval) (c: ℝ) :
     (PiecewiseConstantFunction.mkConst I c).integral = c * |I|ₗ := by
   unfold PiecewiseConstantFunction.integral PiecewiseConstantFunction.mkConst
   simp [Finset.sum_singleton]
 
 /-- Helper: Construct the negation of a piecewise constant function -/
-def PiecewiseConstantFunction.neg {I: BoundedInterval} (g: PiecewiseConstantFunction I) : PiecewiseConstantFunction I where
+def neg {I: BoundedInterval} (g: PiecewiseConstantFunction I) : PiecewiseConstantFunction I where
   f := fun x => -g.f x
   T := g.T
   c := fun J => -g.c J
@@ -800,7 +801,7 @@ def PiecewiseConstantFunction.neg {I: BoundedInterval} (g: PiecewiseConstantFunc
     simp [h_const]
 
 /-- Helper: The integral of a negated piecewise constant function -/
-lemma PiecewiseConstantFunction.integral_neg {I: BoundedInterval} (g: PiecewiseConstantFunction I) :
+lemma integral_neg {I: BoundedInterval} (g: PiecewiseConstantFunction I) :
     g.neg.integral = -g.integral := by
   unfold PiecewiseConstantFunction.integral PiecewiseConstantFunction.neg
   rw [← Finset.sum_neg_distrib]
@@ -809,14 +810,14 @@ lemma PiecewiseConstantFunction.integral_neg {I: BoundedInterval} (g: PiecewiseC
   ring
 
 /-- Helper: Convert a PiecewiseConstantFunction to PiecewiseConstantOn and relate integrals -/
-lemma PiecewiseConstantFunction.to_PiecewiseConstantOn {I: BoundedInterval} (g: PiecewiseConstantFunction I) :
+lemma to_PiecewiseConstantOn {I: BoundedInterval} (g: PiecewiseConstantFunction I) :
     ∃ (h: PiecewiseConstantOn g.f I), h.integral = g.integral := by
   have hg_agrees : g.agreesWith g.f := fun x hx => rfl
   use ⟨g, hg_agrees⟩
   exact PiecewiseConstantOn.integral_eq g.f ⟨g, hg_agrees⟩ g hg_agrees
 
 /-- Helper: Apply integral_mono between two PiecewiseConstantFunctions via PiecewiseConstantOn -/
-lemma PiecewiseConstantFunction.integral_mono' {I: BoundedInterval}
+lemma integral_mono' {I: BoundedInterval}
     (g h: PiecewiseConstantFunction I) (h_pointwise: ∀ x ∈ I.toSet, g.f x ≤ h.f x) :
     g.integral ≤ h.integral := by
   have hg_agrees : g.agreesWith g.f := fun x hx => rfl
@@ -831,6 +832,9 @@ lemma PiecewiseConstantFunction.integral_mono' {I: BoundedInterval}
     PiecewiseConstantFunction.integral_mono hg_pc hh_pc h_pointwise
   rw [h_integral_eq_g, h_integral_eq_h] at h_mono
   exact h_mono
+
+end PiecewiseConstantFunction
+
 
 /-- Helper: The lower Darboux set is bounded above -/
 lemma LowerDarbouxIntegral.bddAbove {f:ℝ → ℝ} {I: BoundedInterval} (M: ℝ) (hM: ∀ x ∈ I, |f x| ≤ M) :
