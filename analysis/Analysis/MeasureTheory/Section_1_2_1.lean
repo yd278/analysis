@@ -91,6 +91,13 @@ noncomputable def set_dist {X:Type*} [PseudoMetricSpace X] (A B: Set X) : ℝ :=
 -- ========================================================================
 -- Start of Helpers for lemma 1.2.5: Lebesgue_outer_measure.union_of_separated
 -- ========================================================================
+/-- max distributes over division by 2 -/
+lemma max_div_two (x : ℝ) : max x 0 / 2 = max (x / 2) 0 := by
+  by_cases hx : 0 ≤ x
+  · simp [max_eq_left hx, max_eq_left (div_nonneg hx (by norm_num : (0:ℝ) < 2).le)]
+  · push_neg at hx
+    simp [max_eq_right (le_of_lt hx), max_eq_right (by linarith : x / 2 ≤ 0)]
+
 /-- For EReal, adding a positive real value to a value that is neither ⊥ nor ⊤ gives a strictly greater result. -/
 lemma EReal.lt_add_of_pos_coe {x : EReal} {ε : ℝ} (hε : 0 < ε) (h_ne_bot : x ≠ ⊥) (h_ne_top : x ≠ ⊤) :
     x < x + ↑ε := by
@@ -140,9 +147,12 @@ lemma Real.sqrt_sum_le_sum_sqrt {ι : Type*} [Fintype ι] [DecidableEq ι] (f : 
               apply add_le_add_left
               exact ih
 
+
+
+namespace BoundedInterval
 /-- Extract the left and right endpoints of a BoundedInterval.
     Returns (a, b) where a is the left endpoint and b is the right endpoint. -/
-def BoundedInterval.endpoints (I : BoundedInterval) : ℝ × ℝ :=
+def endpoints (I : BoundedInterval) : ℝ × ℝ :=
   match I with
   | Ioo a b => (a, b)
   | Icc a b => (a, b)
@@ -150,7 +160,7 @@ def BoundedInterval.endpoints (I : BoundedInterval) : ℝ × ℝ :=
   | Ico a b => (a, b)
 
 /-- Compute the midpoint of a BoundedInterval. -/
-noncomputable def BoundedInterval.midpoint (I : BoundedInterval) : ℝ :=
+noncomputable def midpoint (I : BoundedInterval) : ℝ :=
   let (a, b) := I.endpoints
   (a + b) / 2
 
@@ -158,13 +168,13 @@ noncomputable def BoundedInterval.midpoint (I : BoundedInterval) : ℝ :=
     Left half: [a, m], Right half: [m, b], where m is the midpoint.
     Using closed intervals ensures coverage (union equals original) while
     maintaining measure-theoretic properties (overlap has measure zero). -/
-noncomputable def BoundedInterval.bisect (I : BoundedInterval) : BoundedInterval × BoundedInterval :=
+noncomputable def bisect (I : BoundedInterval) : BoundedInterval × BoundedInterval :=
   let (a, b) := I.endpoints
   let m := I.midpoint
   (Icc a m, Icc m b)
 
 /-- Bisecting an interval gives distinct sub-intervals unless the interval is degenerate -/
-lemma BoundedInterval.bisect_fst_ne_snd (I : BoundedInterval) :
+lemma bisect_fst_ne_snd (I : BoundedInterval) :
     I.bisect.fst ≠ I.bisect.snd ∨ I.a = I.b := by
   unfold bisect midpoint endpoints
   cases I with
@@ -205,15 +215,8 @@ lemma BoundedInterval.bisect_fst_ne_snd (I : BoundedInterval) :
       have hb : (a + b) / 2 = b := congrArg BoundedInterval.b h
       exact hab (by linarith)
 
-/-- Helper: max distributes over division by 2 -/
-lemma max_div_two (x : ℝ) : max x 0 / 2 = max (x / 2) 0 := by
-  by_cases hx : 0 ≤ x
-  · simp [max_eq_left hx, max_eq_left (div_nonneg hx (by norm_num : (0:ℝ) < 2).le)]
-  · push_neg at hx
-    simp [max_eq_right (le_of_lt hx), max_eq_right (by linarith : x / 2 ≤ 0)]
-
 /-- The left half of bisection has half the original length -/
-lemma BoundedInterval.bisect_fst_length (I : BoundedInterval) :
+lemma bisect_fst_length (I : BoundedInterval) :
     |(I.bisect.fst)|ₗ = |I|ₗ / 2 := by
   unfold bisect midpoint endpoints length
   cases I with
@@ -236,7 +239,7 @@ lemma BoundedInterval.bisect_fst_length (I : BoundedInterval) :
     rw [h, max_div_two]
 
 /-- The right half of bisection has half the original length -/
-lemma BoundedInterval.bisect_snd_length (I : BoundedInterval) :
+lemma bisect_snd_length (I : BoundedInterval) :
     |(I.bisect.snd)|ₗ = |I|ₗ / 2 := by
   unfold bisect midpoint endpoints length
   cases I with
@@ -259,13 +262,52 @@ lemma BoundedInterval.bisect_snd_length (I : BoundedInterval) :
     rw [h, max_div_two]
 
 /-- Bisecting preserves total length -/
-lemma BoundedInterval.bisect_length_sum (I : BoundedInterval) :
+lemma bisect_length_sum (I : BoundedInterval) :
     |(I.bisect.fst)|ₗ + |(I.bisect.snd)|ₗ = |I|ₗ := by
   rw [bisect_fst_length, bisect_snd_length]
   ring
 
-namespace Box
+/-- The midpoint is in the first half of bisection (as the right endpoint of Icc) -/
+lemma midpoint_mem_bisect_fst (I : BoundedInterval) (h : I.toSet.Nonempty) :
+    I.midpoint ∈ (I.bisect.fst).toSet := by
+  obtain ⟨x, hx⟩ := h
+  unfold bisect midpoint endpoints toSet at *
+  cases I with
+  | Ioo a b =>
+    simp only [Set.mem_Ioo] at hx
+    simp only [Set.mem_Icc]; exact ⟨by linarith, by linarith⟩
+  | Icc a b =>
+    simp only [Set.mem_Icc] at hx
+    simp only [Set.mem_Icc]; exact ⟨by linarith, by linarith⟩
+  | Ioc a b =>
+    simp only [Set.mem_Ioc] at hx
+    simp only [Set.mem_Icc]; exact ⟨by linarith, by linarith⟩
+  | Ico a b =>
+    simp only [Set.mem_Ico] at hx
+    simp only [Set.mem_Icc]; exact ⟨by linarith, by linarith⟩
 
+/-- The midpoint is in the second half of bisection (as the left endpoint of Icc) -/
+lemma midpoint_mem_bisect_snd (I : BoundedInterval) (h : I.toSet.Nonempty) :
+    I.midpoint ∈ (I.bisect.snd).toSet := by
+  obtain ⟨x, hx⟩ := h
+  unfold bisect midpoint endpoints toSet at *
+  cases I with
+  | Ioo a b =>
+    simp only [Set.mem_Ioo] at hx
+    simp only [Set.mem_Icc]; exact ⟨by linarith, by linarith⟩
+  | Icc a b =>
+    simp only [Set.mem_Icc] at hx
+    simp only [Set.mem_Icc]; exact ⟨by linarith, by linarith⟩
+  | Ioc a b =>
+    simp only [Set.mem_Ioc] at hx
+    simp only [Set.mem_Icc]; exact ⟨by linarith, by linarith⟩
+  | Ico a b =>
+    simp only [Set.mem_Ico] at hx
+    simp only [Set.mem_Icc]; exact ⟨by linarith, by linarith⟩
+
+end BoundedInterval
+
+namespace Box
 /-- The diameter of a box is the supremum of Euclidean distances between points in the box -/
 noncomputable def diameter {d:ℕ} (B: Box d) : ℝ :=
   sSup { r | ∃ x ∈ B.toSet, ∃ y ∈ B.toSet, r = √(∑ i, (x i - y i)^2) }
@@ -533,6 +575,260 @@ lemma diameter_bound_by_sides {d:ℕ} (B: Box d) :
       -- BoundedInterval.length is max (b - a) 0, which is always ≥ 0
       simp [BoundedInterval.length]
 
+/-- For any nonempty interval and target value less than the length,
+    we can find two points in the interval with separation exceeding the target.
+    This is the key density fact: achievable differences are dense in [0, length]. -/
+lemma BoundedInterval.exists_points_with_diff {I : BoundedInterval}
+    (h_nonempty : I.toSet.Nonempty) {t : ℝ} (ht_nonneg : 0 ≤ t) (ht : t < |I|ₗ) :
+    ∃ x ∈ I.toSet, ∃ y ∈ I.toSet, t < |x - y| := by
+  -- Since t < |I|ₗ = max (b - a) 0 and t ≥ 0, we have b - a > t ≥ 0
+  have h_len_pos : 0 < |I|ₗ := lt_of_le_of_lt ht_nonneg ht
+  cases I with
+  | Icc a b =>
+    simp only [length, BoundedInterval.a, BoundedInterval.b] at ht h_len_pos
+    have h_ab : a < b := by
+      by_contra h; push_neg at h
+      have : max (b - a) 0 = 0 := max_eq_right (by linarith)
+      linarith
+    have h_t_lt : t < b - a := by
+      have hmax : max (b - a) 0 = b - a := max_eq_left (by linarith)
+      rw [hmax] at ht
+      exact ht
+    -- Closed: use endpoints a and b
+    refine ⟨a, Set.left_mem_Icc.mpr (le_of_lt h_ab), b, Set.right_mem_Icc.mpr (le_of_lt h_ab), ?_⟩
+    rw [abs_sub_comm, abs_of_pos (by linarith : 0 < b - a)]
+    linarith
+  | Ioo a b =>
+    simp only [length, BoundedInterval.a, BoundedInterval.b] at ht h_len_pos
+    have h_ab : a < b := by
+      by_contra h; push_neg at h
+      have : max (b - a) 0 = 0 := max_eq_right (by linarith)
+      linarith
+    have h_t_lt : t < b - a := by
+      have hmax : max (b - a) 0 = b - a := max_eq_left (by linarith)
+      rw [hmax] at ht
+      exact ht
+    -- Open: use points close to endpoints
+    set δ := ((b - a) - t) / 2 with hδ_def
+    have h_δ_pos : 0 < δ := by linarith
+    have hx_mem : a + δ / 2 ∈ Set.Ioo a b := Set.mem_Ioo.mpr ⟨by linarith, by linarith⟩
+    have hy_mem : b - δ / 2 ∈ Set.Ioo a b := Set.mem_Ioo.mpr ⟨by linarith, by linarith⟩
+    refine ⟨a + δ / 2, hx_mem, b - δ / 2, hy_mem, ?_⟩
+    have h_diff : (b - δ / 2) - (a + δ / 2) = (b - a) - δ := by ring
+    rw [abs_sub_comm, abs_of_pos (by linarith : 0 < (b - δ / 2) - (a + δ / 2)), h_diff]
+    linarith
+  | Ioc a b =>
+    simp only [length, BoundedInterval.a, BoundedInterval.b] at ht h_len_pos
+    have h_ab : a < b := by
+      by_contra h; push_neg at h
+      have : max (b - a) 0 = 0 := max_eq_right (by linarith)
+      linarith
+    have h_t_lt : t < b - a := by
+      have hmax : max (b - a) 0 = b - a := max_eq_left (by linarith)
+      rw [hmax] at ht
+      exact ht
+    -- Left open, right closed: use point close to a and b
+    set δ := ((b - a) - t) / 2 with hδ_def
+    have h_δ_pos : 0 < δ := by linarith
+    have hx_mem : a + δ / 2 ∈ Set.Ioc a b := Set.mem_Ioc.mpr ⟨by linarith, by linarith⟩
+    have hy_mem : b ∈ Set.Ioc a b := Set.mem_Ioc.mpr ⟨h_ab, le_refl b⟩
+    refine ⟨a + δ / 2, hx_mem, b, hy_mem, ?_⟩
+    have h_diff : b - (a + δ / 2) = (b - a) - δ / 2 := by ring
+    rw [abs_sub_comm, abs_of_pos (by linarith : 0 < b - (a + δ / 2)), h_diff]
+    linarith
+  | Ico a b =>
+    simp only [length, BoundedInterval.a, BoundedInterval.b] at ht h_len_pos
+    have h_ab : a < b := by
+      by_contra h; push_neg at h
+      have : max (b - a) 0 = 0 := max_eq_right (by linarith)
+      linarith
+    have h_t_lt : t < b - a := by
+      have hmax : max (b - a) 0 = b - a := max_eq_left (by linarith)
+      rw [hmax] at ht
+      exact ht
+    -- Left closed, right open: use a and point close to b
+    set δ := ((b - a) - t) / 2 with hδ_def
+    have h_δ_pos : 0 < δ := by linarith
+    have hx_mem : a ∈ Set.Ico a b := Set.mem_Ico.mpr ⟨le_refl a, h_ab⟩
+    have hy_mem : b - δ / 2 ∈ Set.Ico a b := Set.mem_Ico.mpr ⟨by linarith, by linarith⟩
+    refine ⟨a, hx_mem, b - δ / 2, hy_mem, ?_⟩
+    have h_diff : (b - δ / 2) - a = (b - a) - δ / 2 := by ring
+    rw [abs_sub_comm, abs_of_pos (by linarith : 0 < (b - δ / 2) - a), h_diff]
+    linarith
+
+/-- The diameter of a nonempty box equals the diagonal length √(∑ |side i|ₗ²).
+    This is the key fact: the supremum of pairwise distances equals the diagonal.
+    For closed intervals, the diagonal is achieved at corners.
+    For open intervals, the diagonal is the limit (supremum) of achievable distances. -/
+lemma diameter_eq_sqrt_sum_sq {d:ℕ} (B: Box d) (h: B.toSet.Nonempty) :
+    B.diameter = √(∑ i, |B.side i|ₗ^2) := by
+  unfold diameter
+  -- Use csSup_eq_of_forall_le_of_forall_lt_exists_gt:
+  -- if s.Nonempty ∧ (∀ a ∈ s, a ≤ b) ∧ (∀ c < b, ∃ a ∈ s, c < a), then sSup s = b
+  let s := { r | ∃ x ∈ B.toSet, ∃ y ∈ B.toSet, r = √(∑ i, (x i - y i)^2) }
+  let b := √(∑ i, |B.side i|ₗ^2)
+  apply csSup_eq_of_forall_le_of_forall_lt_exists_gt
+  · -- s is nonempty
+    obtain ⟨x, hx⟩ := h
+    exact ⟨√(∑ i, (x i - x i)^2), x, hx, x, hx, rfl⟩
+  · -- ∀ a ∈ s, a ≤ b (upper bound)
+    intro r ⟨x, hx, y, hy, hr⟩
+    rw [hr]
+    apply Real.sqrt_le_sqrt
+    apply Finset.sum_le_sum
+    intro i _
+    -- |x i - y i|² ≤ |B.side i|ₗ²
+    have hx_i : x i ∈ (B.side i).toSet := hx i (Set.mem_univ i)
+    have hy_i : y i ∈ (B.side i).toSet := hy i (Set.mem_univ i)
+    have coord_bound : |x i - y i| ≤ |B.side i|ₗ := by
+      cases h_side : B.side i <;>
+          simp [BoundedInterval.toSet, h_side] at hx_i hy_i <;>
+          simp [BoundedInterval.length] <;>
+          (left; rw [abs_sub_le_iff]; constructor <;> linarith [hx_i.1, hx_i.2, hy_i.1, hy_i.2])
+    calc (x i - y i)^2 = |x i - y i|^2 := by rw [sq_abs]
+      _ ≤ |B.side i|ₗ^2 := by
+          apply sq_le_sq' <;> [linarith [abs_nonneg (x i - y i), coord_bound]; exact coord_bound]
+  · -- ∀ c < b, ∃ a ∈ s, c < a (density: can get arbitrarily close to b)
+    intro c hc
+    -- Need to find x, y ∈ B with √(∑ (x i - y i)²) > c
+    -- Strategy: for each coordinate, pick points near opposite ends of the interval
+    -- The resulting distance will be close to √(∑ side²)
+    -- Since c < √(∑ side²), we can find ε > 0 such that c < √(∑ side²) - ε
+    -- Then pick x, y such that |x i - y i| ≥ |side i| - δ for small enough δ
+    -- This gives √(∑ (x i - y i)²) ≥ √(∑ (side - δ)²) > c for small δ
+    --
+    -- For the formal proof, we use that intervals are nonempty (from h_nonempty)
+    -- and that we can pick points with controlled distances from endpoints.
+    by_cases h_zero : (∑ i, |B.side i|ₗ^2) = 0
+    · -- All sides have length 0, so b = 0
+      -- c < 0 is impossible since distances are ≥ 0
+      simp only [h_zero, Real.sqrt_zero] at hc
+      -- c < 0, but any distance is ≥ 0, so we need c < some distance ≥ 0
+      -- Since c < 0, we have c < 0 ≤ any distance
+      obtain ⟨x, hx⟩ := h
+      use 0
+      constructor
+      · exact ⟨x, hx, x, hx, by simp⟩
+      · linarith
+    · -- Some side has positive length
+      -- Use the characterization: √(∑ side²) > c means ∑ side² > c²
+      have h_pos : 0 < ∑ i, |B.side i|ₗ^2 := by
+        apply lt_of_le_of_ne
+        · apply Finset.sum_nonneg; intro i _; exact sq_nonneg _
+        · exact Ne.symm h_zero
+      -- Get ε such that c + ε < √(∑ side²)
+      have h_c_lt : c < √(∑ i, |B.side i|ₗ^2) := hc
+      -- Since c < √(∑ side²), we have c² < ∑ side² (for c ≥ 0) or c < 0
+      by_cases hc_nonneg : 0 ≤ c
+      · -- c ≥ 0 case: we need to construct points with large distance
+        -- Strategy: use exists_points_with_diff for positive-length coordinates
+        -- Each interval is nonempty (from h: B.toSet.Nonempty)
+        have h_interval_nonempty : ∀ i, (B.side i).toSet.Nonempty := by
+          intro i; obtain ⟨x, hx⟩ := h
+          exact ⟨x i, hx i (Set.mem_univ i)⟩
+        -- We'll construct points coordinate-wise with ≥ for all and > for positive-length
+        let ratio := c / √(∑ i, |B.side i|ₗ^2)
+        have h_ratio_lt_one : ratio < 1 := by
+          show c / √(∑ i, |B.side i|ₗ^2) < 1
+          rw [div_lt_one (Real.sqrt_pos.mpr h_pos)]
+          exact h_c_lt
+        have h_ratio_nonneg : 0 ≤ ratio := by
+          show 0 ≤ c / √(∑ i, |B.side i|ₗ^2)
+          exact div_nonneg hc_nonneg (Real.sqrt_nonneg _)
+        -- For positive-length coordinates: get strict inequality
+        have h_exists_points : ∀ i, ∃ xi ∈ (B.side i).toSet, ∃ yi ∈ (B.side i).toSet,
+            |B.side i|ₗ * ratio ≤ |xi - yi| ∧
+            (0 < |B.side i|ₗ → |B.side i|ₗ * ratio < |xi - yi|) := by
+          intro i
+          by_cases h_len_zero : |B.side i|ₗ = 0
+          · -- Zero-length interval: xi = yi gives 0 ≤ 0
+            obtain ⟨xi, hxi⟩ := h_interval_nonempty i
+            refine ⟨xi, hxi, xi, hxi, ?_, ?_⟩
+            · simp [h_len_zero]
+            · simp [h_len_zero]
+          · -- Positive-length interval: use exists_points_with_diff
+            have h_len_pos : 0 < |B.side i|ₗ := by
+              apply lt_of_le_of_ne; simp [BoundedInterval.length]; exact Ne.symm h_len_zero
+            have h_target_lt : |B.side i|ₗ * ratio < |B.side i|ₗ := by
+              calc |B.side i|ₗ * ratio < |B.side i|ₗ * 1 := by
+                    apply mul_lt_mul_of_pos_left h_ratio_lt_one h_len_pos
+                _ = |B.side i|ₗ := mul_one _
+            obtain ⟨xi, hxi, yi, hyi, hlt⟩ := BoundedInterval.exists_points_with_diff
+              (h_interval_nonempty i) (mul_nonneg (by simp [BoundedInterval.length]) h_ratio_nonneg)
+              h_target_lt
+            exact ⟨xi, hxi, yi, hyi, le_of_lt hlt, fun _ => hlt⟩
+        -- Use Classical.choose to extract the points
+        classical
+        let x : Fin d → ℝ := fun i => (h_exists_points i).choose
+        let y : Fin d → ℝ := fun i => (h_exists_points i).choose_spec.2.choose
+        have hx_mem : ∀ i, x i ∈ (B.side i).toSet := fun i => (h_exists_points i).choose_spec.1
+        have hy_mem : ∀ i, y i ∈ (B.side i).toSet := fun i =>
+          (h_exists_points i).choose_spec.2.choose_spec.1
+        have h_diff_le : ∀ i, |B.side i|ₗ * ratio ≤ |x i - y i| := fun i =>
+          (h_exists_points i).choose_spec.2.choose_spec.2.1
+        have h_diff_lt : ∀ i, 0 < |B.side i|ₗ → |B.side i|ₗ * ratio < |x i - y i| := fun i =>
+          (h_exists_points i).choose_spec.2.choose_spec.2.2
+        -- x, y ∈ B.toSet
+        have hx_box : x ∈ B.toSet := fun i _ => hx_mem i
+        have hy_box : y ∈ B.toSet := fun i _ => hy_mem i
+        -- The distance √(∑ (x_i - y_i)²) > c
+        use √(∑ i, (x i - y i)^2)
+        constructor
+        · exact ⟨x, hx_box, y, hy_box, rfl⟩
+        · -- Need: c < √(∑ (x_i - y_i)²)
+          rw [← Real.sqrt_sq hc_nonneg]
+          apply Real.sqrt_lt_sqrt (sq_nonneg c)
+          -- Need: c² < ∑ (x_i - y_i)²
+          -- c² = ∑ (side * ratio)² and we have ≤ for all, < for at least one positive side
+          have h_target : c^2 = ∑ i, (|B.side i|ₗ * ratio)^2 := by
+            have h_sum_nonneg : 0 ≤ ∑ i : Fin d, |B.side i|ₗ^2 :=
+              Finset.sum_nonneg (fun i _ => sq_nonneg (|B.side i|ₗ))
+            have h_sqrt_ne : √(∑ i, |B.side i|ₗ^2) ≠ 0 := Real.sqrt_ne_zero'.mpr h_pos
+            calc c^2 = (√(∑ i, |B.side i|ₗ^2) * ratio)^2 := by
+                  show c^2 = (√(∑ i, |B.side i|ₗ^2) * (c / √(∑ i, |B.side i|ₗ^2)))^2
+                  field_simp
+              _ = (∑ i, |B.side i|ₗ^2) * ratio^2 := by
+                  rw [mul_pow, Real.sq_sqrt h_sum_nonneg]
+              _ = ∑ i, |B.side i|ₗ^2 * ratio^2 := Finset.sum_mul _ _ _
+              _ = ∑ i, (|B.side i|ₗ * ratio)^2 := by congr 1; ext i; ring
+          rw [h_target]
+          -- Since ∑ side² > 0, at least one side is positive
+          have h_exists_pos : ∃ j, 0 < |B.side j|ₗ := by
+            by_contra h_all_zero; push_neg at h_all_zero
+            have h_sum_zero : (∑ i, |B.side i|ₗ^2) = 0 := by
+              apply Finset.sum_eq_zero; intro i _
+              have : |B.side i|ₗ ≤ 0 := h_all_zero i
+              have h_nonneg : 0 ≤ |B.side i|ₗ := by simp [BoundedInterval.length]
+              have : |B.side i|ₗ = 0 := le_antisymm this h_nonneg
+              simp [this]
+            exact h_zero h_sum_zero
+          obtain ⟨j, hj_pos⟩ := h_exists_pos
+          apply Finset.sum_lt_sum
+          · intro i _
+            have h_sq : (|B.side i|ₗ * ratio)^2 ≤ |x i - y i|^2 := by
+              apply sq_le_sq' _ (h_diff_le i)
+              calc -(|x i - y i|) ≤ 0 := neg_nonpos.mpr (abs_nonneg _)
+                _ ≤ |B.side i|ₗ * ratio := mul_nonneg (by simp [BoundedInterval.length]) h_ratio_nonneg
+            calc (|B.side i|ₗ * ratio)^2 ≤ |x i - y i|^2 := h_sq
+              _ = (x i - y i)^2 := by rw [sq_abs]
+          · use j, Finset.mem_univ j
+            have h_sq_lt : (|B.side j|ₗ * ratio)^2 < |x j - y j|^2 := by
+              -- From h_diff_lt we know side * ratio < |x j - y j|, so |x j - y j| > 0
+              have h_diff_pos : 0 < |x j - y j| :=
+                lt_of_le_of_lt (mul_nonneg (by simp [BoundedInterval.length]) h_ratio_nonneg)
+                  (h_diff_lt j hj_pos)
+              apply sq_lt_sq' _ (h_diff_lt j hj_pos)
+              calc -(|x j - y j|) < 0 := neg_neg_of_pos h_diff_pos
+                _ ≤ |B.side j|ₗ * ratio := mul_nonneg (by simp [BoundedInterval.length]) h_ratio_nonneg
+            calc (|B.side j|ₗ * ratio)^2 < |x j - y j|^2 := h_sq_lt
+              _ = (x j - y j)^2 := by rw [sq_abs]
+      · -- c < 0 case: any distance ≥ 0 > c
+        push_neg at hc_nonneg
+        obtain ⟨x, hx⟩ := h
+        use 0
+        constructor
+        · exact ⟨x, hx, x, hx, by simp⟩
+        · linarith
 
 /-- If a box intersects two sets, any two points (one from each set)
     in the box have distance at most the diameter -/
@@ -815,15 +1111,59 @@ lemma volume_subdivide {d:ℕ} (B: Box d) :
   rw [Finset.sum_image' h_func h_fiber]
 
 /-- Each sub-box of a subdivision has diameter at most the original diameter divided by √2.
-    This follows because each side is halved, reducing the diagonal by a factor related to √2. -/
-lemma subdivide_diameter_bound {d:ℕ} (B: Box d) :
+    This follows because each side is halved, reducing the diagonal by a factor related to √2.
+    Note: The hypothesis that B is nonempty is necessary because bisection always creates closed
+    intervals, which can turn degenerate open intervals (Ioo a a) into nonempty singletons. -/
+lemma subdivide_diameter_bound {d:ℕ} (B: Box d) (hB : B.toSet.Nonempty) :
     ∀ B' ∈ B.subdivide, B'.diameter ≤ B.diameter / Real.sqrt 2 := by
-  sorry
-
-/-- The union of all sub-boxes equals the original box -/
-lemma subdivide_covers {d:ℕ} (B: Box d) :
-    (⋃ B' ∈ B.subdivide, B'.toSet) = B.toSet := by
-  sorry
+  intro B' hB'
+  -- Extract the choice function that defines B'
+  unfold subdivide at hB'
+  simp only [Finset.mem_image, Finset.mem_univ, true_and] at hB'
+  obtain ⟨choice, rfl⟩ := hB'
+  -- Abbreviate the sub-box for readability
+  set B' : Box d := { side := fun i => if choice i then (B.side i).bisect.snd
+      else (B.side i).bisect.fst } with hB'_def
+  -- Key: B'.diameter ≤ B.diameter / 2 ≤ B.diameter / √2
+  -- Since √2 < 2, we have B.diameter / 2 ≤ B.diameter / √2
+  suffices h : B'.diameter ≤ B.diameter / 2 by
+    calc B'.diameter
+        ≤ B.diameter / 2 := h
+      _ ≤ B.diameter / √2 := by
+          apply div_le_div_of_nonneg_left (diameter_nonneg B)
+          · exact Real.sqrt_pos.mpr (by norm_num : (0:ℝ) < 2)
+          · calc √2 ≤ √4 := Real.sqrt_le_sqrt (by norm_num : (2:ℝ) ≤ 4)
+              _ = 2 := by norm_num
+  -- Now prove B'.diameter ≤ B.diameter / 2
+  -- Key: |B'.side i|ₗ = |B.side i|ₗ / 2 for all i, so diagonal is halved
+  -- From nonemptiness of B, each side interval is nonempty
+  have h_side_nonempty : ∀ i, (B.side i).toSet.Nonempty := by
+    intro i; obtain ⟨x, hx⟩ := hB
+    exact ⟨x i, hx i (Set.mem_univ i)⟩
+  -- First show B' is nonempty (the midpoint of each side is in both halves)
+  have hB'_nonempty : B'.toSet.Nonempty := by
+    use fun i => (B.side i).midpoint
+    intro i _
+    simp only [hB'_def]
+    split_ifs with h
+    · exact BoundedInterval.midpoint_mem_bisect_snd (B.side i) (h_side_nonempty i)
+    · exact BoundedInterval.midpoint_mem_bisect_fst (B.side i) (h_side_nonempty i)
+  -- Each side of B' has half the length of B's side
+  have h_side_half : ∀ i, |B'.side i|ₗ = |B.side i|ₗ / 2 := by
+    intro i
+    simp only [hB'_def]
+    split_ifs with h
+    · exact BoundedInterval.bisect_snd_length _
+    · exact BoundedInterval.bisect_fst_length _
+  -- Use diameter_eq_sqrt_sum_sq for both boxes
+  rw [diameter_eq_sqrt_sum_sq B' hB'_nonempty, diameter_eq_sqrt_sum_sq B hB]
+  -- √(∑ (side/2)²) = √(∑ side²) / 2
+  have h_sum_eq : ∑ i, |B'.side i|ₗ^2 = (∑ i, |B.side i|ₗ^2) / 4 := by
+    simp_rw [h_side_half, div_pow]
+    rw [Finset.sum_div]
+    ring_nf
+  rw [h_sum_eq, Real.sqrt_div (Finset.sum_nonneg (fun i _ => sq_nonneg _))]
+  norm_num
 
 end Box
 
@@ -991,7 +1331,7 @@ lemma partition_disjoint {d:ℕ} {E F: Set (EuclideanSpace' d)} (S: ℕ → Box 
 end Lebesgue_outer_measure
 
 -- ========================================================================
--- End of Helpers
+-- End of Helpers for lemma 1.2.5
 -- ========================================================================
 
 /-- Lemma 1.2.5 (Finite additivity for separated sets).
