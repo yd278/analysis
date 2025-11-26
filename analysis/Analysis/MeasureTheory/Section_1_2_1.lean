@@ -1891,9 +1891,34 @@ lemma subdivide_iter_covers {d:ℕ} (B : Box d) (k : ℕ) (x : EuclideanSpace' d
         simp only [hc]
         exact (BoundedInterval.mem_bisect_fst_iff (B''.side i) (x i) hx_i).mpr (le_of_lt hm)
 
+/-- Box volume is non-negative (product of non-negative interval lengths). -/
+lemma volume_nonneg {d : ℕ} (B : Box d) : 0 ≤ B.volume := by
+  unfold volume
+  apply Finset.prod_nonneg
+  intro i _
+  unfold BoundedInterval.length
+  exact le_max_right _ _
+
 end Box
 
 namespace Lebesgue_outer_measure
+
+/-- Any ℕ-indexed cover gives an upper bound on outer measure.
+    Follows directly from the infimum definition. -/
+lemma le_of_nat_cover {d:ℕ} (hd: 0 < d) (E: Set (EuclideanSpace' d))
+    (S : ℕ → Box d) (hcover : E ⊆ ⋃ n, (S n).toSet) :
+    Lebesgue_outer_measure E ≤ ∑' n, (S n).volume.toEReal := by
+  rw [Lebesgue_outer_measure_eq_nat_indexed hd]
+  apply csInf_le
+  · -- Show the set is bounded below by 0
+    use 0
+    intro v hv
+    obtain ⟨S', _, rfl⟩ := hv
+    apply tsum_nonneg
+    intro n
+    exact EReal.coe_nonneg.mpr (Box.volume_nonneg _)
+  · -- S is in the set of covers
+    exact ⟨S, hcover, rfl⟩
 
 /-- Upper bound from finset-indexed cover: if a set is covered by ⋃ n, ⋃ B ∈ I n, B.toSet
     where each I n is a finite set of boxes, then the outer measure is bounded by the
@@ -1901,44 +1926,7 @@ namespace Lebesgue_outer_measure
 lemma le_of_finset_cover {d:ℕ} (hd: 0 < d) (E: Set (EuclideanSpace' d))
     (I : ℕ → Finset (Box d)) (hcover : E ⊆ ⋃ n, ⋃ B ∈ I n, B.toSet) :
     Lebesgue_outer_measure E ≤ ∑' n, (∑ B ∈ I n, B.volume).toEReal := by
-  -- Strategy: Flatten the double-indexed cover to a single ℕ-indexed sequence
-  -- using Nat.pair, then apply the definition of outer measure (sInf_le)
-  rw [Lebesgue_outer_measure_eq_nat_indexed hd]
-
-  -- Construct a zero-volume box for padding (exists when d > 0)
-  have ⟨B₀, hB₀⟩ : ∃ B : Box d, B.volume = 0 := by
-    use ⟨fun _ => BoundedInterval.Ioc 0 0⟩
-    simp only [Box.volume, BoundedInterval.length]
-    conv_lhs => arg 2; ext i; rw [sub_self, max_eq_right (le_refl 0)]
-    rw [Finset.prod_const, show Finset.univ.card = d from Fintype.card_fin d]
-    exact zero_pow (Nat.pos_iff_ne_zero.mp hd)
-
-  -- Convert each Finset to a list for indexing
-  let L : ℕ → List (Box d) := fun n => (I n).toList
-
-  -- Flatten: S' m encodes boxes via Nat.pair
-  -- For each m = Nat.pair n k, if k < (L n).length, return (L n)[k], else B₀
-  let S' : ℕ → Box d := fun m =>
-    let (n, k) := Nat.unpair m
-    if h : k < (L n).length then (L n)[k] else B₀
-
-  apply sInf_le
-  use S'
-  constructor
-
-  -- Part 1: Show E ⊆ ⋃ n, (S' n).toSet
-  · intro x hxE
-    have := hcover hxE
-    simp only [Set.mem_iUnion] at this ⊢
-    obtain ⟨n, B, hB_mem, hx_in_B⟩ := this
-    have hB_in_list : B ∈ L n := Finset.mem_toList.mpr hB_mem
-    obtain ⟨k, hk_lt, hk_eq⟩ := List.getElem_of_mem hB_in_list
-    use Nat.pair n k
-    simp only [S', Nat.unpair_pair, dif_pos hk_lt, hk_eq]
-    exact hx_in_B
-
-  -- Part 2: Show ∑' n, (S' n).volume.toEReal = ∑' n, (∑ B ∈ I n, B.volume).toEReal
-  · sorry
+  sorry
 
 
 /-- For any set with finite outer measure, we can find a cover whose volume is within ε of the outer measure.
@@ -2198,8 +2186,9 @@ lemma tsum_add_tsum_le_of_disjoint_nonneg {I_E I_F : Set ℕ} (h_disj : Disjoint
   -- Use monotonicity: ∑' (n : I_E ∪ I_F), g n ≤ ∑' n, g n
   -- This follows from the fact that I_union ⊆ Set.univ
   have h_mono : (∑' (n : I_union), g n.val : ENNReal) ≤ (∑' n, g n : ENNReal) := by
-    -- Use ENNReal.tsum_subtype_le_tsum: sum over subset ≤ sum over all
-    sorry -- TODO: Prove using ENNReal.tsum_subtype_le_tsum or similar
+    -- Use ENNReal.tsum_mono_subtype with I_union ⊆ Set.univ, then collapse tsum over Set.univ
+    rw [← tsum_univ g]
+    exact ENNReal.tsum_mono_subtype g (Set.subset_univ I_union)
 
   -- Combine: ∑' I_E + ∑' I_F = ∑' (I_E ∪ I_F) ≤ ∑' ℕ in ENNReal
   have h_ineq_ennreal : (∑' (n : I_E), g n.val : ENNReal) + (∑' (n : I_F), g n.val : ENNReal) ≤
@@ -2217,19 +2206,26 @@ lemma tsum_add_tsum_le_of_disjoint_nonneg {I_E I_F : Set ℕ} (h_disj : Disjoint
   }
   have h_cont : Continuous φ := continuous_coe_ennreal_ereal
 
+  -- Key: pointwise equality (f n).toEReal = ↑(g n : ENNReal) for non-negative f n
+  have h_pw : ∀ n, (f n).toEReal = ↑(g n : ENNReal) := by
+    intro n
+    simp only [g]
+    -- (f n).toNNReal : NNReal coerces to ENNReal as ENNReal.ofReal (f n)
+    have h1 : ((f n).toNNReal : ENNReal) = ENNReal.ofReal (f n) := rfl
+    rw [h1, EReal.coe_ennreal_ofReal, max_eq_left (hf_nonneg n)]
+
   -- Convert each tsum: (∑' (n : I_E), (f n).toEReal) = ↑(∑' (n : I_E), g n.val)
   have h_coe_E : (∑' (n : I_E), (f n).toEReal) = ↑(∑' (n : I_E), g n.val : ENNReal) := by
-    -- Need to show: (f n).toEReal = ↑(g n.val) for n ∈ I_E
-    -- This follows from: (f n).toEReal = ↑((f n).toNNReal : ENNReal) = ↑(g n.val)
-    sorry -- TODO: Prove tsum conversion for subtypes
+    simp_rw [h_pw]
+    exact (Summable.map_tsum h_sum_E φ h_cont).symm
 
   have h_coe_F : (∑' (n : I_F), (f n).toEReal) = ↑(∑' (n : I_F), g n.val : ENNReal) := by
-    sorry -- Same as above
+    simp_rw [h_pw]
+    exact (Summable.map_tsum h_sum_F φ h_cont).symm
 
   have h_coe_all : (∑' n, (f n).toEReal) = ↑(∑' n, g n : ENNReal) := by
-    -- Use Summable.map_tsum: need to show (f n).toEReal = φ (g n)
-    -- This follows from: (f n).toEReal = ↑((f n).toNNReal : ENNReal) = ↑(g n) = φ (g n)
-    sorry -- TODO: Prove using Summable.map_tsum with proper conversion
+    simp_rw [h_pw]
+    exact (Summable.map_tsum h_sum_all φ h_cont).symm
 
   -- Apply the inequality in EReal
   rw [h_coe_E, h_coe_F, h_coe_all]
