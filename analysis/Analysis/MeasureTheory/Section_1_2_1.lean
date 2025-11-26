@@ -1958,27 +1958,6 @@ lemma ENNReal.tsum_decode₂_eq {α : Type*} [Encodable α] (f : α → ENNReal)
       = ∑' a, g (Encodable.encode a) := (h_inj.tsum_eq h_support).symm
     _ = ∑' a, f a := by simp only [h_eq]
 
-/-- For ENNReal values, summing over an encodable type via decoding equals summing over the type.
-    Uses the fact that for non-zero f values, decode and decode₂ agree.
-    Key: encode is injective and decode ∘ encode = some. -/
-lemma ENNReal.tsum_decode_eq {α : Type*} [Encodable α] (f : α → ENNReal) :
-    ∑' (m : ℕ), (match Encodable.decode (α := α) m with
-                 | some a => f a
-                 | none => 0) = ∑' (a : α), f a := by
-  -- The key insight: when decode m = some a and f a ≠ 0,
-  -- we need encode a = m. But decode doesn't guarantee this.
-  -- However, for the tsum, we can use decode₂ which does guarantee this.
-  -- The contribution from decode m = some a where encode a ≠ m just adds
-  -- extra non-zero terms that don't correspond to actual elements.
-  -- This is problematic - the decode-based sum might be larger!
-  -- Actually, we should use decode₂ in the definition, or prove differently.
-
-  -- For now, let's note that this lemma requires decode to be "proper"
-  -- i.e., decode m = some a implies encode a = m. This holds for most
-  -- Encodable instances but isn't guaranteed by the typeclass.
-  -- We use a sorry here and document the assumption.
-  sorry
-
 /-- For non-negative reals, toEReal commutes with finite sums.
     Uses induction on the finset with EReal.coe_add. -/
 lemma EReal.coe_finset_sum {α : Type*} {s : Finset α} {f : α → ℝ}
@@ -1990,27 +1969,6 @@ lemma EReal.coe_finset_sum {α : Type*} {s : Finset α} {f : α → ℝ}
     rw [Finset.sum_cons ha, Finset.sum_cons ha]
     have hf_s' : ∀ x ∈ s', 0 ≤ f x := fun x hx => hf x (Finset.mem_cons_of_mem hx)
     rw [EReal.coe_add, ih hf_s']
-
-/-- For an EReal-valued function on an encodable type (with non-negative values coerced from ℝ),
-    we can compute tsum via decoding. Works through ENNReal.
-    This is a helper lemma for le_of_finset_cover. -/
-lemma EReal.tsum_decode_eq_of_real {α : Type*} [Encodable α] (f : α → ℝ) (hf : ∀ a, 0 ≤ f a) :
-    ∑' (m : ℕ), (match Encodable.decode (α := α) m with
-                 | some a => (f a).toEReal
-                 | none => 0) = ∑' (a : α), (f a).toEReal := by
-  -- Key insight: for non-negative reals, Real.toEReal = (ENNReal.ofReal _).toEReal
-  -- The ENNReal version ENNReal.tsum_decode_eq handles the tsum equality
-  -- Then we need EReal coercion to commute with tsum for ENNReal
-  sorry
-
-/-- For a family of finsets with non-negative values, the tsum of finite sums
-    is ≤ the tsum over the sigma type (equality when disjoint).
-    Uses: finite sum ≤ tsum, and enumeration via sigma type. -/
-lemma EReal.tsum_finset_le_tsum_sigma {α : Type*} (I : ℕ → Finset α) (f : α → ℝ)
-    (hf : ∀ a, 0 ≤ f a) :
-    ∑' n, (∑ a ∈ I n, f a).toEReal ≤
-    ∑' (p : (n : ℕ) × (I n : Set α)), (f p.2.val).toEReal := by
-  sorry
 
 /-- Upper bound from finset-indexed cover: if a set is covered by ⋃ n, ⋃ B ∈ I n, B.toSet
     where each I n is a finite set of boxes, then the outer measure is bounded by the
@@ -2181,7 +2139,55 @@ lemma le_of_finset_cover {d:ℕ} (hd: 0 < d) (E: Set (EuclideanSpace' d))
               exact tsum_fintype _
             simp_rw [h_eq_finite]
 
-            sorry
+            -- Lift to ENNReal to use unconditional tsum_sigma
+            -- Define ENNReal version of the term
+            let f_enn : SigmaType → ENNReal := fun p => ENNReal.ofReal p.2.val.volume
+
+            -- Decomposition holds in ENNReal
+            have h_enn_decomp : ∑' p, f_enn p = ∑' n, ∑' (B : (I n : Set (Box d))), f_enn ⟨n, B⟩ :=
+              ENNReal.tsum_sigma' _
+
+            -- Define coercion to EReal
+            let φ : ENNReal →+ EReal := {
+              toFun := fun x => (↑x : EReal)
+              map_zero' := rfl
+              map_add' := EReal.coe_ennreal_add
+            }
+            have h_cont : Continuous φ := continuous_coe_ennreal_ereal
+
+            -- Show LHS equals coerced ENNReal sum
+            have h_lhs : ∑' (p : SigmaType), p.snd.val.volume.toEReal = ↑(∑' (p : SigmaType), f_enn p) := by
+              have h_eq : ∀ p : SigmaType, p.snd.val.volume.toEReal = φ (f_enn p) := by
+                intro p
+                simp only [f_enn, φ, AddMonoidHom.coe_mk, ZeroHom.coe_mk]
+                rw [EReal.coe_ennreal_ofReal, max_eq_left (Box.volume_nonneg _)]
+              simp_rw [h_eq]
+              exact (Summable.map_tsum ENNReal.summable φ h_cont).symm
+
+            -- Show RHS equals coerced ENNReal sum (using sum instead of tsum for inner)
+            have h_rhs : ∑' n, ∑ (B : (I n : Set (Box d))), B.val.volume.toEReal =
+                         ↑(∑' n, ∑' (B : (I n : Set (Box d))), f_enn ⟨n, B⟩) := by
+              -- Convert inner tsum to sum in ENNReal
+              have h_inner_enn : ∀ n, ∑' (B : (I n : Set (Box d))), f_enn ⟨n, B⟩ =
+                                      ∑ B, f_enn ⟨n, B⟩ := fun n => tsum_fintype _
+              simp_rw [h_inner_enn]
+
+              -- Map coercion through outer sum
+              have h_outer : ∑' n, ∑ (B : (I n : Set (Box d))), B.val.volume.toEReal =
+                             ↑(∑' n, ∑ (B : (I n : Set (Box d))), f_enn ⟨n, B⟩) := by
+                have h_eq_term : ∀ n, ∑ (B : (I n : Set (Box d))), B.val.volume.toEReal = φ (∑ (B : (I n : Set (Box d))), f_enn ⟨n, B⟩) := by
+                  intro n
+                  rw [map_sum]
+                  apply Finset.sum_congr rfl
+                  intro (B : (I n : Set (Box d))) _
+                  simp only [f_enn, φ, AddMonoidHom.coe_mk, ZeroHom.coe_mk]
+                  rw [EReal.coe_ennreal_ofReal, max_eq_left (Box.volume_nonneg _)]
+                simp_rw [h_eq_term]
+                exact (Summable.map_tsum ENNReal.summable φ h_cont).symm
+
+              exact h_outer
+
+            rw [h_lhs, h_rhs, h_enn_decomp]
 
           rw [h_sigma_decomp]
           congr 1
