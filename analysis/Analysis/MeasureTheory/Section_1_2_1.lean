@@ -1880,7 +1880,7 @@ def intersecting_indices {d:ℕ} (S: ℕ → Box d) (E: Set (EuclideanSpace' d))
 /-- If all boxes have diameter less than dist(E,F), then the sets of indices intersecting
     E and F are disjoint. This follows from Box.not_intersects_both_of_diameter_lt. -/
 lemma partition_disjoint {d:ℕ} {E F: Set (EuclideanSpace' d)} (S: ℕ → Box d)
-    (h_sep: 0 < set_dist E F) (h_diam: ∀ n, (S n).diameter < set_dist E F) :
+    (_h_sep: 0 < set_dist E F) (h_diam: ∀ n, (S n).diameter < set_dist E F) :
     Disjoint (intersecting_indices S E) (intersecting_indices S F) := by
   rw [Set.disjoint_iff]
   intro n ⟨hE, hF⟩
@@ -1892,6 +1892,34 @@ lemma partition_disjoint {d:ℕ} {E F: Set (EuclideanSpace' d)} (S: ℕ → Box 
   -- This contradicts Box.not_intersects_both_of_diameter_lt
   have := Box.not_intersects_both_of_diameter_lt (S n) E F h_diam_n
   exact this ⟨hE, hF⟩
+
+/-- For disjoint subsets I_E, I_F of ℕ and a non-negative function f : ℕ → ℝ,
+    the sum of tsums over the disjoint sets is at most the tsum over all of ℕ.
+
+    This is a standard measure-theoretic fact: since I_E and I_F are disjoint,
+    ∑' I_E + ∑' I_F = ∑' (I_E ∪ I_F) ≤ ∑' ℕ by monotonicity.
+
+    The proof converts to ENNReal where Summable.tsum_union_disjoint and
+    ENNReal.tsum_mono_subtype are available, then lifts back to EReal. -/
+lemma tsum_add_tsum_le_of_disjoint_nonneg {I_E I_F : Set ℕ} (h_disj : Disjoint I_E I_F)
+    (f : ℕ → ℝ) (hf_nonneg : ∀ n, 0 ≤ f n) :
+    (∑' (n : I_E), (f n).toEReal) + (∑' (n : I_F), (f n).toEReal) ≤ ∑' n, (f n).toEReal := by
+  -- Convert to ENNReal where we have nice lemmas
+  let g : ℕ → ENNReal := fun n => (f n).toNNReal
+
+  -- The proof requires showing:
+  -- 1. ∑' (n : I_E), (f n).toEReal = (∑' (n : I_E), g n.val).toEReal
+  -- 2. ∑' (n : I_F), (f n).toEReal = (∑' (n : I_F), g n.val).toEReal
+  -- 3. ∑' n, (f n).toEReal = (∑' n, g n).toEReal
+  -- 4. In ENNReal: ∑ I_E + ∑ I_F = ∑ (I_E ∪ I_F) ≤ ∑ ℕ
+  --
+  -- Steps 1-3 require careful tsum conversion lemmas that don't exist in mathlib yet.
+  -- The conversions between EReal and ENNReal tsums over subtypes have type issues.
+  --
+  -- TODO: This is a standard fact that should be provable once proper conversion
+  -- lemmas between EReal and ENNReal tsums are available in mathlib, or by working
+  -- directly at the HasSum level instead of using tsum.
+  sorry
 
 /-- EReal epsilon argument: if for all positive ε, a ≤ b + ε, then a ≤ b.
     This holds when b ≠ ⊤ (if b = ⊤, the implication is trivially true). -/
@@ -2057,18 +2085,48 @@ theorem Lebesgue_outer_measure.union_of_separated {d:ℕ} (hd: 0 < d) {E F : Set
         -- By definition of outer measure:
         -- m*(E) ≤ sum over I_E and m*(F) ≤ sum over I_F
         have hE_bound : Lebesgue_outer_measure E ≤ ∑' (n : I_E), (S' n).volume.toEReal := by
-          sorry
+          -- The boxes indexed by I_E cover E, so their sum is in the infimum set
+          unfold Lebesgue_outer_measure
+          apply sInf_le
+          -- Witness: I_E as index set, S' restricted to I_E
+          use I_E, fun n : I_E => S' n.val
+          constructor
+          · -- Show E ⊆ ⋃ n : I_E, (S' n.val).toSet
+            intro x hxE
+            rw [Set.mem_iUnion]
+            obtain ⟨n, hn_mem, hn_in⟩ := Set.mem_iUnion₂.mp (hE_cover hxE)
+            exact ⟨⟨n, hn_mem⟩, hn_in⟩
+          · -- The sum is equal
+            rfl
 
         have hF_bound : Lebesgue_outer_measure F ≤ ∑' (n : I_F), (S' n).volume.toEReal := by
-          sorry
+          -- Same proof structure for F
+          unfold Lebesgue_outer_measure
+          apply sInf_le
+          use I_F, fun n : I_F => S' n.val
+          constructor
+          · intro x hxF
+            rw [Set.mem_iUnion]
+            obtain ⟨n, hn_mem, hn_in⟩ := Set.mem_iUnion₂.mp (hF_cover hxF)
+            exact ⟨⟨n, hn_mem⟩, hn_in⟩
+          · rfl
 
-        -- Sum the bounds
+        -- Sum the bounds using the helper lemma for disjoint tsums
+        have hsum_disj : (∑' (n : I_E), (S' n).volume.toEReal) + (∑' (n : I_F), (S' n).volume.toEReal)
+            ≤ ∑' n, (S' n).volume.toEReal := by
+          apply tsum_add_tsum_le_of_disjoint_nonneg h_disj (fun n => (S' n).volume)
+          -- Volumes are non-negative (product of non-negative interval lengths)
+          intro n
+          rw [Box.volume]
+          apply Finset.prod_nonneg
+          intro i _
+          rw [BoundedInterval.length]
+          exact le_max_right _ _
+
         calc Lebesgue_outer_measure E + Lebesgue_outer_measure F
             ≤ (∑' (n : I_E), (S' n).volume.toEReal) + (∑' (n : I_F), (S' n).volume.toEReal) :=
                 add_le_add hE_bound hF_bound
-          _ ≤ ∑' n, (S' n).volume.toEReal := by
-                -- Since I_E and I_F are disjoint subsets of ℕ
-                sorry
+          _ ≤ ∑' n, (S' n).volume.toEReal := hsum_disj
           _ ≤ ∑' n, (S n).volume.toEReal := hS'_vol
           _ ≤ Lebesgue_outer_measure (E ∪ F) + (ε : EReal) := hS_vol
 
