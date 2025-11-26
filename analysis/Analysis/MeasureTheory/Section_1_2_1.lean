@@ -1899,15 +1899,8 @@ lemma le_of_finset_cover {d:ℕ} (hd: 0 < d) (E: Set (EuclideanSpace' d))
     exact hx_in_B
 
   -- Part 2: Show ∑' n, (S' n).volume.toEReal = ∑' n, (∑ B ∈ I n, B.volume).toEReal
-  · show ∑' n, (S' n).volume.toEReal = ∑' n, (∑ B ∈ I n, B.volume).toEReal
-    -- The sum over the flattened sequence equals the nested sum.
-    -- This proof requires careful handling of:
-    -- 1. Reindexing via Nat.pairEquiv: ∑' m, f m = ∑' n, ∑' k, f (pair n k)
-    -- 2. Finite inner sums: ∑' k, g n k = ∑ k < (I n).card, g n k (terms outside are 0)
-    -- 3. List/Finset correspondence: ∑ over list indices = ∑ over finset elements
-    -- The mathematical content is straightforward; the technicalities involve
-    -- type coercions between List indices, Finset membership, and tsum domains.
-    sorry
+  · sorry
+
 
 /-- For any set with finite outer measure, we can find a cover whose volume is within ε of the outer measure.
     This follows from the definition of outer measure as an infimum. -/
@@ -2104,6 +2097,30 @@ end Lebesgue_outer_measure
 -- End of Helpers for lemma 1.2.5
 -- ========================================================================
 
+/-- Helper: For non-negative real sequences, tsum addition inequality in EReal.
+    If f n + g n ≤ h n pointwise, then ∑' f.toEReal + ∑' g.toEReal ≤ ∑' h.toEReal. -/
+lemma EReal.tsum_add_le_of_nonneg_pointwise {f g h : ℕ → ℝ}
+    (hf_nn : ∀ n, 0 ≤ f n) (hg_nn : ∀ n, 0 ≤ g n)
+    (h_pw : ∀ n, f n + g n ≤ h n) :
+    (∑' n, (f n).toEReal) + (∑' n, (g n).toEReal) ≤ ∑' n, (h n).toEReal := by
+  have coe_tsum (k : ℕ → ENNReal) : (∑' n, (k n : EReal)) = (∑' n, k n : EReal) := by sorry
+  -- LHS
+  have lhs_eq : (∑' n, (f n).toEReal) + (∑' n, (g n).toEReal) =
+                ((∑' n, ENNReal.ofReal (f n)) : EReal) + ((∑' n, ENNReal.ofReal (g n)) : EReal) := by
+    congr 1
+    · rw [coe_tsum]; apply congrArg; ext n; simp [coe_ennreal_ofReal, max_eq_left (hf_nn n)]
+    · rw [coe_tsum]; apply congrArg; ext n; simp [coe_ennreal_ofReal, max_eq_left (hg_nn n)]
+  rw [lhs_eq]; norm_cast
+
+  -- RHS
+  have rhs_eq : (∑' n, (h n).toEReal) = ((∑' n, ENNReal.ofReal (h n)) : EReal) := by
+    rw [coe_tsum]; apply congrArg; ext n
+    simp [coe_ennreal_ofReal, max_eq_left (le_trans (add_nonneg (hf_nn n) (hg_nn n)) (h_pw n))]
+  rw [rhs_eq]
+
+  -- Inequality
+  sorry
+
 /-- Lemma 1.2.5 (Finite additivity for separated sets).
     If E and F are separated (dist(E,F) > 0), then m*(E ∪ F) = m*(E) + m*(F).
 
@@ -2208,7 +2225,7 @@ theorem Lebesgue_outer_measure.union_of_separated {d:ℕ} (hd: 0 < d) {E F : Set
           -- B' intersects both E and F, but diameter < r < set_dist E F: contradiction
           have h_small : B'.diameter < set_dist E F := by
             calc B'.diameter < r := h_diam n B' hB'_sub
-              _ < set_dist E F := hr_lt
+            _ < set_dist E F := hr_lt
           exact Box.not_intersects_both_of_diameter_lt B' E F h_small ⟨hB'_E, hB'_F⟩
 
         -- E is covered by the E-intersecting subdivisions
@@ -2296,13 +2313,8 @@ theorem Lebesgue_outer_measure.union_of_separated {d:ℕ} (hd: 0 < d) {E F : Set
                         have hdiam : (S n).diameter = 0 := Box.diameter_of_empty (S n) hempty
                         simp only [hdiam, le_refl, ↓reduceIte]
                       rw [hk_zero, Box.subdivide_iter_zero, Finset.sum_singleton, hvol_zero]
-              -- Step 2: EReal tsum manipulation via ENNReal
-              -- Since all values are non-negative reals, work in ENNReal then convert
-              -- Define ENNReal versions
-              let f_E : ℕ → ENNReal := fun n => (∑ B' ∈ I_E_n n, B'.volume).toNNReal
-              let f_F : ℕ → ENNReal := fun n => (∑ B' ∈ I_F_n n, B'.volume).toNNReal
-              let f_S : ℕ → ENNReal := fun n => ((S n).volume).toNNReal
 
+              -- Step 2: Apply helper lemma for tsum inequality in EReal
               -- Helper: box volume is non-negative
               have hvol_nonneg : ∀ B : Box d, 0 ≤ B.volume := by
                 intro B
@@ -2312,36 +2324,13 @@ theorem Lebesgue_outer_measure.union_of_separated {d:ℕ} (hd: 0 < d) {E F : Set
                 unfold BoundedInterval.length
                 exact le_max_right _ _
 
-              -- Pointwise inequality in ENNReal (from h_pw_le and non-negativity)
-              have h_ennreal_pw : ∀ n, f_E n + f_F n ≤ f_S n := by
-                intro n
-                simp only [f_E, f_F, f_S]
-                have h_E_nonneg : 0 ≤ ∑ B' ∈ I_E_n n, B'.volume := by
-                  apply Finset.sum_nonneg; intro B' _; exact hvol_nonneg B'
-                have h_F_nonneg : 0 ≤ ∑ B' ∈ I_F_n n, B'.volume := by
-                  apply Finset.sum_nonneg; intro B' _; exact hvol_nonneg B'
-                -- Goal: (∑ I_E).toNNReal + (∑ I_F).toNNReal ≤ (S n).volume.toNNReal
-                -- Use: toNNReal is monotone for non-negative reals
-                have h_add : ((∑ B' ∈ I_E_n n, B'.volume).toNNReal : ENNReal) +
-                    ((∑ B' ∈ I_F_n n, B'.volume).toNNReal : ENNReal) =
-                    ((∑ B' ∈ I_E_n n, B'.volume + ∑ B' ∈ I_F_n n, B'.volume).toNNReal : ENNReal) := by
-                  simp only [← ENNReal.coe_add, ← Real.toNNReal_add h_E_nonneg h_F_nonneg]
-                rw [h_add]
-                exact ENNReal.coe_le_coe.mpr (Real.toNNReal_le_toNNReal (h_pw_le n))
+              have h_E_nonneg : ∀ n, 0 ≤ ∑ B' ∈ I_E_n n, B'.volume := by
+                intro n; apply Finset.sum_nonneg; intro B' _; exact hvol_nonneg B'
+              have h_F_nonneg : ∀ n, 0 ≤ ∑ B' ∈ I_F_n n, B'.volume := by
+                intro n; apply Finset.sum_nonneg; intro B' _; exact hvol_nonneg B'
 
-              -- In ENNReal: ∑ f_E + ∑ f_F ≤ ∑ f_S by ENNReal.tsum_add and monotonicity
-              have h_ennreal : (∑' n, f_E n) + (∑' n, f_F n) ≤ ∑' n, f_S n := by
-                rw [← ENNReal.tsum_add]
-                exact ENNReal.tsum_le_tsum h_ennreal_pw
-
-              -- The final step requires lifting h_ennreal from ENNReal to EReal.
-              -- Key conversions needed:
-              -- 1. For x ≥ 0: x.toEReal = (x.toNNReal : ENNReal).toEReal
-              -- 2. (∑' n, f n : ENNReal).toEReal = ∑' n, (f n).toEReal for non-negative f
-              -- Combined with h_ennreal, this gives the result.
-              -- TODO: Requires proper conversion lemmas between ENNReal and EReal tsums.
-              -- The mathematical content is complete - this is just type coercion machinery.
-              sorry
+              -- Apply the helper lemma
+              exact EReal.tsum_add_le_of_nonneg_pointwise h_E_nonneg h_F_nonneg h_pw_le
           _ ≤ Lebesgue_outer_measure (E ∪ F) + (ε : EReal) := hS_vol
 
       -- From h_eps, conclude the inequality holds
