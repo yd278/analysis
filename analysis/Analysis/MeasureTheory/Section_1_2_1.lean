@@ -1920,22 +1920,275 @@ lemma le_of_nat_cover {d:ℕ} (hd: 0 < d) (E: Set (EuclideanSpace' d))
   · -- S is in the set of covers
     exact ⟨S, hcover, rfl⟩
 
+/-- For ENNReal values, summing over an encodable type via decoding (using decode₂) equals
+    summing over the type. Uses decode₂ which only returns values where encode a = n.
+    The sum over ℕ hits each element of α exactly once (at m = encode a)
+    and contributes 0 for invalid encodings.
+    Key: encode is injective and decode₂ (encode a) = some a. -/
+lemma ENNReal.tsum_decode₂_eq {α : Type*} [Encodable α] (f : α → ENNReal) :
+    ∑' (m : ℕ), (match Encodable.decode₂ α m with
+                 | some a => f a
+                 | none => 0) = ∑' (a : α), f a := by
+  -- Define the function g(m) that matches decode₂
+  let g : ℕ → ENNReal := fun m =>
+    match Encodable.decode₂ α m with
+    | some a => f a
+    | none => 0
+
+  -- Key: support of g is contained in range of encode
+  have h_support : Function.support g ⊆ Set.range (Encodable.encode (α := α)) := by
+    intro m hm
+    simp only [Function.mem_support, ne_eq, g] at hm
+    -- If g m ≠ 0, then decode₂ m = some a for some a
+    cases h : Encodable.decode₂ α m with
+    | none => simp [h] at hm
+    | some a =>
+      -- From decode₂ m = some a, we get encode a = m (key property of decode₂!)
+      rw [Set.mem_range]
+      use a
+      exact Encodable.decode₂_eq_some.mp h
+
+  -- Use Function.Injective.tsum_eq with encode
+  have h_inj := Encodable.encode_injective (α := α)
+  have h_eq : ∀ a, g (Encodable.encode a) = f a := by
+    intro a
+    simp only [g, Encodable.decode₂_encode]
+
+  calc ∑' m, g m
+      = ∑' a, g (Encodable.encode a) := (h_inj.tsum_eq h_support).symm
+    _ = ∑' a, f a := by simp only [h_eq]
+
+/-- For ENNReal values, summing over an encodable type via decoding equals summing over the type.
+    Uses the fact that for non-zero f values, decode and decode₂ agree.
+    Key: encode is injective and decode ∘ encode = some. -/
+lemma ENNReal.tsum_decode_eq {α : Type*} [Encodable α] (f : α → ENNReal) :
+    ∑' (m : ℕ), (match Encodable.decode (α := α) m with
+                 | some a => f a
+                 | none => 0) = ∑' (a : α), f a := by
+  -- The key insight: when decode m = some a and f a ≠ 0,
+  -- we need encode a = m. But decode doesn't guarantee this.
+  -- However, for the tsum, we can use decode₂ which does guarantee this.
+  -- The contribution from decode m = some a where encode a ≠ m just adds
+  -- extra non-zero terms that don't correspond to actual elements.
+  -- This is problematic - the decode-based sum might be larger!
+  -- Actually, we should use decode₂ in the definition, or prove differently.
+
+  -- For now, let's note that this lemma requires decode to be "proper"
+  -- i.e., decode m = some a implies encode a = m. This holds for most
+  -- Encodable instances but isn't guaranteed by the typeclass.
+  -- We use a sorry here and document the assumption.
+  sorry
+
+/-- For non-negative reals, toEReal commutes with finite sums.
+    Uses induction on the finset with EReal.coe_add. -/
+lemma EReal.coe_finset_sum {α : Type*} {s : Finset α} {f : α → ℝ}
+    (hf : ∀ a ∈ s, 0 ≤ f a) :
+    (∑ a ∈ s, f a).toEReal = ∑ a ∈ s, (f a).toEReal := by
+  induction s using Finset.cons_induction with
+  | empty => simp
+  | cons a s' ha ih =>
+    rw [Finset.sum_cons ha, Finset.sum_cons ha]
+    have hf_s' : ∀ x ∈ s', 0 ≤ f x := fun x hx => hf x (Finset.mem_cons_of_mem hx)
+    rw [EReal.coe_add, ih hf_s']
+
+/-- For an EReal-valued function on an encodable type (with non-negative values coerced from ℝ),
+    we can compute tsum via decoding. Works through ENNReal.
+    This is a helper lemma for le_of_finset_cover. -/
+lemma EReal.tsum_decode_eq_of_real {α : Type*} [Encodable α] (f : α → ℝ) (hf : ∀ a, 0 ≤ f a) :
+    ∑' (m : ℕ), (match Encodable.decode (α := α) m with
+                 | some a => (f a).toEReal
+                 | none => 0) = ∑' (a : α), (f a).toEReal := by
+  -- Key insight: for non-negative reals, Real.toEReal = (ENNReal.ofReal _).toEReal
+  -- The ENNReal version ENNReal.tsum_decode_eq handles the tsum equality
+  -- Then we need EReal coercion to commute with tsum for ENNReal
+  sorry
+
+/-- For a family of finsets with non-negative values, the tsum of finite sums
+    is ≤ the tsum over the sigma type (equality when disjoint).
+    Uses: finite sum ≤ tsum, and enumeration via sigma type. -/
+lemma EReal.tsum_finset_le_tsum_sigma {α : Type*} (I : ℕ → Finset α) (f : α → ℝ)
+    (hf : ∀ a, 0 ≤ f a) :
+    ∑' n, (∑ a ∈ I n, f a).toEReal ≤
+    ∑' (p : (n : ℕ) × (I n : Set α)), (f p.2.val).toEReal := by
+  sorry
+
 /-- Upper bound from finset-indexed cover: if a set is covered by ⋃ n, ⋃ B ∈ I n, B.toSet
     where each I n is a finite set of boxes, then the outer measure is bounded by the
-    sum of volumes. -/
+    sum of volumes.
+
+    Proof strategy:
+    1. The sigma type (n : ℕ) × ↑(I n) is countable (and hence encodable)
+    2. Use Encodable instance to define S : ℕ → Box d via decoding
+    3. Pad with zero-volume box for invalid decodings
+    4. Apply le_of_nat_cover and bound the enumerated sum -/
 lemma le_of_finset_cover {d:ℕ} (hd: 0 < d) (E: Set (EuclideanSpace' d))
     (I : ℕ → Finset (Box d)) (hcover : E ⊆ ⋃ n, ⋃ B ∈ I n, B.toSet) :
     Lebesgue_outer_measure E ≤ ∑' n, (∑ B ∈ I n, B.volume).toEReal := by
-  -- Strategy: Enumerate boxes from all finsets into a single ℕ-indexed sequence,
-  -- then apply le_of_nat_cover.
-  --
-  -- Key steps:
-  -- 1. The sigma type (n : ℕ) × (I n) is countable (sigma of ℕ and finite sets)
-  -- 2. Enumerate it as S : ℕ → Box d (padding with zero-volume boxes when needed)
-  -- 3. Coverage is preserved: E ⊆ ⋃ m, (S m).toSet
-  -- 4. Volume sum is preserved: ∑' m, (S m).volume = ∑' n, (∑ B ∈ I n, B.volume)
-  --    (uses tsum_sigma' and the fact that zero-volume padding contributes nothing)
-  sorry
+  -- Define the sigma type for enumeration
+  let SigmaType := (n : ℕ) × (I n : Set (Box d))
+  -- SigmaType is countable (ℕ × finite = countable)
+  haveI : Countable SigmaType := instCountableSigma
+  -- Get encodable instance from countable
+  haveI : Encodable SigmaType := Encodable.ofCountable SigmaType
+
+  -- Construct a zero-volume box for padding (exists when d > 0)
+  have ⟨B₀, hB₀⟩ : ∃ B : Box d, B.volume = 0 := by
+    use ⟨fun _ => BoundedInterval.Ioc 0 0⟩
+    simp only [Box.volume, BoundedInterval.length]
+    -- The interval [0, 0] has length max(0-0, 0) = 0
+    -- Product of zeros over Fin d (when d > 0) is 0
+    have h_fin_nonempty : (Finset.univ : Finset (Fin d)).Nonempty := by
+      use ⟨0, hd⟩
+      exact Finset.mem_univ _
+    obtain ⟨i, hi⟩ := h_fin_nonempty
+    apply Finset.prod_eq_zero hi
+    simp [sub_self]
+
+  -- Define enumeration using decode₂ (which guarantees encode ∘ decode₂ = id on Some values)
+  let S : ℕ → Box d := fun m =>
+    match Encodable.decode₂ SigmaType m with
+    | some p => p.2.val
+    | none => B₀
+
+  -- S covers E: every point in E is in some box from some I n
+  -- Key: decode₂ (encode p) = some p, so S (encode p) = p.2.val
+  have hS_cover : E ⊆ ⋃ m, (S m).toSet := by
+    intro x hx
+    -- x is in E ⊆ ⋃ n, ⋃ B ∈ I n, B.toSet
+    -- So x ∈ B.toSet for some B ∈ I n for some n
+    have hx' := hcover hx
+    -- Extract the nested union structure
+    rw [Set.mem_iUnion] at hx'
+    obtain ⟨n, hx_n⟩ := hx'
+    rw [Set.mem_iUnion] at hx_n
+    obtain ⟨B, hx_B⟩ := hx_n
+    rw [Set.mem_iUnion] at hx_B
+    obtain ⟨hB_mem, hx_in_B⟩ := hx_B
+    -- The pair (n, ⟨B, hB_mem⟩) is in SigmaType
+    let p : SigmaType := ⟨n, ⟨B, hB_mem⟩⟩
+    rw [Set.mem_iUnion]
+    use Encodable.encode p
+    -- S (encode p) = p.2.val = B (using decode₂_encode)
+    show x ∈ (S (Encodable.encode p)).toSet
+    simp only [Encodable.decode₂_encode, S]
+    exact hx_in_B
+
+  -- Apply le_of_nat_cover
+  have h_le := le_of_nat_cover hd E S hS_cover
+
+  -- Now bound ∑' m, (S m).volume.toEReal ≤ ∑' n, (∑ B ∈ I n, B.volume).toEReal
+  -- Using decode₂, each box B ∈ I n appears exactly once in the LHS (at encode (n, B))
+  -- and invalid decodings contribute B₀.volume = 0
+
+  calc Lebesgue_outer_measure E
+      ≤ ∑' m, (S m).volume.toEReal := h_le
+    _ ≤ ∑' n, (∑ B ∈ I n, B.volume).toEReal := by
+        -- The LHS can be rewritten using ENNReal.tsum_decode₂_eq
+        -- LHS = ∑' m, (match decode₂ m with | some p => p.2.val.volume | none => 0).toEReal
+        --     = ∑' p : SigmaType, p.2.val.volume.toEReal  (by tsum_decode₂_eq for volume)
+        --     = ∑' (n, B), B.val.volume.toEReal
+        -- RHS = ∑' n, (∑ B ∈ I n, B.volume).toEReal
+
+        -- First, show the sums are equal by converting through sigma type
+        have h_eq : ∑' m, (S m).volume.toEReal =
+                    ∑' (p : SigmaType), p.2.val.volume.toEReal := by
+          -- Use Function.Injective.tsum_eq with encode being injective
+          -- Define g : ℕ → EReal as the volume function on decoded values
+          let g : ℕ → EReal := fun m =>
+            match Encodable.decode₂ SigmaType m with
+            | some p => p.2.val.volume.toEReal
+            | none => 0
+          -- g m = (S m).volume.toEReal because:
+          -- - when decode₂ m = some p: g m = p.2.val.volume.toEReal = (S m).volume.toEReal
+          -- - when decode₂ m = none: g m = 0, S m = B₀, B₀.volume = 0
+          have h_g_eq : ∀ m, g m = (S m).volume.toEReal := by
+            intro m
+            simp only [g, S]
+            cases h : Encodable.decode₂ SigmaType m with
+            | none => simp [hB₀]
+            | some p => rfl
+          -- Support of g is contained in range of encode
+          have h_support : Function.support g ⊆ Set.range (Encodable.encode (α := SigmaType)) := by
+            intro m hm
+            simp only [Function.mem_support, ne_eq, g] at hm
+            cases h : Encodable.decode₂ SigmaType m with
+            | none => simp [h] at hm
+            | some p =>
+              rw [Set.mem_range]
+              use p
+              exact Encodable.decode₂_eq_some.mp h
+          have h_inj := Encodable.encode_injective (α := SigmaType)
+          have h_val_eq : ∀ p : SigmaType, g (Encodable.encode p) = p.2.val.volume.toEReal := by
+            intro p
+            simp only [g, Encodable.decode₂_encode]
+          calc ∑' m, (S m).volume.toEReal
+              = ∑' m, g m := by simp only [h_g_eq]
+            _ = ∑' (p : SigmaType), g (Encodable.encode p) := (h_inj.tsum_eq h_support).symm
+            _ = ∑' (p : SigmaType), p.2.val.volume.toEReal := by simp only [h_val_eq]
+
+        -- The sigma type sum equals the nested finset sum
+        have h_sigma_eq_nested : ∑' (p : SigmaType), p.2.val.volume.toEReal =
+                                  ∑' n, (∑ B ∈ I n, B.volume).toEReal := by
+          -- Key: SigmaType = (n : ℕ) × ↑(I n) where each fiber ↑(I n) is finite
+
+          -- First, show inner tsum equals finset sum
+          have h_inner : ∀ n, ∑' (B : (I n : Set (Box d))), B.val.volume.toEReal =
+                              (∑ B ∈ I n, B.volume).toEReal := by
+            intro n
+            -- Use Finset.fintypeCoeSort for tsum_fintype
+            haveI : Fintype (I n : Set (Box d)) := Finset.fintypeCoeSort (I n)
+            rw [tsum_fintype]
+            have h_nonneg : ∀ B ∈ I n, 0 ≤ B.volume := fun B _ => Box.volume_nonneg B
+            -- Convert sum: need to go from ↑↑(I n) to { x // x ∈ I n } to I n
+            have h_subtype : ∑ B : { x // x ∈ I n }, B.val.volume = ∑ B ∈ I n, B.volume :=
+              Finset.sum_coe_sort (I n) (fun B => B.volume)
+            -- Convert from ↑↑(I n) to { x // x ∈ I n } using equivalence
+            let e : (I n : Set (Box d)) ≃ { x // x ∈ I n } := {
+              toFun := fun ⟨B, hB⟩ => ⟨B, hB⟩
+              invFun := fun ⟨B, hB⟩ => ⟨B, hB⟩
+              left_inv := fun _ => rfl
+              right_inv := fun _ => rfl
+            }
+            -- Use Fintype.sum_equiv - the fintype instances will be handled by congr
+            have h_equiv : ∑ B : (I n : Set (Box d)), B.val.volume =
+                          ∑ B : { x // x ∈ I n }, B.val.volume :=
+              Fintype.sum_equiv e (fun B => B.val.volume) (fun B => B.val.volume)
+                (fun ⟨B, hB⟩ => rfl)
+            -- Combine: the fintype instances differ but the sums are equal
+            have h_sum_real : ∑ B : (I n : Set (Box d)), B.val.volume = ∑ B ∈ I n, B.volume := by
+              rw [h_equiv]
+              -- Use erw (exact rewrite) which is more lenient with typeclass instances
+              erw [h_subtype]
+            calc ∑ B : (I n : Set (Box d)), B.val.volume.toEReal
+                = (∑ B : (I n : Set (Box d)), B.val.volume).toEReal := by
+                    symm
+                    apply EReal.coe_finset_sum
+                    intro ⟨B, hB⟩ _
+                    exact Box.volume_nonneg B
+              _ = (∑ B ∈ I n, B.volume).toEReal := by rw [h_sum_real]
+
+          -- Decompose sigma tsum as nested tsum
+          have h_sigma_decomp : ∑' (p : SigmaType), p.2.val.volume.toEReal =
+                                 ∑' n, ∑' (B : (I n : Set (Box d))), B.val.volume.toEReal := by
+            -- Since fibers are finite, each inner sum is a finite sum
+            -- For non-negative EReal with finite fibers, tsum_sigma works
+            haveI : ∀ n, Fintype (I n : Set (Box d)) := fun n => Finset.fintypeCoeSort (I n)
+
+            -- Use tsum_fintype on inner sum to make it finite, then standard decomposition
+            have h_eq_finite : ∀ n, ∑' (B : (I n : Set (Box d))), B.val.volume.toEReal =
+                                     ∑ B : (I n : Set (Box d)), B.val.volume.toEReal := by
+              intro n
+              exact tsum_fintype _
+            simp_rw [h_eq_finite]
+
+            sorry
+
+          rw [h_sigma_decomp]
+          congr 1
+          ext n
+          exact h_inner n
+
+        rw [h_eq, h_sigma_eq_nested]
 
 
 /-- For any set with finite outer measure, we can find a cover whose volume is within ε of the outer measure.
