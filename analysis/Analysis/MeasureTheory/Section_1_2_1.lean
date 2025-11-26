@@ -212,47 +212,47 @@ noncomputable def bisect (I : BoundedInterval) : BoundedInterval × BoundedInter
   let m := I.midpoint
   (Icc a m, Icc m b)
 
-/-- Bisecting an interval gives distinct sub-intervals unless the interval is degenerate -/
-lemma bisect_fst_ne_snd (I : BoundedInterval) :
-    I.bisect.fst ≠ I.bisect.snd ∨ I.a = I.b := by
-  unfold bisect midpoint endpoints
-  cases I with
-  | Ioo a b =>
-    simp only [BoundedInterval.a, BoundedInterval.b]
-    by_cases hab : a = b
-    · right; exact hab
-    · left
-      intro h
-      have ha : a = (a + b) / 2 := congrArg BoundedInterval.a h
-      have hb : (a + b) / 2 = b := congrArg BoundedInterval.b h
-      exact hab (by linarith)
-  | Icc a b =>
-    simp only [BoundedInterval.a, BoundedInterval.b]
-    by_cases hab : a = b
-    · right; exact hab
-    · left
-      intro h
-      have ha : a = (a + b) / 2 := congrArg BoundedInterval.a h
-      have hb : (a + b) / 2 = b := congrArg BoundedInterval.b h
-      exact hab (by linarith)
-  | Ioc a b =>
-    simp only [BoundedInterval.a, BoundedInterval.b]
-    by_cases hab : a = b
-    · right; exact hab
-    · left
-      intro h
-      have ha : a = (a + b) / 2 := congrArg BoundedInterval.a h
-      have hb : (a + b) / 2 = b := congrArg BoundedInterval.b h
-      exact hab (by linarith)
-  | Ico a b =>
-    simp only [BoundedInterval.a, BoundedInterval.b]
-    by_cases hab : a = b
-    · right; exact hab
-    · left
-      intro h
-      have ha : a = (a + b) / 2 := congrArg BoundedInterval.a h
-      have hb : (a + b) / 2 = b := congrArg BoundedInterval.b h
-      exact hab (by linarith)
+-- Bisecting an interval gives distinct sub-intervals unless the interval is degenerate -/
+-- lemma bisect_fst_ne_snd (I : BoundedInterval) :
+--     I.bisect.fst ≠ I.bisect.snd ∨ I.a = I.b := by
+--   unfold bisect midpoint endpoints
+--   cases I with
+--   | Ioo a b =>
+--     simp only [BoundedInterval.a, BoundedInterval.b]
+--     by_cases hab : a = b
+--     · right; exact hab
+--     · left
+--       intro h
+--       have ha : a = (a + b) / 2 := congrArg BoundedInterval.a h
+--       have hb : (a + b) / 2 = b := congrArg BoundedInterval.b h
+--       exact hab (by linarith)
+--   | Icc a b =>
+--     simp only [BoundedInterval.a, BoundedInterval.b]
+--     by_cases hab : a = b
+--     · right; exact hab
+--     · left
+--       intro h
+--       have ha : a = (a + b) / 2 := congrArg BoundedInterval.a h
+--       have hb : (a + b) / 2 = b := congrArg BoundedInterval.b h
+--       exact hab (by linarith)
+--   | Ioc a b =>
+--     simp only [BoundedInterval.a, BoundedInterval.b]
+--     by_cases hab : a = b
+--     · right; exact hab
+--     · left
+--       intro h
+--       have ha : a = (a + b) / 2 := congrArg BoundedInterval.a h
+--       have hb : (a + b) / 2 = b := congrArg BoundedInterval.b h
+--       exact hab (by linarith)
+--   | Ico a b =>
+--     simp only [BoundedInterval.a, BoundedInterval.b]
+--     by_cases hab : a = b
+--     · right; exact hab
+--     · left
+--       intro h
+--       have ha : a = (a + b) / 2 := congrArg BoundedInterval.a h
+--       have hb : (a + b) / 2 = b := congrArg BoundedInterval.b h
+--       exact hab (by linarith)
 
 /-- The left half of bisection has half the original length -/
 lemma bisect_fst_length (I : BoundedInterval) :
@@ -336,9 +336,9 @@ lemma midpoint_eq_a_add_half_length (I : BoundedInterval) (h : I.a ≤ I.b) :
     simp only [BoundedInterval.a, BoundedInterval.b] at h ⊢
     simp [max_eq_left (sub_nonneg.mpr h)]; ring
 
-/-- For Icc intervals (the result of bisect), midpoint = a + (b-a)/2 -/
-lemma Icc_midpoint_eq (a b : ℝ) : (Icc a b : BoundedInterval).midpoint = (a + b) / 2 := by
-  simp [midpoint, endpoints]
+-- For Icc intervals (the result of bisect), midpoint = a + (b-a)/2 -/
+-- lemma Icc_midpoint_eq (a b : ℝ) : (Icc a b : BoundedInterval).midpoint = (a + b) / 2 := by
+--   simp [midpoint, endpoints]
 
 /-- The midpoint is in the first half of bisection (as the right endpoint of Icc) -/
 lemma midpoint_mem_bisect_fst (I : BoundedInterval) (h : I.toSet.Nonempty) :
@@ -378,31 +378,31 @@ lemma midpoint_mem_bisect_snd (I : BoundedInterval) (h : I.toSet.Nonempty) :
     simp only [Set.mem_Ico] at hx
     simp only [Set.mem_Icc]; exact ⟨by linarith, by linarith⟩
 
-/-- Every point in I.toSet is in one half of the bisection -/
-lemma mem_bisect_of_mem_toSet (I : BoundedInterval) (x : ℝ) (hx : x ∈ I.toSet) :
-    x ∈ (I.bisect.fst).toSet ∨ x ∈ (I.bisect.snd).toSet := by
-  unfold bisect midpoint endpoints toSet at *
-  cases I with
-  | Ioo a b =>
-    simp only [Set.mem_Ioo] at hx
-    by_cases hm : x ≥ (a + b) / 2
-    · right; simp only [Set.mem_Icc]; exact ⟨hm, by linarith⟩
-    · left; push_neg at hm; simp only [Set.mem_Icc]; exact ⟨by linarith, by linarith⟩
-  | Icc a b =>
-    simp only [Set.mem_Icc] at hx
-    by_cases hm : x ≥ (a + b) / 2
-    · right; simp only [Set.mem_Icc]; exact ⟨hm, by linarith⟩
-    · left; push_neg at hm; simp only [Set.mem_Icc]; exact ⟨by linarith, by linarith⟩
-  | Ioc a b =>
-    simp only [Set.mem_Ioc] at hx
-    by_cases hm : x ≥ (a + b) / 2
-    · right; simp only [Set.mem_Icc]; exact ⟨hm, by linarith⟩
-    · left; push_neg at hm; simp only [Set.mem_Icc]; exact ⟨by linarith, by linarith⟩
-  | Ico a b =>
-    simp only [Set.mem_Ico] at hx
-    by_cases hm : x ≥ (a + b) / 2
-    · right; simp only [Set.mem_Icc]; exact ⟨hm, by linarith⟩
-    · left; push_neg at hm; simp only [Set.mem_Icc]; exact ⟨by linarith, by linarith⟩
+-- Every point in I.toSet is in one half of the bisection -/
+-- lemma mem_bisect_of_mem_toSet (I : BoundedInterval) (x : ℝ) (hx : x ∈ I.toSet) :
+--     x ∈ (I.bisect.fst).toSet ∨ x ∈ (I.bisect.snd).toSet := by
+--   unfold bisect midpoint endpoints toSet at *
+--   cases I with
+--   | Ioo a b =>
+--     simp only [Set.mem_Ioo] at hx
+--     by_cases hm : x ≥ (a + b) / 2
+--     · right; simp only [Set.mem_Icc]; exact ⟨hm, by linarith⟩
+--     · left; push_neg at hm; simp only [Set.mem_Icc]; exact ⟨by linarith, by linarith⟩
+--   | Icc a b =>
+--     simp only [Set.mem_Icc] at hx
+--     by_cases hm : x ≥ (a + b) / 2
+--     · right; simp only [Set.mem_Icc]; exact ⟨hm, by linarith⟩
+--     · left; push_neg at hm; simp only [Set.mem_Icc]; exact ⟨by linarith, by linarith⟩
+--   | Ioc a b =>
+--     simp only [Set.mem_Ioc] at hx
+--     by_cases hm : x ≥ (a + b) / 2
+--     · right; simp only [Set.mem_Icc]; exact ⟨hm, by linarith⟩
+--     · left; push_neg at hm; simp only [Set.mem_Icc]; exact ⟨by linarith, by linarith⟩
+--   | Ico a b =>
+--     simp only [Set.mem_Ico] at hx
+--     by_cases hm : x ≥ (a + b) / 2
+--     · right; simp only [Set.mem_Icc]; exact ⟨hm, by linarith⟩
+--     · left; push_neg at hm; simp only [Set.mem_Icc]; exact ⟨by linarith, by linarith⟩
 
 /-- A point is in I.bisect.snd iff it's in I.toSet and at or above the midpoint -/
 lemma mem_bisect_snd_iff (I : BoundedInterval) (x : ℝ) (hx : x ∈ I.toSet) :
@@ -488,26 +488,26 @@ lemma bisect_snd_eq_endpoints {I₁ I₂ : BoundedInterval}
   -- Now hm' : (a₁ + b₁)/2 = (a₂ + b₂)/2 and hb' : b₁ = b₂
   all_goals constructor <;> linarith
 
-/-- When a = b, bisect.fst = bisect.snd -/
-lemma bisect_fst_eq_snd_of_endpoints_eq {I : BoundedInterval} (h : I.a = I.b) :
-    I.bisect.fst = I.bisect.snd := by
-  cases I with
-  | Ioo a b => simp only [BoundedInterval.a, BoundedInterval.b] at h; simp [bisect, endpoints, midpoint, h]
-  | Icc a b => simp only [BoundedInterval.a, BoundedInterval.b] at h; simp [bisect, endpoints, midpoint, h]
-  | Ioc a b => simp only [BoundedInterval.a, BoundedInterval.b] at h; simp [bisect, endpoints, midpoint, h]
-  | Ico a b => simp only [BoundedInterval.a, BoundedInterval.b] at h; simp [bisect, endpoints, midpoint, h]
+-- When a = b, bisect.fst = bisect.snd -/
+-- lemma bisect_fst_eq_snd_of_endpoints_eq {I : BoundedInterval} (h : I.a = I.b) :
+--     I.bisect.fst = I.bisect.snd := by
+--   cases I with
+--   | Ioo a b => simp only [BoundedInterval.a, BoundedInterval.b] at h; simp [bisect, endpoints, midpoint, h]
+--   | Icc a b => simp only [BoundedInterval.a, BoundedInterval.b] at h; simp [bisect, endpoints, midpoint, h]
+--   | Ioc a b => simp only [BoundedInterval.a, BoundedInterval.b] at h; simp [bisect, endpoints, midpoint, h]
+--   | Ico a b => simp only [BoundedInterval.a, BoundedInterval.b] at h; simp [bisect, endpoints, midpoint, h]
 
-/-- Cross-case fst=snd equality forces a₁ = b₁ when a₁ = a₂ -/
-lemma bisect_fst_eq_snd_forces_degenerate {I₁ I₂ : BoundedInterval}
-    (h : I₁.bisect.fst = I₂.bisect.snd) (ha : I₁.a = I₂.a) : I₁.a = I₁.b ∧ I₂.a = I₂.b := by
-  cases I₁ with | _ a₁ b₁ =>
-  cases I₂ with | _ a₂ b₂ =>
-  simp only [bisect, endpoints, midpoint, BoundedInterval.a, BoundedInterval.b] at h ha ⊢
-  -- Extract the equality of left and right endpoints from bisect equality
-  have h_a_eq : a₁ = (a₂ + b₂) / 2 := congrArg BoundedInterval.a h
-  have h_b_eq : (a₁ + b₁) / 2 = b₂ := congrArg BoundedInterval.b h
-  simp only [] at h_a_eq h_b_eq
-  constructor <;> linarith
+-- Cross-case fst=snd equality forces a₁ = b₁ when a₁ = a₂ -/
+-- lemma bisect_fst_eq_snd_forces_degenerate {I₁ I₂ : BoundedInterval}
+--     (h : I₁.bisect.fst = I₂.bisect.snd) (ha : I₁.a = I₂.a) : I₁.a = I₁.b ∧ I₂.a = I₂.b := by
+--   cases I₁ with | _ a₁ b₁ =>
+--   cases I₂ with | _ a₂ b₂ =>
+--   simp only [bisect, endpoints, midpoint, BoundedInterval.a, BoundedInterval.b] at h ha ⊢
+--   -- Extract the equality of left and right endpoints from bisect equality
+--   have h_a_eq : a₁ = (a₂ + b₂) / 2 := congrArg BoundedInterval.a h
+--   have h_b_eq : (a₁ + b₁) / 2 = b₂ := congrArg BoundedInterval.b h
+--   simp only [] at h_a_eq h_b_eq
+--   constructor <;> linarith
 
 /-- Cross-case: if bisect.fst = bisect.snd, the intervals have overlapping midpoint and endpoint -/
 lemma bisect_fst_eq_snd_shift {I₁ I₂ : BoundedInterval}
@@ -519,21 +519,21 @@ lemma bisect_fst_eq_snd_shift {I₁ I₂ : BoundedInterval}
   all_goals simp only [bisect, endpoints, midpoint, BoundedInterval.a, BoundedInterval.b] at ha' ⊢
   all_goals linarith
 
-/-- Cross-case: if bisect.snd = bisect.fst, the intervals have overlapping endpoint and midpoint -/
-lemma bisect_snd_eq_fst_shift {I₁ I₂ : BoundedInterval}
-    (h : I₁.bisect.snd = I₂.bisect.fst) : I₂.a = (I₁.a + I₁.b) / 2 := by
-  have : I₂.bisect.fst = I₁.bisect.snd := h.symm
-  exact bisect_fst_eq_snd_shift this
+-- Cross-case: if bisect.snd = bisect.fst, the intervals have overlapping endpoint and midpoint -/
+-- lemma bisect_snd_eq_fst_shift {I₁ I₂ : BoundedInterval}
+--     (h : I₁.bisect.snd = I₂.bisect.fst) : I₂.a = (I₁.a + I₁.b) / 2 := by
+--   have : I₂.bisect.fst = I₁.bisect.snd := h.symm
+--   exact bisect_fst_eq_snd_shift this
 
-/-- Icc intervals with equal endpoints are equal -/
-@[simp]
-lemma Icc_eq_Icc_iff {a₁ b₁ a₂ b₂ : ℝ} :
-    (Icc a₁ b₁ : BoundedInterval) = Icc a₂ b₂ ↔ a₁ = a₂ ∧ b₁ = b₂ := by
-  constructor
-  · intro h
-    exact ⟨congrArg BoundedInterval.a h, congrArg BoundedInterval.b h⟩
-  · intro ⟨ha, hb⟩
-    simp [ha, hb]
+-- Icc intervals with equal endpoints are equal -/
+-- @[simp]
+-- lemma Icc_eq_Icc_iff {a₁ b₁ a₂ b₂ : ℝ} :
+--     (Icc a₁ b₁ : BoundedInterval) = Icc a₂ b₂ ↔ a₁ = a₂ ∧ b₁ = b₂ := by
+--   constructor
+--   · intro h
+--     exact ⟨congrArg BoundedInterval.a h, congrArg BoundedInterval.b h⟩
+--   · intro ⟨ha, hb⟩
+--     simp [ha, hb]
 
 end BoundedInterval
 
@@ -694,116 +694,116 @@ lemma dist_le_diameter {d:ℕ} (B: Box d) {x y: EuclideanSpace' d}
   · -- √(∑ (x i - y i)²) is in the set
     exact ⟨x, hx, y, hy, rfl⟩
 
-/-- Diameter is bounded by √d times the maximum side length -/
-lemma diameter_bound_by_sides {d:ℕ} (B: Box d) :
-    B.diameter ≤ Real.sqrt d * (⨆ i, |B.side i|ₗ) := by
-  unfold diameter
-  by_cases h : B.toSet.Nonempty
-  · apply csSup_le
-    · obtain ⟨x, hx⟩ := h
-      exact ⟨√(∑ i, (x i - x i)^2), x, hx, x, hx, rfl⟩
-    · intro r ⟨x, hx, y, hy, hr⟩
-      -- √(∑ i, (x i - y i)²) ≤ √(d * max²) = √d * max
-      rw [hr]
-      let max_side := ⨆ i, |B.side i|ₗ
-      -- Each coordinate difference is bounded by the maximum side length
-      have coord_bound : ∀ i, |(x - y) i| ≤ max_side := by
-        intro i
-        have hx_i : x i ∈ (B.side i).toSet := hx i (Set.mem_univ i)
-        have hy_i : y i ∈ (B.side i).toSet := hy i (Set.mem_univ i)
-        -- |x i - y i| ≤ |B.side i|ₗ ≤ max_side
-        have bound_by_side : |(x - y) i| ≤ |B.side i|ₗ := by
-          cases h_side : B.side i with
-          | Ioo a b =>
-              simp [BoundedInterval.toSet, h_side] at hx_i hy_i
-              simp [BoundedInterval.length]
-              left
-              rw [abs_sub_le_iff]
-              constructor <;> linarith [hx_i.1, hx_i.2, hy_i.1, hy_i.2]
-          | Icc a b =>
-              simp [BoundedInterval.toSet, h_side] at hx_i hy_i
-              simp [BoundedInterval.length]
-              left
-              rw [abs_sub_le_iff]
-              constructor <;> linarith [hx_i.1, hx_i.2, hy_i.1, hy_i.2]
-          | Ioc a b =>
-              simp [BoundedInterval.toSet, h_side] at hx_i hy_i
-              simp [BoundedInterval.length]
-              left
-              rw [abs_sub_le_iff]
-              constructor <;> linarith [hx_i.1, hx_i.2, hy_i.1, hy_i.2]
-          | Ico a b =>
-              simp [BoundedInterval.toSet, h_side] at hx_i hy_i
-              simp [BoundedInterval.length]
-              left
-              rw [abs_sub_le_iff]
-              constructor <;> linarith [hx_i.1, hx_i.2, hy_i.1, hy_i.2]
-        calc |(x - y) i|
-            ≤ |B.side i|ₗ := bound_by_side
-          _ ≤ max_side := by
-              show |B.side i|ₗ ≤ ⨆ j, |B.side j|ₗ
-              apply le_ciSup _ i
-              -- The set is bounded above
-              refine ⟨∑ j : Fin d, |B.side j|ₗ, ?_⟩
-              intro r ⟨j, hj⟩
-              simp only at hj
-              rw [← hj]
-              -- |B.side j|ₗ ≤ sum of all sides
-              have single_le : ∀ j : Fin d, |B.side j|ₗ ≤ ∑ k : Fin d, |B.side k|ₗ := by
-                intro j'
-                calc |B.side j'|ₗ
-                    = ∑ k ∈ ({j'} : Finset (Fin d)), |B.side k|ₗ := by simp
-                  _ ≤ ∑ k ∈ Finset.univ, |B.side k|ₗ := by
-                      apply Finset.sum_le_sum_of_subset_of_nonneg
-                      · intro x _; simp
-                      · intro k _ _; simp [BoundedInterval.length]
-                  _ = ∑ k : Fin d, |B.side k|ₗ := rfl
-              exact single_le j
-      -- Now: (x i - y i)² ≤ max_side² for each i
-      have sq_bound : ∀ i, (x i - y i)^2 ≤ max_side^2 := by
-        intro i
-        have := coord_bound i
-        calc (x i - y i)^2
-            ≤ |(x i - y i)|^2 := by rw [← sq_abs]
-          _ = |(x - y) i|^2 := by rfl
-          _ ≤ max_side^2 := by
-              apply sq_le_sq'
-              · linarith [abs_nonneg ((x - y) i)]
-              · exact this
-      -- Sum: ∑ i, (x i - y i)² ≤ d * max_side²
-      have sum_bound : ∑ i, (x i - y i)^2 ≤ d * max_side^2 := by
-        calc ∑ i, (x i - y i)^2
-            ≤ ∑ i : Fin d, max_side^2 := by
-                apply Finset.sum_le_sum
-                intro i _
-                exact sq_bound i
-          _ = Finset.card (Finset.univ : Finset (Fin d)) * max_side^2 := by
-                rw [Finset.sum_const, nsmul_eq_mul]
-          _ = d * max_side^2 := by
-                rw [Finset.card_fin]
-      -- Apply sqrt to both sides
-      calc √(∑ i, (x i - y i)^2)
-          ≤ √(d * max_side^2) := by
-              apply Real.sqrt_le_sqrt
-              exact sum_bound
-        _ = √d * √(max_side^2) := by
-              rw [Real.sqrt_mul (Nat.cast_nonneg d)]
-        _ = √d * max_side := by
-              rw [Real.sqrt_sq (by
-                -- max_side ≥ 0
-                apply Real.iSup_nonneg
-                intro i
-                -- BoundedInterval.length is max (b - a) 0, which is always ≥ 0
-                simp [BoundedInterval.length])]
-  · rw [Set.not_nonempty_iff_eq_empty] at h
-    rw [h]
-    simp [sSup]
-    apply mul_nonneg
-    · exact Real.sqrt_nonneg _
-    · apply Real.iSup_nonneg
-      intro i
-      -- BoundedInterval.length is max (b - a) 0, which is always ≥ 0
-      simp [BoundedInterval.length]
+-- Diameter is bounded by √d times the maximum side length -/
+-- lemma diameter_bound_by_sides {d:ℕ} (B: Box d) :
+--     B.diameter ≤ Real.sqrt d * (⨆ i, |B.side i|ₗ) := by
+--   unfold diameter
+--   by_cases h : B.toSet.Nonempty
+--   · apply csSup_le
+--     · obtain ⟨x, hx⟩ := h
+--       exact ⟨√(∑ i, (x i - x i)^2), x, hx, x, hx, rfl⟩
+--     · intro r ⟨x, hx, y, hy, hr⟩
+--       -- √(∑ i, (x i - y i)²) ≤ √(d * max²) = √d * max
+--       rw [hr]
+--       let max_side := ⨆ i, |B.side i|ₗ
+--       -- Each coordinate difference is bounded by the maximum side length
+--       have coord_bound : ∀ i, |(x - y) i| ≤ max_side := by
+--         intro i
+--         have hx_i : x i ∈ (B.side i).toSet := hx i (Set.mem_univ i)
+--         have hy_i : y i ∈ (B.side i).toSet := hy i (Set.mem_univ i)
+--         -- |x i - y i| ≤ |B.side i|ₗ ≤ max_side
+--         have bound_by_side : |(x - y) i| ≤ |B.side i|ₗ := by
+--           cases h_side : B.side i with
+--           | Ioo a b =>
+--               simp [BoundedInterval.toSet, h_side] at hx_i hy_i
+--               simp [BoundedInterval.length]
+--               left
+--               rw [abs_sub_le_iff]
+--               constructor <;> linarith [hx_i.1, hx_i.2, hy_i.1, hy_i.2]
+--           | Icc a b =>
+--               simp [BoundedInterval.toSet, h_side] at hx_i hy_i
+--               simp [BoundedInterval.length]
+--               left
+--               rw [abs_sub_le_iff]
+--               constructor <;> linarith [hx_i.1, hx_i.2, hy_i.1, hy_i.2]
+--           | Ioc a b =>
+--               simp [BoundedInterval.toSet, h_side] at hx_i hy_i
+--               simp [BoundedInterval.length]
+--               left
+--               rw [abs_sub_le_iff]
+--               constructor <;> linarith [hx_i.1, hx_i.2, hy_i.1, hy_i.2]
+--           | Ico a b =>
+--               simp [BoundedInterval.toSet, h_side] at hx_i hy_i
+--               simp [BoundedInterval.length]
+--               left
+--               rw [abs_sub_le_iff]
+--               constructor <;> linarith [hx_i.1, hx_i.2, hy_i.1, hy_i.2]
+--         calc |(x - y) i|
+--             ≤ |B.side i|ₗ := bound_by_side
+--           _ ≤ max_side := by
+--               show |B.side i|ₗ ≤ ⨆ j, |B.side j|ₗ
+--               apply le_ciSup _ i
+--               -- The set is bounded above
+--               refine ⟨∑ j : Fin d, |B.side j|ₗ, ?_⟩
+--               intro r ⟨j, hj⟩
+--               simp only at hj
+--               rw [← hj]
+--               -- |B.side j|ₗ ≤ sum of all sides
+--               have single_le : ∀ j : Fin d, |B.side j|ₗ ≤ ∑ k : Fin d, |B.side k|ₗ := by
+--                 intro j'
+--                 calc |B.side j'|ₗ
+--                     = ∑ k ∈ ({j'} : Finset (Fin d)), |B.side k|ₗ := by simp
+--                   _ ≤ ∑ k ∈ Finset.univ, |B.side k|ₗ := by
+--                       apply Finset.sum_le_sum_of_subset_of_nonneg
+--                       · intro x _; simp
+--                       · intro k _ _; simp [BoundedInterval.length]
+--                   _ = ∑ k : Fin d, |B.side k|ₗ := rfl
+--               exact single_le j
+--       -- Now: (x i - y i)² ≤ max_side² for each i
+--       have sq_bound : ∀ i, (x i - y i)^2 ≤ max_side^2 := by
+--         intro i
+--         have := coord_bound i
+--         calc (x i - y i)^2
+--             ≤ |(x i - y i)|^2 := by rw [← sq_abs]
+--           _ = |(x - y) i|^2 := by rfl
+--           _ ≤ max_side^2 := by
+--               apply sq_le_sq'
+--               · linarith [abs_nonneg ((x - y) i)]
+--               · exact this
+--       -- Sum: ∑ i, (x i - y i)² ≤ d * max_side²
+--       have sum_bound : ∑ i, (x i - y i)^2 ≤ d * max_side^2 := by
+--         calc ∑ i, (x i - y i)^2
+--             ≤ ∑ i : Fin d, max_side^2 := by
+--                 apply Finset.sum_le_sum
+--                 intro i _
+--                 exact sq_bound i
+--           _ = Finset.card (Finset.univ : Finset (Fin d)) * max_side^2 := by
+--                 rw [Finset.sum_const, nsmul_eq_mul]
+--           _ = d * max_side^2 := by
+--                 rw [Finset.card_fin]
+--       -- Apply sqrt to both sides
+--       calc √(∑ i, (x i - y i)^2)
+--           ≤ √(d * max_side^2) := by
+--               apply Real.sqrt_le_sqrt
+--               exact sum_bound
+--         _ = √d * √(max_side^2) := by
+--               rw [Real.sqrt_mul (Nat.cast_nonneg d)]
+--         _ = √d * max_side := by
+--               rw [Real.sqrt_sq (by
+--                 -- max_side ≥ 0
+--                 apply Real.iSup_nonneg
+--                 intro i
+--                 -- BoundedInterval.length is max (b - a) 0, which is always ≥ 0
+--                 simp [BoundedInterval.length])]
+--   · rw [Set.not_nonempty_iff_eq_empty] at h
+--     rw [h]
+--     simp [sSup]
+--     apply mul_nonneg
+--     · exact Real.sqrt_nonneg _
+--     · apply Real.iSup_nonneg
+--       intro i
+--       -- BoundedInterval.length is max (b - a) 0, which is always ≥ 0
+--       simp [BoundedInterval.length]
 
 /-- For any nonempty interval and target value less than the length,
     we can find two points in the interval with separation exceeding the target.
@@ -1920,43 +1920,43 @@ lemma le_of_nat_cover {d:ℕ} (hd: 0 < d) (E: Set (EuclideanSpace' d))
   · -- S is in the set of covers
     exact ⟨S, hcover, rfl⟩
 
-/-- For ENNReal values, summing over an encodable type via decoding (using decode₂) equals
-    summing over the type. Uses decode₂ which only returns values where encode a = n.
-    The sum over ℕ hits each element of α exactly once (at m = encode a)
-    and contributes 0 for invalid encodings.
-    Key: encode is injective and decode₂ (encode a) = some a. -/
-lemma ENNReal.tsum_decode₂_eq {α : Type*} [Encodable α] (f : α → ENNReal) :
-    ∑' (m : ℕ), (match Encodable.decode₂ α m with
-                 | some a => f a
-                 | none => 0) = ∑' (a : α), f a := by
-  -- Define the function g(m) that matches decode₂
-  let g : ℕ → ENNReal := fun m =>
-    match Encodable.decode₂ α m with
-    | some a => f a
-    | none => 0
+-- For ENNReal values, summing over an encodable type via decoding (using decode₂) equals
+    -- summing over the type. Uses decode₂ which only returns values where encode a = n.
+    -- The sum over ℕ hits each element of α exactly once (at m = encode a)
+    -- and contributes 0 for invalid encodings.
+    -- Key: encode is injective and decode₂ (encode a) = some a. -/
+-- lemma ENNReal.tsum_decode₂_eq {α : Type*} [Encodable α] (f : α → ENNReal) :
+--     ∑' (m : ℕ), (match Encodable.decode₂ α m with
+--                  | some a => f a
+--                  | none => 0) = ∑' (a : α), f a := by
+--   -- Define the function g(m) that matches decode₂
+--   let g : ℕ → ENNReal := fun m =>
+--     match Encodable.decode₂ α m with
+--     | some a => f a
+--     | none => 0
 
-  -- Key: support of g is contained in range of encode
-  have h_support : Function.support g ⊆ Set.range (Encodable.encode (α := α)) := by
-    intro m hm
-    simp only [Function.mem_support, ne_eq, g] at hm
-    -- If g m ≠ 0, then decode₂ m = some a for some a
-    cases h : Encodable.decode₂ α m with
-    | none => simp [h] at hm
-    | some a =>
-      -- From decode₂ m = some a, we get encode a = m (key property of decode₂!)
-      rw [Set.mem_range]
-      use a
-      exact Encodable.decode₂_eq_some.mp h
+--   -- Key: support of g is contained in range of encode
+--   have h_support : Function.support g ⊆ Set.range (Encodable.encode (α := α)) := by
+--     intro m hm
+--     simp only [Function.mem_support, ne_eq, g] at hm
+--     -- If g m ≠ 0, then decode₂ m = some a for some a
+--     cases h : Encodable.decode₂ α m with
+--     | none => simp [h] at hm
+--     | some a =>
+--       -- From decode₂ m = some a, we get encode a = m (key property of decode₂!)
+--       rw [Set.mem_range]
+--       use a
+--       exact Encodable.decode₂_eq_some.mp h
 
-  -- Use Function.Injective.tsum_eq with encode
-  have h_inj := Encodable.encode_injective (α := α)
-  have h_eq : ∀ a, g (Encodable.encode a) = f a := by
-    intro a
-    simp only [g, Encodable.decode₂_encode]
+--   -- Use Function.Injective.tsum_eq with encode
+--   have h_inj := Encodable.encode_injective (α := α)
+--   have h_eq : ∀ a, g (Encodable.encode a) = f a := by
+--     intro a
+--     simp only [g, Encodable.decode₂_encode]
 
-  calc ∑' m, g m
-      = ∑' a, g (Encodable.encode a) := (h_inj.tsum_eq h_support).symm
-    _ = ∑' a, f a := by simp only [h_eq]
+--   calc ∑' m, g m
+--       = ∑' a, g (Encodable.encode a) := (h_inj.tsum_eq h_support).symm
+--     _ = ∑' a, f a := by simp only [h_eq]
 
 /-- For non-negative reals, toEReal commutes with finite sums.
     Uses induction on the finset with EReal.coe_add. -/
@@ -2301,25 +2301,25 @@ lemma exists_cover_close {d:ℕ} (hd: 0 < d)
   exact ⟨S, hS_cover, le_of_lt hv_lt⟩
 
 
-/-- The set of indices of boxes that intersect a given set E -/
-def intersecting_indices {d:ℕ} (S: ℕ → Box d) (E: Set (EuclideanSpace' d)) : Set ℕ :=
-  { n | ((S n).toSet ∩ E).Nonempty }
+-- The set of indices of boxes that intersect a given set E -/
+-- def intersecting_indices {d:ℕ} (S: ℕ → Box d) (E: Set (EuclideanSpace' d)) : Set ℕ :=
+--   { n | ((S n).toSet ∩ E).Nonempty }
 
-/-- If all boxes have diameter less than dist(E,F), then the sets of indices intersecting
-    E and F are disjoint. This follows from Box.not_intersects_both_of_diameter_lt. -/
-lemma partition_disjoint {d:ℕ} {E F: Set (EuclideanSpace' d)} (S: ℕ → Box d)
-    (_h_sep: 0 < set_dist E F) (h_diam: ∀ n, (S n).diameter < set_dist E F) :
-    Disjoint (intersecting_indices S E) (intersecting_indices S F) := by
-  rw [Set.disjoint_iff]
-  intro n ⟨hE, hF⟩
-  -- Box n intersects both E and F
-  unfold intersecting_indices at hE hF
-  simp at hE hF
-  -- But diameter of box n < dist(E,F)
-  have h_diam_n := h_diam n
-  -- This contradicts Box.not_intersects_both_of_diameter_lt
-  have := Box.not_intersects_both_of_diameter_lt (S n) E F h_diam_n
-  exact this ⟨hE, hF⟩
+-- If all boxes have diameter less than dist(E,F), then the sets of indices intersecting
+    -- E and F are disjoint. This follows from Box.not_intersects_both_of_diameter_lt. -/
+-- lemma partition_disjoint {d:ℕ} {E F: Set (EuclideanSpace' d)} (S: ℕ → Box d)
+--     (_h_sep: 0 < set_dist E F) (h_diam: ∀ n, (S n).diameter < set_dist E F) :
+--     Disjoint (intersecting_indices S E) (intersecting_indices S F) := by
+--   rw [Set.disjoint_iff]
+--   intro n ⟨hE, hF⟩
+--   -- Box n intersects both E and F
+--   unfold intersecting_indices at hE hF
+--   simp at hE hF
+--   -- But diameter of box n < dist(E,F)
+--   have h_diam_n := h_diam n
+--   -- This contradicts Box.not_intersects_both_of_diameter_lt
+--   have := Box.not_intersects_both_of_diameter_lt (S n) E F h_diam_n
+--   exact this ⟨hE, hF⟩
 
 end Lebesgue_outer_measure
 
