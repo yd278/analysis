@@ -1926,6 +1926,15 @@ lemma le_of_nat_cover {d:ℕ} (hd: 0 < d) (E: Set (EuclideanSpace' d))
 lemma le_of_finset_cover {d:ℕ} (hd: 0 < d) (E: Set (EuclideanSpace' d))
     (I : ℕ → Finset (Box d)) (hcover : E ⊆ ⋃ n, ⋃ B ∈ I n, B.toSet) :
     Lebesgue_outer_measure E ≤ ∑' n, (∑ B ∈ I n, B.volume).toEReal := by
+  -- Strategy: Enumerate boxes from all finsets into a single ℕ-indexed sequence,
+  -- then apply le_of_nat_cover.
+  --
+  -- Key steps:
+  -- 1. The sigma type (n : ℕ) × (I n) is countable (sigma of ℕ and finite sets)
+  -- 2. Enumerate it as S : ℕ → Box d (padding with zero-volume boxes when needed)
+  -- 3. Coverage is preserved: E ⊆ ⋃ m, (S m).toSet
+  -- 4. Volume sum is preserved: ∑' m, (S m).volume = ∑' n, (∑ B ∈ I n, B.volume)
+  --    (uses tsum_sigma' and the fact that zero-volume padding contributes nothing)
   sorry
 
 
@@ -2433,19 +2442,10 @@ theorem Lebesgue_outer_measure.union_of_separated {d:ℕ} (hd: 0 < d) {E F : Set
                       rw [hk_zero, Box.subdivide_iter_zero, Finset.sum_singleton, hvol_zero]
 
               -- Step 2: Apply helper lemma for tsum inequality in EReal
-              -- Helper: box volume is non-negative
-              have hvol_nonneg : ∀ B : Box d, 0 ≤ B.volume := by
-                intro B
-                unfold Box.volume
-                apply Finset.prod_nonneg
-                intro i _
-                unfold BoundedInterval.length
-                exact le_max_right _ _
-
               have h_E_nonneg : ∀ n, 0 ≤ ∑ B' ∈ I_E_n n, B'.volume := by
-                intro n; apply Finset.sum_nonneg; intro B' _; exact hvol_nonneg B'
+                intro n; apply Finset.sum_nonneg; intro B' _; exact Box.volume_nonneg B'
               have h_F_nonneg : ∀ n, 0 ≤ ∑ B' ∈ I_F_n n, B'.volume := by
-                intro n; apply Finset.sum_nonneg; intro B' _; exact hvol_nonneg B'
+                intro n; apply Finset.sum_nonneg; intro B' _; exact Box.volume_nonneg B'
 
               -- Apply the helper lemma
               exact EReal.tsum_add_le_of_nonneg_pointwise h_E_nonneg h_F_nonneg h_pw_le
