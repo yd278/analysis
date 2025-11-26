@@ -105,6 +105,44 @@ lemma EReal.lt_add_of_pos_coe {x : EReal} {ε : ℝ} (hε : 0 < ε) (h_ne_bot : 
   have : 0 + x < ↑ε + x := EReal.add_lt_add_of_lt_of_le h_eps (le_refl x) h_ne_bot h_ne_top
   simpa [add_comm] using this
 
+/-- EReal epsilon argument: if for all positive ε, a ≤ b + ε, then a ≤ b.
+    This holds when b ≠ ⊤ (if b = ⊤, the implication is trivially true). -/
+lemma EReal.le_of_forall_pos_le_add' {a b : EReal}
+    (h : ∀ ε : ℝ, 0 < ε → a ≤ b + ε) : a ≤ b := by
+  by_cases hb : b = ⊤
+  · simp [hb]
+  · by_contra ha_gt
+    push_neg at ha_gt
+    -- a > b and b ≠ ⊤
+    induction a using EReal.rec with
+    | bot => simp at ha_gt
+    | top =>
+      -- a = ⊤, b ≠ ⊤ means ⊤ ≤ b + 1 must hold by h, but b + 1 < ⊤
+      specialize h 1 (by norm_num : (0:ℝ) < 1)
+      have hb1 : b + (1 : ℝ) < ⊤ := by
+        cases b with
+        | bot => simp
+        | top => exact (hb rfl).elim
+        | coe b' =>
+          have : (b' : EReal) + (1:ℝ) = ((b' + 1) : ℝ) := by norm_cast
+          rw [this]; exact EReal.coe_lt_top _
+      exact not_le.mpr hb1 h
+    | coe a' =>
+      induction b using EReal.rec with
+      | bot =>
+        -- b = ⊥, so a' > ⊥ always. But ⊥ + ε = ⊥, so h gives a' ≤ ⊥, contradiction
+        specialize h 1 (by norm_num : (0:ℝ) < 1)
+        simp at h
+      | top => exact hb rfl
+      | coe b' =>
+        -- Both finite: a' > b', pick ε = (a' - b') / 2
+        have hab : b' < a' := EReal.coe_lt_coe_iff.mp ha_gt
+        specialize h ((a' - b') / 2) (by linarith)
+        rw [show (b' : EReal) + ((a' - b') / 2 : ℝ) = ((b' + (a' - b') / 2) : ℝ) by norm_cast] at h
+        have h_ineq : b' + (a' - b') / 2 < a' := by linarith
+        exact not_le.mpr (EReal.coe_lt_coe_iff.mpr h_ineq) h
+
+
 /-- The square root function is subadditive: √(x + y) ≤ √x + √y for non-negative reals.
     This follows from the fact that (√x + √y)² = x + y + 2√(xy) ≥ x + y. -/
 lemma Real.sqrt_add_le_add_sqrt {x y : ℝ} (hx : 0 ≤ x) (hy : 0 ≤ y) :
@@ -2026,14 +2064,117 @@ lemma partition_disjoint {d:ℕ} {E F: Set (EuclideanSpace' d)} (S: ℕ → Box 
   have := Box.not_intersects_both_of_diameter_lt (S n) E F h_diam_n
   exact this ⟨hE, hF⟩
 
+end Lebesgue_outer_measure
+
+/-- Helper: Coercion from ENNReal to EReal preserves summability.
+    All ENNReal sequences are summable, and their coercions to EReal are also summable. -/
+lemma Summable.coe_ennreal {α : Type*} {f : α → ENNReal} :
+    Summable (fun x => ↑(f x) : α → EReal) := by
+  -- All ENNReal sequences are summable
+  have h_sum : Summable f := ENNReal.summable
+  -- Get the HasSum for the original sequence
+  have h_has_sum : HasSum f (∑' x, f x) := h_sum.hasSum
+  -- The coercion preserves addition: ↑(x + y) = ↑x + ↑y
+  have h_add : ∀ x y : ENNReal, (↑(x + y) : EReal) = (↑x : EReal) + (↑y : EReal) := EReal.coe_ennreal_add
+  -- Construct an AddMonoidHom from the coercion
+  -- Note: We need to show the coercion is an additive monoid homomorphism
+  let φ : ENNReal →+ EReal := {
+    toFun := fun x => (↑x : EReal)
+    map_zero' := by simp
+    map_add' := h_add
+  }
+  -- Coercion is continuous
+  have h_cont : Continuous φ := continuous_coe_ennreal_ereal
+  -- Apply HasSum.map to show the coerced sequence has a sum
+  have h_has_sum_coe : HasSum (fun x => ↑(f x) : α → EReal) ↑(∑' x, f x) :=
+    h_has_sum.map φ h_cont
+  -- Summable follows from HasSum
+  exact h_has_sum_coe.summable
+
+/-- Helper: Addition of tsums of ENNReal values coerced to EReal.
+    (∑' n, ↑(a n) : EReal) + (∑' n, ↑(b n) : EReal) = (∑' n, ↑(a n + b n) : EReal)
+
+    This follows from ENNReal.tsum_add and the fact that coercion commutes with addition. -/
+lemma EReal.tsum_add_coe_ennreal {α : Type*} {a b : α → ENNReal} :
+    (∑' n, ↑(a n) : EReal) + (∑' n, ↑(b n) : EReal) = (∑' n, ↑(a n + b n) : EReal) := by
+  -- Use ENNReal.tsum_add: ∑' n, (a n + b n) = ∑' n, a n + ∑' n, b n
+  have h_tsum_add : (∑' n, (a n + b n) : ENNReal) = (∑' n, a n : ENNReal) + (∑' n, b n : ENNReal) := by
+    rw [ENNReal.tsum_add]
+  -- Coerce both sides: ↑(∑' n, a n + b n) = ↑(∑' n, a n) + ↑(∑' n, b n)
+  -- Use Summable.map_tsum: continuous additive maps commute with tsum
+  -- All ENNReal sequences are summable
+  have h_sum_a : Summable a := ENNReal.summable
+  have h_sum_b : Summable b := ENNReal.summable
+  have h_sum_ab : Summable (fun n => a n + b n) := ENNReal.summable
+  -- Construct the AddMonoidHom from ENNReal to EReal (same as in Summable.coe_ennreal)
+  have h_add : ∀ x y : ENNReal, (↑(x + y) : EReal) = (↑x : EReal) + (↑y : EReal) := EReal.coe_ennreal_add
+  let φ : ENNReal →+ EReal := {
+    toFun := fun x => (↑x : EReal)
+    map_zero' := by simp
+    map_add' := h_add
+  }
+  have h_cont : Continuous φ := continuous_coe_ennreal_ereal
+  -- Apply Summable.map_tsum to show coercion commutes with tsum
+  have h_coe_tsum_a : (∑' n, ↑(a n) : EReal) = ↑(∑' n, a n : ENNReal) := by
+    exact (Summable.map_tsum h_sum_a φ h_cont).symm
+  have h_coe_tsum_b : (∑' n, ↑(b n) : EReal) = ↑(∑' n, b n : ENNReal) := by
+    exact (Summable.map_tsum h_sum_b φ h_cont).symm
+  have h_coe_tsum_sum : (∑' n, ↑(a n + b n) : EReal) = ↑(∑' n, (a n + b n) : ENNReal) := by
+    exact (Summable.map_tsum h_sum_ab φ h_cont).symm
+  rw [h_coe_tsum_a, h_coe_tsum_b, h_coe_tsum_sum]
+  rw [← EReal.coe_ennreal_add]
+  congr 1
+  exact h_tsum_add.symm
+
+/-- Helper: For non-negative real sequences, tsum addition inequality in EReal.
+    If f n + g n ≤ h n pointwise, then ∑' f.toEReal + ∑' g.toEReal ≤ ∑' h.toEReal. -/
+lemma EReal.tsum_add_le_of_nonneg_pointwise {f g h : ℕ → ℝ}
+    (hf_nn : ∀ n, 0 ≤ f n) (hg_nn : ∀ n, 0 ≤ g n)
+    (h_pw : ∀ n, f n + g n ≤ h n) :
+    (∑' n, (f n).toEReal) + (∑' n, (g n).toEReal) ≤ ∑' n, (h n).toEReal := by
+  -- Convert to ENNReal where we have better tsum properties
+  -- For non-negative reals, x.toEReal = (ENNReal.ofReal x : EReal)
+  have hf_eq : ∀ n, (f n).toEReal = (ENNReal.ofReal (f n) : EReal) := by
+    intro n; simp [EReal.coe_ennreal_ofReal, max_eq_left (hf_nn n)]
+  have hg_eq : ∀ n, (g n).toEReal = (ENNReal.ofReal (g n) : EReal) := by
+    intro n; simp [EReal.coe_ennreal_ofReal, max_eq_left (hg_nn n)]
+  have hh_eq : ∀ n, (h n).toEReal = (ENNReal.ofReal (h n) : EReal) := by
+    intro n; simp [EReal.coe_ennreal_ofReal, max_eq_left (le_trans (add_nonneg (hf_nn n) (hg_nn n)) (h_pw n))]
+
+  -- Rewrite using these equalities
+  simp_rw [hf_eq, hg_eq, hh_eq]
+
+  -- Need to show: (∑' n, ↑(ENNReal.ofReal (f n)) : EReal) + (∑' n, ↑(ENNReal.ofReal (g n)) : EReal)
+  --            ≤ (∑' n, ↑(ENNReal.ofReal (h n)) : EReal)
+  -- Use helper lemma to combine sums
+  let a : ℕ → ENNReal := fun n => ENNReal.ofReal (f n)
+  let b : ℕ → ENNReal := fun n => ENNReal.ofReal (g n)
+  let c : ℕ → ENNReal := fun n => ENNReal.ofReal (h n)
+
+  -- Combine the sums on LHS using helper lemma
+  have h_combine : (∑' n, ↑(a n) : EReal) + (∑' n, ↑(b n) : EReal) = (∑' n, ↑(a n + b n) : EReal) := by
+    exact EReal.tsum_add_coe_ennreal
+  -- Expand a and b in the goal to match h_combine
+  simp only [a, b] at *
+  -- Rewrite LHS to combined form
+  rw [h_combine]
+
+  -- Now need: (∑' n, ↑(ENNReal.ofReal (f n) + ENNReal.ofReal (g n)) : EReal)
+  --         ≤ (∑' n, ↑(ENNReal.ofReal (h n)) : EReal)
+  have h_sum_lhs : Summable (fun n => ↑(ENNReal.ofReal (f n) + ENNReal.ofReal (g n)) : ℕ → EReal) :=
+    Summable.coe_ennreal
+  have h_sum_rhs : Summable (fun n => ↑(ENNReal.ofReal (h n)) : ℕ → EReal) :=
+    Summable.coe_ennreal
+  refine Summable.tsum_le_tsum (fun n => ?_) h_sum_lhs h_sum_rhs
+  -- Pointwise inequality: ↑(ofReal (f n) + ofReal (g n)) ≤ ↑(ofReal (h n))
+  rw [EReal.coe_ennreal_le_coe_ennreal_iff]
+  have h_add_eq : ENNReal.ofReal (f n) + ENNReal.ofReal (g n) = ENNReal.ofReal (f n + g n) := by
+    rw [ENNReal.ofReal_add (hf_nn n) (hg_nn n)]
+  rw [h_add_eq]
+  exact ENNReal.ofReal_le_ofReal (h_pw n)
+
 /-- For disjoint subsets I_E, I_F of ℕ and a non-negative function f : ℕ → ℝ,
-    the sum of tsums over the disjoint sets is at most the tsum over all of ℕ.
-
-    This is a standard measure-theoretic fact: since I_E and I_F are disjoint,
-    ∑' I_E + ∑' I_F = ∑' (I_E ∪ I_F) ≤ ∑' ℕ by monotonicity.
-
-    The proof converts to ENNReal where Summable.tsum_union_disjoint and
-    ENNReal.tsum_mono_subtype are available, then lifts back to EReal. -/
+    the sum of tsums over the disjoint sets is at most the tsum over all of ℕ. -/
 lemma tsum_add_tsum_le_of_disjoint_nonneg {I_E I_F : Set ℕ} (h_disj : Disjoint I_E I_F)
     (f : ℕ → ℝ) (hf_nonneg : ∀ n, 0 ≤ f n) :
     (∑' (n : I_E), (f n).toEReal) + (∑' (n : I_F), (f n).toEReal) ≤ ∑' n, (f n).toEReal := by
@@ -2049,77 +2190,11 @@ lemma tsum_add_tsum_le_of_disjoint_nonneg {I_E I_F : Set ℕ} (h_disj : Disjoint
   -- Steps 1-3 require careful tsum conversion lemmas that don't exist in mathlib yet.
   -- The conversions between EReal and ENNReal tsums over subtypes have type issues.
   --
-  -- TODO: This is a standard fact that should be provable once proper conversion
-  -- lemmas between EReal and ENNReal tsums are available in mathlib, or by working
-  -- directly at the HasSum level instead of using tsum.
   sorry
-
-/-- EReal epsilon argument: if for all positive ε, a ≤ b + ε, then a ≤ b.
-    This holds when b ≠ ⊤ (if b = ⊤, the implication is trivially true). -/
-lemma EReal.le_of_forall_pos_le_add' {a b : EReal}
-    (h : ∀ ε : ℝ, 0 < ε → a ≤ b + ε) : a ≤ b := by
-  by_cases hb : b = ⊤
-  · simp [hb]
-  · by_contra ha_gt
-    push_neg at ha_gt
-    -- a > b and b ≠ ⊤
-    induction a using EReal.rec with
-    | bot => simp at ha_gt
-    | top =>
-      -- a = ⊤, b ≠ ⊤ means ⊤ ≤ b + 1 must hold by h, but b + 1 < ⊤
-      specialize h 1 (by norm_num : (0:ℝ) < 1)
-      have hb1 : b + (1 : ℝ) < ⊤ := by
-        cases b with
-        | bot => simp
-        | top => exact (hb rfl).elim
-        | coe b' =>
-          have : (b' : EReal) + (1:ℝ) = ((b' + 1) : ℝ) := by norm_cast
-          rw [this]; exact EReal.coe_lt_top _
-      exact not_le.mpr hb1 h
-    | coe a' =>
-      induction b using EReal.rec with
-      | bot =>
-        -- b = ⊥, so a' > ⊥ always. But ⊥ + ε = ⊥, so h gives a' ≤ ⊥, contradiction
-        specialize h 1 (by norm_num : (0:ℝ) < 1)
-        simp at h
-      | top => exact hb rfl
-      | coe b' =>
-        -- Both finite: a' > b', pick ε = (a' - b') / 2
-        have hab : b' < a' := EReal.coe_lt_coe_iff.mp ha_gt
-        specialize h ((a' - b') / 2) (by linarith)
-        rw [show (b' : EReal) + ((a' - b') / 2 : ℝ) = ((b' + (a' - b') / 2) : ℝ) by norm_cast] at h
-        have h_ineq : b' + (a' - b') / 2 < a' := by linarith
-        exact not_le.mpr (EReal.coe_lt_coe_iff.mpr h_ineq) h
-
-end Lebesgue_outer_measure
 
 -- ========================================================================
 -- End of Helpers for lemma 1.2.5
 -- ========================================================================
-
-/-- Helper: For non-negative real sequences, tsum addition inequality in EReal.
-    If f n + g n ≤ h n pointwise, then ∑' f.toEReal + ∑' g.toEReal ≤ ∑' h.toEReal. -/
-lemma EReal.tsum_add_le_of_nonneg_pointwise {f g h : ℕ → ℝ}
-    (hf_nn : ∀ n, 0 ≤ f n) (hg_nn : ∀ n, 0 ≤ g n)
-    (h_pw : ∀ n, f n + g n ≤ h n) :
-    (∑' n, (f n).toEReal) + (∑' n, (g n).toEReal) ≤ ∑' n, (h n).toEReal := by
-  have coe_tsum (k : ℕ → ENNReal) : (∑' n, (k n : EReal)) = (∑' n, k n : EReal) := by sorry
-  -- LHS
-  have lhs_eq : (∑' n, (f n).toEReal) + (∑' n, (g n).toEReal) =
-                ((∑' n, ENNReal.ofReal (f n)) : EReal) + ((∑' n, ENNReal.ofReal (g n)) : EReal) := by
-    congr 1
-    · rw [coe_tsum]; apply congrArg; ext n; simp [coe_ennreal_ofReal, max_eq_left (hf_nn n)]
-    · rw [coe_tsum]; apply congrArg; ext n; simp [coe_ennreal_ofReal, max_eq_left (hg_nn n)]
-  rw [lhs_eq]; norm_cast
-
-  -- RHS
-  have rhs_eq : (∑' n, (h n).toEReal) = ((∑' n, ENNReal.ofReal (h n)) : EReal) := by
-    rw [coe_tsum]; apply congrArg; ext n
-    simp [coe_ennreal_ofReal, max_eq_left (le_trans (add_nonneg (hf_nn n) (hg_nn n)) (h_pw n))]
-  rw [rhs_eq]
-
-  -- Inequality
-  sorry
 
 /-- Lemma 1.2.5 (Finite additivity for separated sets).
     If E and F are separated (dist(E,F) > 0), then m*(E ∪ F) = m*(E) + m*(F).
@@ -2334,7 +2409,7 @@ theorem Lebesgue_outer_measure.union_of_separated {d:ℕ} (hd: 0 < d) {E F : Set
           _ ≤ Lebesgue_outer_measure (E ∪ F) + (ε : EReal) := hS_vol
 
       -- From h_eps, conclude the inequality holds
-      exact Lebesgue_outer_measure.EReal.le_of_forall_pos_le_add' h_eps
+      exact EReal.le_of_forall_pos_le_add' h_eps
 
   -- Combine both directions
   exact le_antisymm h_le h_ge
