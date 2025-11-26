@@ -143,6 +143,7 @@ lemma EReal.le_of_forall_pos_le_add' {a b : EReal}
         exact not_le.mpr (EReal.coe_lt_coe_iff.mpr h_ineq) h
 
 
+
 /-- The square root function is subadditive: √(x + y) ≤ √x + √y for non-negative reals.
     This follows from the fact that (√x + √y)² = x + y + 2√(xy) ≥ x + y. -/
 lemma Real.sqrt_add_le_add_sqrt {x y : ℝ} (hx : 0 ≤ x) (hy : 0 ≤ y) :
@@ -2173,24 +2174,70 @@ lemma EReal.tsum_add_le_of_nonneg_pointwise {f g h : ℕ → ℝ}
   rw [h_add_eq]
   exact ENNReal.ofReal_le_ofReal (h_pw n)
 
+
+
 /-- For disjoint subsets I_E, I_F of ℕ and a non-negative function f : ℕ → ℝ,
-    the sum of tsums over the disjoint sets is at most the tsum over all of ℕ. -/
+     the sum of tsums over the disjoint sets is at most the tsum over all of ℕ. -/
 lemma tsum_add_tsum_le_of_disjoint_nonneg {I_E I_F : Set ℕ} (h_disj : Disjoint I_E I_F)
     (f : ℕ → ℝ) (hf_nonneg : ∀ n, 0 ≤ f n) :
     (∑' (n : I_E), (f n).toEReal) + (∑' (n : I_F), (f n).toEReal) ≤ ∑' n, (f n).toEReal := by
   -- Convert to ENNReal where we have nice lemmas
   let g : ℕ → ENNReal := fun n => (f n).toNNReal
 
-  -- The proof requires showing:
-  -- 1. ∑' (n : I_E), (f n).toEReal = (∑' (n : I_E), g n.val).toEReal
-  -- 2. ∑' (n : I_F), (f n).toEReal = (∑' (n : I_F), g n.val).toEReal
-  -- 3. ∑' n, (f n).toEReal = (∑' n, g n).toEReal
-  -- 4. In ENNReal: ∑ I_E + ∑ I_F = ∑ (I_E ∪ I_F) ≤ ∑ ℕ
-  --
-  -- Steps 1-3 require careful tsum conversion lemmas that don't exist in mathlib yet.
-  -- The conversions between EReal and ENNReal tsums over subtypes have type issues.
-  --
-  sorry
+  -- All ENNReal sequences are summable, including over subtypes
+  have h_sum_E : Summable (fun n : I_E => g n.val) := ENNReal.summable
+  have h_sum_F : Summable (fun n : I_F => g n.val) := ENNReal.summable
+  have h_sum_all : Summable g := ENNReal.summable
+
+  -- Use Summable.tsum_union_disjoint in ENNReal: ∑' (n : I_E ∪ I_F), g n = ∑' (n : I_E), g n + ∑' (n : I_F), g n
+  let I_union : Set ℕ := I_E ∪ I_F
+  have h_union_eq : (∑' (n : I_union), g n.val : ENNReal) =
+      (∑' (n : I_E), g n.val : ENNReal) + (∑' (n : I_F), g n.val : ENNReal) := by
+    exact Summable.tsum_union_disjoint h_disj h_sum_E h_sum_F
+
+  -- Use monotonicity: ∑' (n : I_E ∪ I_F), g n ≤ ∑' n, g n
+  -- This follows from the fact that I_union ⊆ Set.univ
+  have h_mono : (∑' (n : I_union), g n.val : ENNReal) ≤ (∑' n, g n : ENNReal) := by
+    -- Use ENNReal.tsum_subtype_le_tsum: sum over subset ≤ sum over all
+    sorry -- TODO: Prove using ENNReal.tsum_subtype_le_tsum or similar
+
+  -- Combine: ∑' I_E + ∑' I_F = ∑' (I_E ∪ I_F) ≤ ∑' ℕ in ENNReal
+  have h_ineq_ennreal : (∑' (n : I_E), g n.val : ENNReal) + (∑' (n : I_F), g n.val : ENNReal) ≤
+      (∑' n, g n : ENNReal) := by
+    rw [← h_union_eq]
+    exact h_mono
+
+  -- Convert back to EReal using Summable.map_tsum
+  -- Construct the AddMonoidHom from ENNReal to EReal
+  have h_add : ∀ x y : ENNReal, (↑(x + y) : EReal) = (↑x : EReal) + (↑y : EReal) := EReal.coe_ennreal_add
+  let φ : ENNReal →+ EReal := {
+    toFun := fun x => (↑x : EReal)
+    map_zero' := by simp
+    map_add' := h_add
+  }
+  have h_cont : Continuous φ := continuous_coe_ennreal_ereal
+
+  -- Convert each tsum: (∑' (n : I_E), (f n).toEReal) = ↑(∑' (n : I_E), g n.val)
+  have h_coe_E : (∑' (n : I_E), (f n).toEReal) = ↑(∑' (n : I_E), g n.val : ENNReal) := by
+    -- Need to show: (f n).toEReal = ↑(g n.val) for n ∈ I_E
+    -- This follows from: (f n).toEReal = ↑((f n).toNNReal : ENNReal) = ↑(g n.val)
+    sorry -- TODO: Prove tsum conversion for subtypes
+
+  have h_coe_F : (∑' (n : I_F), (f n).toEReal) = ↑(∑' (n : I_F), g n.val : ENNReal) := by
+    sorry -- Same as above
+
+  have h_coe_all : (∑' n, (f n).toEReal) = ↑(∑' n, g n : ENNReal) := by
+    -- Use Summable.map_tsum: need to show (f n).toEReal = φ (g n)
+    -- This follows from: (f n).toEReal = ↑((f n).toNNReal : ENNReal) = ↑(g n) = φ (g n)
+    sorry -- TODO: Prove using Summable.map_tsum with proper conversion
+
+  -- Apply the inequality in EReal
+  rw [h_coe_E, h_coe_F, h_coe_all]
+  -- Need: ↑(∑' I_E) + ↑(∑' I_F) ≤ ↑(∑' ℕ)
+  -- Use EReal.coe_ennreal_le_coe_ennreal_iff and the ENNReal inequality
+  rw [← EReal.coe_ennreal_add]
+  rw [EReal.coe_ennreal_le_coe_ennreal_iff]
+  exact h_ineq_ennreal
 
 -- ========================================================================
 -- End of Helpers for lemma 1.2.5
