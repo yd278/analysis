@@ -339,6 +339,92 @@ lemma midpoint_mem_bisect_snd (I : BoundedInterval) (h : I.toSet.Nonempty) :
     simp only [Set.mem_Ico] at hx
     simp only [Set.mem_Icc]; exact ⟨by linarith, by linarith⟩
 
+/-- Every point in I.toSet is in one half of the bisection -/
+lemma mem_bisect_of_mem_toSet (I : BoundedInterval) (x : ℝ) (hx : x ∈ I.toSet) :
+    x ∈ (I.bisect.fst).toSet ∨ x ∈ (I.bisect.snd).toSet := by
+  unfold bisect midpoint endpoints toSet at *
+  cases I with
+  | Ioo a b =>
+    simp only [Set.mem_Ioo] at hx
+    by_cases hm : x ≥ (a + b) / 2
+    · right; simp only [Set.mem_Icc]; exact ⟨hm, by linarith⟩
+    · left; push_neg at hm; simp only [Set.mem_Icc]; exact ⟨by linarith, by linarith⟩
+  | Icc a b =>
+    simp only [Set.mem_Icc] at hx
+    by_cases hm : x ≥ (a + b) / 2
+    · right; simp only [Set.mem_Icc]; exact ⟨hm, by linarith⟩
+    · left; push_neg at hm; simp only [Set.mem_Icc]; exact ⟨by linarith, by linarith⟩
+  | Ioc a b =>
+    simp only [Set.mem_Ioc] at hx
+    by_cases hm : x ≥ (a + b) / 2
+    · right; simp only [Set.mem_Icc]; exact ⟨hm, by linarith⟩
+    · left; push_neg at hm; simp only [Set.mem_Icc]; exact ⟨by linarith, by linarith⟩
+  | Ico a b =>
+    simp only [Set.mem_Ico] at hx
+    by_cases hm : x ≥ (a + b) / 2
+    · right; simp only [Set.mem_Icc]; exact ⟨hm, by linarith⟩
+    · left; push_neg at hm; simp only [Set.mem_Icc]; exact ⟨by linarith, by linarith⟩
+
+/-- A point is in I.bisect.snd iff it's in I.toSet and at or above the midpoint -/
+lemma mem_bisect_snd_iff (I : BoundedInterval) (x : ℝ) (hx : x ∈ I.toSet) :
+    x ∈ (I.bisect.snd).toSet ↔ x ≥ I.midpoint := by
+  unfold bisect midpoint endpoints toSet at *
+  cases I with
+  | Ioo a b =>
+    simp only [Set.mem_Ioo] at hx
+    simp only [Set.mem_Icc]
+    constructor
+    · intro ⟨h1, _⟩; exact h1
+    · intro h; exact ⟨h, by linarith⟩
+  | Icc a b =>
+    simp only [Set.mem_Icc] at hx
+    simp only [Set.mem_Icc]
+    constructor
+    · intro ⟨h1, _⟩; exact h1
+    · intro h; exact ⟨h, by linarith⟩
+  | Ioc a b =>
+    simp only [Set.mem_Ioc] at hx
+    simp only [Set.mem_Icc]
+    constructor
+    · intro ⟨h1, _⟩; exact h1
+    · intro h; exact ⟨h, by linarith⟩
+  | Ico a b =>
+    simp only [Set.mem_Ico] at hx
+    simp only [Set.mem_Icc]
+    constructor
+    · intro ⟨h1, _⟩; exact h1
+    · intro h; exact ⟨h, by linarith⟩
+
+/-- A point is in I.bisect.fst iff it's in I.toSet and below the midpoint -/
+lemma mem_bisect_fst_iff (I : BoundedInterval) (x : ℝ) (hx : x ∈ I.toSet) :
+    x ∈ (I.bisect.fst).toSet ↔ x ≤ I.midpoint := by
+  unfold bisect midpoint endpoints toSet at *
+  cases I with
+  | Ioo a b =>
+    simp only [Set.mem_Ioo] at hx
+    simp only [Set.mem_Icc]
+    constructor
+    · intro ⟨_, h2⟩; exact h2
+    · intro h; exact ⟨by linarith, h⟩
+  | Icc a b =>
+    simp only [Set.mem_Icc] at hx
+    simp only [Set.mem_Icc]
+    constructor
+    · intro ⟨_, h2⟩; exact h2
+    · intro h; exact ⟨by linarith, h⟩
+  | Ioc a b =>
+    simp only [Set.mem_Ioc] at hx
+    simp only [Set.mem_Icc]
+    constructor
+    · intro ⟨_, h2⟩; exact h2
+    · intro h; exact ⟨by linarith, h⟩
+  | Ico a b =>
+    simp only [Set.mem_Ico] at hx
+    simp only [Set.mem_Icc]
+    constructor
+    · intro ⟨_, h2⟩; exact h2
+    · intro h; exact ⟨by linarith, h⟩
+
 /-- If two intervals have equal bisect.fst, then their endpoints match -/
 lemma bisect_fst_eq_endpoints {I₁ I₂ : BoundedInterval}
     (h : I₁.bisect.fst = I₂.bisect.fst) : I₁.a = I₂.a ∧ I₁.b = I₂.b := by
@@ -348,7 +434,7 @@ lemma bisect_fst_eq_endpoints {I₁ I₂ : BoundedInterval}
   simp only [bisect, endpoints, midpoint, BoundedInterval.a, BoundedInterval.b] at ha' hm'
   constructor
   · cases I₁ <;> cases I₂ <;> simp_all
-  · cases I₁ <;> cases I₂ <;> simp only [BoundedInterval.a, BoundedInterval.b] at ha' hm' ⊢ <;> linarith
+  · cases I₁ <;> cases I₂ <;> simp only [BoundedInterval.b] at ha' hm' ⊢ <;> linarith
 
 /-- If two intervals have equal bisect.snd, then their endpoints match -/
 lemma bisect_snd_eq_endpoints {I₁ I₂ : BoundedInterval}
@@ -381,7 +467,7 @@ lemma bisect_fst_eq_snd_forces_degenerate {I₁ I₂ : BoundedInterval}
   -- Extract the equality of left and right endpoints from bisect equality
   have h_a_eq : a₁ = (a₂ + b₂) / 2 := congrArg BoundedInterval.a h
   have h_b_eq : (a₁ + b₁) / 2 = b₂ := congrArg BoundedInterval.b h
-  simp only [BoundedInterval.a, BoundedInterval.b] at h_a_eq h_b_eq
+  simp only [] at h_a_eq h_b_eq
   constructor <;> linarith
 
 /-- Cross-case: if bisect.fst = bisect.snd, the intervals have overlapping midpoint and endpoint -/
@@ -1288,7 +1374,7 @@ lemma subdivide_side_is_Icc {d:ℕ} (B: Box d) (B' : Box d) (hB' : B' ∈ B.subd
   obtain ⟨c, rfl⟩ := hB'
   -- B' = { side := fun j => if c j then ... else ... }
   -- B'.side i = if c i then (B.side i).bisect.snd else (B.side i).bisect.fst
-  simp only [Box.side]
+  simp only  -- This introduces the if-then-else in the goal
   split_ifs with hc
   · -- snd case: (B.side i).bisect.snd is Icc
     unfold BoundedInterval.bisect BoundedInterval.endpoints BoundedInterval.midpoint
@@ -1470,7 +1556,7 @@ lemma volume_subdivide_iter {d:ℕ} (B: Box d) (hB : B.toSet.Nonempty) (k: ℕ) 
       have h_len₂ := subdivide_iter_side_length B (k'+1) B₂ hB₂ i
       have h_same_len : |B₁.side i|ₗ = |B₂.side i|ₗ := by rw [h_len₁, h_len₂]
       -- Case analysis on c₁ i and c₂ i
-      cases hc₁ : c₁ i <;> cases hc₂ : c₂ i <;> simp only [hc₁, hc₂, ite_true, ite_false] at h_side_eq
+      cases hc₁ : c₁ i <;> cases hc₂ : c₂ i <;> simp only [hc₁, hc₂, ite_true] at h_side_eq
       · -- fst = fst case: endpoint equality implies parent equality
         obtain ⟨ha, hb⟩ := BoundedInterval.bisect_fst_eq_endpoints h_side_eq
         -- Both sides are Icc with same endpoints
@@ -1729,9 +1815,100 @@ lemma diameter_lt_of_iter_count {d:ℕ} (B: Box d) (hB: B.toSet.Nonempty) (r: �
                   apply mul_lt_mul_of_pos_right h2pow_gt hr
               _ = r * (2 : ℝ) ^ (((B.iter_count r) : ℝ) / 2) := by ring
 
+/-- Subdivided boxes cover the original box: any point in B.toSet is contained in
+    some box in subdivide_iter B k. -/
+lemma subdivide_iter_covers {d:ℕ} (B : Box d) (k : ℕ) (x : EuclideanSpace' d)
+    (hx : x ∈ B.toSet) : ∃ B' ∈ subdivide_iter B k, x ∈ B'.toSet := by
+  induction k with
+  | zero =>
+    refine ⟨B, ?_, hx⟩
+    simp only [subdivide_iter_zero, Finset.mem_singleton]
+  | succ k ih =>
+    obtain ⟨B'', hB''_mem, hx_B''⟩ := ih
+    -- B'' is subdivided, x is in B''.toSet, need to find B' ∈ B''.subdivide with x ∈ B'
+    -- Define choice function: c i = true iff x i is in right half
+    let c : Fin d → Bool := fun i => decide (x i ≥ (B''.side i).midpoint)
+    -- The sub-box for this choice contains x
+    let B' : Box d := {
+      side := fun i => if c i then (B''.side i).bisect.snd else (B''.side i).bisect.fst
+    }
+    refine ⟨B', ?_, ?_⟩
+    · -- B' ∈ subdivide_iter B (k+1)
+      simp only [subdivide_iter_succ, Finset.mem_biUnion]
+      exact ⟨B'', hB''_mem, by simp only [subdivide, Finset.mem_image, Finset.mem_univ, true_and]; exact ⟨c, rfl⟩⟩
+    · -- x ∈ B'.toSet: for each i, x i is in the appropriate half
+      intro i hi
+      have hx_i : x i ∈ (B''.side i).toSet := by
+        have := hx_B''
+        simp only [toSet] at this
+        exact this i (Set.mem_univ i)
+      simp only [B']
+      by_cases hm : x i ≥ (B''.side i).midpoint
+      · have hc : c i = true := decide_eq_true hm
+        simp only [hc, ite_true]
+        exact (BoundedInterval.mem_bisect_snd_iff (B''.side i) (x i) hx_i).mpr hm
+      · push_neg at hm
+        have hc : c i = false := decide_eq_false (not_le.mpr hm)
+        simp only [hc]
+        exact (BoundedInterval.mem_bisect_fst_iff (B''.side i) (x i) hx_i).mpr (le_of_lt hm)
+
 end Box
 
 namespace Lebesgue_outer_measure
+
+/-- Upper bound from finset-indexed cover: if a set is covered by ⋃ n, ⋃ B ∈ I n, B.toSet
+    where each I n is a finite set of boxes, then the outer measure is bounded by the
+    sum of volumes. -/
+lemma le_of_finset_cover {d:ℕ} (hd: 0 < d) (E: Set (EuclideanSpace' d))
+    (I : ℕ → Finset (Box d)) (hcover : E ⊆ ⋃ n, ⋃ B ∈ I n, B.toSet) :
+    Lebesgue_outer_measure E ≤ ∑' n, (∑ B ∈ I n, B.volume).toEReal := by
+  -- Strategy: Flatten the double-indexed cover to a single ℕ-indexed sequence
+  -- using Nat.pair, then apply the definition of outer measure (sInf_le)
+  rw [Lebesgue_outer_measure_eq_nat_indexed hd]
+
+  -- Construct a zero-volume box for padding (exists when d > 0)
+  have ⟨B₀, hB₀⟩ : ∃ B : Box d, B.volume = 0 := by
+    use ⟨fun _ => BoundedInterval.Ioc 0 0⟩
+    simp only [Box.volume, BoundedInterval.length]
+    conv_lhs => arg 2; ext i; rw [sub_self, max_eq_right (le_refl 0)]
+    rw [Finset.prod_const, show Finset.univ.card = d from Fintype.card_fin d]
+    exact zero_pow (Nat.pos_iff_ne_zero.mp hd)
+
+  -- Convert each Finset to a list for indexing
+  let L : ℕ → List (Box d) := fun n => (I n).toList
+
+  -- Flatten: S' m encodes boxes via Nat.pair
+  -- For each m = Nat.pair n k, if k < (L n).length, return (L n)[k], else B₀
+  let S' : ℕ → Box d := fun m =>
+    let (n, k) := Nat.unpair m
+    if h : k < (L n).length then (L n)[k] else B₀
+
+  apply sInf_le
+  use S'
+  constructor
+
+  -- Part 1: Show E ⊆ ⋃ n, (S' n).toSet
+  · intro x hxE
+    have := hcover hxE
+    simp only [Set.mem_iUnion] at this ⊢
+    obtain ⟨n, B, hB_mem, hx_in_B⟩ := this
+    have hB_in_list : B ∈ L n := Finset.mem_toList.mpr hB_mem
+    obtain ⟨k, hk_lt, hk_eq⟩ := List.getElem_of_mem hB_in_list
+    use Nat.pair n k
+    simp only [S', Nat.unpair_pair, dif_pos hk_lt, hk_eq]
+    exact hx_in_B
+
+  -- Part 2: Show ∑' n, (S' n).volume.toEReal = ∑' n, (∑ B ∈ I n, B.volume).toEReal
+  · show ∑' n, (S' n).volume.toEReal = ∑' n, (∑ B ∈ I n, B.volume).toEReal
+    -- The sum over the flattened sequence equals the nested sum.
+    -- This proof requires careful handling of:
+    -- 1. Reindexing via Nat.pairEquiv: ∑' m, f m = ∑' n, ∑' k, f (pair n k)
+    -- 2. Finite inner sums: ∑' k, g n k = ∑ k < (I n).card, g n k (terms outside are 0)
+    -- 3. List/Finset correspondence: ∑ over list indices = ∑ over finset elements
+    -- The mathematical content is straightforward; the technicalities involve
+    -- type coercions between List indices, Finset membership, and tsum domains.
+    sorry
+
 /-- For any set with finite outer measure, we can find a cover whose volume is within ε of the outer measure.
     This follows from the definition of outer measure as an infimum. -/
 lemma exists_cover_close {d:ℕ} (hd: 0 < d)
@@ -2034,34 +2211,16 @@ theorem Lebesgue_outer_measure.union_of_separated {d:ℕ} (hd: 0 < d) {E F : Set
               _ < set_dist E F := hr_lt
           exact Box.not_intersects_both_of_diameter_lt B' E F h_small ⟨hB'_E, hB'_F⟩
 
-        -- Helper: subdivide_iter covers the original box
-        -- For any x ∈ B.toSet, there exists B' ∈ subdivide_iter B k with x ∈ B'.toSet
-        have h_subdivide_covers : ∀ (B : Box d) (k : ℕ) (x : EuclideanSpace' d),
-            x ∈ B.toSet → ∃ B' ∈ Box.subdivide_iter B k, x ∈ B'.toSet := by
-          intro B k
-          induction k with
-          | zero =>
-            intro x hx
-            refine ⟨B, ?_, hx⟩
-            simp only [Box.subdivide_iter_zero, Finset.mem_singleton]
-          | succ k ih =>
-            intro x hx
-            obtain ⟨B'', hB''_mem, hx_B''⟩ := ih x hx
-            -- B'' is subdivided, and x is in one of its subdivisions
-            -- For subdivide, we need to show x is in some sub-box
-            -- TODO: This requires a lemma about Box.subdivide covering B''
-            sorry
-
         -- E is covered by the E-intersecting subdivisions
         have hE_cover : E ⊆ ⋃ n, ⋃ B' ∈ I_E_n n, B'.toSet := by
           intro x hxE
           have hx_union : x ∈ E ∪ F := Set.mem_union_left F hxE
           obtain ⟨n, hn⟩ := Set.mem_iUnion.mp (hS_cover hx_union)
-          obtain ⟨B', hB'_mem, hx_B'⟩ := h_subdivide_covers (S n) (k n) x hn
+          obtain ⟨B', hB'_mem, hx_B'⟩ := Box.subdivide_iter_covers (S n) (k n) x hn
           have hB'_in_IE : B' ∈ I_E_n n := by
             rw [Finset.mem_filter]
             exact ⟨hB'_mem, ⟨x, hx_B', hxE⟩⟩
-          simp only [Set.mem_iUnion, Set.mem_setOf_eq, Finset.mem_coe]
+          simp only [Set.mem_iUnion]
           exact ⟨n, ⟨B', ⟨hB'_in_IE, hx_B'⟩⟩⟩
 
         -- F is covered by the F-intersecting subdivisions
@@ -2069,20 +2228,19 @@ theorem Lebesgue_outer_measure.union_of_separated {d:ℕ} (hd: 0 < d) {E F : Set
           intro x hxF
           have hx_union : x ∈ E ∪ F := Set.mem_union_right E hxF
           obtain ⟨n, hn⟩ := Set.mem_iUnion.mp (hS_cover hx_union)
-          obtain ⟨B', hB'_mem, hx_B'⟩ := h_subdivide_covers (S n) (k n) x hn
+          obtain ⟨B', hB'_mem, hx_B'⟩ := Box.subdivide_iter_covers (S n) (k n) x hn
           have hB'_in_IF : B' ∈ I_F_n n := by
             rw [Finset.mem_filter]
             exact ⟨hB'_mem, ⟨x, hx_B', hxF⟩⟩
-          simp only [Set.mem_iUnion, Set.mem_setOf_eq, Finset.mem_coe]
+          simp only [Set.mem_iUnion]
           exact ⟨n, ⟨B', ⟨hB'_in_IF, hx_B'⟩⟩⟩
 
         -- Volume bounds: m*(E) ≤ sum over E-intersecting boxes
-        have hE_bound : Lebesgue_outer_measure E ≤ ∑' n, (∑ B' ∈ I_E_n n, B'.volume).toEReal := by
-          -- The I_E_n boxes cover E, so by definition of outer measure...
-          sorry
+        have hE_bound : Lebesgue_outer_measure E ≤ ∑' n, (∑ B' ∈ I_E_n n, B'.volume).toEReal :=
+          le_of_finset_cover hd E I_E_n hE_cover
 
-        have hF_bound : Lebesgue_outer_measure F ≤ ∑' n, (∑ B' ∈ I_F_n n, B'.volume).toEReal := by
-          sorry
+        have hF_bound : Lebesgue_outer_measure F ≤ ∑' n, (∑ B' ∈ I_F_n n, B'.volume).toEReal :=
+          le_of_finset_cover hd F I_F_n hF_cover
 
         -- Key: disjoint partition means ∑ I_E_n + ∑ I_F_n ≤ ∑ all subdivisions
         have h_sum_le : ∀ n, (∑ B' ∈ I_E_n n, B'.volume) + (∑ B' ∈ I_F_n n, B'.volume)
@@ -2113,16 +2271,76 @@ theorem Lebesgue_outer_measure.union_of_separated {d:ℕ} (hd: 0 < d) {E F : Set
           exact Box.volume_subdivide_iter (S n) hn (k n)
 
         -- Final calculation: combine bounds
-        -- The technical details involve EReal/Real tsum manipulation
         calc Lebesgue_outer_measure E + Lebesgue_outer_measure F
             ≤ (∑' n, (∑ B' ∈ I_E_n n, B'.volume).toEReal) +
               (∑' n, (∑ B' ∈ I_F_n n, B'.volume).toEReal) :=
                 add_le_add hE_bound hF_bound
           _ ≤ ∑' n, (S n).volume.toEReal := by
-              -- Key steps:
-              -- 1. ∑' f + ∑' g ≤ ∑' (f + g) for non-negative (by tsum_add)
-              -- 2. For each n: f(n) + g(n) ≤ ∑ subdivide_iter by h_sum_le
-              -- 3. ∑ subdivide_iter = vol(S n) by h_vol_eq (for nonempty)
+              -- Convert to ENNReal where we have better tsum properties
+              -- Key fact: for non-negative reals, x.toEReal = (x.toNNReal : ENNReal).toEReal
+              -- Step 1: Show pointwise (∑ I_E_n) + (∑ I_F_n) ≤ vol(S n)
+              have h_pw_le : ∀ n, (∑ B' ∈ I_E_n n, B'.volume) + (∑ B' ∈ I_F_n n, B'.volume) ≤ (S n).volume := by
+                intro n
+                calc (∑ B' ∈ I_E_n n, B'.volume) + (∑ B' ∈ I_F_n n, B'.volume)
+                    ≤ ∑ B' ∈ Box.subdivide_iter (S n) (k n), B'.volume := h_sum_le n
+                  _ ≤ (S n).volume := by
+                    by_cases hn : (S n).toSet.Nonempty
+                    · exact le_of_eq (h_vol_eq n hn)
+                    · -- Empty box: volume = 0, and sum over subdivisions ≤ 0 = vol
+                      have hempty : (S n).toSet = ∅ := Set.not_nonempty_iff_eq_empty.mp hn
+                      have hvol_zero : (S n).volume = 0 := Box.volume_eq_zero_of_empty (S n) hempty
+                      rw [hvol_zero]
+                      -- subdivide_iter of empty box = {S n} with volume 0
+                      have hk_zero : k n = 0 := by
+                        simp only [k, Box.iter_count]
+                        have hdiam : (S n).diameter = 0 := Box.diameter_of_empty (S n) hempty
+                        simp only [hdiam, le_refl, ↓reduceIte]
+                      rw [hk_zero, Box.subdivide_iter_zero, Finset.sum_singleton, hvol_zero]
+              -- Step 2: EReal tsum manipulation via ENNReal
+              -- Since all values are non-negative reals, work in ENNReal then convert
+              -- Define ENNReal versions
+              let f_E : ℕ → ENNReal := fun n => (∑ B' ∈ I_E_n n, B'.volume).toNNReal
+              let f_F : ℕ → ENNReal := fun n => (∑ B' ∈ I_F_n n, B'.volume).toNNReal
+              let f_S : ℕ → ENNReal := fun n => ((S n).volume).toNNReal
+
+              -- Helper: box volume is non-negative
+              have hvol_nonneg : ∀ B : Box d, 0 ≤ B.volume := by
+                intro B
+                unfold Box.volume
+                apply Finset.prod_nonneg
+                intro i _
+                unfold BoundedInterval.length
+                exact le_max_right _ _
+
+              -- Pointwise inequality in ENNReal (from h_pw_le and non-negativity)
+              have h_ennreal_pw : ∀ n, f_E n + f_F n ≤ f_S n := by
+                intro n
+                simp only [f_E, f_F, f_S]
+                have h_E_nonneg : 0 ≤ ∑ B' ∈ I_E_n n, B'.volume := by
+                  apply Finset.sum_nonneg; intro B' _; exact hvol_nonneg B'
+                have h_F_nonneg : 0 ≤ ∑ B' ∈ I_F_n n, B'.volume := by
+                  apply Finset.sum_nonneg; intro B' _; exact hvol_nonneg B'
+                -- Goal: (∑ I_E).toNNReal + (∑ I_F).toNNReal ≤ (S n).volume.toNNReal
+                -- Use: toNNReal is monotone for non-negative reals
+                have h_add : ((∑ B' ∈ I_E_n n, B'.volume).toNNReal : ENNReal) +
+                    ((∑ B' ∈ I_F_n n, B'.volume).toNNReal : ENNReal) =
+                    ((∑ B' ∈ I_E_n n, B'.volume + ∑ B' ∈ I_F_n n, B'.volume).toNNReal : ENNReal) := by
+                  simp only [← ENNReal.coe_add, ← Real.toNNReal_add h_E_nonneg h_F_nonneg]
+                rw [h_add]
+                exact ENNReal.coe_le_coe.mpr (Real.toNNReal_le_toNNReal (h_pw_le n))
+
+              -- In ENNReal: ∑ f_E + ∑ f_F ≤ ∑ f_S by ENNReal.tsum_add and monotonicity
+              have h_ennreal : (∑' n, f_E n) + (∑' n, f_F n) ≤ ∑' n, f_S n := by
+                rw [← ENNReal.tsum_add]
+                exact ENNReal.tsum_le_tsum h_ennreal_pw
+
+              -- The final step requires lifting h_ennreal from ENNReal to EReal.
+              -- Key conversions needed:
+              -- 1. For x ≥ 0: x.toEReal = (x.toNNReal : ENNReal).toEReal
+              -- 2. (∑' n, f n : ENNReal).toEReal = ∑' n, (f n).toEReal for non-negative f
+              -- Combined with h_ennreal, this gives the result.
+              -- TODO: Requires proper conversion lemmas between ENNReal and EReal tsums.
+              -- The mathematical content is complete - this is just type coercion machinery.
               sorry
           _ ≤ Lebesgue_outer_measure (E ∪ F) + (ε : EReal) := hS_vol
 
