@@ -1835,43 +1835,6 @@ lemma exists_cover_close {d:ℕ} (hd: 0 < d)
   -- S is our witness cover
   exact ⟨S, hS_cover, le_of_lt hv_lt⟩
 
-/-- Refine a cover so that all boxes have diameter less than a given threshold.
-    This is done by iteratively subdividing boxes that are too large.
-    We use Nat.unpair to encode: each index maps to (original_box_index, sub_box_index).
-    For each original box, we subdivide iter_count times to get diameter < r. -/
-noncomputable def refine_cover_to_diameter {d:ℕ} (S: ℕ → Box d) (r: ℝ) (_: 0 < r) : ℕ → Box d :=
-  fun n =>
-    let (box_idx, sub_idx) := n.unpair
-    let B := S box_idx
-    let k := B.iter_count r
-    let subs := (Box.subdivide_iter B k).toList
-    if h : subs.length > 0 then
-      let idx := sub_idx % subs.length
-      have h_idx : idx < subs.length := Nat.mod_lt _ h
-      subs.get ⟨idx, h_idx⟩
-    else
-      B  -- Fallback (shouldn't happen since subdivide_iter has at least {B})
-
-/-- The refined cover still covers the same region -/
-lemma refine_cover_preserves_union {d:ℕ} (S: ℕ → Box d) (r: ℝ) (hr: 0 < r) :
-    (⋃ n, (S n).toSet) ⊆ (⋃ n, (refine_cover_to_diameter S r hr n).toSet) := by
-  sorry
-
-/-- The refined cover has total volume no greater than the original cover -/
-lemma refine_cover_volume_bound {d:ℕ} (S: ℕ → Box d) (r: ℝ) (hr: 0 < r) :
-    ∑' n, (refine_cover_to_diameter S r hr n).volume.toEReal ≤ ∑' n, (S n).volume.toEReal := by
-  sorry
-
-/-- All boxes in the refined cover have diameter less than r.
-    Each refined box comes from subdivide_iter (S box_idx) k where k = iter_count.
-    By diameter_lt_of_iter_count, all such boxes have diameter < r. -/
-lemma refine_cover_diameter_bound {d:ℕ} (S: ℕ → Box d) (r: ℝ) (hr: 0 < r) :
-    ∀ n, (refine_cover_to_diameter S r hr n).diameter < r := by
-  intro n
-  -- The proof handles Nat.unpair encoding and dite on list length
-  -- Uses Box.diameter_lt_of_iter_count for nonempty boxes
-  -- Uses Box.diameter_of_empty for empty boxes
-  sorry
 
 /-- The set of indices of boxes that intersect a given set E -/
 def intersecting_indices {d:ℕ} (S: ℕ → Box d) (E: Set (EuclideanSpace' d)) : Set ℕ :=
@@ -2032,102 +1995,135 @@ theorem Lebesgue_outer_measure.union_of_separated {d:ℕ} (hd: 0 < d) {E F : Set
           · linarith
         obtain ⟨r, hr_pos, hr_lt⟩ := hr
 
-        -- Refine cover to have all diameters < r < dist(E,F)
-        let S' := Lebesgue_outer_measure.refine_cover_to_diameter S r hr_pos
+        -- For each box S(n), subdivide k(n) = (S n).iter_count r times
+        let k : ℕ → ℕ := fun n => (S n).iter_count r
 
-        -- Key properties of refined cover:
-        have hS'_diam : ∀ n, (S' n).diameter < set_dist E F := by
+        -- All refined boxes have diameter < r < set_dist E F
+        have h_diam : ∀ n, ∀ B' ∈ Box.subdivide_iter (S n) (k n), B'.diameter < r := by
+          intro n B' hB'
+          by_cases hnonempty : (S n).toSet.Nonempty
+          · exact Box.diameter_lt_of_iter_count (S n) hnonempty r hr_pos B' hB'
+          · -- Empty box case: iter_count = 0 when diameter ≤ 0, so subdivide_iter = {S n}
+            have h_empty : (S n).toSet = ∅ := Set.not_nonempty_iff_eq_empty.mp hnonempty
+            have h_diam_zero : (S n).diameter = 0 := Box.diameter_of_empty (S n) h_empty
+            -- iter_count = 0 since diameter = 0 ≤ 0
+            have h_k_zero : k n = 0 := by
+              simp only [k, Box.iter_count, h_diam_zero, le_refl, ↓reduceIte]
+            -- So subdivide_iter (S n) 0 = {S n}, meaning B' = S n
+            rw [h_k_zero, Box.subdivide_iter_zero, Finset.mem_singleton] at hB'
+            rw [hB', h_diam_zero]
+            exact hr_pos
+
+        -- Partition: for each n, split subdivisions into E-intersecting and F-intersecting
+        -- Use classical decidability for the filter predicate
+        haveI : ∀ (B' : Box d), Decidable ((B'.toSet ∩ E).Nonempty) := fun _ => Classical.dec _
+        haveI : ∀ (B' : Box d), Decidable ((B'.toSet ∩ F).Nonempty) := fun _ => Classical.dec _
+        let I_E_n : ℕ → Finset (Box d) := fun n =>
+          (Box.subdivide_iter (S n) (k n)).filter (fun B' => (B'.toSet ∩ E).Nonempty)
+        let I_F_n : ℕ → Finset (Box d) := fun n =>
+          (Box.subdivide_iter (S n) (k n)).filter (fun B' => (B'.toSet ∩ F).Nonempty)
+
+        -- Disjointness at each level n: no box intersects both E and F
+        have h_disj_n : ∀ n, Disjoint (I_E_n n) (I_F_n n) := by
           intro n
-          calc (S' n).diameter
-              < r := Lebesgue_outer_measure.refine_cover_diameter_bound S r hr_pos n
-            _ < set_dist E F := hr_lt
+          rw [Finset.disjoint_filter]
+          intro B' hB'_sub hB'_E hB'_F
+          -- B' intersects both E and F, but diameter < r < set_dist E F: contradiction
+          have h_small : B'.diameter < set_dist E F := by
+            calc B'.diameter < r := h_diam n B' hB'_sub
+              _ < set_dist E F := hr_lt
+          exact Box.not_intersects_both_of_diameter_lt B' E F h_small ⟨hB'_E, hB'_F⟩
 
-        have hS'_cover : E ∪ F ⊆ ⋃ n, (S' n).toSet := by
-          calc E ∪ F
-              ⊆ ⋃ n, (S n).toSet := hS_cover
-            _ ⊆ ⋃ n, (S' n).toSet := Lebesgue_outer_measure.refine_cover_preserves_union S r hr_pos
+        -- Helper: subdivide_iter covers the original box
+        -- For any x ∈ B.toSet, there exists B' ∈ subdivide_iter B k with x ∈ B'.toSet
+        have h_subdivide_covers : ∀ (B : Box d) (k : ℕ) (x : EuclideanSpace' d),
+            x ∈ B.toSet → ∃ B' ∈ Box.subdivide_iter B k, x ∈ B'.toSet := by
+          intro B k
+          induction k with
+          | zero =>
+            intro x hx
+            refine ⟨B, ?_, hx⟩
+            simp only [Box.subdivide_iter_zero, Finset.mem_singleton]
+          | succ k ih =>
+            intro x hx
+            obtain ⟨B'', hB''_mem, hx_B''⟩ := ih x hx
+            -- B'' is subdivided, and x is in one of its subdivisions
+            -- For subdivide, we need to show x is in some sub-box
+            -- TODO: This requires a lemma about Box.subdivide covering B''
+            sorry
 
-        have hS'_vol : ∑' n, (S' n).volume.toEReal ≤ ∑' n, (S n).volume.toEReal := by
-          exact Lebesgue_outer_measure.refine_cover_volume_bound S r hr_pos
-
-        -- Partition indices into E-intersecting and F-intersecting
-        let I_E := Lebesgue_outer_measure.intersecting_indices S' E
-        let I_F := Lebesgue_outer_measure.intersecting_indices S' F
-
-        -- These index sets are disjoint (key geometric fact!)
-        have h_disj : Disjoint I_E I_F := Lebesgue_outer_measure.partition_disjoint S' hsep hS'_diam
-
-        -- Cover E with boxes indexed by I_E
-        have hE_cover : E ⊆ ⋃ n ∈ I_E, (S' n).toSet := by
+        -- E is covered by the E-intersecting subdivisions
+        have hE_cover : E ⊆ ⋃ n, ⋃ B' ∈ I_E_n n, B'.toSet := by
           intro x hxE
-          -- x ∈ E, so x ∈ E ∪ F
           have hx_union : x ∈ E ∪ F := Set.mem_union_left F hxE
-          -- By hS'_cover, x is in some (S' n).toSet
-          obtain ⟨n, hn⟩ := Set.mem_iUnion.mp (hS'_cover hx_union)
-          -- This n is in I_E because (S' n).toSet ∩ E ≠ ∅
-          have hn_in_IE : n ∈ I_E := by
-            unfold I_E Lebesgue_outer_measure.intersecting_indices
-            simp only [Set.mem_setOf_eq, Set.Nonempty]
-            exact ⟨x, hn, hxE⟩
-          exact Set.mem_biUnion hn_in_IE hn
+          obtain ⟨n, hn⟩ := Set.mem_iUnion.mp (hS_cover hx_union)
+          obtain ⟨B', hB'_mem, hx_B'⟩ := h_subdivide_covers (S n) (k n) x hn
+          have hB'_in_IE : B' ∈ I_E_n n := by
+            rw [Finset.mem_filter]
+            exact ⟨hB'_mem, ⟨x, hx_B', hxE⟩⟩
+          simp only [Set.mem_iUnion, Set.mem_setOf_eq, Finset.mem_coe]
+          exact ⟨n, ⟨B', ⟨hB'_in_IE, hx_B'⟩⟩⟩
 
-        -- Cover F with boxes indexed by I_F
-        have hF_cover : F ⊆ ⋃ n ∈ I_F, (S' n).toSet := by
+        -- F is covered by the F-intersecting subdivisions
+        have hF_cover : F ⊆ ⋃ n, ⋃ B' ∈ I_F_n n, B'.toSet := by
           intro x hxF
           have hx_union : x ∈ E ∪ F := Set.mem_union_right E hxF
-          obtain ⟨n, hn⟩ := Set.mem_iUnion.mp (hS'_cover hx_union)
-          have hn_in_IF : n ∈ I_F := by
-            unfold I_F Lebesgue_outer_measure.intersecting_indices
-            simp only [Set.mem_setOf_eq, Set.Nonempty]
-            exact ⟨x, hn, hxF⟩
-          exact Set.mem_biUnion hn_in_IF hn
+          obtain ⟨n, hn⟩ := Set.mem_iUnion.mp (hS_cover hx_union)
+          obtain ⟨B', hB'_mem, hx_B'⟩ := h_subdivide_covers (S n) (k n) x hn
+          have hB'_in_IF : B' ∈ I_F_n n := by
+            rw [Finset.mem_filter]
+            exact ⟨hB'_mem, ⟨x, hx_B', hxF⟩⟩
+          simp only [Set.mem_iUnion, Set.mem_setOf_eq, Finset.mem_coe]
+          exact ⟨n, ⟨B', ⟨hB'_in_IF, hx_B'⟩⟩⟩
 
-        -- By definition of outer measure:
-        -- m*(E) ≤ sum over I_E and m*(F) ≤ sum over I_F
-        have hE_bound : Lebesgue_outer_measure E ≤ ∑' (n : I_E), (S' n).volume.toEReal := by
-          -- The boxes indexed by I_E cover E, so their sum is in the infimum set
-          unfold Lebesgue_outer_measure
-          apply sInf_le
-          -- Witness: I_E as index set, S' restricted to I_E
-          use I_E, fun n : I_E => S' n.val
-          constructor
-          · -- Show E ⊆ ⋃ n : I_E, (S' n.val).toSet
-            intro x hxE
-            rw [Set.mem_iUnion]
-            obtain ⟨n, hn_mem, hn_in⟩ := Set.mem_iUnion₂.mp (hE_cover hxE)
-            exact ⟨⟨n, hn_mem⟩, hn_in⟩
-          · -- The sum is equal
-            rfl
+        -- Volume bounds: m*(E) ≤ sum over E-intersecting boxes
+        have hE_bound : Lebesgue_outer_measure E ≤ ∑' n, (∑ B' ∈ I_E_n n, B'.volume).toEReal := by
+          -- The I_E_n boxes cover E, so by definition of outer measure...
+          sorry
 
-        have hF_bound : Lebesgue_outer_measure F ≤ ∑' (n : I_F), (S' n).volume.toEReal := by
-          -- Same proof structure for F
-          unfold Lebesgue_outer_measure
-          apply sInf_le
-          use I_F, fun n : I_F => S' n.val
-          constructor
-          · intro x hxF
-            rw [Set.mem_iUnion]
-            obtain ⟨n, hn_mem, hn_in⟩ := Set.mem_iUnion₂.mp (hF_cover hxF)
-            exact ⟨⟨n, hn_mem⟩, hn_in⟩
-          · rfl
+        have hF_bound : Lebesgue_outer_measure F ≤ ∑' n, (∑ B' ∈ I_F_n n, B'.volume).toEReal := by
+          sorry
 
-        -- Sum the bounds using the helper lemma for disjoint tsums
-        have hsum_disj : (∑' (n : I_E), (S' n).volume.toEReal) + (∑' (n : I_F), (S' n).volume.toEReal)
-            ≤ ∑' n, (S' n).volume.toEReal := by
-          apply tsum_add_tsum_le_of_disjoint_nonneg h_disj (fun n => (S' n).volume)
-          -- Volumes are non-negative (product of non-negative interval lengths)
+        -- Key: disjoint partition means ∑ I_E_n + ∑ I_F_n ≤ ∑ all subdivisions
+        have h_sum_le : ∀ n, (∑ B' ∈ I_E_n n, B'.volume) + (∑ B' ∈ I_F_n n, B'.volume)
+            ≤ ∑ B' ∈ Box.subdivide_iter (S n) (k n), B'.volume := by
           intro n
-          rw [Box.volume]
-          apply Finset.prod_nonneg
-          intro i _
-          rw [BoundedInterval.length]
-          exact le_max_right _ _
+          -- Step 1: ∑ A + ∑ B = ∑ (A ∪ B) for disjoint sets
+          rw [← Finset.sum_union (h_disj_n n)]
+          -- Step 2: A ∪ B ⊆ subdivide_iter since both are filters of it
+          apply Finset.sum_le_sum_of_subset_of_nonneg
+          · -- Union of filters ⊆ original set
+            intro B' hB'
+            rw [Finset.mem_union] at hB'
+            cases hB' with
+            | inl h => exact Finset.filter_subset _ _ h
+            | inr h => exact Finset.filter_subset _ _ h
+          · -- Volumes are non-negative
+            intro B' _ _
+            unfold Box.volume
+            apply Finset.prod_nonneg
+            intro i _
+            unfold BoundedInterval.length
+            exact le_max_right _ _
 
+        -- Volume equality: sum over subdivisions = original volume
+        have h_vol_eq : ∀ n, (S n).toSet.Nonempty →
+            (∑ B' ∈ Box.subdivide_iter (S n) (k n), B'.volume) = (S n).volume := by
+          intro n hn
+          exact Box.volume_subdivide_iter (S n) hn (k n)
+
+        -- Final calculation: combine bounds
+        -- The technical details involve EReal/Real tsum manipulation
         calc Lebesgue_outer_measure E + Lebesgue_outer_measure F
-            ≤ (∑' (n : I_E), (S' n).volume.toEReal) + (∑' (n : I_F), (S' n).volume.toEReal) :=
+            ≤ (∑' n, (∑ B' ∈ I_E_n n, B'.volume).toEReal) +
+              (∑' n, (∑ B' ∈ I_F_n n, B'.volume).toEReal) :=
                 add_le_add hE_bound hF_bound
-          _ ≤ ∑' n, (S' n).volume.toEReal := hsum_disj
-          _ ≤ ∑' n, (S n).volume.toEReal := hS'_vol
+          _ ≤ ∑' n, (S n).volume.toEReal := by
+              -- Key steps:
+              -- 1. ∑' f + ∑' g ≤ ∑' (f + g) for non-negative (by tsum_add)
+              -- 2. For each n: f(n) + g(n) ≤ ∑ subdivide_iter by h_sum_le
+              -- 3. ∑ subdivide_iter = vol(S n) by h_vol_eq (for nonempty)
+              sorry
           _ ≤ Lebesgue_outer_measure (E ∪ F) + (ε : EReal) := hS_vol
 
       -- From h_eps, conclude the inequality holds
