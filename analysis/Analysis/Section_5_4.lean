@@ -25,7 +25,6 @@ Users of the companion who have completed the exercises in this section are welc
 
 namespace Chapter5
 
-
 /--
   Definition 5.4.1 (sequences bounded away from zero with sign). Sequences are indexed to start
   from zero as this is more convenient for Mathlib purposes.
@@ -64,7 +63,6 @@ example : BoundedAwayZero (fun n ↦ (-1)^n) := ⟨ 1, by norm_num, by intros; s
 
 theorem BoundedAwayZero.boundedAwayPos {a:ℕ → ℚ} (ha: BoundedAwayPos a) : BoundedAwayZero a := by
   peel 3 ha with c h1 n h2; rwa [abs_of_nonneg (by linarith)]
-
 
 theorem BoundedAwayZero.boundedAwayNeg {a:ℕ → ℚ} (ha: BoundedAwayNeg a) : BoundedAwayZero a := by
   peel 3 ha with c h1 n h2; rw [abs_of_neg (by linarith)]; linarith
@@ -398,6 +396,5 @@ theorem Real.inv_min {x y :Real} (hx:x.IsPos) (hy:y.IsPos) : (min x y)⁻¹ = ma
 abbrev Real.ratCast_ordered_hom : ℚ →+*o Real where
   toRingHom := ratCast_hom
   monotone' := by sorry
-
 
 end Chapter5
