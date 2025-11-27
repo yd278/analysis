@@ -2060,7 +2060,56 @@ theorem Lebesgue_outer_measure.union_of_separated {d:ℕ} (hd: 0 < d) {E F : Set
   -- Combine both directions
   exact le_antisymm h_le h_ge
 
-example : set_dist (Ico 0 1).toSet (Icc 1 2).toSet = 0 := by sorry
+example : set_dist (Ico 0 1).toSet (Icc 1 2).toSet = 0 := by
+  apply le_antisymm
+  · -- set_dist ≤ 0: by contradiction, if set_dist > 0, we find a closer pair
+    by_contra hne
+    simp only [not_le] at hne
+    -- So set_dist > 0
+    have hpos := hne
+    -- Take ε = set_dist / 2
+    set ε := set_dist (Ico 0 1).toSet (Icc 1 2).toSet / 2 with hε_def
+    have hε_pos : 0 < ε := by linarith
+    -- set_dist ≤ dist(0, 1) = 1, so ε ≤ 1/2
+    have h_upper : set_dist (Ico 0 1).toSet (Icc 1 2).toSet ≤ 1 := by
+      unfold set_dist
+      apply csInf_le
+      · use 0
+        intro r hr
+        obtain ⟨⟨x, y⟩, ⟨_, _⟩, rfl⟩ := hr
+        exact dist_nonneg
+      · refine ⟨(0, 1), ⟨?_, ?_⟩, ?_⟩
+        · norm_num
+        · norm_num
+        · simp [Real.dist_eq]
+    have hε_le : ε ≤ 1/2 := by linarith
+    -- The point (1 - ε, 1) has distance ε < set_dist, contradiction
+    have hmem : dist (1 - ε) 1 ∈ (fun p : ℝ × ℝ ↦ dist p.1 p.2) '' ((Ico 0 1).toSet ×ˢ (Icc 1 2).toSet) := by
+      refine ⟨(1 - ε, 1), ⟨?_, ?_⟩, rfl⟩
+      · constructor <;> linarith
+      · constructor <;> linarith
+    have hdist_val : dist (1 - ε) 1 = ε := by
+      rw [Real.dist_eq]
+      simp only [sub_sub_cancel_left, abs_neg, abs_of_pos hε_pos]
+    unfold set_dist at hpos hε_def
+    have hle : sInf ((fun p : ℝ × ℝ ↦ dist p.1 p.2) '' ((Ico 0 1).toSet ×ˢ (Icc 1 2).toSet)) ≤ ε := by
+      apply csInf_le
+      · use 0
+        intro r hr
+        obtain ⟨⟨x, y⟩, ⟨_, _⟩, rfl⟩ := hr
+        exact dist_nonneg
+      · rw [← hdist_val]; exact hmem
+    linarith
+  · -- 0 ≤ set_dist: infimum of nonnegative values is nonnegative
+    unfold set_dist
+    apply le_csInf
+    · -- Nonempty
+      refine ⟨dist 0 1, (0, 1), ⟨?_, ?_⟩, rfl⟩
+      · norm_num
+      · norm_num
+    · intro r hr
+      obtain ⟨⟨x, y⟩, ⟨_, _⟩, rfl⟩ := hr
+      exact dist_nonneg
 
 /-- Exercise 1.2.4 -/
 theorem dist_of_disj_compact_pos {d:ℕ} (E F: Set (EuclideanSpace' d)) (hE: IsCompact E) (hF: IsCompact F) (hdisj: E ∩ F = ∅) :
