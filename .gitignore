@@ -20,3 +20,4 @@ analysis/.repair
 
 # miscellaneous files
 **/tobeIgnored/
+**/tmp

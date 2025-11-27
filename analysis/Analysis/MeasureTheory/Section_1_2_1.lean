@@ -1,4 +1,6 @@
 import Analysis.MeasureTheory.Section_1_2
+import Analysis.Misc.«Real-EReal-ENNReal»
+import Analysis.Misc.Combinatorics
 
 /-!
 # Introduction to Measure Theory, Section 1.2.1: Properties of Lebesgue outer measure
@@ -91,58 +93,11 @@ noncomputable def set_dist {X:Type*} [PseudoMetricSpace X] (A B: Set X) : ℝ :=
 -- ========================================================================
 -- Start of Helpers for lemma 1.2.5: Lebesgue_outer_measure.union_of_separated
 -- ========================================================================
-/-- For EReal, adding a positive real value to a value that is neither ⊥ nor ⊤ gives a strictly greater result. -/
-lemma EReal.lt_add_of_pos_coe {x : EReal} {ε : ℝ} (hε : 0 < ε) (h_ne_bot : x ≠ ⊥) (h_ne_top : x ≠ ⊤) :
-    x < x + ↑ε := by
-  have h_eps : (0 : EReal) < (ε : EReal) := EReal.coe_pos.mpr hε
-  have : 0 + x < ↑ε + x := EReal.add_lt_add_of_lt_of_le h_eps (le_refl x) h_ne_bot h_ne_top
-  simpa [add_comm] using this
 
-/-- The square root function is subadditive: √(x + y) ≤ √x + √y for non-negative reals.
-    This follows from the fact that (√x + √y)² = x + y + 2√(xy) ≥ x + y. -/
-lemma Real.sqrt_add_le_add_sqrt {x y : ℝ} (hx : 0 ≤ x) (hy : 0 ≤ y) :
-    √(x + y) ≤ √x + √y := by
-  by_cases hxy : x + y = 0
-  · simp [hxy]
-    exact add_nonneg (Real.sqrt_nonneg _) (Real.sqrt_nonneg _)
-  · rw [Real.sqrt_le_left (by positivity)]
-    have : x + y ≤ (√x + √y) ^ 2 := by
-      calc x + y
-          = (√x) ^ 2 + (√y) ^ 2 := by
-              rw [Real.sq_sqrt hx, Real.sq_sqrt hy]
-        _ ≤ (√x) ^ 2 + (√y) ^ 2 + 2 * √x * √y := by
-              apply le_add_of_nonneg_right
-              apply mul_nonneg; apply mul_nonneg
-              · norm_num
-              · exact Real.sqrt_nonneg _
-              · exact Real.sqrt_nonneg _
-        _ = (√x + √y) ^ 2 := by ring
-    exact this
-
-/-- The square root function is subadditive over finite sums: √(∑ᵢ xᵢ) ≤ ∑ᵢ √xᵢ
-    for non-negative terms. This is a consequence of the concavity of sqrt. -/
-lemma Real.sqrt_sum_le_sum_sqrt {ι : Type*} [Fintype ι] [DecidableEq ι] (f : ι → ℝ)
-    (hf : ∀ i, 0 ≤ f i) :
-    √(∑ i, f i) ≤ ∑ i, √(f i) := by
-  -- Proof by induction on the Finset
-  let s := (Finset.univ : Finset ι)
-  show √(∑ i ∈ s, f i) ≤ ∑ i ∈ s, √(f i)
-  induction s using Finset.induction with
-  | empty => simp
-  | insert i s hi ih =>
-      simp [Finset.sum_insert hi]
-      calc √(f i + ∑ x ∈ s, f x)
-          ≤ √(f i) + √(∑ x ∈ s, f x) := by
-              apply Real.sqrt_add_le_add_sqrt (hf i)
-              apply Finset.sum_nonneg
-              intro j _; exact hf j
-        _ ≤ √(f i) + ∑ x ∈ s, √(f x) := by
-              apply add_le_add_left
-              exact ih
-
+namespace BoundedInterval
 /-- Extract the left and right endpoints of a BoundedInterval.
     Returns (a, b) where a is the left endpoint and b is the right endpoint. -/
-def BoundedInterval.endpoints (I : BoundedInterval) : ℝ × ℝ :=
+def endpoints (I : BoundedInterval) : ℝ × ℝ :=
   match I with
   | Ioo a b => (a, b)
   | Icc a b => (a, b)
@@ -150,7 +105,7 @@ def BoundedInterval.endpoints (I : BoundedInterval) : ℝ × ℝ :=
   | Ico a b => (a, b)
 
 /-- Compute the midpoint of a BoundedInterval. -/
-noncomputable def BoundedInterval.midpoint (I : BoundedInterval) : ℝ :=
+noncomputable def midpoint (I : BoundedInterval) : ℝ :=
   let (a, b) := I.endpoints
   (a + b) / 2
 
@@ -158,62 +113,14 @@ noncomputable def BoundedInterval.midpoint (I : BoundedInterval) : ℝ :=
     Left half: [a, m], Right half: [m, b], where m is the midpoint.
     Using closed intervals ensures coverage (union equals original) while
     maintaining measure-theoretic properties (overlap has measure zero). -/
-noncomputable def BoundedInterval.bisect (I : BoundedInterval) : BoundedInterval × BoundedInterval :=
+noncomputable def bisect (I : BoundedInterval) : BoundedInterval × BoundedInterval :=
   let (a, b) := I.endpoints
   let m := I.midpoint
   (Icc a m, Icc m b)
 
-/-- Bisecting an interval gives distinct sub-intervals unless the interval is degenerate -/
-lemma BoundedInterval.bisect_fst_ne_snd (I : BoundedInterval) :
-    I.bisect.fst ≠ I.bisect.snd ∨ I.a = I.b := by
-  unfold bisect midpoint endpoints
-  cases I with
-  | Ioo a b =>
-    simp only [BoundedInterval.a, BoundedInterval.b]
-    by_cases hab : a = b
-    · right; exact hab
-    · left
-      intro h
-      have ha : a = (a + b) / 2 := congrArg BoundedInterval.a h
-      have hb : (a + b) / 2 = b := congrArg BoundedInterval.b h
-      exact hab (by linarith)
-  | Icc a b =>
-    simp only [BoundedInterval.a, BoundedInterval.b]
-    by_cases hab : a = b
-    · right; exact hab
-    · left
-      intro h
-      have ha : a = (a + b) / 2 := congrArg BoundedInterval.a h
-      have hb : (a + b) / 2 = b := congrArg BoundedInterval.b h
-      exact hab (by linarith)
-  | Ioc a b =>
-    simp only [BoundedInterval.a, BoundedInterval.b]
-    by_cases hab : a = b
-    · right; exact hab
-    · left
-      intro h
-      have ha : a = (a + b) / 2 := congrArg BoundedInterval.a h
-      have hb : (a + b) / 2 = b := congrArg BoundedInterval.b h
-      exact hab (by linarith)
-  | Ico a b =>
-    simp only [BoundedInterval.a, BoundedInterval.b]
-    by_cases hab : a = b
-    · right; exact hab
-    · left
-      intro h
-      have ha : a = (a + b) / 2 := congrArg BoundedInterval.a h
-      have hb : (a + b) / 2 = b := congrArg BoundedInterval.b h
-      exact hab (by linarith)
-
-/-- Helper: max distributes over division by 2 -/
-lemma max_div_two (x : ℝ) : max x 0 / 2 = max (x / 2) 0 := by
-  by_cases hx : 0 ≤ x
-  · simp [max_eq_left hx, max_eq_left (div_nonneg hx (by norm_num : (0:ℝ) < 2).le)]
-  · push_neg at hx
-    simp [max_eq_right (le_of_lt hx), max_eq_right (by linarith : x / 2 ≤ 0)]
 
 /-- The left half of bisection has half the original length -/
-lemma BoundedInterval.bisect_fst_length (I : BoundedInterval) :
+lemma bisect_fst_length (I : BoundedInterval) :
     |(I.bisect.fst)|ₗ = |I|ₗ / 2 := by
   unfold bisect midpoint endpoints length
   cases I with
@@ -236,7 +143,7 @@ lemma BoundedInterval.bisect_fst_length (I : BoundedInterval) :
     rw [h, max_div_two]
 
 /-- The right half of bisection has half the original length -/
-lemma BoundedInterval.bisect_snd_length (I : BoundedInterval) :
+lemma bisect_snd_length (I : BoundedInterval) :
     |(I.bisect.snd)|ₗ = |I|ₗ / 2 := by
   unfold bisect midpoint endpoints length
   cases I with
@@ -259,13 +166,179 @@ lemma BoundedInterval.bisect_snd_length (I : BoundedInterval) :
     rw [h, max_div_two]
 
 /-- Bisecting preserves total length -/
-lemma BoundedInterval.bisect_length_sum (I : BoundedInterval) :
+lemma bisect_length_sum (I : BoundedInterval) :
     |(I.bisect.fst)|ₗ + |(I.bisect.snd)|ₗ = |I|ₗ := by
   rw [bisect_fst_length, bisect_snd_length]
   ring
 
-namespace Box
+/-- The left endpoint of bisect.fst is I.a -/
+@[simp]
+lemma bisect_fst_a (I : BoundedInterval) : (I.bisect.fst).a = I.a := by
+  unfold bisect endpoints
+  cases I <;> simp [BoundedInterval.a]
 
+/-- The left endpoint of bisect.snd is I.midpoint -/
+@[simp]
+lemma bisect_snd_a (I : BoundedInterval) : (I.bisect.snd).a = I.midpoint := by
+  unfold bisect endpoints
+  cases I <;> simp [BoundedInterval.a, midpoint]
+
+/-- The midpoint equals a + length/2 when a ≤ b (non-degenerate interval) -/
+lemma midpoint_eq_a_add_half_length (I : BoundedInterval) (h : I.a ≤ I.b) :
+    I.midpoint = I.a + |I|ₗ / 2 := by
+  unfold midpoint endpoints length
+  cases I with
+  | Ioo a b =>
+    simp only [BoundedInterval.a, BoundedInterval.b] at h ⊢
+    simp [max_eq_left (sub_nonneg.mpr h)]; ring
+  | Icc a b =>
+    simp only [BoundedInterval.a, BoundedInterval.b] at h ⊢
+    simp [max_eq_left (sub_nonneg.mpr h)]; ring
+  | Ioc a b =>
+    simp only [BoundedInterval.a, BoundedInterval.b] at h ⊢
+    simp [max_eq_left (sub_nonneg.mpr h)]; ring
+  | Ico a b =>
+    simp only [BoundedInterval.a, BoundedInterval.b] at h ⊢
+    simp [max_eq_left (sub_nonneg.mpr h)]; ring
+
+
+/-- The midpoint is in the first half of bisection (as the right endpoint of Icc) -/
+lemma midpoint_mem_bisect_fst (I : BoundedInterval) (h : I.toSet.Nonempty) :
+    I.midpoint ∈ (I.bisect.fst).toSet := by
+  obtain ⟨x, hx⟩ := h
+  unfold bisect midpoint endpoints toSet at *
+  cases I with
+  | Ioo a b =>
+    simp only [Set.mem_Ioo] at hx
+    simp only [Set.mem_Icc]; exact ⟨by linarith, by linarith⟩
+  | Icc a b =>
+    simp only [Set.mem_Icc] at hx
+    simp only [Set.mem_Icc]; exact ⟨by linarith, by linarith⟩
+  | Ioc a b =>
+    simp only [Set.mem_Ioc] at hx
+    simp only [Set.mem_Icc]; exact ⟨by linarith, by linarith⟩
+  | Ico a b =>
+    simp only [Set.mem_Ico] at hx
+    simp only [Set.mem_Icc]; exact ⟨by linarith, by linarith⟩
+
+/-- The midpoint is in the second half of bisection (as the left endpoint of Icc) -/
+lemma midpoint_mem_bisect_snd (I : BoundedInterval) (h : I.toSet.Nonempty) :
+    I.midpoint ∈ (I.bisect.snd).toSet := by
+  obtain ⟨x, hx⟩ := h
+  unfold bisect midpoint endpoints toSet at *
+  cases I with
+  | Ioo a b =>
+    simp only [Set.mem_Ioo] at hx
+    simp only [Set.mem_Icc]; exact ⟨by linarith, by linarith⟩
+  | Icc a b =>
+    simp only [Set.mem_Icc] at hx
+    simp only [Set.mem_Icc]; exact ⟨by linarith, by linarith⟩
+  | Ioc a b =>
+    simp only [Set.mem_Ioc] at hx
+    simp only [Set.mem_Icc]; exact ⟨by linarith, by linarith⟩
+  | Ico a b =>
+    simp only [Set.mem_Ico] at hx
+    simp only [Set.mem_Icc]; exact ⟨by linarith, by linarith⟩
+
+
+/-- A point is in I.bisect.snd iff it's in I.toSet and at or above the midpoint -/
+lemma mem_bisect_snd_iff (I : BoundedInterval) (x : ℝ) (hx : x ∈ I.toSet) :
+    x ∈ (I.bisect.snd).toSet ↔ x ≥ I.midpoint := by
+  unfold bisect midpoint endpoints toSet at *
+  cases I with
+  | Ioo a b =>
+    simp only [Set.mem_Ioo] at hx
+    simp only [Set.mem_Icc]
+    constructor
+    · intro ⟨h1, _⟩; exact h1
+    · intro h; exact ⟨h, by linarith⟩
+  | Icc a b =>
+    simp only [Set.mem_Icc] at hx
+    simp only [Set.mem_Icc]
+    constructor
+    · intro ⟨h1, _⟩; exact h1
+    · intro h; exact ⟨h, by linarith⟩
+  | Ioc a b =>
+    simp only [Set.mem_Ioc] at hx
+    simp only [Set.mem_Icc]
+    constructor
+    · intro ⟨h1, _⟩; exact h1
+    · intro h; exact ⟨h, by linarith⟩
+  | Ico a b =>
+    simp only [Set.mem_Ico] at hx
+    simp only [Set.mem_Icc]
+    constructor
+    · intro ⟨h1, _⟩; exact h1
+    · intro h; exact ⟨h, by linarith⟩
+
+/-- A point is in I.bisect.fst iff it's in I.toSet and below the midpoint -/
+lemma mem_bisect_fst_iff (I : BoundedInterval) (x : ℝ) (hx : x ∈ I.toSet) :
+    x ∈ (I.bisect.fst).toSet ↔ x ≤ I.midpoint := by
+  unfold bisect midpoint endpoints toSet at *
+  cases I with
+  | Ioo a b =>
+    simp only [Set.mem_Ioo] at hx
+    simp only [Set.mem_Icc]
+    constructor
+    · intro ⟨_, h2⟩; exact h2
+    · intro h; exact ⟨by linarith, h⟩
+  | Icc a b =>
+    simp only [Set.mem_Icc] at hx
+    simp only [Set.mem_Icc]
+    constructor
+    · intro ⟨_, h2⟩; exact h2
+    · intro h; exact ⟨by linarith, h⟩
+  | Ioc a b =>
+    simp only [Set.mem_Ioc] at hx
+    simp only [Set.mem_Icc]
+    constructor
+    · intro ⟨_, h2⟩; exact h2
+    · intro h; exact ⟨by linarith, h⟩
+  | Ico a b =>
+    simp only [Set.mem_Ico] at hx
+    simp only [Set.mem_Icc]
+    constructor
+    · intro ⟨_, h2⟩; exact h2
+    · intro h; exact ⟨by linarith, h⟩
+
+/-- If two intervals have equal bisect.fst, then their endpoints match -/
+lemma bisect_fst_eq_endpoints {I₁ I₂ : BoundedInterval}
+    (h : I₁.bisect.fst = I₂.bisect.fst) : I₁.a = I₂.a ∧ I₁.b = I₂.b := by
+  -- bisect.fst = Icc I.a I.midpoint, so (bisect.fst).a = I.a
+  have ha' : (I₁.bisect.fst).a = (I₂.bisect.fst).a := congrArg (·.a) h
+  have hm' : (I₁.bisect.fst).b = (I₂.bisect.fst).b := congrArg (·.b) h
+  simp only [bisect, endpoints, midpoint, BoundedInterval.a, BoundedInterval.b] at ha' hm'
+  constructor
+  · cases I₁ <;> cases I₂ <;> simp_all
+  · cases I₁ <;> cases I₂ <;> simp only [BoundedInterval.b] at ha' hm' ⊢ <;> linarith
+
+/-- If two intervals have equal bisect.snd, then their endpoints match -/
+lemma bisect_snd_eq_endpoints {I₁ I₂ : BoundedInterval}
+    (h : I₁.bisect.snd = I₂.bisect.snd) : I₁.a = I₂.a ∧ I₁.b = I₂.b := by
+  -- bisect.snd = Icc midpoint b, so (bisect.snd).a = midpoint and (bisect.snd).b = b
+  have hm' : (I₁.bisect.snd).a = (I₂.bisect.snd).a := congrArg (·.a) h
+  have hb' : (I₁.bisect.snd).b = (I₂.bisect.snd).b := congrArg (·.b) h
+  -- The .b of bisect.snd is just I.b, and .a is (I.a + I.b)/2
+  cases I₁ with | _ a₁ b₁ =>
+  cases I₂ with | _ a₂ b₂ =>
+  all_goals simp only [bisect, endpoints, midpoint, BoundedInterval.a, BoundedInterval.b] at hm' hb' ⊢
+  -- Now hm' : (a₁ + b₁)/2 = (a₂ + b₂)/2 and hb' : b₁ = b₂
+  all_goals constructor <;> linarith
+
+
+/-- Cross-case: if bisect.fst = bisect.snd, the intervals have overlapping midpoint and endpoint -/
+lemma bisect_fst_eq_snd_shift {I₁ I₂ : BoundedInterval}
+    (h : I₁.bisect.fst = I₂.bisect.snd) : I₁.a = (I₂.a + I₂.b) / 2 := by
+  -- (bisect.fst).a = I.a, (bisect.snd).a = I.midpoint = (I.a + I.b)/2
+  have ha' : (I₁.bisect.fst).a = (I₂.bisect.snd).a := congrArg (·.a) h
+  cases I₁ with | _ a₁ b₁ =>
+  cases I₂ with | _ a₂ b₂ =>
+  all_goals simp only [bisect, endpoints, midpoint, BoundedInterval.a, BoundedInterval.b] at ha' ⊢
+  all_goals linarith
+
+end BoundedInterval
+
+namespace Box
 /-- The diameter of a box is the supremum of Euclidean distances between points in the box -/
 noncomputable def diameter {d:ℕ} (B: Box d) : ℝ :=
   sSup { r | ∃ x ∈ B.toSet, ∃ y ∈ B.toSet, r = √(∑ i, (x i - y i)^2) }
@@ -422,117 +495,261 @@ lemma dist_le_diameter {d:ℕ} (B: Box d) {x y: EuclideanSpace' d}
   · -- √(∑ (x i - y i)²) is in the set
     exact ⟨x, hx, y, hy, rfl⟩
 
-/-- Diameter is bounded by √d times the maximum side length -/
-lemma diameter_bound_by_sides {d:ℕ} (B: Box d) :
-    B.diameter ≤ Real.sqrt d * (⨆ i, |B.side i|ₗ) := by
-  unfold diameter
-  by_cases h : B.toSet.Nonempty
-  · apply csSup_le
-    · obtain ⟨x, hx⟩ := h
-      exact ⟨√(∑ i, (x i - x i)^2), x, hx, x, hx, rfl⟩
-    · intro r ⟨x, hx, y, hy, hr⟩
-      -- √(∑ i, (x i - y i)²) ≤ √(d * max²) = √d * max
-      rw [hr]
-      let max_side := ⨆ i, |B.side i|ₗ
-      -- Each coordinate difference is bounded by the maximum side length
-      have coord_bound : ∀ i, |(x - y) i| ≤ max_side := by
-        intro i
-        have hx_i : x i ∈ (B.side i).toSet := hx i (Set.mem_univ i)
-        have hy_i : y i ∈ (B.side i).toSet := hy i (Set.mem_univ i)
-        -- |x i - y i| ≤ |B.side i|ₗ ≤ max_side
-        have bound_by_side : |(x - y) i| ≤ |B.side i|ₗ := by
-          cases h_side : B.side i with
-          | Ioo a b =>
-              simp [BoundedInterval.toSet, h_side] at hx_i hy_i
-              simp [BoundedInterval.length]
-              left
-              rw [abs_sub_le_iff]
-              constructor <;> linarith [hx_i.1, hx_i.2, hy_i.1, hy_i.2]
-          | Icc a b =>
-              simp [BoundedInterval.toSet, h_side] at hx_i hy_i
-              simp [BoundedInterval.length]
-              left
-              rw [abs_sub_le_iff]
-              constructor <;> linarith [hx_i.1, hx_i.2, hy_i.1, hy_i.2]
-          | Ioc a b =>
-              simp [BoundedInterval.toSet, h_side] at hx_i hy_i
-              simp [BoundedInterval.length]
-              left
-              rw [abs_sub_le_iff]
-              constructor <;> linarith [hx_i.1, hx_i.2, hy_i.1, hy_i.2]
-          | Ico a b =>
-              simp [BoundedInterval.toSet, h_side] at hx_i hy_i
-              simp [BoundedInterval.length]
-              left
-              rw [abs_sub_le_iff]
-              constructor <;> linarith [hx_i.1, hx_i.2, hy_i.1, hy_i.2]
-        calc |(x - y) i|
-            ≤ |B.side i|ₗ := bound_by_side
-          _ ≤ max_side := by
-              show |B.side i|ₗ ≤ ⨆ j, |B.side j|ₗ
-              apply le_ciSup _ i
-              -- The set is bounded above
-              refine ⟨∑ j : Fin d, |B.side j|ₗ, ?_⟩
-              intro r ⟨j, hj⟩
-              simp only at hj
-              rw [← hj]
-              -- |B.side j|ₗ ≤ sum of all sides
-              have single_le : ∀ j : Fin d, |B.side j|ₗ ≤ ∑ k : Fin d, |B.side k|ₗ := by
-                intro j'
-                calc |B.side j'|ₗ
-                    = ∑ k ∈ ({j'} : Finset (Fin d)), |B.side k|ₗ := by simp
-                  _ ≤ ∑ k ∈ Finset.univ, |B.side k|ₗ := by
-                      apply Finset.sum_le_sum_of_subset_of_nonneg
-                      · intro x _; simp
-                      · intro k _ _; simp [BoundedInterval.length]
-                  _ = ∑ k : Fin d, |B.side k|ₗ := rfl
-              exact single_le j
-      -- Now: (x i - y i)² ≤ max_side² for each i
-      have sq_bound : ∀ i, (x i - y i)^2 ≤ max_side^2 := by
-        intro i
-        have := coord_bound i
-        calc (x i - y i)^2
-            ≤ |(x i - y i)|^2 := by rw [← sq_abs]
-          _ = |(x - y) i|^2 := by rfl
-          _ ≤ max_side^2 := by
-              apply sq_le_sq'
-              · linarith [abs_nonneg ((x - y) i)]
-              · exact this
-      -- Sum: ∑ i, (x i - y i)² ≤ d * max_side²
-      have sum_bound : ∑ i, (x i - y i)^2 ≤ d * max_side^2 := by
-        calc ∑ i, (x i - y i)^2
-            ≤ ∑ i : Fin d, max_side^2 := by
-                apply Finset.sum_le_sum
-                intro i _
-                exact sq_bound i
-          _ = Finset.card (Finset.univ : Finset (Fin d)) * max_side^2 := by
-                rw [Finset.sum_const, nsmul_eq_mul]
-          _ = d * max_side^2 := by
-                rw [Finset.card_fin]
-      -- Apply sqrt to both sides
-      calc √(∑ i, (x i - y i)^2)
-          ≤ √(d * max_side^2) := by
-              apply Real.sqrt_le_sqrt
-              exact sum_bound
-        _ = √d * √(max_side^2) := by
-              rw [Real.sqrt_mul (Nat.cast_nonneg d)]
-        _ = √d * max_side := by
-              rw [Real.sqrt_sq (by
-                -- max_side ≥ 0
-                apply Real.iSup_nonneg
-                intro i
-                -- BoundedInterval.length is max (b - a) 0, which is always ≥ 0
-                simp [BoundedInterval.length])]
-  · rw [Set.not_nonempty_iff_eq_empty] at h
-    rw [h]
-    simp [sSup]
-    apply mul_nonneg
-    · exact Real.sqrt_nonneg _
-    · apply Real.iSup_nonneg
-      intro i
-      -- BoundedInterval.length is max (b - a) 0, which is always ≥ 0
-      simp [BoundedInterval.length]
 
+/-- For any nonempty interval and target value less than the length,
+    we can find two points in the interval with separation exceeding the target.
+    This is the key density fact: achievable differences are dense in [0, length]. -/
+lemma BoundedInterval.exists_points_with_diff {I : BoundedInterval}
+    (h_nonempty : I.toSet.Nonempty) {t : ℝ} (ht_nonneg : 0 ≤ t) (ht : t < |I|ₗ) :
+    ∃ x ∈ I.toSet, ∃ y ∈ I.toSet, t < |x - y| := by
+  -- Since t < |I|ₗ = max (b - a) 0 and t ≥ 0, we have b - a > t ≥ 0
+  have h_len_pos : 0 < |I|ₗ := lt_of_le_of_lt ht_nonneg ht
+  cases I with
+  | Icc a b =>
+    simp only [length, BoundedInterval.a, BoundedInterval.b] at ht h_len_pos
+    have h_ab : a < b := by
+      by_contra h; push_neg at h
+      have : max (b - a) 0 = 0 := max_eq_right (by linarith)
+      linarith
+    have h_t_lt : t < b - a := by
+      have hmax : max (b - a) 0 = b - a := max_eq_left (by linarith)
+      rw [hmax] at ht
+      exact ht
+    -- Closed: use endpoints a and b
+    refine ⟨a, Set.left_mem_Icc.mpr (le_of_lt h_ab), b, Set.right_mem_Icc.mpr (le_of_lt h_ab), ?_⟩
+    rw [abs_sub_comm, abs_of_pos (by linarith : 0 < b - a)]
+    linarith
+  | Ioo a b =>
+    simp only [length, BoundedInterval.a, BoundedInterval.b] at ht h_len_pos
+    have h_ab : a < b := by
+      by_contra h; push_neg at h
+      have : max (b - a) 0 = 0 := max_eq_right (by linarith)
+      linarith
+    have h_t_lt : t < b - a := by
+      have hmax : max (b - a) 0 = b - a := max_eq_left (by linarith)
+      rw [hmax] at ht
+      exact ht
+    -- Open: use points close to endpoints
+    set δ := ((b - a) - t) / 2 with hδ_def
+    have h_δ_pos : 0 < δ := by linarith
+    have hx_mem : a + δ / 2 ∈ Set.Ioo a b := Set.mem_Ioo.mpr ⟨by linarith, by linarith⟩
+    have hy_mem : b - δ / 2 ∈ Set.Ioo a b := Set.mem_Ioo.mpr ⟨by linarith, by linarith⟩
+    refine ⟨a + δ / 2, hx_mem, b - δ / 2, hy_mem, ?_⟩
+    have h_diff : (b - δ / 2) - (a + δ / 2) = (b - a) - δ := by ring
+    rw [abs_sub_comm, abs_of_pos (by linarith : 0 < (b - δ / 2) - (a + δ / 2)), h_diff]
+    linarith
+  | Ioc a b =>
+    simp only [length, BoundedInterval.a, BoundedInterval.b] at ht h_len_pos
+    have h_ab : a < b := by
+      by_contra h; push_neg at h
+      have : max (b - a) 0 = 0 := max_eq_right (by linarith)
+      linarith
+    have h_t_lt : t < b - a := by
+      have hmax : max (b - a) 0 = b - a := max_eq_left (by linarith)
+      rw [hmax] at ht
+      exact ht
+    -- Left open, right closed: use point close to a and b
+    set δ := ((b - a) - t) / 2 with hδ_def
+    have h_δ_pos : 0 < δ := by linarith
+    have hx_mem : a + δ / 2 ∈ Set.Ioc a b := Set.mem_Ioc.mpr ⟨by linarith, by linarith⟩
+    have hy_mem : b ∈ Set.Ioc a b := Set.mem_Ioc.mpr ⟨h_ab, le_refl b⟩
+    refine ⟨a + δ / 2, hx_mem, b, hy_mem, ?_⟩
+    have h_diff : b - (a + δ / 2) = (b - a) - δ / 2 := by ring
+    rw [abs_sub_comm, abs_of_pos (by linarith : 0 < b - (a + δ / 2)), h_diff]
+    linarith
+  | Ico a b =>
+    simp only [length, BoundedInterval.a, BoundedInterval.b] at ht h_len_pos
+    have h_ab : a < b := by
+      by_contra h; push_neg at h
+      have : max (b - a) 0 = 0 := max_eq_right (by linarith)
+      linarith
+    have h_t_lt : t < b - a := by
+      have hmax : max (b - a) 0 = b - a := max_eq_left (by linarith)
+      rw [hmax] at ht
+      exact ht
+    -- Left closed, right open: use a and point close to b
+    set δ := ((b - a) - t) / 2 with hδ_def
+    have h_δ_pos : 0 < δ := by linarith
+    have hx_mem : a ∈ Set.Ico a b := Set.mem_Ico.mpr ⟨le_refl a, h_ab⟩
+    have hy_mem : b - δ / 2 ∈ Set.Ico a b := Set.mem_Ico.mpr ⟨by linarith, by linarith⟩
+    refine ⟨a, hx_mem, b - δ / 2, hy_mem, ?_⟩
+    have h_diff : (b - δ / 2) - a = (b - a) - δ / 2 := by ring
+    rw [abs_sub_comm, abs_of_pos (by linarith : 0 < (b - δ / 2) - a), h_diff]
+    linarith
+
+/-- The diameter of a nonempty box equals the diagonal length √(∑ |side i|ₗ²).
+    This is the key fact: the supremum of pairwise distances equals the diagonal.
+    For closed intervals, the diagonal is achieved at corners.
+    For open intervals, the diagonal is the limit (supremum) of achievable distances. -/
+lemma diameter_eq_sqrt_sum_sq {d:ℕ} (B: Box d) (h: B.toSet.Nonempty) :
+    B.diameter = √(∑ i, |B.side i|ₗ^2) := by
+  unfold diameter
+  -- Use csSup_eq_of_forall_le_of_forall_lt_exists_gt:
+  -- if s.Nonempty ∧ (∀ a ∈ s, a ≤ b) ∧ (∀ c < b, ∃ a ∈ s, c < a), then sSup s = b
+  let s := { r | ∃ x ∈ B.toSet, ∃ y ∈ B.toSet, r = √(∑ i, (x i - y i)^2) }
+  let b := √(∑ i, |B.side i|ₗ^2)
+  apply csSup_eq_of_forall_le_of_forall_lt_exists_gt
+  · -- s is nonempty
+    obtain ⟨x, hx⟩ := h
+    exact ⟨√(∑ i, (x i - x i)^2), x, hx, x, hx, rfl⟩
+  · -- ∀ a ∈ s, a ≤ b (upper bound)
+    intro r ⟨x, hx, y, hy, hr⟩
+    rw [hr]
+    apply Real.sqrt_le_sqrt
+    apply Finset.sum_le_sum
+    intro i _
+    -- |x i - y i|² ≤ |B.side i|ₗ²
+    have hx_i : x i ∈ (B.side i).toSet := hx i (Set.mem_univ i)
+    have hy_i : y i ∈ (B.side i).toSet := hy i (Set.mem_univ i)
+    have coord_bound : |x i - y i| ≤ |B.side i|ₗ := by
+      cases h_side : B.side i <;>
+          simp [BoundedInterval.toSet, h_side] at hx_i hy_i <;>
+          simp [BoundedInterval.length] <;>
+          (left; rw [abs_sub_le_iff]; constructor <;> linarith [hx_i.1, hx_i.2, hy_i.1, hy_i.2])
+    calc (x i - y i)^2 = |x i - y i|^2 := by rw [sq_abs]
+      _ ≤ |B.side i|ₗ^2 := by
+          apply sq_le_sq' <;> [linarith [abs_nonneg (x i - y i), coord_bound]; exact coord_bound]
+  · -- ∀ c < b, ∃ a ∈ s, c < a (density: can get arbitrarily close to b)
+    intro c hc
+    -- Need to find x, y ∈ B with √(∑ (x i - y i)²) > c
+    -- Strategy: for each coordinate, pick points near opposite ends of the interval
+    -- The resulting distance will be close to √(∑ side²)
+    -- Since c < √(∑ side²), we can find ε > 0 such that c < √(∑ side²) - ε
+    -- Then pick x, y such that |x i - y i| ≥ |side i| - δ for small enough δ
+    -- This gives √(∑ (x i - y i)²) ≥ √(∑ (side - δ)²) > c for small δ
+    --
+    -- For the formal proof, we use that intervals are nonempty (from h_nonempty)
+    -- and that we can pick points with controlled distances from endpoints.
+    by_cases h_zero : (∑ i, |B.side i|ₗ^2) = 0
+    · -- All sides have length 0, so b = 0
+      -- c < 0 is impossible since distances are ≥ 0
+      simp only [h_zero, Real.sqrt_zero] at hc
+      -- c < 0, but any distance is ≥ 0, so we need c < some distance ≥ 0
+      -- Since c < 0, we have c < 0 ≤ any distance
+      obtain ⟨x, hx⟩ := h
+      use 0
+      constructor
+      · exact ⟨x, hx, x, hx, by simp⟩
+      · linarith
+    · -- Some side has positive length
+      -- Use the characterization: √(∑ side²) > c means ∑ side² > c²
+      have h_pos : 0 < ∑ i, |B.side i|ₗ^2 := by
+        apply lt_of_le_of_ne
+        · apply Finset.sum_nonneg; intro i _; exact sq_nonneg _
+        · exact Ne.symm h_zero
+      -- Get ε such that c + ε < √(∑ side²)
+      have h_c_lt : c < √(∑ i, |B.side i|ₗ^2) := hc
+      -- Since c < √(∑ side²), we have c² < ∑ side² (for c ≥ 0) or c < 0
+      by_cases hc_nonneg : 0 ≤ c
+      · -- c ≥ 0 case: we need to construct points with large distance
+        -- Strategy: use exists_points_with_diff for positive-length coordinates
+        -- Each interval is nonempty (from h: B.toSet.Nonempty)
+        have h_interval_nonempty : ∀ i, (B.side i).toSet.Nonempty := by
+          intro i; obtain ⟨x, hx⟩ := h
+          exact ⟨x i, hx i (Set.mem_univ i)⟩
+        -- We'll construct points coordinate-wise with ≥ for all and > for positive-length
+        let ratio := c / √(∑ i, |B.side i|ₗ^2)
+        have h_ratio_lt_one : ratio < 1 := by
+          show c / √(∑ i, |B.side i|ₗ^2) < 1
+          rw [div_lt_one (Real.sqrt_pos.mpr h_pos)]
+          exact h_c_lt
+        have h_ratio_nonneg : 0 ≤ ratio := by
+          show 0 ≤ c / √(∑ i, |B.side i|ₗ^2)
+          exact div_nonneg hc_nonneg (Real.sqrt_nonneg _)
+        -- For positive-length coordinates: get strict inequality
+        have h_exists_points : ∀ i, ∃ xi ∈ (B.side i).toSet, ∃ yi ∈ (B.side i).toSet,
+            |B.side i|ₗ * ratio ≤ |xi - yi| ∧
+            (0 < |B.side i|ₗ → |B.side i|ₗ * ratio < |xi - yi|) := by
+          intro i
+          by_cases h_len_zero : |B.side i|ₗ = 0
+          · -- Zero-length interval: xi = yi gives 0 ≤ 0
+            obtain ⟨xi, hxi⟩ := h_interval_nonempty i
+            refine ⟨xi, hxi, xi, hxi, ?_, ?_⟩
+            · simp [h_len_zero]
+            · simp [h_len_zero]
+          · -- Positive-length interval: use exists_points_with_diff
+            have h_len_pos : 0 < |B.side i|ₗ := by
+              apply lt_of_le_of_ne; simp [BoundedInterval.length]; exact Ne.symm h_len_zero
+            have h_target_lt : |B.side i|ₗ * ratio < |B.side i|ₗ := by
+              calc |B.side i|ₗ * ratio < |B.side i|ₗ * 1 := by
+                    apply mul_lt_mul_of_pos_left h_ratio_lt_one h_len_pos
+                _ = |B.side i|ₗ := mul_one _
+            obtain ⟨xi, hxi, yi, hyi, hlt⟩ := BoundedInterval.exists_points_with_diff
+              (h_interval_nonempty i) (mul_nonneg (by simp [BoundedInterval.length]) h_ratio_nonneg)
+              h_target_lt
+            exact ⟨xi, hxi, yi, hyi, le_of_lt hlt, fun _ => hlt⟩
+        -- Use Classical.choose to extract the points
+        classical
+        let x : Fin d → ℝ := fun i => (h_exists_points i).choose
+        let y : Fin d → ℝ := fun i => (h_exists_points i).choose_spec.2.choose
+        have hx_mem : ∀ i, x i ∈ (B.side i).toSet := fun i => (h_exists_points i).choose_spec.1
+        have hy_mem : ∀ i, y i ∈ (B.side i).toSet := fun i =>
+          (h_exists_points i).choose_spec.2.choose_spec.1
+        have h_diff_le : ∀ i, |B.side i|ₗ * ratio ≤ |x i - y i| := fun i =>
+          (h_exists_points i).choose_spec.2.choose_spec.2.1
+        have h_diff_lt : ∀ i, 0 < |B.side i|ₗ → |B.side i|ₗ * ratio < |x i - y i| := fun i =>
+          (h_exists_points i).choose_spec.2.choose_spec.2.2
+        -- x, y ∈ B.toSet
+        have hx_box : x ∈ B.toSet := fun i _ => hx_mem i
+        have hy_box : y ∈ B.toSet := fun i _ => hy_mem i
+        -- The distance √(∑ (x_i - y_i)²) > c
+        use √(∑ i, (x i - y i)^2)
+        constructor
+        · exact ⟨x, hx_box, y, hy_box, rfl⟩
+        · -- Need: c < √(∑ (x_i - y_i)²)
+          rw [← Real.sqrt_sq hc_nonneg]
+          apply Real.sqrt_lt_sqrt (sq_nonneg c)
+          -- Need: c² < ∑ (x_i - y_i)²
+          -- c² = ∑ (side * ratio)² and we have ≤ for all, < for at least one positive side
+          have h_target : c^2 = ∑ i, (|B.side i|ₗ * ratio)^2 := by
+            have h_sum_nonneg : 0 ≤ ∑ i : Fin d, |B.side i|ₗ^2 :=
+              Finset.sum_nonneg (fun i _ => sq_nonneg (|B.side i|ₗ))
+            have h_sqrt_ne : √(∑ i, |B.side i|ₗ^2) ≠ 0 := Real.sqrt_ne_zero'.mpr h_pos
+            calc c^2 = (√(∑ i, |B.side i|ₗ^2) * ratio)^2 := by
+                  show c^2 = (√(∑ i, |B.side i|ₗ^2) * (c / √(∑ i, |B.side i|ₗ^2)))^2
+                  field_simp
+              _ = (∑ i, |B.side i|ₗ^2) * ratio^2 := by
+                  rw [mul_pow, Real.sq_sqrt h_sum_nonneg]
+              _ = ∑ i, |B.side i|ₗ^2 * ratio^2 := Finset.sum_mul _ _ _
+              _ = ∑ i, (|B.side i|ₗ * ratio)^2 := by congr 1; ext i; ring
+          rw [h_target]
+          -- Since ∑ side² > 0, at least one side is positive
+          have h_exists_pos : ∃ j, 0 < |B.side j|ₗ := by
+            by_contra h_all_zero; push_neg at h_all_zero
+            have h_sum_zero : (∑ i, |B.side i|ₗ^2) = 0 := by
+              apply Finset.sum_eq_zero; intro i _
+              have : |B.side i|ₗ ≤ 0 := h_all_zero i
+              have h_nonneg : 0 ≤ |B.side i|ₗ := by simp [BoundedInterval.length]
+              have : |B.side i|ₗ = 0 := le_antisymm this h_nonneg
+              simp [this]
+            exact h_zero h_sum_zero
+          obtain ⟨j, hj_pos⟩ := h_exists_pos
+          apply Finset.sum_lt_sum
+          · intro i _
+            have h_sq : (|B.side i|ₗ * ratio)^2 ≤ |x i - y i|^2 := by
+              apply sq_le_sq' _ (h_diff_le i)
+              calc -(|x i - y i|) ≤ 0 := neg_nonpos.mpr (abs_nonneg _)
+                _ ≤ |B.side i|ₗ * ratio := mul_nonneg (by simp [BoundedInterval.length]) h_ratio_nonneg
+            calc (|B.side i|ₗ * ratio)^2 ≤ |x i - y i|^2 := h_sq
+              _ = (x i - y i)^2 := by rw [sq_abs]
+          · use j, Finset.mem_univ j
+            have h_sq_lt : (|B.side j|ₗ * ratio)^2 < |x j - y j|^2 := by
+              -- From h_diff_lt we know side * ratio < |x j - y j|, so |x j - y j| > 0
+              have h_diff_pos : 0 < |x j - y j| :=
+                lt_of_le_of_lt (mul_nonneg (by simp [BoundedInterval.length]) h_ratio_nonneg)
+                  (h_diff_lt j hj_pos)
+              apply sq_lt_sq' _ (h_diff_lt j hj_pos)
+              calc -(|x j - y j|) < 0 := neg_neg_of_pos h_diff_pos
+                _ ≤ |B.side j|ₗ * ratio := mul_nonneg (by simp [BoundedInterval.length]) h_ratio_nonneg
+            calc (|B.side j|ₗ * ratio)^2 < |x j - y j|^2 := h_sq_lt
+              _ = (x j - y j)^2 := by rw [sq_abs]
+      · -- c < 0 case: any distance ≥ 0 > c
+        push_neg at hc_nonneg
+        obtain ⟨x, hx⟩ := h
+        use 0
+        constructor
+        · exact ⟨x, hx, x, hx, by simp⟩
+        · linarith
 
 /-- If a box intersects two sets, any two points (one from each set)
     in the box have distance at most the diameter -/
@@ -595,103 +812,6 @@ noncomputable def subdivide {d:ℕ} (B: Box d) : Finset (Box d) :=
     { side := fun i =>
         let (left, right) := (B.side i).bisect
         if choice i then right else left }
-
-/-- Distributive law: product of sums over Fin d equals sum over boolean choices of products.
-    This is the key identity: ∏ᵢ (aᵢ + bᵢ) = ∑_{c : Fin d → Bool} ∏ᵢ (if cᵢ then bᵢ else aᵢ) -/
-lemma Fin.prod_add_eq_sum_prod_choice (d : ℕ) (a b : Fin d → ℝ) :
-    ∏ i, (a i + b i) = ∑ c : Fin d → Bool, ∏ i, (if c i then b i else a i) := by
-  induction d with
-  | zero =>
-    -- Empty product = 1, and there's exactly one function Fin 0 → Bool
-    simp only [Finset.univ_eq_empty, Finset.prod_empty]
-    have h_card : (Finset.univ : Finset (Fin 0 → Bool)).card = 1 := by simp
-    rw [Finset.card_eq_one] at h_card
-    obtain ⟨f, hf⟩ := h_card
-    simp only [hf, Finset.sum_singleton]
-  | succ d ih =>
-    -- Split off first coordinate: ∏_{i:Fin(d+1)} = (first term) * ∏_{i:Fin d}
-    rw [Fin.prod_univ_succ]
-    -- Apply IH to the tail
-    let a' : Fin d → ℝ := fun i => a i.succ
-    let b' : Fin d → ℝ := fun i => b i.succ
-    have h_tail : ∏ i : Fin d, (a i.succ + b i.succ) = ∏ i, (a' i + b' i) := rfl
-    rw [h_tail, ih a' b']
-    -- Distribute: (a 0 + b 0) * (∑ c', ...) = b 0 * (∑ c', ...) + a 0 * (∑ c', ...)
-    rw [add_comm (a 0) (b 0), add_mul, Finset.mul_sum, Finset.mul_sum]
-    -- Split RHS sum by first bit: ∑_c = ∑_{c 0 = true} + ∑_{c 0 = false}
-    symm
-    rw [← Finset.sum_filter_add_sum_filter_not Finset.univ (fun c : Fin (d+1) → Bool => c 0)]
-    -- Now: (∑_{c 0 = true} ...) + (∑_{c 0 = false} ...) = b 0 * (...) + a 0 * (...)
-    congr 1
-    · -- c 0 = true case
-      have h_factor : ∀ c ∈ Finset.filter (fun c : Fin (d+1) → Bool => c 0) Finset.univ,
-          ∏ i, (if c i then b i else a i) =
-          b 0 * ∏ i : Fin d, (if c i.succ then b' i else a' i) := by
-        intro c hc
-        rw [Fin.prod_univ_succ]
-        simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hc
-        simp only [hc, ↓reduceIte, a', b']
-      rw [Finset.sum_congr rfl h_factor, ← Finset.mul_sum]
-      -- Now goal is: b 0 * (∑ c ∈ filter, ∏...) = b 0 * (∑ c' ∈ univ, ∏...)
-      -- Need to show the sums are equal, then multiply by b 0
-      have h_sum_eq : ∑ c ∈ Finset.filter (fun c : Fin (d+1) → Bool => c 0) Finset.univ,
-          ∏ i : Fin d, (if c i.succ then b' i else a' i) =
-          ∑ c' : Fin d → Bool, ∏ i, (if c' i then b' i else a' i) := by
-        symm
-        refine Finset.sum_bij (fun (c' : Fin d → Bool) _ => Fin.cons true c') ?_ ?_ ?_ ?_
-        · intro c' _
-          simp only [Finset.mem_filter, Finset.mem_univ, Fin.cons_zero, true_and]
-        · intro c₁ _ c₂ _ heq
-          simp only at heq
-          funext i
-          have h : (Fin.cons true c₁ : Fin (d+1) → Bool) i.succ =
-                   (Fin.cons true c₂ : Fin (d+1) → Bool) i.succ := by rw [heq]
-          simp only [Fin.cons_succ] at h
-          exact h
-        · intro c hc
-          simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hc
-          refine ⟨fun i => c i.succ, Finset.mem_univ _, ?_⟩
-          funext i; cases' i using Fin.cases with i
-          · simp only [Fin.cons_zero]; exact hc.symm
-          · simp only [Fin.cons_succ]
-        · intro c' _
-          apply Finset.prod_congr rfl; intro i _
-          simp only [Fin.cons_succ]
-      rw [h_sum_eq, Finset.mul_sum]
-    · -- c 0 = false case
-      have h_factor : ∀ c ∈ Finset.filter (fun c : Fin (d+1) → Bool => ¬c 0) Finset.univ,
-          ∏ i, (if c i then b i else a i) =
-          a 0 * ∏ i : Fin d, (if c i.succ then b' i else a' i) := by
-        intro c hc
-        rw [Fin.prod_univ_succ]
-        simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hc
-        simp only [Bool.eq_false_iff.mpr hc, Bool.false_eq_true, ↓reduceIte, a', b']
-      rw [Finset.sum_congr rfl h_factor, ← Finset.mul_sum]
-      have h_sum_eq : ∑ c ∈ Finset.filter (fun c : Fin (d+1) → Bool => ¬c 0) Finset.univ,
-          ∏ i : Fin d, (if c i.succ then b' i else a' i) =
-          ∑ c' : Fin d → Bool, ∏ i, (if c' i then b' i else a' i) := by
-        symm
-        refine Finset.sum_bij (fun (c' : Fin d → Bool) _ => Fin.cons false c') ?_ ?_ ?_ ?_
-        · intro c' _
-          simp only [Finset.mem_filter, Finset.mem_univ, Fin.cons_zero]
-          trivial
-        · intro c₁ _ c₂ _ heq
-          simp only at heq
-          funext i
-          have h : (Fin.cons false c₁ : Fin (d+1) → Bool) i.succ =
-                   (Fin.cons false c₂ : Fin (d+1) → Bool) i.succ := by rw [heq]
-          simp only [Fin.cons_succ] at h
-          exact h
-        · intro c hc
-          simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hc
-          refine ⟨fun i => c i.succ, Finset.mem_univ _, ?_⟩
-          funext i; cases' i using Fin.cases with i
-          · simp only [Fin.cons_zero]; exact (Bool.eq_false_iff.mpr hc).symm
-          · simp only [Fin.cons_succ]
-        · intro c' _
-          apply Finset.prod_congr rfl; intro i _
-          simp only [Fin.cons_succ]
-      rw [h_sum_eq, Finset.mul_sum]
 
 /-- The volume of a subdivided box equals the sum of its sub-box volumes -/
 lemma volume_subdivide {d:ℕ} (B: Box d) :
@@ -815,19 +935,812 @@ lemma volume_subdivide {d:ℕ} (B: Box d) :
   rw [Finset.sum_image' h_func h_fiber]
 
 /-- Each sub-box of a subdivision has diameter at most the original diameter divided by √2.
-    This follows because each side is halved, reducing the diagonal by a factor related to √2. -/
-lemma subdivide_diameter_bound {d:ℕ} (B: Box d) :
+    This follows because each side is halved, reducing the diagonal by a factor related to √2.
+    Note: The hypothesis that B is nonempty is necessary because bisection always creates closed
+    intervals, which can turn degenerate open intervals (Ioo a a) into nonempty singletons. -/
+lemma subdivide_diameter_bound {d:ℕ} (B: Box d) (hB : B.toSet.Nonempty) :
     ∀ B' ∈ B.subdivide, B'.diameter ≤ B.diameter / Real.sqrt 2 := by
-  sorry
+  intro B' hB'
+  -- Extract the choice function that defines B'
+  unfold subdivide at hB'
+  simp only [Finset.mem_image, Finset.mem_univ, true_and] at hB'
+  obtain ⟨choice, rfl⟩ := hB'
+  -- Abbreviate the sub-box for readability
+  set B' : Box d := { side := fun i => if choice i then (B.side i).bisect.snd
+      else (B.side i).bisect.fst } with hB'_def
+  -- Key: B'.diameter ≤ B.diameter / 2 ≤ B.diameter / √2
+  -- Since √2 < 2, we have B.diameter / 2 ≤ B.diameter / √2
+  suffices h : B'.diameter ≤ B.diameter / 2 by
+    calc B'.diameter
+        ≤ B.diameter / 2 := h
+      _ ≤ B.diameter / √2 := by
+          apply div_le_div_of_nonneg_left (diameter_nonneg B)
+          · exact Real.sqrt_pos.mpr (by norm_num : (0:ℝ) < 2)
+          · calc √2 ≤ √4 := Real.sqrt_le_sqrt (by norm_num : (2:ℝ) ≤ 4)
+              _ = 2 := by norm_num
+  -- Now prove B'.diameter ≤ B.diameter / 2
+  -- Key: |B'.side i|ₗ = |B.side i|ₗ / 2 for all i, so diagonal is halved
+  -- From nonemptiness of B, each side interval is nonempty
+  have h_side_nonempty : ∀ i, (B.side i).toSet.Nonempty := by
+    intro i; obtain ⟨x, hx⟩ := hB
+    exact ⟨x i, hx i (Set.mem_univ i)⟩
+  -- First show B' is nonempty (the midpoint of each side is in both halves)
+  have hB'_nonempty : B'.toSet.Nonempty := by
+    use fun i => (B.side i).midpoint
+    intro i _
+    simp only [hB'_def]
+    split_ifs with h
+    · exact BoundedInterval.midpoint_mem_bisect_snd (B.side i) (h_side_nonempty i)
+    · exact BoundedInterval.midpoint_mem_bisect_fst (B.side i) (h_side_nonempty i)
+  -- Each side of B' has half the length of B's side
+  have h_side_half : ∀ i, |B'.side i|ₗ = |B.side i|ₗ / 2 := by
+    intro i
+    simp only [hB'_def]
+    split_ifs with h
+    · exact BoundedInterval.bisect_snd_length _
+    · exact BoundedInterval.bisect_fst_length _
+  -- Use diameter_eq_sqrt_sum_sq for both boxes
+  rw [diameter_eq_sqrt_sum_sq B' hB'_nonempty, diameter_eq_sqrt_sum_sq B hB]
+  -- √(∑ (side/2)²) = √(∑ side²) / 2
+  have h_sum_eq : ∑ i, |B'.side i|ₗ^2 = (∑ i, |B.side i|ₗ^2) / 4 := by
+    simp_rw [h_side_half, div_pow]
+    rw [Finset.sum_div]
+    ring_nf
+  rw [h_sum_eq, Real.sqrt_div (Finset.sum_nonneg (fun i _ => sq_nonneg _))]
+  norm_num
 
-/-- The union of all sub-boxes equals the original box -/
-lemma subdivide_covers {d:ℕ} (B: Box d) :
-    (⋃ B' ∈ B.subdivide, B'.toSet) = B.toSet := by
-  sorry
+/-- Subdivide a box k times, producing a Finset of boxes.
+    After k iterations, each original box becomes up to 2^(d*k) sub-boxes. -/
+noncomputable def subdivide_iter {d:ℕ} (B: Box d) : ℕ → Finset (Box d)
+  | 0 => {B}
+  | k+1 => (subdivide_iter B k).biUnion Box.subdivide
+
+lemma subdivide_iter_zero {d:ℕ} (B: Box d) : subdivide_iter B 0 = {B} := rfl
+
+lemma subdivide_iter_succ {d:ℕ} (B: Box d) (k: ℕ) :
+    subdivide_iter B (k+1) = (subdivide_iter B k).biUnion Box.subdivide := rfl
+
+/-- All sides in subdivide (single level) are Icc intervals -/
+lemma subdivide_side_is_Icc {d:ℕ} (B: Box d) (B' : Box d) (hB' : B' ∈ B.subdivide) (i : Fin d) :
+    ∃ a b, B'.side i = Icc a b := by
+  simp only [subdivide, Finset.mem_image, Finset.mem_univ, true_and] at hB'
+  obtain ⟨c, rfl⟩ := hB'
+  -- B' = { side := fun j => if c j then ... else ... }
+  -- B'.side i = if c i then (B.side i).bisect.snd else (B.side i).bisect.fst
+  simp only  -- This introduces the if-then-else in the goal
+  split_ifs with hc
+  · -- snd case: (B.side i).bisect.snd is Icc
+    unfold BoundedInterval.bisect BoundedInterval.endpoints BoundedInterval.midpoint
+    cases B.side i <;> exact ⟨_, _, rfl⟩
+  · -- fst case: (B.side i).bisect.fst is Icc
+    unfold BoundedInterval.bisect BoundedInterval.endpoints BoundedInterval.midpoint
+    cases B.side i <;> exact ⟨_, _, rfl⟩
+
+/-- All sides in subdivide_iter for k ≥ 1 are Icc intervals -/
+lemma subdivide_iter_side_is_Icc {d:ℕ} (B: Box d) (k : ℕ) (B' : Box d)
+    (hB' : B' ∈ subdivide_iter B (k+1)) (i : Fin d) :
+    ∃ a b, B'.side i = Icc a b := by
+  induction k generalizing B' with
+  | zero =>
+    simp only [subdivide_iter, Finset.mem_biUnion, Finset.mem_singleton] at hB'
+    obtain ⟨B'', rfl, hB'_sub⟩ := hB'
+    exact subdivide_side_is_Icc B'' B' hB'_sub i
+  | succ k ih =>
+    simp only [subdivide_iter_succ, Finset.mem_biUnion] at hB'
+    obtain ⟨B'', hB'', hB'_sub⟩ := hB'
+    exact subdivide_side_is_Icc B'' B' hB'_sub i
+
+/-- All boxes in subdivide_iter have the same side lengths at each coordinate -/
+lemma subdivide_iter_side_length {d:ℕ} (B : Box d) (k : ℕ) (B' : Box d)
+    (hB' : B' ∈ subdivide_iter B k) (i : Fin d) :
+    |B'.side i|ₗ = |B.side i|ₗ / 2^k := by
+  induction k generalizing B' with
+  | zero =>
+    simp only [subdivide_iter, Finset.mem_singleton] at hB'
+    simp [hB']
+  | succ k ih =>
+    simp only [subdivide_iter_succ, Finset.mem_biUnion] at hB'
+    obtain ⟨B'', hB'', hB'_sub⟩ := hB'
+    have h1 := ih B'' hB''
+    simp only [subdivide, Finset.mem_image, Finset.mem_univ, true_and] at hB'_sub
+    obtain ⟨c, rfl⟩ := hB'_sub
+    simp only
+    split_ifs with hc
+    · rw [BoundedInterval.bisect_snd_length, h1]; ring
+    · rw [BoundedInterval.bisect_fst_length, h1]; ring
+
+/-- A nonempty box remains nonempty after subdivision -/
+lemma subdivide_one_step_nonempty {d:ℕ} (B: Box d) (hB: B.toSet.Nonempty) :
+    ∀ B' ∈ B.subdivide, B'.toSet.Nonempty := by
+  intro B' hB'
+  unfold subdivide at hB'
+  simp only [Finset.mem_image, Finset.mem_univ, true_and] at hB'
+  obtain ⟨choice, rfl⟩ := hB'
+  -- The midpoint of B is in all sub-boxes
+  use fun i => (B.side i).midpoint
+  intro i _
+  have h_side_nonempty : (B.side i).toSet.Nonempty := by
+    obtain ⟨x, hx⟩ := hB
+    exact ⟨x i, hx i (Set.mem_univ i)⟩
+  simp only
+  split_ifs with h
+  · exact BoundedInterval.midpoint_mem_bisect_snd (B.side i) h_side_nonempty
+  · exact BoundedInterval.midpoint_mem_bisect_fst (B.side i) h_side_nonempty
+
+/-- A nonempty box remains nonempty after k iterations of subdivision -/
+lemma subdivide_iter_nonempty {d:ℕ} (B: Box d) (hB: B.toSet.Nonempty) (k: ℕ) :
+    ∀ B' ∈ subdivide_iter B k, B'.toSet.Nonempty := by
+  induction k with
+  | zero =>
+    simp only [subdivide_iter, Finset.mem_singleton]
+    intro B' hB'; rw [hB']; exact hB
+  | succ k ih =>
+    intro B' hB'
+    simp only [subdivide_iter_succ, Finset.mem_biUnion] at hB'
+    obtain ⟨B'', hB''_mem, hB'_sub⟩ := hB'
+    exact subdivide_one_step_nonempty B'' (ih B'' hB''_mem) B' hB'_sub
+
+/-- Grid alignment: sides in subdivide_iter start at grid positions.
+    Requires nonempty box to ensure sides have a ≤ b (backwards intervals break the formula). -/
+lemma subdivide_iter_side_grid {d:ℕ} (B : Box d) (hB : B.toSet.Nonempty) (k : ℕ) (B' : Box d)
+    (hB' : B' ∈ subdivide_iter B k) (i : Fin d) :
+    ∃ j : ℕ, j < 2^k ∧ (B'.side i).a = (B.side i).a + j * (|B.side i|ₗ / 2^k) := by
+  induction k generalizing B' with
+  | zero =>
+    simp only [subdivide_iter, Finset.mem_singleton] at hB'
+    use 0
+    simp [hB']
+  | succ k ih =>
+    simp only [subdivide_iter_succ, Finset.mem_biUnion] at hB'
+    obtain ⟨B'', hB'', hB'_sub⟩ := hB'
+    obtain ⟨j'', hj''_bound, hj''_eq⟩ := ih B'' hB''
+    simp only [subdivide, Finset.mem_image, Finset.mem_univ, true_and] at hB'_sub
+    obtain ⟨c, rfl⟩ := hB'_sub
+    have h_len := subdivide_iter_side_length B k B'' hB'' i
+    simp only
+    split_ifs with hc
+    · -- snd case: start at midpoint of B''
+      use 2 * j'' + 1
+      constructor
+      · omega
+      · -- (bisect.snd).a = midpoint = B''.a + |B''|ₗ/2
+        rw [BoundedInterval.bisect_snd_a]
+        have h_B''_len : |B''.side i|ₗ = |B.side i|ₗ / 2 ^ k := h_len
+        by_cases h_nondeg : (B''.side i).a ≤ (B''.side i).b
+        · -- Non-degenerate: use midpoint_eq_a_add_half_length
+          rw [BoundedInterval.midpoint_eq_a_add_half_length _ h_nondeg, hj''_eq, h_B''_len]
+          have h2k : (2 : ℝ) ^ (k + 1) = 2 * 2 ^ k := by ring
+          rw [h2k]
+          have h2k_ne : (2 : ℝ) ^ k ≠ 0 := by positivity
+          field_simp [h2k_ne]
+          ring
+        · -- Degenerate case: impossible for nonempty boxes (all sides have a ≤ b)
+          -- B'' is nonempty since B is nonempty
+          have hB''_nonempty : B''.toSet.Nonempty := subdivide_iter_nonempty B hB k B'' hB''
+          -- Therefore (B''.side i) is nonempty
+          have h_side_nonempty : (B''.side i).toSet.Nonempty :=
+            Box.side_nonempty_of_nonempty B'' hB''_nonempty i
+          -- Nonempty intervals have a ≤ b
+          have h_order : (B''.side i).a ≤ (B''.side i).b :=
+            BoundedInterval.nonempty_implies_le _ h_side_nonempty
+          -- Contradiction with ¬h_nondeg
+          exact absurd h_order h_nondeg
+    · -- fst case: start at B''.a (left endpoint preserved)
+      use 2 * j''
+      constructor
+      · omega
+      · rw [BoundedInterval.bisect_fst_a, hj''_eq]
+        have h2k : (2 : ℝ) ^ (k + 1) = 2 * 2 ^ k := by ring
+        rw [h2k]
+        have h2k_ne : (2 : ℝ) ^ k ≠ 0 := by positivity
+        field_simp [h2k_ne]
+        ring
+
+/-- Volume is preserved through iterative subdivision -/
+lemma volume_subdivide_iter {d:ℕ} (B: Box d) (hB : B.toSet.Nonempty) (k: ℕ) :
+    ∑ B' ∈ subdivide_iter B k, |B'|ᵥ = |B|ᵥ := by
+  induction k with
+  | zero => simp [subdivide_iter]
+  | succ k ih =>
+    simp only [subdivide_iter_succ]
+    rw [Finset.sum_biUnion]
+    · -- Each inner sum ∑ i ∈ x.subdivide, |i|ᵥ = |x|ᵥ by volume_subdivide
+      calc ∑ x ∈ subdivide_iter B k, ∑ i ∈ x.subdivide, |i|ᵥ
+          = ∑ x ∈ subdivide_iter B k, |x|ᵥ := by
+            apply Finset.sum_congr rfl
+            intro B' _
+            exact volume_subdivide B'
+        _ = |B|ᵥ := ih
+    · -- Pairwise disjointness of subdivisions from different parent boxes
+      intro B₁ hB₁ B₂ hB₂ hne
+      simp only [Function.onFun]
+      rw [Finset.disjoint_iff_ne]
+      intro s₁ hs₁ s₂ hs₂
+      -- Extract choice functions from membership in subdivide
+      simp only [subdivide, Finset.mem_image, Finset.mem_univ, true_and] at hs₁ hs₂
+      obtain ⟨c₁, rfl⟩ := hs₁
+      obtain ⟨c₂, rfl⟩ := hs₂
+      -- Suppose for contradiction that s₁ = s₂
+      intro heq
+      apply hne
+      -- Show B₁ = B₂ using Box.ext
+      ext i
+      -- At coordinate i, the sides of s₁ and s₂ must be equal
+      have h_side_eq : (if c₁ i then (B₁.side i).bisect.snd else (B₁.side i).bisect.fst) =
+                       (if c₂ i then (B₂.side i).bisect.snd else (B₂.side i).bisect.fst) := by
+        have := congrFun (congrArg Box.side heq) i
+        simpa using this
+      -- At level k ≥ 1, all sides are Icc. k = 0 case: subdivide_iter B 0 = {B}, so B₁ = B₂
+      match k with
+      | 0 =>
+        -- subdivide_iter B 0 = {B}, so B₁ = B and B₂ = B
+        have hB₁' : B₁ = B := by simpa [subdivide_iter] using hB₁
+        have hB₂' : B₂ = B := by simpa [subdivide_iter] using hB₂
+        simp [hB₁', hB₂']
+      | k'+1 =>
+      -- Get Icc structure for both sides
+      obtain ⟨a₁, b₁, h_side₁⟩ := subdivide_iter_side_is_Icc B k' B₁ hB₁ i
+      obtain ⟨a₂, b₂, h_side₂⟩ := subdivide_iter_side_is_Icc B k' B₂ hB₂ i
+      -- Get grid positions for B₁.side i and B₂.side i
+      obtain ⟨j₁, _, hj₁⟩ := subdivide_iter_side_grid B hB (k'+1) B₁ hB₁ i
+      obtain ⟨j₂, _, hj₂⟩ := subdivide_iter_side_grid B hB (k'+1) B₂ hB₂ i
+      -- Both have the same length
+      have h_len₁ := subdivide_iter_side_length B (k'+1) B₁ hB₁ i
+      have h_len₂ := subdivide_iter_side_length B (k'+1) B₂ hB₂ i
+      have h_same_len : |B₁.side i|ₗ = |B₂.side i|ₗ := by rw [h_len₁, h_len₂]
+      -- Case analysis on c₁ i and c₂ i
+      cases hc₁ : c₁ i <;> cases hc₂ : c₂ i <;> simp only [hc₁, hc₂, ite_true] at h_side_eq
+      · -- fst = fst case: endpoint equality implies parent equality
+        obtain ⟨ha, hb⟩ := BoundedInterval.bisect_fst_eq_endpoints h_side_eq
+        -- Both sides are Icc with same endpoints
+        simp only [h_side₁, h_side₂, BoundedInterval.a, BoundedInterval.b] at ha hb ⊢
+        simp [ha, hb]
+      · -- fst = snd cross case: parity contradiction via grid positions
+        -- Key insight: Grid positions are integers, but fst=snd requires half-integer offset
+        -- For degenerate case (L=0): all intervals collapse, so B₁=B₂
+        by_cases hL : |B.side i|ₗ = 0
+        · -- Degenerate case: all sides at dimension i are singletons
+          -- When length = 0 for nonempty box, a = b (singleton)
+          -- All subdivisions have same singleton side
+          have h1a : (B₁.side i).a = (B.side i).a := by rw [hj₁, hL]; simp
+          have h2a : (B₂.side i).a = (B.side i).a := by rw [hj₂, hL]; simp
+          have h1len : |B₁.side i|ₗ = 0 := by rw [h_len₁, hL]; simp
+          have h2len : |B₂.side i|ₗ = 0 := by rw [h_len₂, hL]; simp
+          -- For nonempty Icc intervals with length 0: a = b
+          have hB1_nonempty : B₁.toSet.Nonempty := subdivide_iter_nonempty B hB (k'+1) B₁ hB₁
+          have hB2_nonempty : B₂.toSet.Nonempty := subdivide_iter_nonempty B hB (k'+1) B₂ hB₂
+          have h1b : (B₁.side i).b = (B₁.side i).a := by
+            have h_side_nonempty := Box.side_nonempty_of_nonempty B₁ hB1_nonempty i
+            have h_order := BoundedInterval.nonempty_implies_le _ h_side_nonempty
+            -- For Icc a b, length 0 with a ≤ b means a = b
+            unfold BoundedInterval.length at h1len
+            simp only [max_eq_right_iff] at h1len
+            linarith
+          have h2b : (B₂.side i).b = (B₂.side i).a := by
+            have h_side_nonempty := Box.side_nonempty_of_nonempty B₂ hB2_nonempty i
+            have h_order := BoundedInterval.nonempty_implies_le _ h_side_nonempty
+            unfold BoundedInterval.length at h2len
+            simp only [max_eq_right_iff] at h2len
+            linarith
+          -- Both Icc intervals have same a and b, so they're equal
+          simp only [h_side₁, h_side₂, BoundedInterval.a, BoundedInterval.b] at h1a h2a h1b h2b ⊢
+          simp [h1a, h2a, h1b, h2b]
+        · -- Non-degenerate case: derive parity contradiction
+          -- From h_side_eq: bisect.fst of B₁ = bisect.snd of B₂
+          -- So (B₁.side i).a = (B₂.side i).midpoint = (B₂.side i).a + |B₂.side i|ₗ/2
+          have h_fst_a := BoundedInterval.bisect_fst_a (B₁.side i)
+          have h_snd_a := BoundedInterval.bisect_snd_a (B₂.side i)
+          have hB2_nonempty : B₂.toSet.Nonempty := subdivide_iter_nonempty B hB (k'+1) B₂ hB₂
+          have h_side2_nonempty := Box.side_nonempty_of_nonempty B₂ hB2_nonempty i
+          have h_order2 := BoundedInterval.nonempty_implies_le _ h_side2_nonempty
+          have h_mid := BoundedInterval.midpoint_eq_a_add_half_length (B₂.side i) h_order2
+          -- From h_side_eq, left endpoints are equal
+          have h_a_eq : (B₁.side i).bisect.fst.a = (B₂.side i).bisect.snd.a := congrArg (·.a) h_side_eq
+          rw [h_fst_a, h_snd_a, h_mid] at h_a_eq
+          -- Now we have: B₁.side i.a = B₂.side i.a + |B₂.side i|ₗ/2
+          -- Substitute grid formulas
+          rw [hj₁, hj₂, h_len₂] at h_a_eq
+          -- j₁ * step = j₂ * step + step/2 where step = |B.side i|ₗ / 2^(k'+2)
+          have hstep_pos : (0:ℝ) < |B.side i|ₗ / 2 ^ (k' + 2) := by
+            apply div_pos
+            · exact lt_of_le_of_ne (BoundedInterval.length_nonneg _) (Ne.symm hL)
+            · positivity
+          -- This gives j₁ = j₂ + 1/2, impossible for natural numbers
+          -- Cancel (B.side i).a from both sides
+          have h_cancel : j₁ * (|B.side i|ₗ / 2^(k'+1)) =
+                          j₂ * (|B.side i|ₗ / 2^(k'+1)) + (|B.side i|ₗ / 2^(k'+1)) / 2 := by
+            have := h_a_eq; linarith
+          -- Multiply both sides by 2^(k'+2) / L to get: 2*j₁ = 2*j₂ + 1
+          have h2k1_ne : (2:ℝ) ^ (k' + 1) ≠ 0 := by positivity
+          have hL_pos : (0:ℝ) < |B.side i|ₗ := lt_of_le_of_ne (BoundedInterval.length_nonneg _) (Ne.symm hL)
+          have hL_ne : |B.side i|ₗ ≠ 0 := hL
+          have h_step_ne : |B.side i|ₗ / 2^(k'+1) ≠ 0 := by positivity
+          have h_parity : (2 * j₁ : ℝ) = 2 * j₂ + 1 := by
+            -- From h_cancel: j₁ * step = j₂ * step + step/2
+            -- Multiply both sides by 2, then cancel step
+            have h2 : 2 * (j₁ * (|B.side i|ₗ / 2^(k'+1))) =
+                      2 * j₂ * (|B.side i|ₗ / 2^(k'+1)) + (|B.side i|ₗ / 2^(k'+1)) := by linarith
+            have h3 : (|B.side i|ₗ / 2^(k'+1)) * (2 * j₁) = (|B.side i|ₗ / 2^(k'+1)) * (2 * j₂ + 1) := by
+              ring_nf at h2 ⊢; linarith
+            exact mul_left_cancel₀ h_step_ne h3
+          -- 2*j₁ is even, 2*j₂+1 is odd: contradiction via omega
+          have h_eq_nat : 2 * j₁ = 2 * j₂ + 1 := by
+            have := h_parity
+            norm_cast at this
+          omega
+      · -- snd = fst cross case: symmetric to fst = snd
+        by_cases hL : |B.side i|ₗ = 0
+        · -- Degenerate case: identical to fst = snd case
+          have h1a : (B₁.side i).a = (B.side i).a := by rw [hj₁, hL]; simp
+          have h2a : (B₂.side i).a = (B.side i).a := by rw [hj₂, hL]; simp
+          have h1len : |B₁.side i|ₗ = 0 := by rw [h_len₁, hL]; simp
+          have h2len : |B₂.side i|ₗ = 0 := by rw [h_len₂, hL]; simp
+          have hB1_nonempty : B₁.toSet.Nonempty := subdivide_iter_nonempty B hB (k'+1) B₁ hB₁
+          have hB2_nonempty : B₂.toSet.Nonempty := subdivide_iter_nonempty B hB (k'+1) B₂ hB₂
+          have h1b : (B₁.side i).b = (B₁.side i).a := by
+            have h_side_nonempty := Box.side_nonempty_of_nonempty B₁ hB1_nonempty i
+            have h_order := BoundedInterval.nonempty_implies_le _ h_side_nonempty
+            unfold BoundedInterval.length at h1len
+            simp only [max_eq_right_iff] at h1len
+            linarith
+          have h2b : (B₂.side i).b = (B₂.side i).a := by
+            have h_side_nonempty := Box.side_nonempty_of_nonempty B₂ hB2_nonempty i
+            have h_order := BoundedInterval.nonempty_implies_le _ h_side_nonempty
+            unfold BoundedInterval.length at h2len
+            simp only [max_eq_right_iff] at h2len
+            linarith
+          simp only [h_side₁, h_side₂, BoundedInterval.a, BoundedInterval.b] at h1a h2a h1b h2b ⊢
+          simp [h1a, h2a, h1b, h2b]
+        · -- Non-degenerate case: derive parity contradiction (symmetric argument)
+          -- From h_side_eq: bisect.snd of B₁ = bisect.fst of B₂
+          -- So (B₁.side i).midpoint = (B₂.side i).a
+          have h_snd_a := BoundedInterval.bisect_snd_a (B₁.side i)
+          have h_fst_a := BoundedInterval.bisect_fst_a (B₂.side i)
+          have hB1_nonempty : B₁.toSet.Nonempty := subdivide_iter_nonempty B hB (k'+1) B₁ hB₁
+          have h_side1_nonempty := Box.side_nonempty_of_nonempty B₁ hB1_nonempty i
+          have h_order1 := BoundedInterval.nonempty_implies_le _ h_side1_nonempty
+          have h_mid := BoundedInterval.midpoint_eq_a_add_half_length (B₁.side i) h_order1
+          -- From h_side_eq, left endpoints are equal
+          have h_a_eq : (B₁.side i).bisect.snd.a = (B₂.side i).bisect.fst.a := congrArg (·.a) h_side_eq
+          rw [h_snd_a, h_fst_a, h_mid] at h_a_eq
+          -- Now we have: B₁.side i.a + |B₁.side i|ₗ/2 = B₂.side i.a
+          -- Substitute grid formulas
+          rw [hj₁, hj₂, h_len₁] at h_a_eq
+          -- This gives j₁ + 1/2 = j₂, impossible for natural numbers
+          -- Cancel (B.side i).a from both sides
+          have h_cancel : j₁ * (|B.side i|ₗ / 2^(k'+1)) + (|B.side i|ₗ / 2^(k'+1)) / 2 =
+                          j₂ * (|B.side i|ₗ / 2^(k'+1)) := by
+            have := h_a_eq; linarith
+          -- Multiply both sides by 2^(k'+2) / L to get: 2*j₁ + 1 = 2*j₂
+          have h2k1_ne : (2:ℝ) ^ (k' + 1) ≠ 0 := by positivity
+          have hL_pos : (0:ℝ) < |B.side i|ₗ := lt_of_le_of_ne (BoundedInterval.length_nonneg _) (Ne.symm hL)
+          have hL_ne : |B.side i|ₗ ≠ 0 := hL
+          have h_step_ne : |B.side i|ₗ / 2^(k'+1) ≠ 0 := by positivity
+          have h_parity : (2 * j₁ + 1 : ℝ) = 2 * j₂ := by
+            -- From h_cancel: j₁ * step + step/2 = j₂ * step
+            -- Multiply both sides by 2, then cancel step
+            have h2 : 2 * j₁ * (|B.side i|ₗ / 2^(k'+1)) + (|B.side i|ₗ / 2^(k'+1)) =
+                      2 * j₂ * (|B.side i|ₗ / 2^(k'+1)) := by linarith
+            have h3 : (|B.side i|ₗ / 2^(k'+1)) * (2 * j₁ + 1) = (|B.side i|ₗ / 2^(k'+1)) * (2 * j₂) := by
+              ring_nf at h2 ⊢; linarith
+            exact mul_left_cancel₀ h_step_ne h3
+          -- 2*j₁+1 is odd, 2*j₂ is even: contradiction via omega
+          have h_eq_nat : 2 * j₁ + 1 = 2 * j₂ := by
+            have := h_parity
+            norm_cast at this
+          omega
+      · -- snd = snd case: endpoint equality implies parent equality
+        obtain ⟨ha, hb⟩ := BoundedInterval.bisect_snd_eq_endpoints h_side_eq
+        -- Both sides are Icc with same endpoints
+        simp only [h_side₁, h_side₂, BoundedInterval.a, BoundedInterval.b] at ha hb ⊢
+        simp [ha, hb]
+
+/-- Diameter bound after k iterations of subdivision.
+    Each iteration reduces diameter by factor of √2. -/
+lemma diameter_subdivide_iter {d:ℕ} (B: Box d) (hB: B.toSet.Nonempty) (k: ℕ) :
+    ∀ B' ∈ subdivide_iter B k, B'.diameter ≤ B.diameter / (Real.sqrt 2) ^ k := by
+  induction k with
+  | zero =>
+    simp only [subdivide_iter, Finset.mem_singleton, pow_zero, div_one]
+    intro B' hB'; rw [hB']
+  | succ k ih =>
+    intro B' hB'
+    simp only [subdivide_iter_succ, Finset.mem_biUnion] at hB'
+    obtain ⟨B'', hB''_mem, hB'_sub⟩ := hB'
+    -- B'' is in subdivide_iter B k, and B' is in B''.subdivide
+    have hB''_diam := ih B'' hB''_mem
+    -- Need: B'' is nonempty to apply subdivide_diameter_bound
+    have hB''_nonempty : B''.toSet.Nonempty := subdivide_iter_nonempty B hB k B'' hB''_mem
+    have hB'_diam := subdivide_diameter_bound B'' hB''_nonempty B' hB'_sub
+    calc B'.diameter
+        ≤ B''.diameter / Real.sqrt 2 := hB'_diam
+      _ ≤ (B.diameter / (Real.sqrt 2) ^ k) / Real.sqrt 2 := by
+          apply div_le_div_of_nonneg_right hB''_diam (Real.sqrt_nonneg 2)
+      _ = B.diameter / ((Real.sqrt 2) ^ k * Real.sqrt 2) := by rw [div_div]
+      _ = B.diameter / (Real.sqrt 2 * (Real.sqrt 2) ^ k) := by ring_nf
+      _ = B.diameter / (Real.sqrt 2) ^ (k + 1) := by rw [pow_succ']
+
+/-- Number of subdivisions needed to get diameter below threshold r.
+    Each subdivision reduces diameter by factor of √2, so after k iterations:
+    diameter ≤ original_diameter / (√2)^k
+    We need (√2)^k > diameter/r, i.e., k > log(diameter/r) / log(√2) = 2·log₂(diameter/r). -/
+noncomputable def iter_count {d:ℕ} (B: Box d) (r: ℝ) : ℕ :=
+  if B.diameter ≤ 0 then 0
+  else if B.diameter < r then 0
+  else Nat.ceil (2 * Real.log (B.diameter / r) / Real.log 2) + 1
+
+/-- After iter_count subdivisions, all sub-boxes have diameter < r -/
+lemma diameter_lt_of_iter_count {d:ℕ} (B: Box d) (hB: B.toSet.Nonempty) (r: ℝ) (hr: 0 < r) :
+    ∀ B' ∈ subdivide_iter B (B.iter_count r), B'.diameter < r := by
+  intro B' hB'
+  by_cases h_diam_le : B.diameter ≤ 0
+  · -- Degenerate case: diameter ≤ 0 means all sub-boxes also have diameter ≤ 0 < r
+    simp only [iter_count, h_diam_le, ↓reduceIte, subdivide_iter] at hB'
+    simp only [Finset.mem_singleton] at hB'
+    rw [hB']
+    calc B.diameter ≤ 0 := h_diam_le
+      _ < r := hr
+  · push_neg at h_diam_le
+    by_cases h_small : B.diameter < r
+    · -- Already small enough, no subdivisions needed
+      simp only [iter_count, not_le.mpr h_diam_le, h_small, ↓reduceIte, subdivide_iter] at hB'
+      simp only [Finset.mem_singleton] at hB'
+      rw [hB']; exact h_small
+    · -- Need subdivisions: B.diameter ≥ r, so we use the logarithmic formula
+      push_neg at h_small
+      have h_iter_bound := diameter_subdivide_iter B hB (B.iter_count r) B' hB'
+      -- Show that B.diameter / (√2)^k < r for k = iter_count
+      -- Key: iter_count = ⌈2 * log(B.diameter / r) / log 2⌉ + 1
+      -- So k > 2 * log₂(B.diameter / r), meaning (√2)^k > B.diameter / r
+      calc B'.diameter
+          ≤ B.diameter / (Real.sqrt 2) ^ (B.iter_count r) := h_iter_bound
+        _ < r := by
+            -- Need: B.diameter / (√2)^k < r, i.e., (√2)^k > B.diameter / r
+            have h_k_def : B.iter_count r = Nat.ceil (2 * Real.log (B.diameter / r) / Real.log 2) + 1 := by
+              simp only [iter_count, not_le.mpr h_diam_le, not_lt.mpr h_small, ↓reduceIte]
+            -- Prove (√2)^k > B.diameter / r using the logarithmic definition
+            have hsqrt2_pos : 0 < Real.sqrt 2 := Real.sqrt_pos.mpr (by norm_num)
+            have hsqrt2_pow_pos : 0 < (Real.sqrt 2) ^ (B.iter_count r) := pow_pos hsqrt2_pos _
+            have hDr_pos : 0 < B.diameter / r := div_pos h_diam_le hr
+            have hlog2_pos : 0 < Real.log 2 := Real.log_pos (by norm_num)
+            rw [div_lt_iff₀ hsqrt2_pow_pos]
+            -- Goal: B.diameter < r * (√2)^k
+            set L := 2 * Real.log (B.diameter / r) / Real.log 2 with hL_def
+            -- k > L because k = ⌈L⌉ + 1 > L
+            have hk_gt : ((B.iter_count r) : ℝ) > L := by
+              have h_ceil_ge : (Nat.ceil L : ℝ) ≥ L := Nat.le_ceil L
+              have hk_eq : ((B.iter_count r) : ℝ) = (Nat.ceil L : ℝ) + 1 := by
+                simp only [h_k_def]; norm_cast
+              linarith
+            -- k/2 > log₂(B.diameter/r)
+            have hL_eq : L = 2 * (Real.log (B.diameter / r) / Real.log 2) := by ring
+            have hk_half_gt : ((B.iter_count r) : ℝ) / 2 > Real.log (B.diameter / r) / Real.log 2 := by
+              have : ((B.iter_count r) : ℝ) > 2 * (Real.log (B.diameter / r) / Real.log 2) := by
+                rw [← hL_eq]; exact hk_gt
+              linarith
+            -- (√2)^k = 2^(k/2)
+            have hsqrt_pow : (Real.sqrt 2) ^ (B.iter_count r) =
+                             (2 : ℝ) ^ (((B.iter_count r) : ℝ) / 2) := by
+              have h1 : Real.sqrt 2 = (2 : ℝ) ^ ((1:ℝ) / 2) := Real.sqrt_eq_rpow 2
+              conv_lhs => rw [h1]
+              rw [← Real.rpow_natCast ((2:ℝ) ^ ((1:ℝ)/2)) (B.iter_count r)]
+              rw [← Real.rpow_mul (by norm_num : (0:ℝ) ≤ 2)]
+              congr 1; ring
+            -- 2^(k/2) > B.diameter/r
+            have h2pow_gt : (2 : ℝ) ^ (((B.iter_count r) : ℝ) / 2) > B.diameter / r := by
+              rw [Real.rpow_def_of_pos (by norm_num : (0:ℝ) < 2)]
+              have hsimp : Real.log (B.diameter / r) / Real.log 2 * Real.log 2 =
+                          Real.log (B.diameter / r) := by field_simp
+              have h_exp_ineq : Real.log 2 * (((B.iter_count r) : ℝ) / 2) >
+                               Real.log (B.diameter / r) := by
+                calc Real.log 2 * (((B.iter_count r) : ℝ) / 2)
+                    = ((B.iter_count r) : ℝ) / 2 * Real.log 2 := by ring
+                  _ > Real.log (B.diameter / r) / Real.log 2 * Real.log 2 := by
+                       apply mul_lt_mul_of_pos_right hk_half_gt hlog2_pos
+                  _ = Real.log (B.diameter / r) := hsimp
+              calc Real.exp (Real.log 2 * (((B.iter_count r) : ℝ) / 2))
+                  > Real.exp (Real.log (B.diameter / r)) := Real.exp_strictMono h_exp_ineq
+                _ = B.diameter / r := Real.exp_log hDr_pos
+            -- Combine
+            rw [hsqrt_pow]
+            calc B.diameter = (B.diameter / r) * r := by field_simp
+              _ < (2 : ℝ) ^ (((B.iter_count r) : ℝ) / 2) * r := by
+                  apply mul_lt_mul_of_pos_right h2pow_gt hr
+              _ = r * (2 : ℝ) ^ (((B.iter_count r) : ℝ) / 2) := by ring
+
+/-- Subdivided boxes cover the original box: any point in B.toSet is contained in
+    some box in subdivide_iter B k. -/
+lemma subdivide_iter_covers {d:ℕ} (B : Box d) (k : ℕ) (x : EuclideanSpace' d)
+    (hx : x ∈ B.toSet) : ∃ B' ∈ subdivide_iter B k, x ∈ B'.toSet := by
+  induction k with
+  | zero =>
+    refine ⟨B, ?_, hx⟩
+    simp only [subdivide_iter_zero, Finset.mem_singleton]
+  | succ k ih =>
+    obtain ⟨B'', hB''_mem, hx_B''⟩ := ih
+    -- B'' is subdivided, x is in B''.toSet, need to find B' ∈ B''.subdivide with x ∈ B'
+    -- Define choice function: c i = true iff x i is in right half
+    let c : Fin d → Bool := fun i => decide (x i ≥ (B''.side i).midpoint)
+    -- The sub-box for this choice contains x
+    let B' : Box d := {
+      side := fun i => if c i then (B''.side i).bisect.snd else (B''.side i).bisect.fst
+    }
+    refine ⟨B', ?_, ?_⟩
+    · -- B' ∈ subdivide_iter B (k+1)
+      simp only [subdivide_iter_succ, Finset.mem_biUnion]
+      exact ⟨B'', hB''_mem, by simp only [subdivide, Finset.mem_image, Finset.mem_univ, true_and]; exact ⟨c, rfl⟩⟩
+    · -- x ∈ B'.toSet: for each i, x i is in the appropriate half
+      intro i hi
+      have hx_i : x i ∈ (B''.side i).toSet := by
+        have := hx_B''
+        simp only [toSet] at this
+        exact this i (Set.mem_univ i)
+      simp only [B']
+      by_cases hm : x i ≥ (B''.side i).midpoint
+      · have hc : c i = true := decide_eq_true hm
+        simp only [hc, ite_true]
+        exact (BoundedInterval.mem_bisect_snd_iff (B''.side i) (x i) hx_i).mpr hm
+      · push_neg at hm
+        have hc : c i = false := decide_eq_false (not_le.mpr hm)
+        simp only [hc]
+        exact (BoundedInterval.mem_bisect_fst_iff (B''.side i) (x i) hx_i).mpr (le_of_lt hm)
+
+/-- Box volume is non-negative (product of non-negative interval lengths). -/
+lemma volume_nonneg {d : ℕ} (B : Box d) : 0 ≤ B.volume := by
+  unfold volume
+  apply Finset.prod_nonneg
+  intro i _
+  unfold BoundedInterval.length
+  exact le_max_right _ _
 
 end Box
 
 namespace Lebesgue_outer_measure
+
+/-- Any ℕ-indexed cover gives an upper bound on outer measure.
+    Follows directly from the infimum definition. -/
+lemma le_of_nat_cover {d:ℕ} (hd: 0 < d) (E: Set (EuclideanSpace' d))
+    (S : ℕ → Box d) (hcover : E ⊆ ⋃ n, (S n).toSet) :
+    Lebesgue_outer_measure E ≤ ∑' n, (S n).volume.toEReal := by
+  rw [Lebesgue_outer_measure_eq_nat_indexed hd]
+  apply csInf_le
+  · -- Show the set is bounded below by 0
+    use 0
+    intro v hv
+    obtain ⟨S', _, rfl⟩ := hv
+    apply tsum_nonneg
+    intro n
+    exact EReal.coe_nonneg.mpr (Box.volume_nonneg _)
+  · -- S is in the set of covers
+    exact ⟨S, hcover, rfl⟩
+
+/-- Upper bound from finset-indexed cover: if a set is covered by ⋃ n, ⋃ B ∈ I n, B.toSet
+    where each I n is a finite set of boxes, then the outer measure is bounded by the
+    sum of volumes.
+
+    Proof strategy:
+    1. The sigma type (n : ℕ) × ↑(I n) is countable (and hence encodable)
+    2. Use Encodable instance to define S : ℕ → Box d via decoding
+    3. Pad with zero-volume box for invalid decodings
+    4. Apply le_of_nat_cover and bound the enumerated sum -/
+lemma le_of_finset_cover {d:ℕ} (hd: 0 < d) (E: Set (EuclideanSpace' d))
+    (I : ℕ → Finset (Box d)) (hcover : E ⊆ ⋃ n, ⋃ B ∈ I n, B.toSet) :
+    Lebesgue_outer_measure E ≤ ∑' n, (∑ B ∈ I n, B.volume).toEReal := by
+  -- Define the sigma type for enumeration
+  let SigmaType := (n : ℕ) × (I n : Set (Box d))
+  -- SigmaType is countable (ℕ × finite = countable)
+  haveI : Countable SigmaType := instCountableSigma
+  -- Get encodable instance from countable
+  haveI : Encodable SigmaType := Encodable.ofCountable SigmaType
+
+  -- Construct a zero-volume box for padding (exists when d > 0)
+  have ⟨B₀, hB₀⟩ : ∃ B : Box d, B.volume = 0 := by
+    use ⟨fun _ => BoundedInterval.Ioc 0 0⟩
+    simp only [Box.volume, BoundedInterval.length]
+    -- The interval [0, 0] has length max(0-0, 0) = 0
+    -- Product of zeros over Fin d (when d > 0) is 0
+    have h_fin_nonempty : (Finset.univ : Finset (Fin d)).Nonempty := by
+      use ⟨0, hd⟩
+      exact Finset.mem_univ _
+    obtain ⟨i, hi⟩ := h_fin_nonempty
+    apply Finset.prod_eq_zero hi
+    simp [sub_self]
+
+  -- Define enumeration using decode₂ (which guarantees encode ∘ decode₂ = id on Some values)
+  let S : ℕ → Box d := fun m =>
+    match Encodable.decode₂ SigmaType m with
+    | some p => p.2.val
+    | none => B₀
+
+  -- S covers E: every point in E is in some box from some I n
+  -- Key: decode₂ (encode p) = some p, so S (encode p) = p.2.val
+  have hS_cover : E ⊆ ⋃ m, (S m).toSet := by
+    intro x hx
+    -- x is in E ⊆ ⋃ n, ⋃ B ∈ I n, B.toSet
+    -- So x ∈ B.toSet for some B ∈ I n for some n
+    have hx' := hcover hx
+    -- Extract the nested union structure
+    rw [Set.mem_iUnion] at hx'
+    obtain ⟨n, hx_n⟩ := hx'
+    rw [Set.mem_iUnion] at hx_n
+    obtain ⟨B, hx_B⟩ := hx_n
+    rw [Set.mem_iUnion] at hx_B
+    obtain ⟨hB_mem, hx_in_B⟩ := hx_B
+    -- The pair (n, ⟨B, hB_mem⟩) is in SigmaType
+    let p : SigmaType := ⟨n, ⟨B, hB_mem⟩⟩
+    rw [Set.mem_iUnion]
+    use Encodable.encode p
+    -- S (encode p) = p.2.val = B (using decode₂_encode)
+    show x ∈ (S (Encodable.encode p)).toSet
+    simp only [Encodable.decode₂_encode, S]
+    exact hx_in_B
+
+  -- Apply le_of_nat_cover
+  have h_le := le_of_nat_cover hd E S hS_cover
+
+  -- Now bound ∑' m, (S m).volume.toEReal ≤ ∑' n, (∑ B ∈ I n, B.volume).toEReal
+  -- Using decode₂, each box B ∈ I n appears exactly once in the LHS (at encode (n, B))
+  -- and invalid decodings contribute B₀.volume = 0
+
+  calc Lebesgue_outer_measure E
+      ≤ ∑' m, (S m).volume.toEReal := h_le
+    _ ≤ ∑' n, (∑ B ∈ I n, B.volume).toEReal := by
+        -- The LHS can be rewritten using ENNReal.tsum_decode₂_eq
+        -- LHS = ∑' m, (match decode₂ m with | some p => p.2.val.volume | none => 0).toEReal
+        --     = ∑' p : SigmaType, p.2.val.volume.toEReal  (by tsum_decode₂_eq for volume)
+        --     = ∑' (n, B), B.val.volume.toEReal
+        -- RHS = ∑' n, (∑ B ∈ I n, B.volume).toEReal
+
+        -- First, show the sums are equal by converting through sigma type
+        have h_eq : ∑' m, (S m).volume.toEReal =
+                    ∑' (p : SigmaType), p.2.val.volume.toEReal := by
+          -- Use Function.Injective.tsum_eq with encode being injective
+          -- Define g : ℕ → EReal as the volume function on decoded values
+          let g : ℕ → EReal := fun m =>
+            match Encodable.decode₂ SigmaType m with
+            | some p => p.2.val.volume.toEReal
+            | none => 0
+          -- g m = (S m).volume.toEReal because:
+          -- - when decode₂ m = some p: g m = p.2.val.volume.toEReal = (S m).volume.toEReal
+          -- - when decode₂ m = none: g m = 0, S m = B₀, B₀.volume = 0
+          have h_g_eq : ∀ m, g m = (S m).volume.toEReal := by
+            intro m
+            simp only [g, S]
+            cases h : Encodable.decode₂ SigmaType m with
+            | none => simp [hB₀]
+            | some p => rfl
+          -- Support of g is contained in range of encode
+          have h_support : Function.support g ⊆ Set.range (Encodable.encode (α := SigmaType)) := by
+            intro m hm
+            simp only [Function.mem_support, ne_eq, g] at hm
+            cases h : Encodable.decode₂ SigmaType m with
+            | none => simp [h] at hm
+            | some p =>
+              rw [Set.mem_range]
+              use p
+              exact Encodable.decode₂_eq_some.mp h
+          have h_inj := Encodable.encode_injective (α := SigmaType)
+          have h_val_eq : ∀ p : SigmaType, g (Encodable.encode p) = p.2.val.volume.toEReal := by
+            intro p
+            simp only [g, Encodable.decode₂_encode]
+          calc ∑' m, (S m).volume.toEReal
+              = ∑' m, g m := by simp only [h_g_eq]
+            _ = ∑' (p : SigmaType), g (Encodable.encode p) := (h_inj.tsum_eq h_support).symm
+            _ = ∑' (p : SigmaType), p.2.val.volume.toEReal := by simp only [h_val_eq]
+
+        -- The sigma type sum equals the nested finset sum
+        have h_sigma_eq_nested : ∑' (p : SigmaType), p.2.val.volume.toEReal =
+                                  ∑' n, (∑ B ∈ I n, B.volume).toEReal := by
+          -- Key: SigmaType = (n : ℕ) × ↑(I n) where each fiber ↑(I n) is finite
+
+          -- First, show inner tsum equals finset sum
+          have h_inner : ∀ n, ∑' (B : (I n : Set (Box d))), B.val.volume.toEReal =
+                              (∑ B ∈ I n, B.volume).toEReal := by
+            intro n
+            -- Use Finset.fintypeCoeSort for tsum_fintype
+            haveI : Fintype (I n : Set (Box d)) := Finset.fintypeCoeSort (I n)
+            rw [tsum_fintype]
+            have h_nonneg : ∀ B ∈ I n, 0 ≤ B.volume := fun B _ => Box.volume_nonneg B
+            -- Convert sum: need to go from ↑↑(I n) to { x // x ∈ I n } to I n
+            have h_subtype : ∑ B : { x // x ∈ I n }, B.val.volume = ∑ B ∈ I n, B.volume :=
+              Finset.sum_coe_sort (I n) (fun B => B.volume)
+            -- Convert from ↑↑(I n) to { x // x ∈ I n } using equivalence
+            let e : (I n : Set (Box d)) ≃ { x // x ∈ I n } := {
+              toFun := fun ⟨B, hB⟩ => ⟨B, hB⟩
+              invFun := fun ⟨B, hB⟩ => ⟨B, hB⟩
+              left_inv := fun _ => rfl
+              right_inv := fun _ => rfl
+            }
+            -- Use Fintype.sum_equiv - the fintype instances will be handled by congr
+            have h_equiv : ∑ B : (I n : Set (Box d)), B.val.volume =
+                          ∑ B : { x // x ∈ I n }, B.val.volume :=
+              Fintype.sum_equiv e (fun B => B.val.volume) (fun B => B.val.volume)
+                (fun ⟨B, hB⟩ => rfl)
+            -- Combine: the fintype instances differ but the sums are equal
+            have h_sum_real : ∑ B : (I n : Set (Box d)), B.val.volume = ∑ B ∈ I n, B.volume := by
+              rw [h_equiv]
+              -- Use erw (exact rewrite) which is more lenient with typeclass instances
+              erw [h_subtype]
+            calc ∑ B : (I n : Set (Box d)), B.val.volume.toEReal
+                = (∑ B : (I n : Set (Box d)), B.val.volume).toEReal := by
+                    symm
+                    apply EReal.coe_finset_sum
+                    intro ⟨B, hB⟩ _
+                    exact Box.volume_nonneg B
+              _ = (∑ B ∈ I n, B.volume).toEReal := by rw [h_sum_real]
+
+          -- Decompose sigma tsum as nested tsum
+          have h_sigma_decomp : ∑' (p : SigmaType), p.2.val.volume.toEReal =
+                                 ∑' n, ∑' (B : (I n : Set (Box d))), B.val.volume.toEReal := by
+            -- Since fibers are finite, each inner sum is a finite sum
+            -- For non-negative EReal with finite fibers, tsum_sigma works
+            haveI : ∀ n, Fintype (I n : Set (Box d)) := fun n => Finset.fintypeCoeSort (I n)
+
+            -- Use tsum_fintype on inner sum to make it finite, then standard decomposition
+            have h_eq_finite : ∀ n, ∑' (B : (I n : Set (Box d))), B.val.volume.toEReal =
+                                     ∑ B : (I n : Set (Box d)), B.val.volume.toEReal := by
+              intro n
+              exact tsum_fintype _
+            simp_rw [h_eq_finite]
+
+            -- Lift to ENNReal to use unconditional tsum_sigma
+            -- Define ENNReal version of the term
+            let f_enn : SigmaType → ENNReal := fun p => ENNReal.ofReal p.2.val.volume
+
+            -- Decomposition holds in ENNReal
+            have h_enn_decomp : ∑' p, f_enn p = ∑' n, ∑' (B : (I n : Set (Box d))), f_enn ⟨n, B⟩ :=
+              ENNReal.tsum_sigma' _
+
+            -- Define coercion to EReal
+            let φ : ENNReal →+ EReal := {
+              toFun := fun x => (↑x : EReal)
+              map_zero' := rfl
+              map_add' := EReal.coe_ennreal_add
+            }
+            have h_cont : Continuous φ := continuous_coe_ennreal_ereal
+
+            -- Show LHS equals coerced ENNReal sum
+            have h_lhs : ∑' (p : SigmaType), p.snd.val.volume.toEReal = ↑(∑' (p : SigmaType), f_enn p) := by
+              have h_eq : ∀ p : SigmaType, p.snd.val.volume.toEReal = φ (f_enn p) := by
+                intro p
+                simp only [f_enn, φ, AddMonoidHom.coe_mk, ZeroHom.coe_mk]
+                rw [EReal.coe_ennreal_ofReal, max_eq_left (Box.volume_nonneg _)]
+              simp_rw [h_eq]
+              exact (Summable.map_tsum ENNReal.summable φ h_cont).symm
+
+            -- Show RHS equals coerced ENNReal sum (using sum instead of tsum for inner)
+            have h_rhs : ∑' n, ∑ (B : (I n : Set (Box d))), B.val.volume.toEReal =
+                         ↑(∑' n, ∑' (B : (I n : Set (Box d))), f_enn ⟨n, B⟩) := by
+              -- Convert inner tsum to sum in ENNReal
+              have h_inner_enn : ∀ n, ∑' (B : (I n : Set (Box d))), f_enn ⟨n, B⟩ =
+                                      ∑ B, f_enn ⟨n, B⟩ := fun n => tsum_fintype _
+              simp_rw [h_inner_enn]
+
+              -- Map coercion through outer sum
+              have h_outer : ∑' n, ∑ (B : (I n : Set (Box d))), B.val.volume.toEReal =
+                             ↑(∑' n, ∑ (B : (I n : Set (Box d))), f_enn ⟨n, B⟩) := by
+                have h_eq_term : ∀ n, ∑ (B : (I n : Set (Box d))), B.val.volume.toEReal = φ (∑ (B : (I n : Set (Box d))), f_enn ⟨n, B⟩) := by
+                  intro n
+                  rw [map_sum]
+                  apply Finset.sum_congr rfl
+                  intro (B : (I n : Set (Box d))) _
+                  simp only [f_enn, φ, AddMonoidHom.coe_mk, ZeroHom.coe_mk]
+                  rw [EReal.coe_ennreal_ofReal, max_eq_left (Box.volume_nonneg _)]
+                simp_rw [h_eq_term]
+                exact (Summable.map_tsum ENNReal.summable φ h_cont).symm
+
+              exact h_outer
+
+            rw [h_lhs, h_rhs, h_enn_decomp]
+
+          rw [h_sigma_decomp]
+          congr 1
+          ext n
+          exact h_inner n
+
+        rw [h_eq, h_sigma_eq_nested]
+
+
 /-- For any set with finite outer measure, we can find a cover whose volume is within ε of the outer measure.
     This follows from the definition of outer measure as an infimum. -/
 lemma exists_cover_close {d:ℕ} (hd: 0 < d)
@@ -931,67 +1844,11 @@ lemma exists_cover_close {d:ℕ} (hd: 0 < d)
   -- S is our witness cover
   exact ⟨S, hS_cover, le_of_lt hv_lt⟩
 
-/-- Refine a cover so that all boxes have diameter less than a given threshold.
-    This is done by subdividing boxes that are too large.
-    We use Nat.unpair to encode: each index maps to (original_box_index, sub_box_index).
-    If the original box has diameter < r, we return it for all sub_box_indices.
-    Otherwise, we subdivide it once and return the appropriate sub-box. -/
-noncomputable def refine_cover_to_diameter {d:ℕ} (S: ℕ → Box d) (r: ℝ) (_: 0 < r) : ℕ → Box d :=
-  fun n =>
-    let (box_idx, sub_idx) := n.unpair
-    let B := S box_idx
-    if B.diameter < r then
-      B  -- Box is already small enough, return it
-    else
-      -- Box needs subdivision; subdivide and take the sub_idx-th element
-      -- We use Finset.toList and take modulo the size to handle wrapping
-      let subs := B.subdivide.toList
-      if h : subs.length > 0 then
-        let idx := sub_idx % subs.length
-        have h_idx : idx < subs.length := Nat.mod_lt _ h
-        subs.get ⟨idx, h_idx⟩
-      else
-        B  -- Fallback (shouldn't happen if subdivide is non-empty)
-
-/-- The refined cover still covers the same region -/
-lemma refine_cover_preserves_union {d:ℕ} (S: ℕ → Box d) (r: ℝ) (hr: 0 < r) :
-    (⋃ n, (S n).toSet) ⊆ (⋃ n, (refine_cover_to_diameter S r hr n).toSet) := by
-  sorry
-
-/-- The refined cover has total volume no greater than the original cover -/
-lemma refine_cover_volume_bound {d:ℕ} (S: ℕ → Box d) (r: ℝ) (hr: 0 < r) :
-    ∑' n, (refine_cover_to_diameter S r hr n).volume.toEReal ≤ ∑' n, (S n).volume.toEReal := by
-  sorry
-
-/-- All boxes in the refined cover have diameter less than r -/
-lemma refine_cover_diameter_bound {d:ℕ} (S: ℕ → Box d) (r: ℝ) (hr: 0 < r) :
-    ∀ n, (refine_cover_to_diameter S r hr n).diameter < r := by
-  sorry
-
-/-- The set of indices of boxes that intersect a given set E -/
-def intersecting_indices {d:ℕ} (S: ℕ → Box d) (E: Set (EuclideanSpace' d)) : Set ℕ :=
-  { n | ((S n).toSet ∩ E).Nonempty }
-
-/-- If all boxes have diameter less than dist(E,F), then the sets of indices intersecting
-    E and F are disjoint. This follows from Box.not_intersects_both_of_diameter_lt. -/
-lemma partition_disjoint {d:ℕ} {E F: Set (EuclideanSpace' d)} (S: ℕ → Box d)
-    (h_sep: 0 < set_dist E F) (h_diam: ∀ n, (S n).diameter < set_dist E F) :
-    Disjoint (intersecting_indices S E) (intersecting_indices S F) := by
-  rw [Set.disjoint_iff]
-  intro n ⟨hE, hF⟩
-  -- Box n intersects both E and F
-  unfold intersecting_indices at hE hF
-  simp at hE hF
-  -- But diameter of box n < dist(E,F)
-  have h_diam_n := h_diam n
-  -- This contradicts Box.not_intersects_both_of_diameter_lt
-  have := Box.not_intersects_both_of_diameter_lt (S n) E F h_diam_n
-  exact this ⟨hE, hF⟩
 
 end Lebesgue_outer_measure
 
 -- ========================================================================
--- End of Helpers
+-- End of Helpers for lemma 1.2.5
 -- ========================================================================
 
 /-- Lemma 1.2.5 (Finite additivity for separated sets).
@@ -1012,15 +1869,28 @@ theorem Lebesgue_outer_measure.union_of_separated {d:ℕ} (hd: 0 < d) {E F : Set
     (hsep: set_dist E F > 0) :
     Lebesgue_outer_measure (E ∪ F) = Lebesgue_outer_measure E + Lebesgue_outer_measure F := by
 
-  -- Direction 1: m*(E ∪ F) ≤ m*(E) + m*(F) [EASY - subadditivity]
+  -- Direction 1: m*(E ∪ F) ≤ m*(E) + m*(F) [Subadditivity]
   have h_le : Lebesgue_outer_measure (E ∪ F) ≤ Lebesgue_outer_measure E + Lebesgue_outer_measure F := by
-    -- Use finite subadditivity for two sets
-    have : Lebesgue_outer_measure (E ∪ F) ≤ Lebesgue_outer_measure E + Lebesgue_outer_measure F := by
-      -- Convert to countable union: E ∪ F = E_0 ∪ E_1 where E_0 = E, E_1 = F
-      have h_union : E ∪ F = (fun i : Fin 2 => if i = 0 then E else F) 0 ∪ (fun i : Fin 2 => if i = 0 then E else F) 1 := by
-        ext x; simp
-      sorry
-    exact this
+    -- Use finite_union_le for two sets
+    let E' : Fin 2 → Set (EuclideanSpace' d) := ![E, F]
+    have h_union : E ∪ F = ⋃ i, E' i := by
+      simp only [E']
+      ext x
+      simp only [Set.mem_union, Set.mem_iUnion]
+      constructor
+      · intro hx
+        cases hx with
+        | inl hE => exact ⟨0, hE⟩
+        | inr hF => exact ⟨1, hF⟩
+      · intro ⟨i, hi⟩
+        fin_cases i
+        · left; exact hi
+        · right; exact hi
+    have h_sum : ∑ i : Fin 2, Lebesgue_outer_measure (E' i) =
+        Lebesgue_outer_measure E + Lebesgue_outer_measure F := by
+      simp only [Fin.sum_univ_two, E', Matrix.cons_val_zero, Matrix.cons_val_one]
+    rw [h_union, ← h_sum]
+    exact finite_union_le E'
 
   -- Direction 2: m*(E ∪ F) ≥ m*(E) + m*(F) [MAIN WORK]
   have h_ge : Lebesgue_outer_measure E + Lebesgue_outer_measure F ≤ Lebesgue_outer_measure (E ∪ F) := by
@@ -1049,60 +1919,143 @@ theorem Lebesgue_outer_measure.union_of_separated {d:ℕ} (hd: 0 < d) {E F : Set
           · linarith
         obtain ⟨r, hr_pos, hr_lt⟩ := hr
 
-        -- Refine cover to have all diameters < r < dist(E,F)
-        let S' := Lebesgue_outer_measure.refine_cover_to_diameter S r hr_pos
+        -- For each box S(n), subdivide k(n) = (S n).iter_count r times
+        let k : ℕ → ℕ := fun n => (S n).iter_count r
 
-        -- Key properties of refined cover:
-        have hS'_diam : ∀ n, (S' n).diameter < set_dist E F := by
+        -- All refined boxes have diameter < r < set_dist E F
+        have h_diam : ∀ n, ∀ B' ∈ Box.subdivide_iter (S n) (k n), B'.diameter < r := by
+          intro n B' hB'
+          by_cases hnonempty : (S n).toSet.Nonempty
+          · exact Box.diameter_lt_of_iter_count (S n) hnonempty r hr_pos B' hB'
+          · -- Empty box case: iter_count = 0 when diameter ≤ 0, so subdivide_iter = {S n}
+            have h_empty : (S n).toSet = ∅ := Set.not_nonempty_iff_eq_empty.mp hnonempty
+            have h_diam_zero : (S n).diameter = 0 := Box.diameter_of_empty (S n) h_empty
+            -- iter_count = 0 since diameter = 0 ≤ 0
+            have h_k_zero : k n = 0 := by
+              simp only [k, Box.iter_count, h_diam_zero, le_refl, ↓reduceIte]
+            -- So subdivide_iter (S n) 0 = {S n}, meaning B' = S n
+            rw [h_k_zero, Box.subdivide_iter_zero, Finset.mem_singleton] at hB'
+            rw [hB', h_diam_zero]
+            exact hr_pos
+
+        -- Partition: for each n, split subdivisions into E-intersecting and F-intersecting
+        -- Use classical decidability for the filter predicate
+        haveI : ∀ (B' : Box d), Decidable ((B'.toSet ∩ E).Nonempty) := fun _ => Classical.dec _
+        haveI : ∀ (B' : Box d), Decidable ((B'.toSet ∩ F).Nonempty) := fun _ => Classical.dec _
+        let I_E_n : ℕ → Finset (Box d) := fun n =>
+          (Box.subdivide_iter (S n) (k n)).filter (fun B' => (B'.toSet ∩ E).Nonempty)
+        let I_F_n : ℕ → Finset (Box d) := fun n =>
+          (Box.subdivide_iter (S n) (k n)).filter (fun B' => (B'.toSet ∩ F).Nonempty)
+
+        -- Disjointness at each level n: no box intersects both E and F
+        have h_disj_n : ∀ n, Disjoint (I_E_n n) (I_F_n n) := by
           intro n
-          calc (S' n).diameter
-              < r := Lebesgue_outer_measure.refine_cover_diameter_bound S r hr_pos n
+          rw [Finset.disjoint_filter]
+          intro B' hB'_sub hB'_E hB'_F
+          -- B' intersects both E and F, but diameter < r < set_dist E F: contradiction
+          have h_small : B'.diameter < set_dist E F := by
+            calc B'.diameter < r := h_diam n B' hB'_sub
             _ < set_dist E F := hr_lt
+          exact Box.not_intersects_both_of_diameter_lt B' E F h_small ⟨hB'_E, hB'_F⟩
 
-        have hS'_cover : E ∪ F ⊆ ⋃ n, (S' n).toSet := by
-          calc E ∪ F
-              ⊆ ⋃ n, (S n).toSet := hS_cover
-            _ ⊆ ⋃ n, (S' n).toSet := Lebesgue_outer_measure.refine_cover_preserves_union S r hr_pos
+        -- E is covered by the E-intersecting subdivisions
+        have hE_cover : E ⊆ ⋃ n, ⋃ B' ∈ I_E_n n, B'.toSet := by
+          intro x hxE
+          have hx_union : x ∈ E ∪ F := Set.mem_union_left F hxE
+          obtain ⟨n, hn⟩ := Set.mem_iUnion.mp (hS_cover hx_union)
+          obtain ⟨B', hB'_mem, hx_B'⟩ := Box.subdivide_iter_covers (S n) (k n) x hn
+          have hB'_in_IE : B' ∈ I_E_n n := by
+            rw [Finset.mem_filter]
+            exact ⟨hB'_mem, ⟨x, hx_B', hxE⟩⟩
+          simp only [Set.mem_iUnion]
+          exact ⟨n, ⟨B', ⟨hB'_in_IE, hx_B'⟩⟩⟩
 
-        have hS'_vol : ∑' n, (S' n).volume.toEReal ≤ ∑' n, (S n).volume.toEReal := by
-          exact Lebesgue_outer_measure.refine_cover_volume_bound S r hr_pos
+        -- F is covered by the F-intersecting subdivisions
+        have hF_cover : F ⊆ ⋃ n, ⋃ B' ∈ I_F_n n, B'.toSet := by
+          intro x hxF
+          have hx_union : x ∈ E ∪ F := Set.mem_union_right E hxF
+          obtain ⟨n, hn⟩ := Set.mem_iUnion.mp (hS_cover hx_union)
+          obtain ⟨B', hB'_mem, hx_B'⟩ := Box.subdivide_iter_covers (S n) (k n) x hn
+          have hB'_in_IF : B' ∈ I_F_n n := by
+            rw [Finset.mem_filter]
+            exact ⟨hB'_mem, ⟨x, hx_B', hxF⟩⟩
+          simp only [Set.mem_iUnion]
+          exact ⟨n, ⟨B', ⟨hB'_in_IF, hx_B'⟩⟩⟩
 
-        -- Partition indices into E-intersecting and F-intersecting
-        let I_E := Lebesgue_outer_measure.intersecting_indices S' E
-        let I_F := Lebesgue_outer_measure.intersecting_indices S' F
+        -- Volume bounds: m*(E) ≤ sum over E-intersecting boxes
+        have hE_bound : Lebesgue_outer_measure E ≤ ∑' n, (∑ B' ∈ I_E_n n, B'.volume).toEReal :=
+          le_of_finset_cover hd E I_E_n hE_cover
 
-        -- These index sets are disjoint (key geometric fact!)
-        have h_disj : Disjoint I_E I_F := Lebesgue_outer_measure.partition_disjoint S' hsep hS'_diam
+        have hF_bound : Lebesgue_outer_measure F ≤ ∑' n, (∑ B' ∈ I_F_n n, B'.volume).toEReal :=
+          le_of_finset_cover hd F I_F_n hF_cover
 
-        -- Cover E with boxes indexed by I_E
-        have hE_cover : E ⊆ ⋃ n ∈ I_E, (S' n).toSet := by
-          sorry
+        -- Key: disjoint partition means ∑ I_E_n + ∑ I_F_n ≤ ∑ all subdivisions
+        have h_sum_le : ∀ n, (∑ B' ∈ I_E_n n, B'.volume) + (∑ B' ∈ I_F_n n, B'.volume)
+            ≤ ∑ B' ∈ Box.subdivide_iter (S n) (k n), B'.volume := by
+          intro n
+          -- Step 1: ∑ A + ∑ B = ∑ (A ∪ B) for disjoint sets
+          rw [← Finset.sum_union (h_disj_n n)]
+          -- Step 2: A ∪ B ⊆ subdivide_iter since both are filters of it
+          apply Finset.sum_le_sum_of_subset_of_nonneg
+          · -- Union of filters ⊆ original set
+            intro B' hB'
+            rw [Finset.mem_union] at hB'
+            cases hB' with
+            | inl h => exact Finset.filter_subset _ _ h
+            | inr h => exact Finset.filter_subset _ _ h
+          · -- Volumes are non-negative
+            intro B' _ _
+            unfold Box.volume
+            apply Finset.prod_nonneg
+            intro i _
+            unfold BoundedInterval.length
+            exact le_max_right _ _
 
-        -- Cover F with boxes indexed by I_F
-        have hF_cover : F ⊆ ⋃ n ∈ I_F, (S' n).toSet := by
-          sorry
+        -- Volume equality: sum over subdivisions = original volume
+        have h_vol_eq : ∀ n, (S n).toSet.Nonempty →
+            (∑ B' ∈ Box.subdivide_iter (S n) (k n), B'.volume) = (S n).volume := by
+          intro n hn
+          exact Box.volume_subdivide_iter (S n) hn (k n)
 
-        -- By definition of outer measure:
-        -- m*(E) ≤ sum over I_E and m*(F) ≤ sum over I_F
-        have hE_bound : Lebesgue_outer_measure E ≤ ∑' (n : I_E), (S' n).volume.toEReal := by
-          sorry
-
-        have hF_bound : Lebesgue_outer_measure F ≤ ∑' (n : I_F), (S' n).volume.toEReal := by
-          sorry
-
-        -- Sum the bounds
+        -- Final calculation: combine bounds
         calc Lebesgue_outer_measure E + Lebesgue_outer_measure F
-            ≤ (∑' (n : I_E), (S' n).volume.toEReal) + (∑' (n : I_F), (S' n).volume.toEReal) := by
-                sorry  -- EReal addition
-          _ ≤ ∑' n, (S' n).volume.toEReal := by
-                -- Since I_E and I_F are disjoint subsets of ℕ
-                sorry
-          _ ≤ ∑' n, (S n).volume.toEReal := hS'_vol
+            ≤ (∑' n, (∑ B' ∈ I_E_n n, B'.volume).toEReal) +
+              (∑' n, (∑ B' ∈ I_F_n n, B'.volume).toEReal) :=
+                add_le_add hE_bound hF_bound
+          _ ≤ ∑' n, (S n).volume.toEReal := by
+              -- Convert to ENNReal where we have better tsum properties
+              -- Key fact: for non-negative reals, x.toEReal = (x.toNNReal : ENNReal).toEReal
+              -- Step 1: Show pointwise (∑ I_E_n) + (∑ I_F_n) ≤ vol(S n)
+              have h_pw_le : ∀ n, (∑ B' ∈ I_E_n n, B'.volume) + (∑ B' ∈ I_F_n n, B'.volume) ≤ (S n).volume := by
+                intro n
+                calc (∑ B' ∈ I_E_n n, B'.volume) + (∑ B' ∈ I_F_n n, B'.volume)
+                    ≤ ∑ B' ∈ Box.subdivide_iter (S n) (k n), B'.volume := h_sum_le n
+                  _ ≤ (S n).volume := by
+                    by_cases hn : (S n).toSet.Nonempty
+                    · exact le_of_eq (h_vol_eq n hn)
+                    · -- Empty box: volume = 0, and sum over subdivisions ≤ 0 = vol
+                      have hempty : (S n).toSet = ∅ := Set.not_nonempty_iff_eq_empty.mp hn
+                      have hvol_zero : (S n).volume = 0 := Box.volume_eq_zero_of_empty (S n) hempty
+                      rw [hvol_zero]
+                      -- subdivide_iter of empty box = {S n} with volume 0
+                      have hk_zero : k n = 0 := by
+                        simp only [k, Box.iter_count]
+                        have hdiam : (S n).diameter = 0 := Box.diameter_of_empty (S n) hempty
+                        simp only [hdiam, le_refl, ↓reduceIte]
+                      rw [hk_zero, Box.subdivide_iter_zero, Finset.sum_singleton, hvol_zero]
+
+              -- Step 2: Apply helper lemma for tsum inequality in EReal
+              have h_E_nonneg : ∀ n, 0 ≤ ∑ B' ∈ I_E_n n, B'.volume := by
+                intro n; apply Finset.sum_nonneg; intro B' _; exact Box.volume_nonneg B'
+              have h_F_nonneg : ∀ n, 0 ≤ ∑ B' ∈ I_F_n n, B'.volume := by
+                intro n; apply Finset.sum_nonneg; intro B' _; exact Box.volume_nonneg B'
+
+              -- Apply the helper lemma
+              exact EReal.tsum_add_le_of_nonneg_pointwise h_E_nonneg h_F_nonneg h_pw_le
           _ ≤ Lebesgue_outer_measure (E ∪ F) + (ε : EReal) := hS_vol
 
       -- From h_eps, conclude the inequality holds
-      -- If for all ε > 0, a ≤ b + ε, then a ≤ b
-      sorry
+      exact EReal.le_of_forall_pos_le_add' h_eps
 
   -- Combine both directions
   exact le_antisymm h_le h_ge
