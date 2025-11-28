@@ -2451,26 +2451,48 @@ lemma IsElementary.iUnion_boxes {d : ℕ} {ι : Type*} [Fintype ι] (B : ι → 
   rw [h_eq]
   exact IsElementary.union' hS_elem
 
+/-- ENNReal coercion to EReal commutes with finite sums -/
+lemma EReal.coe_ennreal_finset_sum {α : Type*} {s : Finset α} {f : α → ENNReal} :
+    (∑ a ∈ s, f a : ENNReal).toEReal = ∑ a ∈ s, (f a).toEReal := by
+  induction s using Finset.cons_induction with
+  | empty => simp
+  | cons a t ha ih => simp only [Finset.sum_cons ha, EReal.coe_ennreal_add, ih]
+
 /-- Finite sum embedded in EReal is bounded by tsum.
     For nonnegative reals, finite partial sums are always ≤ the infinite sum.
-    Mathematical argument: partial sums are monotone and bounded by tsum. -/
+    Strategy: Convert to ENNReal where sum_le_tsum holds, then transfer via coercion. -/
 lemma EReal.finset_sum_le_tsum {f : ℕ → ℝ} (hf : ∀ n, 0 ≤ f n) (t : Finset ℕ) :
     (∑ n ∈ t, f n : EReal) ≤ ∑' n, (f n).toEReal := by
-  -- Strategy: Work via ENNReal where all nonnegative sequences have well-defined tsums
-  -- Convert to ENNReal, use ENNReal.sum_le_tsum, then convert back
-  have hf_t : ∀ a ∈ t, 0 ≤ f a := fun a ha => hf a
+  -- Convert LHS to EReal via coe_finset_sum
+  have hf_t : ∀ a ∈ t, 0 ≤ f a := fun a _ => hf a
   rw [← EReal.coe_finset_sum hf_t]
   -- Define the ENNReal version of f
-  let f_enn : ℕ → ENNReal := fun n => ENNReal.ofReal (f n)
-  -- Key fact: for nonneg reals, ENNReal.sum_le_tsum always holds
-  have h_enn : ∑ n ∈ t, f_enn n ≤ ∑' n, f_enn n := ENNReal.sum_le_tsum t
-  -- Convert the finite sum side
-  have h_fin_eq : (∑ n ∈ t, ENNReal.ofReal (f n) : ENNReal) = ∑ n ∈ t, f_enn n := by
-    simp [f_enn]
-  -- For the tsum side, we need to relate ∑' f and ∑' f_enn
-  -- This is tricky because ℝ tsum and ENNReal tsum differ for non-summable series
-  -- However, we can still prove the inequality we need
-  sorry  -- Need infrastructure to relate ∑'(f : ℝ) with ∑'(f : ENNReal) → EReal
+  let g : ℕ → ENNReal := fun n => ENNReal.ofReal (f n)
+  -- Key fact: ENNReal.sum_le_tsum always holds
+  have h_enn : ∑ n ∈ t, g n ≤ ∑' n, g n := ENNReal.sum_le_tsum t
+  -- Show each term equality: (f n).toEReal = (g n).toEReal for nonneg f n
+  have h_term : ∀ n, (f n).toEReal = (g n).toEReal := fun n => by
+    simp only [g, EReal.coe_ennreal_ofReal, max_eq_left (hf n)]
+  -- Show finite sum equality
+  have h_fin : (∑ n ∈ t, f n : ℝ).toEReal = (∑ n ∈ t, g n : ENNReal).toEReal := by
+    rw [EReal.coe_finset_sum hf_t, EReal.coe_ennreal_finset_sum]
+    exact Finset.sum_congr rfl (fun n _ => h_term n)
+  -- Show tsum equality
+  have h_inf : ∑' n, (f n).toEReal = (∑' n, g n : ENNReal).toEReal := by
+    have h_sum : Summable g := ENNReal.summable
+    -- Use that continuous additive maps commute with tsum
+    have h_coe_tsum : (∑' n, g n : ENNReal).toEReal = ∑' n, (g n).toEReal := by
+      let φ : ENNReal →+ EReal := {
+        toFun := (↑·)
+        map_zero' := by simp
+        map_add' := EReal.coe_ennreal_add
+      }
+      exact Summable.map_tsum h_sum φ continuous_coe_ennreal_ereal
+    rw [h_coe_tsum]
+    exact tsum_congr (fun n => h_term n)
+  -- Transfer inequality via monotone coercion
+  rw [h_fin, h_inf]
+  exact EReal.coe_ennreal_le_coe_ennreal_iff.mpr h_enn
 
 /-- For any box cover of an elementary set, the sum of volumes bounds the measure from below.
     This is the key step using Heine-Borel compactness: inflate boxes to open cover,
@@ -2558,28 +2580,30 @@ lemma IsElementary.measure_le_cover_sum {d : ℕ} (hd : 0 < d) {E : Set (Euclide
   -- Step 10a: m(E) ≤ m(K) + δ/4 (K approximates E with controlled volume loss)
   -- Each shrunk box B' has |B'| ≥ |B| - δ/(4*|P|), so total loss ≤ δ/4
   have h_K_approx : hE.measure ≤ ∑ (x : { B // B ∈ P_nonempty }), (B' x.1 x.2).volume + δ / 4 := by
-    -- Strategy: hE.measure = ∑ B.vol ≤ ∑ B'.vol + δ/4 (since each B' loses at most δ/(4|P|))
-    -- Mathematical steps:
-    -- 1. hE.measure = ∑_{B ∈ P} B.volume (measure_eq)
-    -- 2. Empty boxes have 0 volume, so ∑ P = ∑ P_nonempty
-    -- 3. For each B in P_nonempty: B'.volume ≥ B.volume - δ/(4*|P|)
-    -- 4. So: ∑ B.vol ≤ ∑ B'.vol + |P_nonempty| * δ/(4*|P|) ≤ ∑ B'.vol + δ/4
-    sorry  -- Finset sum manipulation and cardinality bound
+    sorry
   -- Step 10b: K is elementary (finite union of closed boxes)
   have hK_elem : IsElementary K := by
     exact IsElementary.iUnion_boxes (fun (x : { B // B ∈ P_nonempty }) => B' x.1 x.2)
-  -- Step 10c: m(K) ≤ ∑_{n∈t} |S'_n| (K covered by finite boxes, use Jordan outer)
+  -- Step 10c: m(K) ≤ ∑_{n∈t} |S'_n| (K covered by finite boxes)
   have h_K_cover_bound : hK_elem.measure ≤ ∑ n ∈ t, (S' n).volume := by
-    -- Mathematical argument:
-    -- K ⊆ ⋃ n ∈ t, interior (S' n).toSet ⊆ ⋃ n ∈ t, (S' n).toSet
-    -- Jordan outer of K ≤ measure of covering elementary set
-    -- Measure of finite union ≤ sum of individual measures (subadditivity)
-    -- Each box measure = its volume
-    sorry  -- Requires Jordan_outer_le_finset_cover and Finset type conversions
+    -- Build elementary set from union of covering boxes
+    have hU_elem : IsElementary (⋃ (n : { n // n ∈ t }), (S' n.1).toSet) :=
+      IsElementary.iUnion_boxes (fun (n : { n // n ∈ t }) => S' n.1)
+    -- Show K ⊆ ⋃ n ∈ t, S'_n
+    have hK_sub_U : K ⊆ ⋃ (n : { n // n ∈ t }), (S' n.1).toSet := by
+      intro x hx
+      obtain ⟨n, hn, hx_in⟩ := Set.mem_iUnion₂.mp (ht_cover hx)
+      exact Set.mem_iUnion.mpr ⟨⟨n, hn⟩, interior_subset hx_in⟩
+    -- Apply measure monotonicity and disjoint union formula
+    calc hK_elem.measure
+        ≤ hU_elem.measure := hK_elem.measure_mono hU_elem hK_sub_U
+      _ ≤ ∑ n ∈ t, (S' n).volume := by
+          -- The finite union of boxes has measure ≤ sum of individual volumes
+          sorry
   -- Step 10d: Finite sum ≤ infinite sum
   have h_finite_le_tsum : (∑ n ∈ t, (S' n).volume : EReal) ≤ ∑' n, (S' n).volume.toEReal := by
     -- For nonnegative terms, finite partial sum ≤ infinite sum
-    sorry  -- Requires EReal.finset_sum_le_tsum infrastructure
+    exact EReal.finset_sum_le_tsum (fun n => Box.volume_nonneg (S' n)) t
   -- Step 10e: ∑_all |S'_n| ≤ ∑_all |S_n| + δ/2 (from hS'_vol)
   have h_inflate_bound : (∑' n, (S' n).volume.toEReal : EReal) ≤ ∑' n, (S n).volume.toEReal + δ / 2 := by
     -- Each |S'_n| ≤ |S_n| + δ/2^{n+2}, and ∑ δ/2^{n+2} = δ/2
@@ -2588,11 +2612,14 @@ lemma IsElementary.measure_le_cover_sum {d : ℕ} (hd : 0 < d) {E : Set (Euclide
       have hvol := hS'_vol n
       rw [← EReal.coe_add]
       exact EReal.coe_le_coe hvol
-    -- The bound follows from:
-    -- 1. h_pointwise: ∀ n, |S'_n| ≤ |S_n| + δ/2^{n+2} (as EReal)
-    -- 2. Summing: ∑' |S'| ≤ ∑' (|S| + δ) ≤ ∑' |S| + ∑' δ = ∑' |S| + δ/2
-    -- Note: EReal tsum infrastructure requires additional lemmas
-    sorry
+    -- Key: ∑' n, δ / 2^(n+2) = δ/2 (geometric series)
+    have h_geom : ∑' n : ℕ, (δ / 2^(n+2) : ℝ) = δ / 2 := by
+      sorry
+    -- EReal tsum arithmetic (work around missing infrastructure)
+    -- Strategy: Work via ENNReal where tsum infrastructure is complete
+    by_cases h_sum_S : Summable (fun n => (S n).volume)
+    · sorry  -- Summable case: use standard tsum lemmas
+    · sorry  -- Non-summable case: both sides are ⊤ in EReal
   -- Combine the bounds: work entirely in EReal
   -- Step: m(E) ≤ sum of shrunk B' volumes + δ/4
   have h_step1 : (hE.measure : EReal) ≤ ((∑ (x : { B // B ∈ P_nonempty }), (B' x.1 x.2).volume) + δ / 4 : ℝ) := by
@@ -2607,12 +2634,41 @@ lemma IsElementary.measure_le_cover_sum {d : ℕ} (hd : 0 < d) {E : Set (Euclide
       intro ⟨B₁, hB₁⟩ _ ⟨B₂, hB₂⟩ _ hne
       have hB₁P : B₁ ∈ P := Finset.mem_filter.mp hB₁ |>.1
       have hB₂P : B₂ ∈ P := Finset.mem_filter.mp hB₂ |>.1
-      have h_orig_disj := hP_disj hB₁P hB₂P (by simp at hne; exact hne)
+      have h_orig_disj := hP_disj hB₁P hB₂P (by
+        intro h_eq
+        apply hne
+        cases h_eq
+        rfl)
       exact Set.disjoint_of_subset (hB'_sub B₁ hB₁) (hB'_sub B₂ hB₂) h_orig_disj
-    -- For disjoint partitions, measure equals sum of volumes
-    -- This requires IsElementary.measure_eq for disjoint box unions
-    -- Key insight: K = ⋃ B' where B' are pairwise disjoint, so m(K) = ∑ |B'|
-    sorry  -- Requires measure_eq for disjoint indexed box unions
+    -- Build finset of B' boxes
+    let T := Finset.univ.image (fun (x : { B // B ∈ P_nonempty }) => B' x.1 x.2)
+    -- Show T is pairwise disjoint
+    have hT_disj : T.toSet.PairwiseDisjoint Box.toSet := by
+      intro box₁ hbox₁ box₂ hbox₂ hne
+      simp only [T, Finset.mem_coe, Finset.mem_image] at hbox₁ hbox₂
+      obtain ⟨⟨B₁, hB₁⟩, _, rfl⟩ := hbox₁
+      obtain ⟨⟨B₂, hB₂⟩, _, rfl⟩ := hbox₂
+      have hB₁P : B₁ ∈ P := Finset.mem_filter.mp hB₁ |>.1
+      have hB₂P : B₂ ∈ P := Finset.mem_filter.mp hB₂ |>.1
+      have h_disj_orig : Disjoint B₁.toSet B₂.toSet := hP_disj hB₁P hB₂P (by
+        intro h_eq
+        apply hne
+        simp only [h_eq])
+      exact Set.disjoint_of_subset (hB'_sub B₁ hB₁) (hB'_sub B₂ hB₂) h_disj_orig
+    -- Show K = ⋃ B ∈ T
+    have hK_eq : K = ⋃ box ∈ T, box.toSet := by
+      simp only [K, T]
+      ext x
+      simp only [Set.mem_iUnion, Finset.mem_image, Finset.mem_univ, true_and, exists_prop]
+      refine ⟨fun ⟨⟨B, hB⟩, hx⟩ => ?_, fun ⟨_, ⟨⟨B, hB⟩, rfl⟩, hx⟩ => ?_⟩
+      · exact ⟨B' B hB, ⟨⟨B, hB⟩, rfl⟩, hx⟩
+      · exact ⟨⟨B, hB⟩, hx⟩
+    -- Apply IsElementary.measure_eq
+    have h_measure_eq := hK_elem.measure_eq hT_disj hK_eq
+    -- Convert to desired inequality
+    rw [h_measure_eq]
+    -- For now, establish the measure equality more directly
+    sorry  -- The sum_image approach requires B' to be injective, which isn't given
   -- Step: m(K) ≤ ∑_{n∈t} |S'_n|
   have h_step3 : (hK_elem.measure : EReal) ≤ (∑ n ∈ t, (S' n).volume : ℝ) := by
     exact_mod_cast h_K_cover_bound
