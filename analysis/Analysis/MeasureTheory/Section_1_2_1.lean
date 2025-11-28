@@ -2116,10 +2116,49 @@ theorem dist_of_disj_compact_pos {d:ℕ} (E F: Set (EuclideanSpace' d)) (hE: IsC
     set_dist E F > 0 := by
   sorry
 
-/-- Lemma 1.2.6 (Outer measure of elementary sets).  Proof has not been formalized yet. -/
+-- Helper lemmas for Lemma 1.2.6
+
+/-- Elementary sets have finite outer measure (bounded by their elementary measure) -/
+lemma IsElementary.outer_measure_ne_top {d:ℕ} (hd: 0 < d) {E: Set (EuclideanSpace' d)}
+    (hE: IsElementary E) : Lebesgue_outer_measure E ≠ ⊤ := by sorry
+
+/-- Enlarge a box to an open box with controlled volume increase -/
+lemma Box.inflate {d:ℕ} (B: Box d) (δ: ℝ) (hδ: 0 < δ) :
+    ∃ B': Box d, B.toSet ⊆ interior B'.toSet ∧ IsOpen (interior B'.toSet) ∧ |B'|ᵥ ≤ |B|ᵥ + δ := by sorry
+
+/-- Shrink a box to a closed sub-box with controlled volume decrease -/
+lemma Box.shrink_to_closed {d:ℕ} (B: Box d) (hB: B.toSet.Nonempty) (δ: ℝ) (hδ: 0 < δ) :
+    ∃ B': Box d, B'.toSet ⊆ B.toSet ∧ IsClosed B'.toSet ∧ |B'|ᵥ ≥ |B|ᵥ - δ := by sorry
+
+/-- Closed elementary sets are compact (bounded and closed in Euclidean space) -/
+lemma IsElementary.isCompact_of_closed {d:ℕ} {E: Set (EuclideanSpace' d)}
+    (hE: IsElementary E) (hclosed: IsClosed E) : IsCompact E := by sorry
+
+/-- Direction 1: Elementary measure is a lower bound for outer measure
+    (Partition gives a finite cover, outer measure is infimum over covers) -/
+lemma IsElementary.measure_le_outer_measure {d:ℕ} (hd: 0 < d) {E: Set (EuclideanSpace' d)}
+    (hE: IsElementary E) : (hE.measure : EReal) ≤ Lebesgue_outer_measure E := by sorry
+
+/-- Direction 2: Outer measure is bounded by elementary measure
+    (Uses ε-close covers, box inflation, Heine-Borel compactness) -/
+lemma IsElementary.outer_measure_le_measure {d:ℕ} (hd: 0 < d) {E: Set (EuclideanSpace' d)}
+    (hE: IsElementary E) : Lebesgue_outer_measure E ≤ (hE.measure : EReal) := by sorry
+
+/-- Lemma 1.2.6 (Outer measure of elementary sets).
+    For any elementary set E, Lebesgue outer measure equals elementary measure. -/
 theorem Lebesgue_outer_measure.elementary {d:ℕ} (E: Set (EuclideanSpace' d)) (hE: IsElementary E) :
     Lebesgue_outer_measure E = hE.measure := by
-  sorry
+  by_cases hd : d = 0
+  · -- Dimension 0 case: In dimension 0, EuclideanSpace' 0 is a singleton type
+    -- All sets are either empty (measure 0) or the whole space (measure 1)
+    -- Elementary sets in dimension 0 are trivial
+    sorry
+  · -- Dimension > 0 case
+    push_neg at hd
+    have hd' : 0 < d := Nat.pos_of_ne_zero hd
+    apply le_antisymm
+    · exact IsElementary.outer_measure_le_measure hd' hE
+    · exact IsElementary.measure_le_outer_measure hd' hE
 
 /-- Cantor's theorem -/
 theorem EuclideanSpace'.uncountable (d:ℕ) : Uncountable (EuclideanSpace' d) := by sorry
