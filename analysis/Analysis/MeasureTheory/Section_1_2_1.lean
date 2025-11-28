@@ -2580,7 +2580,83 @@ lemma IsElementary.measure_le_cover_sum {d : ℕ} (hd : 0 < d) {E : Set (Euclide
   -- Step 10a: m(E) ≤ m(K) + δ/4 (K approximates E with controlled volume loss)
   -- Each shrunk box B' has |B'| ≥ |B| - δ/(4*|P|), so total loss ≤ δ/4
   have h_K_approx : hE.measure ≤ ∑ (x : { B // B ∈ P_nonempty }), (B' x.1 x.2).volume + δ / 4 := by
-    sorry
+    -- Strategy: hE.measure = ∑ B ∈ P, B.volume (via disjoint partition)
+    -- For nonempty B: B.volume ≤ B'.volume + δ/(4*|P|)
+    -- For empty B: B.volume = 0
+    -- Sum: hE.measure ≤ ∑ B'.volume + |P_nonempty| * δ/(4*|P|) ≤ ∑ B'.volume + δ/4
+    have hE_measure : hE.measure = ∑ B ∈ P, B.volume := hE.measure_eq hP_disj hP_eq
+    -- Split P into nonempty and empty boxes
+    have hP_split : P = P_nonempty ∪ (P.filter (fun B => ¬(B.toSet).Nonempty)) := by
+      ext B; simp [P_nonempty]; tauto
+    -- Empty boxes have volume 0
+    have h_empty_vol : ∀ B ∈ P.filter (fun B => ¬(B.toSet).Nonempty), B.volume = 0 := by
+      intro B hB
+      simp only [Finset.mem_filter] at hB
+      exact Box.volume_eq_zero_of_empty B (Set.not_nonempty_iff_eq_empty.mp hB.2)
+    -- Sum over empty boxes is 0
+    have h_empty_sum : ∑ B ∈ P.filter (fun B => ¬(B.toSet).Nonempty), B.volume = 0 := by
+      exact Finset.sum_eq_zero h_empty_vol
+    -- Rewrite sum over P
+    have h_sum_split : ∑ B ∈ P, B.volume = ∑ B ∈ P_nonempty, B.volume + ∑ B ∈ P.filter (fun B => ¬(B.toSet).Nonempty), B.volume := by
+      rw [← Finset.sum_union]
+      · rw [← hP_split]
+      · apply Finset.disjoint_left.2
+        intro B hB₁ hB₂
+        simp only [P_nonempty, Finset.mem_filter] at hB₁ hB₂
+        exact hB₂.2 hB₁.2
+    rw [hE_measure, h_sum_split, h_empty_sum, add_zero]
+    -- For each nonempty B: B.volume ≤ B'.volume + δ/(4*|P|)
+    have h_vol_bound : ∀ B (hB : B ∈ P_nonempty), B.volume ≤ (B' B hB).volume + δ / (4 * P.card) := by
+      intro B hB
+      have := hB'_vol B hB
+      linarith
+    -- Sum the bounds
+    have h_sum_bound : ∑ B ∈ P_nonempty, B.volume ≤ ∑ x : { B // B ∈ P_nonempty }, (B' x.1 x.2).volume + P_nonempty.card * (δ / (4 * P.card)) := by
+      calc ∑ B ∈ P_nonempty, B.volume
+          = ∑ x : { B // B ∈ P_nonempty }, x.1.volume := by rw [← Finset.sum_coe_sort]
+        _ ≤ ∑ x : { B // B ∈ P_nonempty }, ((B' x.1 x.2).volume + δ / (4 * P.card)) := by
+            apply Finset.sum_le_sum
+            intro ⟨B, hB⟩ _
+            exact h_vol_bound B hB
+        _ = ∑ x : { B // B ∈ P_nonempty }, (B' x.1 x.2).volume + ∑ _ : { B // B ∈ P_nonempty }, δ / (4 * P.card) := Finset.sum_add_distrib
+        _ = ∑ x : { B // B ∈ P_nonempty }, (B' x.1 x.2).volume + P_nonempty.card * (δ / (4 * P.card)) := by
+            congr 1
+            rw [Finset.sum_const, Finset.card_univ, ← smul_eq_mul]
+            congr 1
+            -- Fintype.card { B // B ∈ P_nonempty } = P_nonempty.card
+            -- The subtype { B // B ∈ P_nonempty } is in bijection with P_nonempty
+            -- Show (Finset.univ : Finset { B // B ∈ P_nonempty }).card = P_nonempty.card
+            -- by showing they have the same image under the projection
+            have : (Finset.univ : Finset { B // B ∈ P_nonempty }).image (fun x => x.val) = P_nonempty := by
+              ext B
+              simp only [Finset.mem_image]
+              constructor
+              · intro ⟨a, ha_mem, ha_eq⟩
+                rw [← ha_eq]
+                exact a.property
+              · intro hB
+                exact ⟨⟨B, hB⟩, Finset.mem_univ _, rfl⟩
+            rw [← Finset.card_univ, ← this]
+            -- Show Finset.univ.card = P_nonempty.card via injectivity of the projection
+            congr 1
+            rw [Finset.card_image_of_injective (Finset.univ : Finset { B // B ∈ P_nonempty }) (fun x y h => Subtype.ext h)]
+            -- Convert • to *: n • x = ↑n * x for n : ℕ, x : ℝ
+            simp [smul_eq_mul]
+    -- Bound P_nonempty.card ≤ P.card
+    have h_card_bound : P_nonempty.card ≤ P.card := Finset.card_filter_le P _
+    have h_loss_bound : P_nonempty.card * (δ / (4 * P.card)) ≤ δ / 4 := by
+      have hP_card_pos : (0 : ℝ) < P.card := Nat.cast_pos.mpr hcard_pos
+      have h_div_nonneg : (0 : ℝ) ≤ δ / (4 * P.card) := by
+        apply div_nonneg
+        · exact le_of_lt hδ_pos
+        · linarith
+      calc P_nonempty.card * (δ / (4 * P.card))
+          ≤ P.card * (δ / (4 * P.card)) := by
+            apply mul_le_mul_of_nonneg_right
+            · exact Nat.cast_le.mpr h_card_bound
+            · exact h_div_nonneg
+        _ = δ / 4 := by field_simp [hP_card_pos.ne.symm]; ring
+    linarith [h_sum_bound, h_loss_bound]
   -- Step 10b: K is elementary (finite union of closed boxes)
   have hK_elem : IsElementary K := by
     exact IsElementary.iUnion_boxes (fun (x : { B // B ∈ P_nonempty }) => B' x.1 x.2)
@@ -2613,13 +2689,79 @@ lemma IsElementary.measure_le_cover_sum {d : ℕ} (hd : 0 < d) {E : Set (Euclide
       rw [← EReal.coe_add]
       exact EReal.coe_le_coe hvol
     -- Key: ∑' n, δ / 2^(n+2) = δ/2 (geometric series)
-    have h_geom : ∑' n : ℕ, (δ / 2^(n+2) : ℝ) = δ / 2 := by
-      sorry
-    -- EReal tsum arithmetic (work around missing infrastructure)
-    -- Strategy: Work via ENNReal where tsum infrastructure is complete
-    by_cases h_sum_S : Summable (fun n => (S n).volume)
-    · sorry  -- Summable case: use standard tsum lemmas
-    · sorry  -- Non-summable case: both sides are ⊤ in EReal
+    have h_geom : ∑' n : ℕ, (δ / 2^(n+2) : ℝ) = δ / 2 := tsum_geometric_inflate hδ_pos
+    -- EReal tsum arithmetic: route through ENNReal where tsum properties are cleaner
+    -- Use EReal.tsum_add_le_of_nonneg_pointwise from our helper library
+    -- We need: ∑' (S' n).vol.toEReal ≤ ∑' (S n).vol.toEReal + δ/2
+    -- From h_pointwise: (S' n).vol ≤ (S n).vol + δ/2^(n+2)
+    -- And h_geom: ∑' δ/2^(n+2) = δ/2
+    -- Strategy: Apply tsum_add_le_of_nonneg_pointwise to get
+    --   ∑' (S' n).vol + ∑' 0 ≤ ∑' ((S n).vol + δ/2^(n+2))
+    -- Then decompose RHS using tsum properties
+    have h_S'_nonneg : ∀ n, 0 ≤ (S' n).volume := fun n => Box.volume_nonneg (S' n)
+    have h_S_nonneg : ∀ n, 0 ≤ (S n).volume := fun n => Box.volume_nonneg (S n)
+    have h_geom_nonneg : ∀ n, (0 : ℝ) ≤ δ / 2^(n+2) := fun n => by positivity
+    -- Use the helper lemma with f = S'.vol, g = 0 (trivially), h = S.vol + δ/2^{n+2}
+    have h_bound : (∑' n : ℕ, (S' n).volume.toEReal) + (∑' n : ℕ, (0 : ℝ).toEReal) ≤
+        ∑' n : ℕ, ((S n).volume + δ / 2^(n+2)).toEReal := by
+      apply EReal.tsum_add_le_of_nonneg_pointwise h_S'_nonneg (fun _ => le_refl 0)
+      intro n; simp only [add_zero]; exact hS'_vol n
+    simp only [EReal.coe_zero, tsum_zero, add_zero] at h_bound
+    -- Now show: ∑' ((S n).vol + δ/2^{n+2}).toEReal ≤ ∑' (S n).vol.toEReal + δ/2
+    have h_rhs_bound : (∑' n : ℕ, ((S n).volume + δ / 2^(n+2)).toEReal) ≤
+        ∑' n : ℕ, (S n).volume.toEReal + (δ / 2 : ℝ) := by
+      -- Route through ENNReal where tsum_add works cleanly
+      let f : ℕ → ENNReal := fun n => ENNReal.ofReal ((S n).volume)
+      let g : ℕ → ENNReal := fun n => ENNReal.ofReal (δ / 2^(n+2))
+      have h_f_eq : ∀ n, (f n).toEReal = (S n).volume.toEReal := fun n => by
+        simp only [f, EReal.coe_ennreal_ofReal, max_eq_left (h_S_nonneg n)]
+      have h_g_eq : ∀ n, (g n).toEReal = (δ / 2^(n+2) : ℝ).toEReal := fun n => by
+        simp only [g, EReal.coe_ennreal_ofReal, max_eq_left (h_geom_nonneg n)]
+      have h_fg_eq : ∀ n, ((S n).volume + δ / 2^(n+2)).toEReal = (f n + g n).toEReal := fun n => by
+        simp only [EReal.coe_ennreal_add, h_f_eq, h_g_eq]
+        rw [← EReal.coe_add]
+      -- Rewrite LHS
+      conv_lhs => congr; ext n; rw [h_fg_eq]
+      -- Use ENNReal tsum properties via coercion
+      have h_sum_fg : (∑' n, (f n + g n).toEReal) = (∑' n, (f n).toEReal) + (∑' n, (g n).toEReal) := by
+        rw [← EReal.tsum_add_coe_ennreal]
+      rw [h_sum_fg]
+      -- Now show ∑' (f n).toEReal = ∑' (S n).vol.toEReal
+      have h_lhs_eq : ∑' n, (f n).toEReal = ∑' n, (S n).volume.toEReal := tsum_congr h_f_eq
+      -- And ∑' (g n).toEReal = (δ/2).toEReal
+      have h_rhs_eq : (∑' n, (g n).toEReal) = (δ / 2 : ℝ).toEReal := by
+        conv_lhs => congr; ext n; rw [h_g_eq]
+        -- Need: ∑' n, (δ/2^(n+2)).toEReal = (δ/2).toEReal
+        -- Since all terms are nonneg and we have h_geom summability
+        have h_geom_summable : Summable (fun n => δ / 2^(n+2) : ℕ → ℝ) := by
+          have : Summable (fun n => δ / 4 * (1/2 : ℝ)^n) :=
+            Summable.mul_left (δ / 4) (summable_geometric_of_lt_one (by norm_num : (0 : ℝ) ≤ 1/2) (by norm_num : (1/2 : ℝ) < 1))
+          refine Summable.congr this ?_
+          intro n; field_simp; ring_nf
+          left; trivial
+        rw [← h_geom]
+        -- Convert: ∑' real.toEReal = (∑' real).toEReal for summable nonneg
+        symm
+        -- Use Summable.map_tsum to show coercion commutes with tsum
+        let φ : ℝ →+ EReal := {
+          toFun := (↑·)
+          map_zero' := EReal.coe_zero
+          map_add' := fun x y => EReal.coe_add x y
+        }
+        have h_cont : Continuous φ := continuous_coe_real_ereal
+        have h_map := Summable.map_tsum h_geom_summable φ h_cont
+        -- h_map: φ (∑' (i : ℕ), δ / 2 ^ (i + 2)) = ∑' (i : ℕ), φ (δ / 2 ^ (i + 2))
+        -- Since φ = (↑·), this is: ↑(∑' (i : ℕ), δ / 2 ^ (i + 2)) = ∑' (i : ℕ), ↑(δ / 2 ^ (i + 2))
+        -- Goal: ↑(∑' (n : ℕ), δ / 2 ^ (n + 2)) = ∑' (n : ℕ), ↑(δ / 2 ^ (n + 2))
+        -- Rewrite both sides to use φ, then apply h_map.symm and match variable names
+        -- Since φ = (↑·), we can use h_map.symm after matching variable names
+        have h_eq_lhs : ↑(∑' (n : ℕ), δ / 2 ^ (n + 2)) = φ (∑' (n : ℕ), δ / 2 ^ (n + 2)) := by
+          congr 1
+        have h_eq_rhs : ∑' (n : ℕ), ↑(δ / 2 ^ (n + 2)) = ∑' (n : ℕ), φ (δ / 2 ^ (n + 2)) :=
+          tsum_congr (fun n => rfl)
+        rw [h_eq_lhs, h_eq_rhs, ← h_map.symm]
+      rw [h_lhs_eq, h_rhs_eq]
+    exact le_trans h_bound h_rhs_bound
   -- Combine the bounds: work entirely in EReal
   -- Step: m(E) ≤ sum of shrunk B' volumes + δ/4
   have h_step1 : (hE.measure : EReal) ≤ ((∑ (x : { B // B ∈ P_nonempty }), (B' x.1 x.2).volume) + δ / 4 : ℝ) := by
