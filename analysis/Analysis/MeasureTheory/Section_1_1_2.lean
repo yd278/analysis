@@ -233,6 +233,7 @@ theorem le_Jordan_outer {d:ℕ} {E: Set (EuclideanSpace' d)} {m:ℝ}
   exact ⟨A, hA, hE_subset, hm'_lt⟩
 
 /-- Exercise 1.1.5 -/
+-- Equivalent characterizations of Jordan measurability: inner and outer measures coincide.
 theorem JordanMeasurable.equiv {d:ℕ} {E: Set (EuclideanSpace' d)} (hE: Bornology.IsBounded E) :
  [JordanMeasurable E,
   ∀ ε>0, ∃ A, ∃ B, ∃ hA: IsElementary A, ∃ hB: IsElementary B,
@@ -343,6 +344,7 @@ lemma JordanMeasurable.undergraph {d:ℕ} {B:Box d} {f: EuclideanSpace' d → �
   sorry
 
 /-- Exercise 1.1.8 -/
+-- A triangle is Jordan measurable.
 lemma JordanMeasurable.triangle (T: Affine.Triangle ℝ (EuclideanSpace' 2)) : JordanMeasurable T.closedInterior := by
   sorry
 
@@ -350,6 +352,7 @@ lemma JordanMeasurable.triangle (T: Affine.Triangle ℝ (EuclideanSpace' 2)) : J
 abbrev EuclideanSpace'.plane_wedge (x y: EuclideanSpace' 2) := x 1 * y 0 - x 0 * y 1
 
 /-- Exercise 1.1.8 -/
+-- The Jordan measure of a triangle equals half the absolute value of the wedge product of two edge vectors.
 lemma JordanMeasurable.measure_triangle (T: Affine.Triangle ℝ (EuclideanSpace' 2)) : (JordanMeasurable.triangle T).measure = |(T.points 1 - T.points 0).plane_wedge (T.points 2 - T.points 0)| / 2 := by
   sorry
 
@@ -362,40 +365,49 @@ lemma JordanMeasurable.polytope {d:ℕ} {P: Set (EuclideanSpace' d)} (hP: IsPoly
   sorry
 
 /-- Exercise 1.1.10 (1) -/
+-- An open ball is Jordan measurable.
 lemma JordanMeasurable.ball {d:ℕ} (x₀: EuclideanSpace' d) {r: ℝ} (hr: 0 < r) : JordanMeasurable (Metric.ball x₀ r) := by
   sorry
 
 /-- Exercise 1.1.10 (1) -/
+-- A closed ball is Jordan measurable.
 lemma JordanMeasurable.closedBall {d:ℕ} (x₀: EuclideanSpace' d) {r: ℝ} (hr: 0 < r) : JordanMeasurable (Metric.closedBall x₀ r) := by
   sorry
 
 
 /-- Exercise 1.1.10 (1) -/
+-- The Jordan measure of a ball is proportional to r^d with a dimension-dependent constant.
 lemma JordanMeasurable.measure_ball (d:ℕ) : ∃ c, ∀ (x₀: EuclideanSpace' d) (r: ℝ) (hr: 0 < r), (ball x₀ hr).measure = c * r^d := by sorry
 
 /-- The Jordan measure of a closed ball equals that of the open ball. -/
 lemma JordanMeasurable.measure_closedBall {d:ℕ} (x₀: EuclideanSpace' d) {r: ℝ} (hr: 0 < r): (closedBall x₀ hr).measure = (ball x₀ hr).measure := by sorry
 
 /-- Exercise 1.1.10 (2) -/
+-- The ball measure constant is bounded above by 2^d.
 lemma JordanMeasurable.measure_ball_le (d:ℕ) : (measure_ball d).choose ≤ 2^d := by sorry
 
 /-- Exercise 1.1.10 (2) -/
+-- The ball measure constant is bounded below by 2^d / d!.
 lemma JordanMeasurable.le_measure_ball (d:ℕ) : 2^d/d.factorial ≤ (measure_ball d).choose := by sorry
 
 /-- Exercise 1.1.11 (1) -/
+-- The linear image of an elementary set is Jordan measurable.
 lemma JordanMeasurable.linear_of_elem {d:ℕ} (T: EuclideanSpace' d ≃ₗ[ℝ] EuclideanSpace' d)
 {E: Set (EuclideanSpace' d)} (hE: IsElementary E): JordanMeasurable (T '' E) := by
   sorry
 
 /-- Exercise 1.1.11 (1) -/
+-- The measure of a linear image of an elementary set scales by a fixed factor depending on the transformation.
 lemma JordanMeasurable.measure_linear_of_elem {d:ℕ} (T: EuclideanSpace' d ≃ₗ[ℝ] EuclideanSpace' d) : ∃ D > 0, ∀ (E: Set (EuclideanSpace' d)) (hE: IsElementary E), (linear_of_elem T hE).measure = D * hE.measure := by sorry
 
 /-- Exercise 1.1.11 (2) -/
+-- The linear image of a Jordan measurable set is Jordan measurable.
 lemma JordanMeasurable.linear {d:ℕ} (T: EuclideanSpace' d ≃ₗ[ℝ] EuclideanSpace' d)
 {E: Set (EuclideanSpace' d)} (hE: JordanMeasurable E): JordanMeasurable (T '' E) := by
   sorry
 
 /-- Exercise 1.1.11 (2) -/
+-- The measure of a linear image of a Jordan measurable set equals the original measure (up to determinant scaling).
 lemma JordanMeasurable.measure_linear {d:ℕ} (T: EuclideanSpace' d ≃ₗ[ℝ] EuclideanSpace' d) :
 ∃ D > 0, ∀ (E: Set (EuclideanSpace' d)) (hE: JordanMeasurable E), (linear T hE).measure = hE.measure := by sorry
 
@@ -410,6 +422,7 @@ EuclideanSpace' d ≃ₗ[ℝ] EuclideanSpace' d where
   right_inv x := by simp
 
 /-- Exercise 1.1.11 (3) -/
+-- For a linear map from an invertible matrix, the measure scaling factor equals the absolute value of the determinant.
 lemma JordanMeasurable.measure_linear_det {d:ℕ} (A: Matrix (Fin d) (Fin d) ℝ) [Invertible A] :
 (measure_linear A.linear_equiv).choose = |A.det| := by sorry
 
@@ -421,10 +434,12 @@ lemma JordanMeasurable.null_iff {d:ℕ} {E: Set (EuclideanSpace' d)} : null E �
   sorry
 
 /-- Exercise 1.1.12 -/
+-- A subset of a Jordan null set is also Jordan null.
 lemma JordanMeasurable.null_mono {d:ℕ} {E F: Set (EuclideanSpace' d)} (h: null E) (hEF: F ⊆ E) : null F := by
   sorry
 
 /-- Exercise 1.1.13 -/
+-- The Jordan measure equals the limit of scaled lattice point counts in the set.
 theorem JordanMeasure.measure_eq {d:ℕ} {E: Set (EuclideanSpace' d)} (hE: JordanMeasurable E):
   Filter.atTop.Tendsto (fun N:ℕ ↦ (N:ℝ)^(-d:ℝ) * Nat.card ↥(E ∩ (Set.range (fun (n:Fin d → ℤ) i ↦ (N:ℝ)⁻¹*(n i)))))
   (nhds hE.measure) := by sorry
@@ -440,6 +455,7 @@ noncomputable abbrev metric_entropy_lower {d:ℕ} (E: Set (EuclideanSpace' d)) (
 noncomputable abbrev metric_entropy_upper {d:ℕ} (E: Set (EuclideanSpace' d)) (n:ℤ) : ℕ := Nat.card { i:Fin d → ℤ | (Box.dyadic n i).toSet ∩ E ≠ ∅ }
 
 /-- Exercise 1.1.14 -/
+-- Jordan measurability is characterized by convergence of scaled dyadic metric entropy difference to zero.
 theorem JordanMeasure.iff {d:ℕ} {E: Set (EuclideanSpace' d)} (hE: Bornology.IsBounded E) :
   JordanMeasurable E ↔ Filter.atTop.Tendsto (fun n ↦ (2:ℝ)^(-(d*n:ℤ)) * ((metric_entropy_upper E n - metric_entropy_lower E n))) (nhds 0) := by sorry
 
@@ -492,14 +508,17 @@ theorem JordanMeasurable.measure_of_equidecomposable {d n:ℕ} {E F: Set (Euclid
   sorry
 
 /-- Exercise 1.1.18 (1) -/
+-- The outer Jordan measure of a set equals the outer measure of its closure.
 theorem JordanMeasurable.outer_measure_of_closure {d:ℕ} {E: Set (EuclideanSpace' d)} (hE: Bornology.IsBounded E) :
   Jordan_outer_measure (closure E) = Jordan_outer_measure E := by sorry
 
 /-- Exercise 1.1.18 (2) -/
+-- The inner Jordan measure of a set equals the inner measure of its interior.
 theorem JordanMeasurable.inner_measure_of_interior {d:ℕ} {E: Set (EuclideanSpace' d)} (hE: Bornology.IsBounded E) :
   Jordan_inner_measure (interior E) = Jordan_inner_measure E := by sorry
 
 /-- Exercise 1.1.18 (3) -/
+-- A bounded set is Jordan measurable if and only if its boundary is Jordan null.
 theorem JordanMeasurable.iff_boundary_null {d:ℕ} {E: Set (EuclideanSpace' d)} (hE: Bornology.IsBounded E) :
   JordanMeasurable E ↔ JordanMeasurable.null (frontier E) := by sorry
 
