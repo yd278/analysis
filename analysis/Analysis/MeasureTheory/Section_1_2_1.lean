@@ -2118,9 +2118,29 @@ theorem dist_of_disj_compact_pos {d:ℕ} (E F: Set (EuclideanSpace' d)) (hE: IsC
 
 -- Helper lemmas for Lemma 1.2.6
 
-/-- Elementary sets have finite outer measure (bounded by their elementary measure) -/
-lemma IsElementary.outer_measure_ne_top {d:ℕ} (hd: 0 < d) {E: Set (EuclideanSpace' d)}
-    (hE: IsElementary E) : Lebesgue_outer_measure E ≠ ⊤ := by sorry
+/-- Every bounded interval (Ioo, Icc, Ioc, Ico) is a bounded set -/
+lemma BoundedInterval.isBounded (I: BoundedInterval) : Bornology.IsBounded I.toSet := by
+  cases I with
+  | Ioo a b => simp only [toSet]; exact Metric.isBounded_Ioo a b
+  | Icc a b => simp only [toSet]; exact Metric.isBounded_Icc a b
+  | Ioc a b => simp only [toSet]; exact Metric.isBounded_Ioc a b
+  | Ico a b => simp only [toSet]; exact Metric.isBounded_Ico a b
+
+/-- Every box is bounded (product of bounded intervals) -/
+lemma Box.isBounded {d:ℕ} (B: Box d) : Bornology.IsBounded B.toSet := by
+  unfold Box.toSet
+  apply Bornology.IsBounded.pi
+  intro i
+  exact BoundedInterval.isBounded (B.side i)
+
+/-- Elementary sets are bounded (finite union of bounded boxes) -/
+lemma IsElementary.isBounded {d:ℕ} {E: Set (EuclideanSpace' d)} (hE: IsElementary E) :
+    Bornology.IsBounded E := by
+  obtain ⟨S, hS_eq⟩ := hE
+  rw [hS_eq]
+  rw [Bornology.isBounded_biUnion_finset]
+  intro B _
+  exact Box.isBounded B
 
 /-- Enlarge a box to an open box with controlled volume increase -/
 lemma Box.inflate {d:ℕ} (B: Box d) (δ: ℝ) (hδ: 0 < δ) :
@@ -2132,27 +2152,106 @@ lemma Box.shrink_to_closed {d:ℕ} (B: Box d) (hB: B.toSet.Nonempty) (δ: ℝ) (
 
 /-- Closed elementary sets are compact (bounded and closed in Euclidean space) -/
 lemma IsElementary.isCompact_of_closed {d:ℕ} {E: Set (EuclideanSpace' d)}
-    (hE: IsElementary E) (hclosed: IsClosed E) : IsCompact E := by sorry
+    (hE: IsElementary E) (hclosed: IsClosed E) : IsCompact E :=
+  Metric.isCompact_of_isClosed_isBounded hclosed hE.isBounded
 
 /-- Direction 1: Elementary measure is a lower bound for outer measure
-    (Partition gives a finite cover, outer measure is infimum over covers) -/
+    (Partition gives a finite cover, outer measure is infimum over covers)
+    Proof sketch (following textbook):
+    - For closed E: Use Heine-Borel to extract finite subcover from any ε-close cover,
+      then finite subadditivity gives m(E) ≤ sum of cover volumes
+    - For non-closed E: Approximate from inside with closed sub-boxes, apply closed case -/
 lemma IsElementary.measure_le_outer_measure {d:ℕ} (hd: 0 < d) {E: Set (EuclideanSpace' d)}
-    (hE: IsElementary E) : (hE.measure : EReal) ≤ Lebesgue_outer_measure E := by sorry
+    (hE: IsElementary E) : (hE.measure : EReal) ≤ Lebesgue_outer_measure E := by
+  -- The key insight: for any box cover {Bₙ} of E, elementary measure ≤ sum of box volumes
+  -- This uses: (1) measure_mono: E ⊆ F → m(E) ≤ m(F)
+  --            (2) measure_of_union': m(⋃ Bᵢ) ≤ Σ m(Bᵢ) for finite covers
+  --            (3) Heine-Borel to extract finite subcover from countable open cover
+  -- Requires Box.inflate to enlarge boxes to open sets for Heine-Borel
+  sorry
 
 /-- Direction 2: Outer measure is bounded by elementary measure
-    (Uses ε-close covers, box inflation, Heine-Borel compactness) -/
-lemma IsElementary.outer_measure_le_measure {d:ℕ} (hd: 0 < d) {E: Set (EuclideanSpace' d)}
-    (hE: IsElementary E) : Lebesgue_outer_measure E ≤ (hE.measure : EReal) := by sorry
+    (Uses: m*(E) ≤ J*(E) for bounded E, and J*(E) ≤ hE.measure for elementary E) -/
+lemma IsElementary.outer_measure_le_measure {d:ℕ} (_hd: 0 < d) {E: Set (EuclideanSpace' d)}
+    (hE: IsElementary E) : Lebesgue_outer_measure E ≤ (hE.measure : EReal) := by
+  -- Step 1: Lebesgue outer measure ≤ Jordan outer measure (for bounded sets)
+  have h_le_jordan : Lebesgue_outer_measure E ≤ Jordan_outer_measure E :=
+    Lebesgue_outer_measure_le_Jordan hE.isBounded
+  -- Step 2: Jordan outer measure ≤ elementary measure (by Jordan_outer_le with E ⊆ E)
+  have h_jordan_le : Jordan_outer_measure E ≤ hE.measure :=
+    Jordan_outer_le hE (Set.Subset.refl E)
+  -- Combine: m*(E) ≤ J*(E) ≤ hE.measure (with EReal coercion)
+  calc Lebesgue_outer_measure E
+      ≤ Jordan_outer_measure E := h_le_jordan
+    _ ≤ hE.measure := by exact_mod_cast h_jordan_le
+
+/-- Elementary sets have finite outer measure (bounded by their elementary measure) -/
+lemma IsElementary.outer_measure_ne_top {d:ℕ} (hd: 0 < d) {E: Set (EuclideanSpace' d)}
+    (hE: IsElementary E) : Lebesgue_outer_measure E ≠ ⊤ :=
+  ne_top_of_le_ne_top (EReal.coe_ne_top hE.measure) (IsElementary.outer_measure_le_measure hd hE)
+
+/-- Helper for dimension 0 case of Lemma 1.2.6 -/
+lemma Lebesgue_outer_measure.elementary_dim_zero (E: Set (EuclideanSpace' 0)) (hE: IsElementary E) :
+    Lebesgue_outer_measure E = hE.measure := by
+  -- In dimension 0, EuclideanSpace' 0 is a singleton (only the empty function Fin 0 → ℝ)
+  -- Outer measure is 1 for nonempty sets, 0 for empty set
+  rw [Lebesgue_outer_measure_of_dim_zero]
+  by_cases hne : E.Nonempty
+  · -- Case: E is nonempty → E = Set.univ (singleton type), outer measure = 1
+    simp only [hne, ↓reduceIte]
+    -- In dim 0, any nonempty elementary set is Set.univ (entire singleton space)
+    -- The partition has one box covering univ, with volume = empty product = 1
+    -- So hE.measure = 1
+    -- Need to show 1 = hE.measure, i.e., hE.measure = 1
+    symm
+    -- E = Set.univ since EuclideanSpace' 0 has only one point
+    have hE_eq_univ : E = Set.univ := by
+      ext x
+      constructor
+      · intro _; exact Set.mem_univ x
+      · intro _
+        -- Show x ∈ E using that E is nonempty and the space is a singleton
+        obtain ⟨y, hy⟩ := hne
+        -- In EuclideanSpace' 0 = (Fin 0 → ℝ), all elements are equal (unique function from empty type)
+        have : x = y := by ext i; exact i.elim0
+        rw [this]; exact hy
+    -- Now show measure of Set.univ in dim 0 is 1
+    -- In dim 0, any box B has B.toSet = Set.univ and |B|ᵥ = 1 (empty product)
+    -- Construct a box in dim 0 and show its measure is 1
+    let B : Box 0 := ⟨fun i => i.elim0⟩
+    have hB_univ : B.toSet = Set.univ := by
+      ext x
+      simp only [Box.toSet, Set.mem_univ, iff_true]
+      intro i; exact i.elim0
+    have hB_vol : |B|ᵥ = 1 := by
+      simp only [Box.volume, Finset.univ_eq_empty, Finset.prod_empty]
+    -- E = Set.univ = B.toSet, so hE.measure = (IsElementary.box B).measure = |B|ᵥ = 1
+    have h_eq : hE.measure = (IsElementary.box B).measure := by
+      apply IsElementary.measure_eq_of_set_eq
+      rw [hE_eq_univ, hB_univ]
+    rw [h_eq, IsElementary.measure_of_box, hB_vol]
+    rfl
+  · -- Case: E is empty → outer measure = 0 = hE.measure
+    have hE_empty : E = ∅ := Set.not_nonempty_iff_eq_empty.mp hne
+    simp only [hne, if_false]
+    -- Need: (0 : EReal) = hE.measure
+    -- Use that E = ∅ implies hE.measure = 0
+    have h_meas_eq : hE.measure = (IsElementary.empty 0).measure :=
+      IsElementary.measure_eq_of_set_eq hE (IsElementary.empty 0) hE_empty
+    rw [h_meas_eq, IsElementary.measure_of_empty]
+    rfl
 
 /-- Lemma 1.2.6 (Outer measure of elementary sets).
     For any elementary set E, Lebesgue outer measure equals elementary measure. -/
 theorem Lebesgue_outer_measure.elementary {d:ℕ} (E: Set (EuclideanSpace' d)) (hE: IsElementary E) :
     Lebesgue_outer_measure E = hE.measure := by
   by_cases hd : d = 0
-  · -- Dimension 0 case: In dimension 0, EuclideanSpace' 0 is a singleton type
-    -- All sets are either empty (measure 0) or the whole space (measure 1)
-    -- Elementary sets in dimension 0 are trivial
-    sorry
+  · -- Dimension 0 case: trivial edge case (EuclideanSpace' 0 is a singleton)
+    -- In dim 0, all boxes have volume 1, E is either empty (measure 0) or univ (measure 1)
+    subst hd
+    -- This edge case requires careful handling of the partition structure in dim 0
+    -- For now, defer to a helper lemma
+    exact Lebesgue_outer_measure.elementary_dim_zero E hE
   · -- Dimension > 0 case
     push_neg at hd
     have hd' : 0 < d := Nat.pos_of_ne_zero hd
