@@ -2412,20 +2412,177 @@ lemma IsElementary.isCompact_of_closed {d:ℕ} {E: Set (EuclideanSpace' d)}
     (hE: IsElementary E) (hclosed: IsClosed E) : IsCompact E :=
   Metric.isCompact_of_isClosed_isBounded hclosed hE.isBounded
 
+/-- Elementary measure of empty set is zero (handles proof term mismatch) -/
+lemma IsElementary.measure_of_empty_eq {d : ℕ} {E : Set (EuclideanSpace' d)}
+    (hE : IsElementary E) (hempty : E = ∅) : hE.measure = 0 := by
+  have : hE.measure = (IsElementary.empty d).measure :=
+    IsElementary.measure_eq_of_set_eq hE (IsElementary.empty d) hempty
+  rw [this, IsElementary.measure_of_empty]
+
+/-- Sum of geometric series δ/2^{n+2} equals δ/2 -/
+lemma tsum_geometric_inflate {δ : ℝ} (_hδ : 0 < δ) :
+    ∑' n : ℕ, δ / 2^(n+2) = δ / 2 := by
+  -- ∑ δ/2^{n+2} = δ/4 * ∑ (1/2)^n = δ/4 * 2 = δ/2
+  have h_eq : (fun n => δ / 2^(n+2)) = (fun n => δ / 4 * (1/2 : ℝ)^n) := by
+    ext n
+    have : (2 : ℝ)^(n+2) = 4 * 2^n := by ring
+    rw [this]
+    field_simp
+  rw [h_eq, tsum_mul_left, tsum_geometric_of_lt_one (by norm_num : (0:ℝ) ≤ 1/2) (by norm_num : (1:ℝ)/2 < 1)]
+  field_simp; ring
+
+/-- For any box cover of an elementary set, the sum of volumes bounds the measure from below.
+    This is the key step using Heine-Borel compactness: inflate boxes to open cover,
+    extract finite subcover of compact approximation, use finite subadditivity. -/
+lemma IsElementary.measure_le_cover_sum {d : ℕ} (hd : 0 < d) {E : Set (EuclideanSpace' d)}
+    (hE : IsElementary E) (S : ℕ → Box d) (hS_cover : E ⊆ ⋃ n, (S n).toSet) :
+    (hE.measure : EReal) ≤ ∑' n, (S n).volume.toEReal := by
+  -- Handle empty case directly
+  by_cases hE_empty : E = ∅
+  · rw [hE.measure_of_empty_eq hE_empty]
+    simp only [EReal.coe_zero]
+    positivity
+  -- E is nonempty
+  have hE_nonempty : E.Nonempty := Set.nonempty_iff_ne_empty.mpr hE_empty
+  -- Get partition of E
+  obtain ⟨P, hP_disj, hP_eq⟩ := hE.partition
+  have hP_nonempty : P.Nonempty := by
+    rw [Finset.nonempty_iff_ne_empty]
+    intro hP_empty
+    rw [hP_empty] at hP_eq
+    simp at hP_eq
+    exact hE_empty hP_eq
+  -- Use ε-argument: show hE.measure ≤ ∑|S_n| + ε for all ε > 0
+  apply EReal.le_of_forall_pos_le_add'
+  intro δ hδ_pos
+  have hδ4_pos : 0 < δ / 4 := by linarith
+  -- Step 1: Inflate each S_n to open S'_n with controlled volume increase
+  have h_inflate : ∀ n : ℕ, ∃ S'_n : Box d,
+      (S n).toSet ⊆ interior S'_n.toSet ∧ IsOpen (interior S'_n.toSet) ∧
+      S'_n.volume ≤ (S n).volume + δ / 2^(n+2) := by
+    intro n
+    exact Box.inflate (S n) (δ / 2^(n+2)) (by positivity)
+  choose S' hS'_subset hS'_open hS'_vol using h_inflate
+  -- Step 2: {interior (S' n)} is an open cover of E
+  have h_open_cover : E ⊆ ⋃ n, interior (S' n).toSet := by
+    intro x hx
+    obtain ⟨n, hn⟩ := Set.mem_iUnion.mp (hS_cover hx)
+    exact Set.mem_iUnion.mpr ⟨n, hS'_subset n hn⟩
+  -- Step 3: Shrink partition boxes to get compact approximation K
+  have hcard_pos : 0 < P.card := Finset.card_pos.mpr hP_nonempty
+  have h_shrink : ∀ B ∈ P, B.toSet.Nonempty → ∃ B' : Box d,
+      B'.toSet ⊆ B.toSet ∧ IsClosed B'.toSet ∧ B'.volume ≥ B.volume - δ / (4 * P.card) := by
+    intro B _ hB_nonempty
+    exact Box.shrink_to_closed B hB_nonempty (δ / (4 * P.card)) (by positivity)
+  -- Step 4: Build compact set K from shrunk partition boxes
+  -- Filter to nonempty boxes (using classical decidability)
+  haveI : DecidablePred (fun (B : Box d) => B.toSet.Nonempty) := Classical.decPred _
+  let P_nonempty := P.filter (fun B => B.toSet.Nonempty)
+  -- For each nonempty box in P, choose a closed shrunk box
+  have h_shrink' : ∀ B ∈ P_nonempty, ∃ B' : Box d,
+      B'.toSet ⊆ B.toSet ∧ IsClosed B'.toSet ∧ B'.volume ≥ B.volume - δ / (4 * P.card) := by
+    intro B hB
+    have hBP : B ∈ P := Finset.mem_filter.mp hB |>.1
+    have hB_ne : B.toSet.Nonempty := Finset.mem_filter.mp hB |>.2
+    exact h_shrink B hBP hB_ne
+  choose B' hB'_sub hB'_closed hB'_vol using h_shrink'
+  -- Define K directly as union of shrunk boxes over P_nonempty
+  let K := ⋃ (x : { B // B ∈ P_nonempty }), (B' x.1 x.2).toSet
+  -- Step 5: K is closed (finite union of closed sets)
+  have hK_closed : IsClosed K := by
+    show IsClosed (⋃ (x : { B // B ∈ P_nonempty }), (B' x.1 x.2).toSet)
+    haveI : Finite { B // B ∈ P_nonempty } := Finset.finite_toSet P_nonempty |>.to_subtype
+    apply isClosed_iUnion_of_finite
+    intro ⟨B, hB⟩
+    exact hB'_closed B hB
+  -- Step 6: K is bounded (K ⊆ E which is bounded)
+  have hK_subset_E : K ⊆ E := by
+    intro x hx
+    rw [Set.mem_iUnion] at hx
+    obtain ⟨⟨B, hB⟩, hx_in_B'⟩ := hx
+    have hBP : B ∈ P := Finset.mem_filter.mp hB |>.1
+    rw [hP_eq]
+    exact Set.mem_biUnion hBP (hB'_sub B hB hx_in_B')
+  have hK_bounded : Bornology.IsBounded K := hE.isBounded.subset hK_subset_E
+  -- Step 7: K is compact (Heine-Borel)
+  have hK_compact : IsCompact K := Metric.isCompact_of_isClosed_isBounded hK_closed hK_bounded
+  -- Step 8: K ⊆ ⋃ interior S'_n (since K ⊆ E ⊆ ⋃ interior S'_n)
+  have hK_cover : K ⊆ ⋃ n, interior (S' n).toSet := hK_subset_E.trans h_open_cover
+  -- Step 9: Apply Heine-Borel to get finite subcover
+  obtain ⟨t, ht_cover⟩ := hK_compact.elim_finite_subcover
+    (fun n => interior (S' n).toSet) (fun n => isOpen_interior) hK_cover
+  -- Step 10: Volume calculation chain
+  -- We have: K ⊆ ⋃ n ∈ t, interior (S' n).toSet ⊆ ⋃ n ∈ t, (S' n).toSet
+  -- Strategy: hE.measure ≤ m(K) + δ/4 ≤ ∑_{n∈t} |S'_n| + δ/4 ≤ ∑_all |S_n| + δ
+  -- Step 10a: m(E) ≤ m(K) + δ/4 (K approximates E with controlled volume loss)
+  -- Each shrunk box B' has |B'| ≥ |B| - δ/(4*|P|), so total loss ≤ δ/4
+  have h_K_approx : hE.measure ≤ ∑ (x : { B // B ∈ P_nonempty }), (B' x.1 x.2).volume + δ / 4 := by
+    sorry -- Sum of B' volumes ≥ sum of original volumes - δ/4
+  -- Step 10b: K is elementary (finite union of closed boxes)
+  have hK_elem : IsElementary K := by
+    sorry -- Finite union of boxes is elementary
+  -- Step 10c: m(K) ≤ ∑_{n∈t} |S'_n| (K covered by finite boxes, use Jordan outer)
+  have h_K_cover_bound : hK_elem.measure ≤ ∑ n ∈ t, (S' n).volume := by
+    sorry -- J*(K) ≤ sum of covering box volumes
+  -- Step 10d: Finite sum ≤ infinite sum
+  have h_finite_le_tsum : (∑ n ∈ t, (S' n).volume : EReal) ≤ ∑' n, (S' n).volume.toEReal := by
+    sorry -- Finite sum bounded by tsum
+  -- Step 10e: ∑_all |S'_n| ≤ ∑_all |S_n| + δ/2 (from hS'_vol)
+  have h_inflate_bound : (∑' n, (S' n).volume.toEReal : EReal) ≤ ∑' n, (S n).volume.toEReal + δ / 2 := by
+    -- Each |S'_n| ≤ |S_n| + δ/2^{n+2}, and ∑ δ/2^{n+2} = δ/2
+    have h_pointwise : ∀ n, (S' n).volume.toEReal ≤ (S n).volume.toEReal + (δ / 2^(n+2) : ℝ) := by
+      intro n
+      have hvol := hS'_vol n
+      rw [← EReal.coe_add]
+      exact EReal.coe_le_coe hvol
+    sorry
+  -- Combine the bounds: work entirely in EReal
+  -- Step: m(E) ≤ sum of shrunk B' volumes + δ/4
+  have h_step1 : (hE.measure : EReal) ≤ ((∑ (x : { B // B ∈ P_nonempty }), (B' x.1 x.2).volume) + δ / 4 : ℝ) := by
+    exact_mod_cast h_K_approx
+  -- Step: sum of B' ≤ m(K) (when K = ⋃ B')
+  have h_step2 : (∑ (x : { B // B ∈ P_nonempty }), (B' x.1 x.2).volume : EReal) ≤ (hK_elem.measure : EReal) := by
+    sorry -- K is disjoint union of B', so m(K) ≥ sum of volumes
+  -- Step: m(K) ≤ ∑_{n∈t} |S'_n|
+  have h_step3 : (hK_elem.measure : EReal) ≤ (∑ n ∈ t, (S' n).volume : ℝ) := by
+    exact_mod_cast h_K_cover_bound
+  -- Step: finite sum ≤ tsum (h_finite_le_tsum already has matching types)
+  have h_step4 : (∑ n ∈ t, (S' n).volume.toEReal) ≤ ∑' n, (S' n).volume.toEReal :=
+    h_finite_le_tsum
+  -- Chain: m(E) ≤ sum B' + δ/4 ≤ m(K) + δ/4 ≤ ∑_{n∈t} S'_n + δ/4 ≤ ∑_n S'_n + δ/4
+  --        ≤ ∑_n S_n + δ/2 + δ/4 ≤ ∑_n S_n + δ
+  -- Note: EReal coercion arithmetic is complex; simplified with sorries
+  sorry
+
 /-- Direction 1: Elementary measure is a lower bound for outer measure
     (Partition gives a finite cover, outer measure is infimum over covers)
-    Proof sketch (following textbook):
-    - For closed E: Use Heine-Borel to extract finite subcover from any ε-close cover,
-      then finite subadditivity gives m(E) ≤ sum of cover volumes
-    - For non-closed E: Approximate from inside with closed sub-boxes, apply closed case -/
+    Uses measure_le_cover_sum for the core Heine-Borel argument. -/
 lemma IsElementary.measure_le_outer_measure {d:ℕ} (hd: 0 < d) {E: Set (EuclideanSpace' d)}
     (hE: IsElementary E) : (hE.measure : EReal) ≤ Lebesgue_outer_measure E := by
-  -- The key insight: for any box cover {Bₙ} of E, elementary measure ≤ sum of box volumes
-  -- This uses: (1) measure_mono: E ⊆ F → m(E) ≤ m(F)
-  --            (2) measure_of_union': m(⋃ Bᵢ) ≤ Σ m(Bᵢ) for finite covers
-  --            (3) Heine-Borel to extract finite subcover from countable open cover
-  -- Requires Box.inflate to enlarge boxes to open sets for Heine-Borel
-  sorry
+  -- Use ε-argument: show ∀ ε > 0, hE.measure ≤ m*(E) + ε
+  apply EReal.le_of_forall_pos_le_add'
+  intro ε hε_pos
+  -- E has finite outer measure (bounded by elementary measure via Jordan)
+  have h_finite : Lebesgue_outer_measure E ≠ ⊤ := by
+    have h1 : Lebesgue_outer_measure E ≤ (Jordan_outer_measure E : EReal) :=
+      Lebesgue_outer_measure_le_Jordan hE.isBounded
+    have h2 : Jordan_outer_measure E ≤ hE.measure := Jordan_outer_le hE (Set.Subset.refl E)
+    have h3 : Lebesgue_outer_measure E ≤ (hE.measure : EReal) := calc Lebesgue_outer_measure E
+        ≤ (Jordan_outer_measure E : EReal) := h1
+      _ ≤ (hE.measure : EReal) := by exact_mod_cast h2
+    exact ne_top_of_le_ne_top (EReal.coe_ne_top hE.measure) h3
+  -- Get ε/2-close cover
+  have hε2_pos : 0 < ε / 2 := by linarith
+  obtain ⟨S, hS_cover, hS_sum⟩ := Lebesgue_outer_measure.exists_cover_close hd E (ε / 2) hε2_pos h_finite
+  -- Use helper lemma for the core bound
+  have h_cover_bound : (hE.measure : EReal) ≤ ∑' n, (S n).volume.toEReal :=
+    hE.measure_le_cover_sum hd S hS_cover
+  calc (hE.measure : EReal)
+      ≤ ∑' n, (S n).volume.toEReal := h_cover_bound
+    _ ≤ Lebesgue_outer_measure E + (ε / 2 : ℝ) := hS_sum
+    _ ≤ Lebesgue_outer_measure E + ε := by
+        apply add_le_add_left
+        exact_mod_cast (by linarith : ε / 2 ≤ ε)
 
 /-- Direction 2: Outer measure is bounded by elementary measure
     (Uses: m*(E) ≤ J*(E) for bounded E, and J*(E) ≤ hE.measure for elementary E) -/
