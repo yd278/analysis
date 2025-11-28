@@ -2144,11 +2144,268 @@ lemma IsElementary.isBounded {d:ℕ} {E: Set (EuclideanSpace' d)} (hE: IsElement
 
 /-- Enlarge a box to an open box with controlled volume increase -/
 lemma Box.inflate {d:ℕ} (B: Box d) (δ: ℝ) (hδ: 0 < δ) :
-    ∃ B': Box d, B.toSet ⊆ interior B'.toSet ∧ IsOpen (interior B'.toSet) ∧ |B'|ᵥ ≤ |B|ᵥ + δ := by sorry
+    ∃ B': Box d, B.toSet ⊆ interior B'.toSet ∧ IsOpen (interior B'.toSet) ∧ |B'|ᵥ ≤ |B|ᵥ + δ := by
+  -- Handle dimension 0 separately (trivial case)
+  by_cases hd : d = 0
+  · subst hd
+    -- In dimension 0, any box works - volume is always 1 (empty product)
+    use B
+    refine ⟨?_, isOpen_interior, by linarith⟩
+    -- B.toSet ⊆ interior B.toSet: in dim 0, B.toSet = Set.univ which is open
+    have hB_univ : B.toSet = Set.univ := by
+      rw [Box.toSet, ← Set.empty_pi (fun i => (B.side i).toSet)]
+      congr 1; ext i; exact Fin.elim0 i
+    rw [hB_univ, interior_univ]
+  -- Dimension d > 0: use continuity argument to find small enough ε
+  push_neg at hd
+  have hd_pos : 0 < d := Nat.pos_of_ne_zero hd
+  -- Define the expanded volume function f(ε) = ∏ᵢ (Lᵢ + 2ε)
+  let f : ℝ → ℝ := fun ε => ∏ i : Fin d, (|B.side i|ₗ + 2 * ε)
+  -- f is continuous
+  have hf_cont : Continuous f := by
+    apply continuous_finset_prod
+    intro i _
+    exact (continuous_const.add (continuous_const.mul continuous_id))
+  -- f(0) = |B|ᵥ
+  have hf_zero : f 0 = |B|ᵥ := by simp only [f, mul_zero, add_zero, Box.volume]
+  -- By continuity at 0, there exists ε > 0 such that f(ε) < |B|ᵥ + δ
+  have hf_cont_at : ContinuousAt f 0 := hf_cont.continuousAt
+  rw [Metric.continuousAt_iff] at hf_cont_at
+  obtain ⟨ε', hε'_pos, hε'_bound⟩ := hf_cont_at δ hδ
+  -- Take ε = ε'/2 > 0 to ensure we're well within the δ-ball
+  let ε := ε' / 2
+  have hε_pos : 0 < ε := by positivity
+  have hε_lt : ε < ε' := by simp only [ε]; nlinarith [hε'_pos]
+  -- Construct the inflated box with Ioo intervals
+  let B' : Box d := ⟨fun i => BoundedInterval.Ioo ((B.side i).a - ε) ((B.side i).b + ε)⟩
+  use B'
+  constructor
+  · -- Prove B.toSet ⊆ interior B'.toSet
+    -- First show B'.toSet is open (product of open intervals)
+    have hB'_open : IsOpen B'.toSet := by
+      rw [Box.toSet]
+      apply isOpen_set_pi (Set.finite_univ)
+      intro i _
+      simp only [B', BoundedInterval.toSet]
+      exact isOpen_Ioo
+    -- So interior B'.toSet = B'.toSet
+    rw [hB'_open.interior_eq]
+    -- Now show B.toSet ⊆ B'.toSet
+    intro x hx
+    rw [Box.toSet, Set.mem_pi] at hx ⊢
+    intro i _
+    simp only [B', BoundedInterval.toSet, Set.mem_Ioo, BoundedInterval.a, BoundedInterval.b]
+    -- Get hx for this specific index i after the case split
+    cases hside : (B.side i) with
+    | Ioo a b =>
+      have hxi := hx i (Set.mem_univ i)
+      simp only [BoundedInterval.toSet, hside, Set.mem_Ioo, BoundedInterval.a, BoundedInterval.b] at hxi ⊢
+      exact ⟨by linarith, by linarith⟩
+    | Icc a b =>
+      have hxi := hx i (Set.mem_univ i)
+      simp only [BoundedInterval.toSet, hside, Set.mem_Icc, BoundedInterval.a, BoundedInterval.b] at hxi ⊢
+      exact ⟨by linarith, by linarith⟩
+    | Ioc a b =>
+      have hxi := hx i (Set.mem_univ i)
+      simp only [BoundedInterval.toSet, hside, Set.mem_Ioc, BoundedInterval.a, BoundedInterval.b] at hxi ⊢
+      exact ⟨by linarith, by linarith⟩
+    | Ico a b =>
+      have hxi := hx i (Set.mem_univ i)
+      simp only [BoundedInterval.toSet, hside, Set.mem_Ico, BoundedInterval.a, BoundedInterval.b] at hxi ⊢
+      exact ⟨by linarith, by linarith⟩
+  constructor
+  · -- IsOpen (interior B'.toSet) is trivially true
+    exact isOpen_interior
+  · -- Prove |B'|ᵥ ≤ |B|ᵥ + δ
+    -- |B'|ᵥ = ∏ᵢ |B'.side i|ₗ ≤ ∏ᵢ (|B.side i|ₗ + 2ε) = f(ε)
+    have hB'_vol_le : |B'|ᵥ ≤ f ε := by
+      simp only [Box.volume, f, B']
+      apply Finset.prod_le_prod
+      · intro i _; exact BoundedInterval.length_nonneg _
+      · intro i _
+        simp only [BoundedInterval.length, BoundedInterval.a, BoundedInterval.b]
+        -- Need: max(b + ε - (a - ε), 0) ≤ max(b - a, 0) + 2ε
+        have h_ineq : ∀ (a b : ℝ), max (b + ε - (a - ε)) 0 ≤ max (b - a) 0 + 2 * ε := by
+          intro a b
+          have h1 : b + ε - (a - ε) = b - a + 2 * ε := by ring
+          rw [h1]
+          by_cases hab : b ≥ a
+          · have h2 : max (b - a) 0 = b - a := max_eq_left (by linarith : 0 ≤ b - a)
+            have h3 : max (b - a + 2 * ε) 0 = b - a + 2 * ε := max_eq_left (by linarith)
+            rw [h2, h3]
+          · push_neg at hab
+            have h2 : max (b - a) 0 = 0 := max_eq_right (by linarith : b - a ≤ 0)
+            rw [h2, zero_add]
+            exact max_le (by linarith) (by linarith)
+        exact h_ineq (B.side i).a (B.side i).b
+    calc |B'|ᵥ ≤ f ε := hB'_vol_le
+         _ ≤ |B|ᵥ + δ := by
+           -- Use continuity bound: |f(ε) - f(0)| < δ since |ε - 0| < ε'
+           have hε_in_ball : dist ε 0 < ε' := by
+             simp only [Real.dist_eq, sub_zero, abs_of_pos hε_pos]
+             exact hε_lt
+           have h_dist := hε'_bound hε_in_ball
+           rw [Real.dist_eq, hf_zero] at h_dist
+           have h_abs := abs_sub_lt_iff.mp h_dist
+           linarith
 
 /-- Shrink a box to a closed sub-box with controlled volume decrease -/
 lemma Box.shrink_to_closed {d:ℕ} (B: Box d) (hB: B.toSet.Nonempty) (δ: ℝ) (hδ: 0 < δ) :
-    ∃ B': Box d, B'.toSet ⊆ B.toSet ∧ IsClosed B'.toSet ∧ |B'|ᵥ ≥ |B|ᵥ - δ := by sorry
+    ∃ B': Box d, B'.toSet ⊆ B.toSet ∧ IsClosed B'.toSet ∧ |B'|ᵥ ≥ |B|ᵥ - δ := by
+  -- Handle dimension 0 separately (trivial case)
+  by_cases hd : d = 0
+  · subst hd
+    use B
+    refine ⟨Set.Subset.refl _, ?_, by linarith⟩
+    have : B.toSet = Set.univ := by
+      rw [Box.toSet, ← Set.empty_pi (fun i => (B.side i).toSet)]
+      congr 1; ext i; exact Fin.elim0 i
+    rw [this]; exact isClosed_univ
+  -- Dimension d > 0
+  push_neg at hd
+  have hd_pos : 0 < d := Nat.pos_of_ne_zero hd
+  have h_sides_nonempty : ∀ i : Fin d, (B.side i).toSet.Nonempty :=
+    fun i => Box.side_nonempty_of_nonempty B hB i
+  -- Check if all sides have strictly positive length
+  by_cases h_all_pos : ∀ i : Fin d, 0 < |B.side i|ₗ
+  · -- Non-degenerate case: all sides have positive length
+    -- Define shrunken volume function g(ε) = ∏ᵢ max(Lᵢ - 2ε, 0)
+    let g : ℝ → ℝ := fun ε => ∏ i : Fin d, max (|B.side i|ₗ - 2 * ε) 0
+    -- g is continuous (max ∘ (f, g) is continuous when f, g are)
+    have hg_cont : Continuous g := by
+      apply continuous_finset_prod
+      intro i _
+      apply Continuous.max
+      · exact continuous_const.sub (continuous_const.mul continuous_id)
+      · exact continuous_const
+    have hg_zero : g 0 = |B|ᵥ := by
+      simp only [g, mul_zero, sub_zero, Box.volume]
+      congr 1; ext i
+      exact max_eq_left (BoundedInterval.length_nonneg _)
+    -- By continuity, ∃ ε > 0 with g(ε) close to g(0)
+    have hg_cont_at : ContinuousAt g 0 := hg_cont.continuousAt
+    rw [Metric.continuousAt_iff] at hg_cont_at
+    obtain ⟨ε', hε'_pos, hε'_bound⟩ := hg_cont_at δ hδ
+    -- Find minimum side length
+    let lengths : Finset ℝ := Finset.univ.image (fun i => |B.side i|ₗ)
+    have hne_lengths : lengths.Nonempty := by
+      simp only [lengths, Finset.image_nonempty]
+      exact Finset.univ_nonempty_iff.mpr ⟨⟨0, hd_pos⟩⟩
+    let L := lengths.min' hne_lengths
+    have hL_pos : 0 < L := by
+      have : L ∈ lengths := Finset.min'_mem _ _
+      simp only [lengths, Finset.mem_image, Finset.mem_univ, true_and] at this
+      obtain ⟨i, hi⟩ := this
+      rw [←hi]; exact h_all_pos i
+    have hL_bound : ∀ i : Fin d, L ≤ |B.side i|ₗ := fun i =>
+      Finset.min'_le _ _ (Finset.mem_image.mpr ⟨i, Finset.mem_univ _, rfl⟩)
+    -- Take ε = min(ε'/2, L/4)
+    let ε := min (ε' / 2) (L / 4)
+    have hε_pos : 0 < ε := by positivity
+    have hε_lt_half : ε < ε' := by
+      calc ε ≤ ε' / 2 := min_le_left _ _
+           _ < ε' := by linarith
+    have hε_lt_L : ε < L / 2 := by
+      calc ε ≤ L / 4 := min_le_right _ _
+           _ < L / 2 := by linarith
+    -- Construct shrunken box
+    let B' : Box d := ⟨fun i => BoundedInterval.Icc ((B.side i).a + ε) ((B.side i).b - ε)⟩
+    use B'
+    refine ⟨?_, ?_, ?_⟩
+    · -- B'.toSet ⊆ B.toSet
+      -- Strategy: Icc (a+ε) (b-ε) ⊆ Ioo a b ⊆ (B.side i).toSet
+      intro x hx
+      rw [Box.toSet, Set.mem_pi] at hx ⊢
+      intro i _; specialize hx i (Set.mem_univ i)
+      simp only [B', BoundedInterval.toSet, Set.mem_Icc] at hx
+      have hne := h_sides_nonempty i
+      have hε_small : 2 * ε < |B.side i|ₗ := by
+        calc 2 * ε < 2 * (L / 2) := by linarith [hε_lt_L]
+             _ = L := by ring
+             _ ≤ |B.side i|ₗ := hL_bound i
+      -- Show x i ∈ (B.side i).toSet using case analysis on the interval type
+      have h_len_pos := h_all_pos i
+      simp only [BoundedInterval.length] at h_len_pos hε_small
+      have h_max : max ((B.side i).b - (B.side i).a) 0 = (B.side i).b - (B.side i).a := by
+        apply max_eq_left; linarith
+      rw [h_max] at h_len_pos hε_small
+      -- x i ∈ Icc (a+ε) (b-ε), which is strictly inside any interval [a,b] variant
+      cases hside : (B.side i) with
+      | Ioo a b =>
+        simp only [BoundedInterval.toSet, Set.mem_Ioo, hside, BoundedInterval.a, BoundedInterval.b] at hx ⊢
+        exact ⟨by linarith [hx.1], by linarith [hx.2]⟩
+      | Icc a b =>
+        simp only [BoundedInterval.toSet, Set.mem_Icc, hside, BoundedInterval.a, BoundedInterval.b] at hx ⊢
+        exact ⟨by linarith [hx.1], by linarith [hx.2]⟩
+      | Ioc a b =>
+        simp only [BoundedInterval.toSet, Set.mem_Ioc, hside, BoundedInterval.a, BoundedInterval.b] at hx ⊢
+        exact ⟨by linarith [hx.1], by linarith [hx.2]⟩
+      | Ico a b =>
+        simp only [BoundedInterval.toSet, Set.mem_Ico, hside, BoundedInterval.a, BoundedInterval.b] at hx ⊢
+        exact ⟨by linarith [hx.1], by linarith [hx.2]⟩
+    · -- IsClosed B'.toSet
+      rw [Box.toSet]; apply isClosed_set_pi; intro i _
+      simp only [B', BoundedInterval.toSet]; exact isClosed_Icc
+    · -- Volume bound
+      have hB'_vol : |B'|ᵥ = g ε := by
+        simp only [Box.volume, g, B']; congr 1; ext i
+        simp only [BoundedInterval.length, BoundedInterval.a, BoundedInterval.b]
+        -- Both sides now have the same match expressions; use congr to unify
+        have h_len := hL_bound i
+        have h_pos_len : |B.side i|ₗ - 2 * ε > 0 := by
+          calc |B.side i|ₗ - 2 * ε ≥ L - 2 * ε := by linarith
+               _ > L - 2 * (L / 2) := by linarith [hε_lt_L]
+               _ = 0 := by ring
+        have h_ab : (B.side i).a ≤ (B.side i).b := by
+          have := h_all_pos i
+          simp only [BoundedInterval.length] at this
+          by_contra h_neg; push_neg at h_neg
+          have : max ((B.side i).b - (B.side i).a) 0 = 0 := max_eq_right (by linarith)
+          linarith
+        simp only [BoundedInterval.length] at h_pos_len
+        have h_max : max ((B.side i).b - (B.side i).a) 0 = (B.side i).b - (B.side i).a := max_eq_left (by linarith)
+        rw [h_max] at h_pos_len
+        -- Goal: max (b - ε - (a + ε)) 0 = max (max (b - a) 0 - 2 * ε) 0
+        -- First simplify RHS using h_max
+        conv_rhs => rw [h_max]
+        -- Now goal is: max (b - ε - (a + ε)) 0 = max (b - a - 2 * ε) 0
+        -- The inner expressions are equal by ring
+        congr 1
+        ring
+      rw [hB'_vol]
+      have hε_in_ball : dist ε 0 < ε' := by simp only [Real.dist_eq, sub_zero, abs_of_pos hε_pos]; exact hε_lt_half
+      have h_dist := hε'_bound hε_in_ball
+      rw [Real.dist_eq, hg_zero] at h_dist
+      have h_abs := abs_sub_lt_iff.mp h_dist
+      linarith
+  · -- Degenerate case: some side has zero length, volume is 0
+    push_neg at h_all_pos
+    obtain ⟨i₀, hi₀⟩ := h_all_pos
+    have hvol_zero : |B|ᵥ = 0 := by
+      simp only [Box.volume]
+      apply Finset.prod_eq_zero (Finset.mem_univ i₀)
+      have h := BoundedInterval.length_nonneg (B.side i₀); linarith
+    obtain ⟨x, hx⟩ := hB
+    let B' : Box d := ⟨fun i => BoundedInterval.Icc (x i) (x i)⟩
+    use B'
+    refine ⟨?_, ?_, ?_⟩
+    · intro y hy
+      rw [Box.toSet, Set.mem_pi] at hy hx ⊢
+      intro i _
+      specialize hy i (Set.mem_univ i)
+      specialize hx i (Set.mem_univ i)
+      simp only [B', BoundedInterval.toSet, Set.mem_Icc] at hy
+      have heq : y i = x i := le_antisymm hy.2 hy.1
+      rw [heq]; exact hx
+    · rw [Box.toSet]; apply isClosed_set_pi; intro i _
+      simp only [B', BoundedInterval.toSet]; exact isClosed_Icc
+    · have hvol' : |B'|ᵥ = 0 := by
+        simp only [Box.volume, B']
+        have h0 : (⟨0, hd_pos⟩ : Fin d) ∈ Finset.univ := Finset.mem_univ _
+        apply Finset.prod_eq_zero h0
+        simp only [BoundedInterval.length, BoundedInterval.a, BoundedInterval.b, sub_self]
+        exact max_eq_right (le_refl 0)
+      rw [hvol', hvol_zero]; linarith
 
 /-- Closed elementary sets are compact (bounded and closed in Euclidean space) -/
 lemma IsElementary.isCompact_of_closed {d:ℕ} {E: Set (EuclideanSpace' d)}
