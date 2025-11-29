@@ -3070,10 +3070,40 @@ theorem Lebesgue_outer_measure.elementary {d:ℕ} (E: Set (EuclideanSpace' d)) (
     · exact IsElementary.measure_le_outer_measure hd' hE
 
 /-- Cantor's theorem -/
-theorem EuclideanSpace'.uncountable (d:ℕ) : Uncountable (EuclideanSpace' d) := by sorry
+theorem EuclideanSpace'.uncountable (d:ℕ) (hd: 0 < d) : Uncountable (EuclideanSpace' d) := by
+  -- Embed ℝ into EuclideanSpace' d via x ↦ (x, 0, 0, ..., 0)
+  let f : ℝ → EuclideanSpace' d := fun x i => if i = ⟨0, hd⟩ then x else 0
+  have hf : Function.Injective f := fun x y hxy => by
+    have : f x ⟨0, hd⟩ = f y ⟨0, hd⟩ := congrFun hxy ⟨0, hd⟩
+    simp only [f, ↓reduceIte] at this
+    exact this
+  exact hf.uncountable
 
-/-- No uncountable subadditivity-/
-example {d:ℕ} : ∃ (S:Type) (E: S → Set (EuclideanSpace' d)), ¬ Lebesgue_outer_measure (⋃ i, E i) ≤ ∑' i, Lebesgue_outer_measure (E i) := by sorry
+/-- No uncountable subadditivity: the unit cube has measure 1, but decomposed into
+singletons (each with measure 0), the sum is 0. -/
+example {d:ℕ} {hd: 0 < d} : ∃ (S:Type) (E: S → Set (EuclideanSpace' d)), ¬ Lebesgue_outer_measure (⋃ i, E i) ≤ ∑' i, Lebesgue_outer_measure (E i) := by
+  use (Box.unit_cube d).toSet
+  use fun x => {x.val}
+  -- ⋃ x, {x.val} = unit cube
+  have h_union : ⋃ x : (Box.unit_cube d).toSet, ({x.val} : Set (EuclideanSpace' d)) = (Box.unit_cube d).toSet := by
+    ext y; simp
+  rw [h_union]
+  -- m(unit cube) = 1 via Lebesgue_outer_measure.elementary
+  have h_cube : Lebesgue_outer_measure (Box.unit_cube d).toSet = 1 := by
+    rw [Lebesgue_outer_measure.elementary _ (IsElementary.box _)]
+    simp only [IsElementary.measure_of_box]
+    simp only [Box.volume, BoundedInterval.length, BoundedInterval.b, BoundedInterval.a]
+    simp
+  -- Each singleton has measure 0
+  have h_sing : ∀ x : (Box.unit_cube d).toSet, Lebesgue_outer_measure ({x.val} : Set (EuclideanSpace' d)) = 0 := by
+    intro x
+    exact Countable.Lebesgue_measure hd (Set.countable_singleton x.val)
+  -- tsum of zeros is zero
+  have h_sum : ∑' x : (Box.unit_cube d).toSet, Lebesgue_outer_measure ({x.val} : Set (EuclideanSpace' d)) = 0 := by
+    simp_rw [h_sing]
+    exact tsum_zero
+  rw [h_cube, h_sum]
+  simp
 
 /-- Remark 1.2.8 -/
 example : ∃ (E: Set (EuclideanSpace' 1)), Bornology.IsBounded E ∧
