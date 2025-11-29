@@ -2116,7 +2116,9 @@ theorem dist_of_disj_compact_pos {d:ℕ} (E F: Set (EuclideanSpace' d)) (hE: IsC
     set_dist E F > 0 := by
   sorry
 
--- Helper lemmas for Lemma 1.2.6
+-- ========================================================================
+-- Start of Helper lemmas for Lemma 1.2.6
+-- ========================================================================
 
 /-- Every bounded interval (Ioo, Icc, Ioc, Ico) is a bounded set -/
 lemma BoundedInterval.isBounded (I: BoundedInterval) : Bornology.IsBounded I.toSet := by
@@ -2249,18 +2251,20 @@ lemma Box.inflate {d:ℕ} (B: Box d) (δ: ℝ) (hδ: 0 < δ) :
            have h_abs := abs_sub_lt_iff.mp h_dist
            linarith
 
-/-- Shrink a box to a closed sub-box with controlled volume decrease -/
+/-- Shrink a box to a closed sub-box with controlled volume decrease.
+    The output is always nonempty when the input is nonempty. -/
 lemma Box.shrink_to_closed {d:ℕ} (B: Box d) (hB: B.toSet.Nonempty) (δ: ℝ) (hδ: 0 < δ) :
-    ∃ B': Box d, B'.toSet ⊆ B.toSet ∧ IsClosed B'.toSet ∧ |B'|ᵥ ≥ |B|ᵥ - δ := by
+    ∃ B': Box d, B'.toSet ⊆ B.toSet ∧ IsClosed B'.toSet ∧ |B'|ᵥ ≥ |B|ᵥ - δ ∧ B'.toSet.Nonempty := by
   -- Handle dimension 0 separately (trivial case)
   by_cases hd : d = 0
   · subst hd
     use B
-    refine ⟨Set.Subset.refl _, ?_, by linarith⟩
-    have : B.toSet = Set.univ := by
-      rw [Box.toSet, ← Set.empty_pi (fun i => (B.side i).toSet)]
-      congr 1; ext i; exact Fin.elim0 i
-    rw [this]; exact isClosed_univ
+    have h_closed : IsClosed B.toSet := by
+      have : B.toSet = Set.univ := by
+        rw [Box.toSet, ← Set.empty_pi (fun i => (B.side i).toSet)]
+        congr 1; ext i; exact Fin.elim0 i
+      rw [this]; exact isClosed_univ
+    exact ⟨Set.Subset.refl _, h_closed, by linarith, hB⟩
   -- Dimension d > 0
   push_neg at hd
   have hd_pos : 0 < d := Nat.pos_of_ne_zero hd
@@ -2311,7 +2315,7 @@ lemma Box.shrink_to_closed {d:ℕ} (B: Box d) (hB: B.toSet.Nonempty) (δ: ℝ) (
     -- Construct shrunken box
     let B' : Box d := ⟨fun i => BoundedInterval.Icc ((B.side i).a + ε) ((B.side i).b - ε)⟩
     use B'
-    refine ⟨?_, ?_, ?_⟩
+    refine ⟨?_, ?_, ?_, ?_⟩
     · -- B'.toSet ⊆ B.toSet
       -- Strategy: Icc (a+ε) (b-ε) ⊆ Ioo a b ⊆ (B.side i).toSet
       intro x hx
@@ -2378,6 +2382,30 @@ lemma Box.shrink_to_closed {d:ℕ} (B: Box d) (hB: B.toSet.Nonempty) (δ: ℝ) (
       rw [Real.dist_eq, hg_zero] at h_dist
       have h_abs := abs_sub_lt_iff.mp h_dist
       linarith
+    · -- B'.toSet.Nonempty (non-degenerate case)
+      -- The shrunk box has sides [a+ε, b-ε] where 2ε < L (min side length)
+      -- So a+ε < b-ε for each side, making each coordinate interval nonempty
+      -- Product of nonempty sets is nonempty
+      rw [Box.toSet]
+      apply Set.pi_nonempty_iff.mpr
+      intro i
+      simp only [B', BoundedInterval.toSet, Set.mem_univ, true_implies]
+      rw [← Set.nonempty_def, Set.nonempty_Icc]
+      -- Need: (B.side i).a + ε ≤ (B.side i).b - ε, i.e., 2ε ≤ (B.side i).b - (B.side i).a
+      have h_side_pos := h_all_pos i
+      simp only [BoundedInterval.length] at h_side_pos
+      have h_ab : (B.side i).a ≤ (B.side i).b := by
+        by_contra h_neg; push_neg at h_neg
+        have : max ((B.side i).b - (B.side i).a) 0 = 0 := max_eq_right (by linarith)
+        linarith
+      have h_max : max ((B.side i).b - (B.side i).a) 0 = (B.side i).b - (B.side i).a := max_eq_left (by linarith)
+      rw [h_max] at h_side_pos
+      have h_2ε_lt : 2 * ε < (B.side i).b - (B.side i).a := by
+        calc 2 * ε < 2 * (L / 2) := by linarith [hε_lt_L]
+             _ = L := by ring
+             _ ≤ |B.side i|ₗ := hL_bound i
+             _ = (B.side i).b - (B.side i).a := by simp only [BoundedInterval.length, h_max]
+      linarith
   · -- Degenerate case: some side has zero length, volume is 0
     push_neg at h_all_pos
     obtain ⟨i₀, hi₀⟩ := h_all_pos
@@ -2388,7 +2416,7 @@ lemma Box.shrink_to_closed {d:ℕ} (B: Box d) (hB: B.toSet.Nonempty) (δ: ℝ) (
     obtain ⟨x, hx⟩ := hB
     let B' : Box d := ⟨fun i => BoundedInterval.Icc (x i) (x i)⟩
     use B'
-    refine ⟨?_, ?_, ?_⟩
+    refine ⟨?_, ?_, ?_, ?_⟩
     · intro y hy
       rw [Box.toSet, Set.mem_pi] at hy hx ⊢
       intro i _
@@ -2406,6 +2434,11 @@ lemma Box.shrink_to_closed {d:ℕ} (B: Box d) (hB: B.toSet.Nonempty) (δ: ℝ) (
         simp only [BoundedInterval.length, BoundedInterval.a, BoundedInterval.b, sub_self]
         exact max_eq_right (le_refl 0)
       rw [hvol', hvol_zero]; linarith
+    · -- B'.toSet.Nonempty (degenerate case): B' = {x} is a singleton containing x
+      use x
+      rw [Box.toSet, Set.mem_pi]
+      intro i _
+      simp only [B', BoundedInterval.toSet, Set.mem_Icc, le_refl, and_self]
 
 /-- Closed elementary sets are compact (bounded and closed in Euclidean space) -/
 lemma IsElementary.isCompact_of_closed {d:ℕ} {E: Set (EuclideanSpace' d)}
@@ -2494,10 +2527,158 @@ lemma EReal.finset_sum_le_tsum {f : ℕ → ℝ} (hf : ∀ n, 0 ≤ f n) (t : Fi
   rw [h_fin, h_inf]
   exact EReal.coe_ennreal_le_coe_ennreal_iff.mpr h_enn
 
+/-- The measure of a finite union of boxes (indexed by finset membership) is at most the sum of volumes.
+    This is finite subadditivity specialized to boxes with a finset index. -/
+lemma IsElementary.measure_le_finset_boxes_volume' {d : ℕ} (t : Finset ℕ) (B : ℕ → Box d) :
+    (IsElementary.iUnion_boxes (fun (n : { n // n ∈ t }) => B n.1)).measure ≤ ∑ n ∈ t, (B n).volume := by
+  classical
+  -- Convert to the Finset of sets form and use IsElementary.measure_of_union'
+  haveI : DecidableEq (Set (EuclideanSpace' d)) := Classical.decEq _
+  let S_sets : Finset (Set (EuclideanSpace' d)) := t.image (fun n => (B n).toSet)
+  have hS_elem : ∀ E ∈ S_sets, IsElementary E := by
+    intro E hE
+    obtain ⟨n, _, rfl⟩ := Finset.mem_image.mp hE
+    exact IsElementary.box (B n)
+  -- The subtype union equals the union over S_sets
+  have h_union_eq : ⋃ (n : { n // n ∈ t }), (B n.1).toSet = ⋃ E ∈ S_sets, E := by
+    ext x
+    simp only [Set.mem_iUnion, S_sets]
+    constructor
+    · intro ⟨⟨n, hn⟩, hx⟩
+      exact ⟨(B n).toSet, Finset.mem_image.mpr ⟨n, hn, rfl⟩, hx⟩
+    · intro ⟨E, hE_mem, hx⟩
+      obtain ⟨n, hn, rfl⟩ := Finset.mem_image.mp hE_mem
+      exact ⟨⟨n, hn⟩, hx⟩
+  -- Apply measure_eq_of_set_eq to link the elementary witnesses
+  have h_measure_eq : (IsElementary.iUnion_boxes (fun (n : { n // n ∈ t }) => B n.1)).measure =
+      (IsElementary.union' hS_elem).measure :=
+    IsElementary.measure_eq_of_set_eq _ _ h_union_eq
+  rw [h_measure_eq]
+  -- Apply finite subadditivity from IsElementary.measure_of_union'
+  have h_sub := IsElementary.measure_of_union' hS_elem
+  -- Reindex the sum: need to show ∑ E : S_sets, (hS_elem E _).measure ≤ ∑ n ∈ t, (B n).volume
+  calc (IsElementary.union' hS_elem).measure
+      ≤ ∑ E : S_sets, (hS_elem E.val E.property).measure := h_sub
+    _ ≤ ∑ n ∈ t, (B n).volume := by
+        -- Each elementary measure = box volume, and S_sets.image is subset of t
+        -- Use sum over image ≤ sum over domain
+        have h_term_eq : ∀ (E : { E // E ∈ S_sets }),
+            (hS_elem E.1 E.2).measure = (B (Finset.mem_image.mp E.2).choose).volume := by
+          intro ⟨E, hE⟩
+          -- choose_spec gives (choose ∈ t ∧ (B choose).toSet = E)
+          have h_spec := (Finset.mem_image.mp hE).choose_spec
+          let n := (Finset.mem_image.mp hE).choose
+          have h_eq : (B n).toSet = E := h_spec.2
+          have hB_elem := IsElementary.box (B n)
+          have hE_eq : E = (B n).toSet := h_eq.symm
+          -- Goal: (hS_elem E hE).measure = (B n).volume
+          rw [IsElementary.measure_eq_of_set_eq (hS_elem E hE) hB_elem hE_eq]
+          rw [IsElementary.measure_of_box (B n)]
+        -- The preimages are a subset of t, so sum ≤ sum over t
+        -- Build preimage function: for each E ∈ S_sets, pick n ∈ t such that (B n).toSet = E
+        let f : { E // E ∈ S_sets } → ℕ := fun E => (Finset.mem_image.mp E.2).choose
+        have hf_mem : ∀ E, f E ∈ t := fun ⟨E, hE⟩ =>
+          (Finset.mem_image.mp hE).choose_spec.1
+        have hf_eq : ∀ E, (B (f E)).toSet = E.1 := fun ⟨E, hE⟩ =>
+          (Finset.mem_image.mp hE).choose_spec.2
+        -- Show that f is injective (different sets → different indices via chosen representatives)
+        have hf_inj : Function.Injective f := by
+          intro ⟨E₁, hE₁⟩ ⟨E₂, hE₂⟩ h_eq
+          apply Subtype.ext
+          calc E₁ = (B (f ⟨E₁, hE₁⟩)).toSet := (hf_eq ⟨E₁, hE₁⟩).symm
+            _ = (B (f ⟨E₂, hE₂⟩)).toSet := by rw [h_eq]
+            _ = E₂ := hf_eq ⟨E₂, hE₂⟩
+        -- The image of f is a subset of t
+        have h_image_sub : (Finset.univ : Finset { E // E ∈ S_sets }).image f ⊆ t := by
+          intro n hn
+          simp only [Finset.mem_image, Finset.mem_univ, true_and] at hn
+          obtain ⟨E, rfl⟩ := hn
+          exact hf_mem E
+        -- Use Finset.sum_image with injectivity
+        calc ∑ E : S_sets, (hS_elem E.val E.property).measure
+            = ∑ E : S_sets, (B (f E)).volume := Finset.sum_congr rfl (fun E _ => h_term_eq E)
+          _ = ∑ n ∈ (Finset.univ : Finset { E // E ∈ S_sets }).image f, (B n).volume := by
+              rw [Finset.sum_image (fun E₁ _ E₂ _ h => hf_inj h)]
+          _ ≤ ∑ n ∈ t, (B n).volume :=
+              Finset.sum_le_sum_of_subset_of_nonneg h_image_sub
+                (fun n _ _ => Box.volume_nonneg (B n))
+
+/-- Disjointness transfers through subsets: if B' i ⊆ B i and B are pairwise disjoint, so are B'. -/
+lemma pairwiseDisjoint_of_subset_disjoint {α β : Type*} {s : Set α} {B : α → Set β} {B' : α → Set β}
+    (h_sub : ∀ i ∈ s, B' i ⊆ B i) (h_disj : s.PairwiseDisjoint B) :
+    s.PairwiseDisjoint B' := by
+  intro i hi j hj hne
+  exact Set.disjoint_of_subset (h_sub i hi) (h_sub j hj) (h_disj hi hj hne)
+
+/-- When P_nonempty ⊆ P, the loss from scaling is bounded by δ/4. -/
+lemma card_ratio_bound {P_nonempty P : Finset α} (hP_nonempty_sub : P_nonempty ⊆ P)
+    {δ : ℝ} (hδ_pos : 0 < δ) (hcard_pos : 0 < P.card) :
+    P_nonempty.card * (δ / (4 * P.card)) ≤ δ / 4 := by
+  have hP_card_pos : (0 : ℝ) < P.card := Nat.cast_pos.mpr hcard_pos
+  have h_card_bound : P_nonempty.card ≤ P.card := Finset.card_le_card hP_nonempty_sub
+  have h_div_nonneg : (0 : ℝ) ≤ δ / (4 * P.card) := by positivity
+  calc P_nonempty.card * (δ / (4 * P.card))
+      ≤ P.card * (δ / (4 * P.card)) := by
+        apply mul_le_mul_of_nonneg_right (Nat.cast_le.mpr h_card_bound) h_div_nonneg
+    _ = δ / 4 := by field_simp [hP_card_pos.ne.symm]; ring
+
+/-- Sum bound from partition filter: if volumes B' satisfy B.vol ≤ B'.vol + ε,
+    then summing over P_nonempty gives total bound with card * ε term. -/
+lemma partition_volume_bound {d : ℕ} {P : Finset (Box d)}
+    {P_nonempty : Finset (Box d)} (_hP_nonempty_sub : P_nonempty ⊆ P)
+    {B' : (B : Box d) → B ∈ P_nonempty → Box d}
+    {ε : ℝ} (_hε_pos : 0 < ε)
+    (h_vol_bound : ∀ B (hB : B ∈ P_nonempty), B.volume ≤ (B' B hB).volume + ε) :
+    ∑ B ∈ P_nonempty, B.volume ≤
+      ∑ x : { B // B ∈ P_nonempty }, (B' x.1 x.2).volume + P_nonempty.card * ε := by
+  calc ∑ B ∈ P_nonempty, B.volume
+      = ∑ x : { B // B ∈ P_nonempty }, x.1.volume := by rw [← Finset.sum_coe_sort]
+    _ ≤ ∑ x : { B // B ∈ P_nonempty }, ((B' x.1 x.2).volume + ε) := by
+        apply Finset.sum_le_sum
+        intro ⟨B, hB⟩ _
+        exact h_vol_bound B hB
+    _ = ∑ x : { B // B ∈ P_nonempty }, (B' x.1 x.2).volume + ∑ _ : { B // B ∈ P_nonempty }, ε :=
+        Finset.sum_add_distrib
+    _ = ∑ x : { B // B ∈ P_nonempty }, (B' x.1 x.2).volume + P_nonempty.card * ε := by
+        congr 1
+        rw [Finset.sum_const, Finset.card_univ, ← smul_eq_mul]
+        have : (Finset.univ : Finset { B // B ∈ P_nonempty }).image (fun x => x.val) = P_nonempty := by
+          ext B
+          simp only [Finset.mem_image]
+          constructor
+          · intro ⟨a, _, ha_eq⟩; rw [← ha_eq]; exact a.property
+          · intro hB; exact ⟨⟨B, hB⟩, Finset.mem_univ _, rfl⟩
+        rw [← Finset.card_univ, ← this]
+        rw [Finset.card_image_of_injective _ (fun x y h => Subtype.ext h)]
+        simp [smul_eq_mul]
+
+/-- Shrunk boxes B' inherit injectivity from parent boxes' disjointness when B' are nonempty. -/
+lemma injective_of_shrunk_nonempty {d : ℕ} {P : Finset (Box d)}
+    {P_nonempty : Finset (Box d)} (hP_nonempty_sub : P_nonempty ⊆ P)
+    {B' : (B : Box d) → B ∈ P_nonempty → Box d}
+    (hP_disj : (P : Set (Box d)).PairwiseDisjoint Box.toSet)
+    (h_sub : ∀ B (hB : B ∈ P_nonempty), (B' B hB).toSet ⊆ B.toSet)
+    (h_nonempty : ∀ B (hB : B ∈ P_nonempty), (B' B hB).toSet.Nonempty) :
+    Function.Injective (fun x : { B // B ∈ P_nonempty } => B' x.1 x.2) := by
+  intro ⟨B₁, hB₁⟩ ⟨B₂, hB₂⟩ h_boxes_eq
+  by_contra h_ne
+  have hB₁P : B₁ ∈ P := hP_nonempty_sub hB₁
+  have hB₂P : B₂ ∈ P := hP_nonempty_sub hB₂
+  have h_orig_ne : B₁ ≠ B₂ := fun h_eq_B => h_ne (Subtype.ext h_eq_B)
+  have h_orig_disj : Disjoint B₁.toSet B₂.toSet := hP_disj hB₁P hB₂P h_orig_ne
+  have h_B'₁_nonempty : (B' B₁ hB₁).toSet.Nonempty := h_nonempty B₁ hB₁
+  have h_in_inter : (B' B₁ hB₁).toSet ⊆ B₁.toSet ∩ B₂.toSet := by
+    intro x hx
+    have h_toSet_eq : (B' B₁ hB₁).toSet = (B' B₂ hB₂).toSet := congr_arg Box.toSet h_boxes_eq
+    exact ⟨h_sub B₁ hB₁ hx, h_sub B₂ hB₂ (h_toSet_eq ▸ hx)⟩
+  have h_inter_empty : B₁.toSet ∩ B₂.toSet = ∅ := Set.disjoint_iff_inter_eq_empty.mp h_orig_disj
+  rw [h_inter_empty] at h_in_inter
+  exact Set.not_nonempty_empty (h_B'₁_nonempty.mono h_in_inter)
+
 /-- For any box cover of an elementary set, the sum of volumes bounds the measure from below.
     This is the key step using Heine-Borel compactness: inflate boxes to open cover,
     extract finite subcover of compact approximation, use finite subadditivity. -/
-lemma IsElementary.measure_le_cover_sum {d : ℕ} (hd : 0 < d) {E : Set (EuclideanSpace' d)}
+lemma IsElementary.measure_le_cover_sum {d : ℕ} (_hd : 0 < d) {E : Set (EuclideanSpace' d)}
     (hE : IsElementary E) (S : ℕ → Box d) (hS_cover : E ⊆ ⋃ n, (S n).toSet) :
     (hE.measure : EReal) ≤ ∑' n, (S n).volume.toEReal := by
   -- Handle empty case directly
@@ -2534,7 +2715,7 @@ lemma IsElementary.measure_le_cover_sum {d : ℕ} (hd : 0 < d) {E : Set (Euclide
   -- Step 3: Shrink partition boxes to get compact approximation K
   have hcard_pos : 0 < P.card := Finset.card_pos.mpr hP_nonempty
   have h_shrink : ∀ B ∈ P, B.toSet.Nonempty → ∃ B' : Box d,
-      B'.toSet ⊆ B.toSet ∧ IsClosed B'.toSet ∧ B'.volume ≥ B.volume - δ / (4 * P.card) := by
+      B'.toSet ⊆ B.toSet ∧ IsClosed B'.toSet ∧ B'.volume ≥ B.volume - δ / (4 * P.card) ∧ B'.toSet.Nonempty := by
     intro B _ hB_nonempty
     exact Box.shrink_to_closed B hB_nonempty (δ / (4 * P.card)) (by positivity)
   -- Step 4: Build compact set K from shrunk partition boxes
@@ -2543,12 +2724,12 @@ lemma IsElementary.measure_le_cover_sum {d : ℕ} (hd : 0 < d) {E : Set (Euclide
   let P_nonempty := P.filter (fun B => B.toSet.Nonempty)
   -- For each nonempty box in P, choose a closed shrunk box
   have h_shrink' : ∀ B ∈ P_nonempty, ∃ B' : Box d,
-      B'.toSet ⊆ B.toSet ∧ IsClosed B'.toSet ∧ B'.volume ≥ B.volume - δ / (4 * P.card) := by
+      B'.toSet ⊆ B.toSet ∧ IsClosed B'.toSet ∧ B'.volume ≥ B.volume - δ / (4 * P.card) ∧ B'.toSet.Nonempty := by
     intro B hB
     have hBP : B ∈ P := Finset.mem_filter.mp hB |>.1
     have hB_ne : B.toSet.Nonempty := Finset.mem_filter.mp hB |>.2
     exact h_shrink B hBP hB_ne
-  choose B' hB'_sub hB'_closed hB'_vol using h_shrink'
+  choose B' hB'_sub hB'_closed hB'_vol hB'_nonempty using h_shrink'
   -- Define K directly as union of shrunk boxes over P_nonempty
   let K := ⋃ (x : { B // B ∈ P_nonempty }), (B' x.1 x.2).toSet
   -- Step 5: K is closed (finite union of closed sets)
@@ -2607,55 +2788,11 @@ lemma IsElementary.measure_le_cover_sum {d : ℕ} (hd : 0 < d) {E : Set (Euclide
     rw [hE_measure, h_sum_split, h_empty_sum, add_zero]
     -- For each nonempty B: B.volume ≤ B'.volume + δ/(4*|P|)
     have h_vol_bound : ∀ B (hB : B ∈ P_nonempty), B.volume ≤ (B' B hB).volume + δ / (4 * P.card) := by
-      intro B hB
-      have := hB'_vol B hB
-      linarith
-    -- Sum the bounds
-    have h_sum_bound : ∑ B ∈ P_nonempty, B.volume ≤ ∑ x : { B // B ∈ P_nonempty }, (B' x.1 x.2).volume + P_nonempty.card * (δ / (4 * P.card)) := by
-      calc ∑ B ∈ P_nonempty, B.volume
-          = ∑ x : { B // B ∈ P_nonempty }, x.1.volume := by rw [← Finset.sum_coe_sort]
-        _ ≤ ∑ x : { B // B ∈ P_nonempty }, ((B' x.1 x.2).volume + δ / (4 * P.card)) := by
-            apply Finset.sum_le_sum
-            intro ⟨B, hB⟩ _
-            exact h_vol_bound B hB
-        _ = ∑ x : { B // B ∈ P_nonempty }, (B' x.1 x.2).volume + ∑ _ : { B // B ∈ P_nonempty }, δ / (4 * P.card) := Finset.sum_add_distrib
-        _ = ∑ x : { B // B ∈ P_nonempty }, (B' x.1 x.2).volume + P_nonempty.card * (δ / (4 * P.card)) := by
-            congr 1
-            rw [Finset.sum_const, Finset.card_univ, ← smul_eq_mul]
-            congr 1
-            -- Fintype.card { B // B ∈ P_nonempty } = P_nonempty.card
-            -- The subtype { B // B ∈ P_nonempty } is in bijection with P_nonempty
-            -- Show (Finset.univ : Finset { B // B ∈ P_nonempty }).card = P_nonempty.card
-            -- by showing they have the same image under the projection
-            have : (Finset.univ : Finset { B // B ∈ P_nonempty }).image (fun x => x.val) = P_nonempty := by
-              ext B
-              simp only [Finset.mem_image]
-              constructor
-              · intro ⟨a, ha_mem, ha_eq⟩
-                rw [← ha_eq]
-                exact a.property
-              · intro hB
-                exact ⟨⟨B, hB⟩, Finset.mem_univ _, rfl⟩
-            rw [← Finset.card_univ, ← this]
-            -- Show Finset.univ.card = P_nonempty.card via injectivity of the projection
-            congr 1
-            rw [Finset.card_image_of_injective (Finset.univ : Finset { B // B ∈ P_nonempty }) (fun x y h => Subtype.ext h)]
-            -- Convert • to *: n • x = ↑n * x for n : ℕ, x : ℝ
-            simp [smul_eq_mul]
-    -- Bound P_nonempty.card ≤ P.card
-    have h_card_bound : P_nonempty.card ≤ P.card := Finset.card_filter_le P _
-    have h_loss_bound : P_nonempty.card * (δ / (4 * P.card)) ≤ δ / 4 := by
-      have hP_card_pos : (0 : ℝ) < P.card := Nat.cast_pos.mpr hcard_pos
-      have h_div_nonneg : (0 : ℝ) ≤ δ / (4 * P.card) := by
-        apply div_nonneg
-        · exact le_of_lt hδ_pos
-        · linarith
-      calc P_nonempty.card * (δ / (4 * P.card))
-          ≤ P.card * (δ / (4 * P.card)) := by
-            apply mul_le_mul_of_nonneg_right
-            · exact Nat.cast_le.mpr h_card_bound
-            · exact h_div_nonneg
-        _ = δ / 4 := by field_simp [hP_card_pos.ne.symm]; ring
+      intro B hB; linarith [hB'_vol B hB]
+    -- Use helper lemmas to bound the sum
+    have hP_nonempty_sub : P_nonempty ⊆ P := Finset.filter_subset _ P
+    have h_sum_bound := partition_volume_bound hP_nonempty_sub (by positivity : 0 < δ / (4 * P.card)) h_vol_bound
+    have h_loss_bound := card_ratio_bound hP_nonempty_sub hδ_pos hcard_pos
     linarith [h_sum_bound, h_loss_bound]
   -- Step 10b: K is elementary (finite union of closed boxes)
   have hK_elem : IsElementary K := by
@@ -2673,9 +2810,7 @@ lemma IsElementary.measure_le_cover_sum {d : ℕ} (hd : 0 < d) {E : Set (Euclide
     -- Apply measure monotonicity and disjoint union formula
     calc hK_elem.measure
         ≤ hU_elem.measure := hK_elem.measure_mono hU_elem hK_sub_U
-      _ ≤ ∑ n ∈ t, (S' n).volume := by
-          -- The finite union of boxes has measure ≤ sum of individual volumes
-          sorry
+      _ ≤ ∑ n ∈ t, (S' n).volume := IsElementary.measure_le_finset_boxes_volume' t S'
   -- Step 10d: Finite sum ≤ infinite sum
   have h_finite_le_tsum : (∑ n ∈ t, (S' n).volume : EReal) ≤ ∑' n, (S' n).volume.toEReal := by
     -- For nonnegative terms, finite partial sum ≤ infinite sum
@@ -2809,8 +2944,18 @@ lemma IsElementary.measure_le_cover_sum {d : ℕ} (hd : 0 < d) {E : Set (Euclide
     have h_measure_eq := hK_elem.measure_eq hT_disj hK_eq
     -- Convert to desired inequality
     rw [h_measure_eq]
-    -- For now, establish the measure equality more directly
-    sorry  -- The sum_image approach requires B' to be injective, which isn't given
+    -- B' is injective because B' boxes are subsets of pairwise disjoint original boxes
+    have hP_nonempty_sub : P_nonempty ⊆ P := Finset.filter_subset _ P
+    have h_B'_inj : Function.Injective (fun x : { B // B ∈ P_nonempty } => B' x.1 x.2) :=
+      injective_of_shrunk_nonempty hP_nonempty_sub hP_disj hB'_sub hB'_nonempty
+    -- Now use sum_image with injectivity
+    have h_sum_eq : ∑ B ∈ T, B.volume = ∑ x : { B // B ∈ P_nonempty }, (B' x.1 x.2).volume := by
+      simp only [T]
+      rw [Finset.sum_image (fun x _ y _ h => h_B'_inj h)]
+    rw [h_sum_eq]
+    -- Convert finset sum to EReal using coe_finset_sum (volumes are nonnegative)
+    have h_vol_nonneg : ∀ x : { B // B ∈ P_nonempty }, 0 ≤ (B' x.1 x.2).volume := fun x => Box.volume_nonneg _
+    rw [← EReal.coe_finset_sum (fun x _ => h_vol_nonneg x)]
   -- Step: m(K) ≤ ∑_{n∈t} |S'_n|
   have h_step3 : (hK_elem.measure : EReal) ≤ (∑ n ∈ t, (S' n).volume : ℝ) := by
     exact_mod_cast h_K_cover_bound
@@ -2819,14 +2964,45 @@ lemma IsElementary.measure_le_cover_sum {d : ℕ} (hd : 0 < d) {E : Set (Euclide
     h_finite_le_tsum
   -- Final chain: m(E) ≤ ∑ B' + δ/4 ≤ m(K) + δ/4 ≤ ∑_{n∈t} S'_n + δ/4
   --              ≤ ∑'_n S'_n + δ/4 ≤ ∑'_n S_n + δ/2 + δ/4 ≤ ∑'_n S_n + δ
-  -- Mathematical outline verified step-by-step above; final assembly has EReal coercion gaps
-  -- Key established facts:
-  --   h_step1: m(E) ≤ (∑ B' + δ/4 : ℝ)
-  --   h_step2: (∑ B' : EReal) ≤ m(K) (disjoint union)
-  --   h_step3: m(K) ≤ (∑_{n∈t} S'_n : ℝ)
-  --   h_step4: (∑_{n∈t} S'_n : EReal) ≤ ∑'_n S'_n
-  --   h_inflate_bound: ∑'_n S'_n ≤ ∑'_n S_n + δ/2
-  sorry  -- Final calc chain: EReal coercion and tsum arithmetic infrastructure gaps
+  -- First, convert h_step1 to separate the sum and δ/4 parts
+  have h_sum_B'_nonneg : 0 ≤ ∑ (x : { B // B ∈ P_nonempty }), (B' x.1 x.2).volume :=
+    Finset.sum_nonneg (fun x _ => Box.volume_nonneg _)
+  have h_vol_nonneg' : ∀ x : { B // B ∈ P_nonempty }, 0 ≤ (B' x.1 x.2).volume := fun x => Box.volume_nonneg _
+  have h_coe_sum : (∑ (x : { B // B ∈ P_nonempty }), (B' x.1 x.2).volume : EReal) =
+      ∑ (x : { B // B ∈ P_nonempty }), ((B' x.1 x.2).volume : EReal) := rfl
+  -- Chain: m(E) ≤ ∑ B' + δ/4 ≤ m(K) + δ/4 ≤ ∑_{t} S' + δ/4 ≤ ∑' S' + δ/4 ≤ ∑' S + δ/2 + δ/4
+  calc (hE.measure : EReal)
+      ≤ ((∑ (x : { B // B ∈ P_nonempty }), (B' x.1 x.2).volume) + δ / 4 : ℝ) := h_step1
+    _ = (∑ (x : { B // B ∈ P_nonempty }), (B' x.1 x.2).volume : EReal) + (δ / 4 : ℝ) := by
+        rw [EReal.coe_add (∑ (x : { B // B ∈ P_nonempty }), (B' x.1 x.2).volume) (δ / 4)]
+        congr 1
+        rw [EReal.coe_finset_sum (fun x _ => h_vol_nonneg' x)]
+    _ ≤ (hK_elem.measure : EReal) + (δ / 4 : ℝ) := by
+        apply add_le_add_right
+        rw [h_coe_sum]
+        exact h_step2
+    _ ≤ (∑ n ∈ t, (S' n).volume : ℝ) + (δ / 4 : ℝ) := by
+        apply add_le_add_right h_step3
+    _ = (∑ n ∈ t, ((S' n).volume : EReal)) + (δ / 4 : ℝ) := by
+        congr 1
+        rw [EReal.coe_finset_sum (fun n _ => Box.volume_nonneg _)]
+    _ ≤ (∑' n, (S' n).volume : EReal) + (δ / 4 : ℝ) := by
+        apply add_le_add_right
+        exact h_step4
+    _ ≤ (∑' n, (S n).volume : EReal) + (δ / 2 : ℝ) + (δ / 4 : ℝ) := by
+        have h1 : (∑' n, (S' n).volume : EReal) ≤ (∑' n, (S n).volume : EReal) + (δ / 2 : ℝ) := h_inflate_bound
+        calc (∑' n, (S' n).volume : EReal) + (δ / 4 : ℝ)
+            ≤ ((∑' n, (S n).volume : EReal) + (δ / 2 : ℝ)) + (δ / 4 : ℝ) := add_le_add_right h1 _
+          _ = (∑' n, (S n).volume : EReal) + (δ / 2 : ℝ) + (δ / 4 : ℝ) := rfl
+    _ = (∑' n, (S n).volume : EReal) + ((δ / 2 : ℝ) + (δ / 4 : ℝ)) := by rw [add_assoc]
+    _ = (∑' n, (S n).volume : EReal) + (3 * δ / 4 : ℝ) := by
+        congr 1
+        rw [← EReal.coe_add (δ / 2) (δ / 4)]
+        congr 1
+        ring
+    _ ≤ (∑' n, (S n).volume : EReal) + (δ : ℝ) := by
+        apply add_le_add_left
+        exact_mod_cast (by linarith : (3 * δ / 4 : ℝ) ≤ δ)
 
 /-- Direction 1: Elementary measure is a lower bound for outer measure
     (Partition gives a finite cover, outer measure is infimum over covers)
@@ -2878,7 +3054,7 @@ lemma IsElementary.outer_measure_ne_top {d:ℕ} (hd: 0 < d) {E: Set (EuclideanSp
     (hE: IsElementary E) : Lebesgue_outer_measure E ≠ ⊤ :=
   ne_top_of_le_ne_top (EReal.coe_ne_top hE.measure) (IsElementary.outer_measure_le_measure hd hE)
 
-/-- Helper for dimension 0 case of Lemma 1.2.6 -/
+/-- Dimension 0 case of Lemma 1.2.6 -/
 lemma Lebesgue_outer_measure.elementary_dim_zero (E: Set (EuclideanSpace' 0)) (hE: IsElementary E) :
     Lebesgue_outer_measure E = hE.measure := by
   -- In dimension 0, EuclideanSpace' 0 is a singleton (only the empty function Fin 0 → ℝ)
@@ -2929,6 +3105,9 @@ lemma Lebesgue_outer_measure.elementary_dim_zero (E: Set (EuclideanSpace' 0)) (h
     rw [h_meas_eq, IsElementary.measure_of_empty]
     rfl
 
+-- ========================================================================
+-- End of Helper lemmas for Lemma 1.2.6
+-- ========================================================================
 /-- Lemma 1.2.6 (Outer measure of elementary sets).
     For any elementary set E, Lebesgue outer measure equals elementary measure. -/
 theorem Lebesgue_outer_measure.elementary {d:ℕ} (E: Set (EuclideanSpace' d)) (hE: IsElementary E) :
