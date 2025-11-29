@@ -2440,11 +2440,6 @@ lemma Box.shrink_to_closed {d:ℕ} (B: Box d) (hB: B.toSet.Nonempty) (δ: ℝ) (
       intro i _
       simp only [B', BoundedInterval.toSet, Set.mem_Icc, le_refl, and_self]
 
-/-- Closed elementary sets are compact (bounded and closed in Euclidean space) -/
-lemma IsElementary.isCompact_of_closed {d:ℕ} {E: Set (EuclideanSpace' d)}
-    (hE: IsElementary E) (hclosed: IsClosed E) : IsCompact E :=
-  Metric.isCompact_of_isClosed_isBounded hclosed hE.isBounded
-
 /-- Elementary measure of empty set is zero (handles proof term mismatch) -/
 lemma IsElementary.measure_of_empty_eq {d : ℕ} {E : Set (EuclideanSpace' d)}
     (hE : IsElementary E) (hempty : E = ∅) : hE.measure = 0 := by
@@ -2602,13 +2597,6 @@ lemma IsElementary.measure_le_finset_boxes_volume' {d : ℕ} (t : Finset ℕ) (B
           _ ≤ ∑ n ∈ t, (B n).volume :=
               Finset.sum_le_sum_of_subset_of_nonneg h_image_sub
                 (fun n _ _ => Box.volume_nonneg (B n))
-
-/-- Disjointness transfers through subsets: if B' i ⊆ B i and B are pairwise disjoint, so are B'. -/
-lemma pairwiseDisjoint_of_subset_disjoint {α β : Type*} {s : Set α} {B : α → Set β} {B' : α → Set β}
-    (h_sub : ∀ i ∈ s, B' i ⊆ B i) (h_disj : s.PairwiseDisjoint B) :
-    s.PairwiseDisjoint B' := by
-  intro i hi j hj hne
-  exact Set.disjoint_of_subset (h_sub i hi) (h_sub j hj) (h_disj hi hj hne)
 
 /-- When P_nonempty ⊆ P, the loss from scaling is bounded by δ/4. -/
 lemma card_ratio_bound {P_nonempty P : Finset α} (hP_nonempty_sub : P_nonempty ⊆ P)
@@ -3048,11 +3036,6 @@ lemma IsElementary.outer_measure_le_measure {d:ℕ} (_hd: 0 < d) {E: Set (Euclid
   calc Lebesgue_outer_measure E
       ≤ Jordan_outer_measure E := h_le_jordan
     _ ≤ hE.measure := by exact_mod_cast h_jordan_le
-
-/-- Elementary sets have finite outer measure (bounded by their elementary measure) -/
-lemma IsElementary.outer_measure_ne_top {d:ℕ} (hd: 0 < d) {E: Set (EuclideanSpace' d)}
-    (hE: IsElementary E) : Lebesgue_outer_measure E ≠ ⊤ :=
-  ne_top_of_le_ne_top (EReal.coe_ne_top hE.measure) (IsElementary.outer_measure_le_measure hd hE)
 
 /-- Dimension 0 case of Lemma 1.2.6 -/
 lemma Lebesgue_outer_measure.elementary_dim_zero (E: Set (EuclideanSpace' 0)) (hE: IsElementary E) :
