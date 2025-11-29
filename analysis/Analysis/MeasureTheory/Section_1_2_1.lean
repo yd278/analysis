@@ -3580,9 +3580,115 @@ example : ∃ (E: Set (EuclideanSpace' 1)), Bornology.IsBounded E ∧
   -- Contradiction: 1 ≤ Jordan_inner ≤ 2/3 is impossible
   linarith
 
-/-- Remark 1.2.8 -/
+/-- Remark 1.2.8: The complement of U in [-2,2] is compact but not Jordan measurable. -/
 example : ∃ (E: Set (EuclideanSpace' 1)), Bornology.IsBounded E ∧
-    IsCompact E ∧ ¬ JordanMeasurable E := by sorry
+    IsCompact E ∧ ¬ JordanMeasurable E := by
+  -- Let B = [-2, 2] lifted to EuclideanSpace' 1
+  let B : Set (EuclideanSpace' 1) := EuclideanSpace'.equiv_Real ⁻¹' Set.Icc (-2) 2
+  -- Let U be the non-Jordan-measurable open set from the first part
+  let U := Remark_1_2_8.U (1/3)
+  -- E = B \ U is compact but not Jordan measurable
+  use B \ U
+  refine ⟨?bounded, ?compact, ?not_jm⟩
+  case bounded =>
+    -- E ⊆ B which is bounded
+    apply Bornology.IsBounded.subset _ Set.diff_subset
+    rw [Metric.isBounded_iff_subset_closedBall 0]
+    use 3
+    intro x hx
+    -- hx : x ∈ B means equiv_Real x ∈ [-2, 2]
+    have hx' : EuclideanSpace'.equiv_Real x ∈ Set.Icc (-2 : ℝ) 2 := hx
+    rw [Metric.mem_closedBall, dist_zero_right, EuclideanSpace'.norm_eq]
+    have hsum : (∑ i : Fin 1, x i ^ 2) = x ⟨0, by omega⟩ ^ 2 := Fin.sum_univ_one _
+    rw [hsum, Real.sqrt_sq_eq_abs]
+    have h1 : EuclideanSpace'.equiv_Real x = x ⟨0, by omega⟩ := rfl
+    simp only [Set.mem_Icc] at hx'
+    rw [h1] at hx'
+    have : |x ⟨0, by omega⟩| ≤ 2 := abs_le.mpr ⟨by linarith, by linarith⟩
+    linarith
+  case compact =>
+    -- B is compact (continuous preimage of compact)
+    have hB_compact : IsCompact B := by
+      have h_cont : Continuous EuclideanSpace'.equiv_Real := continuous_apply _
+      apply Metric.isCompact_of_isClosed_isBounded (isClosed_Icc.preimage h_cont)
+      rw [Metric.isBounded_iff_subset_closedBall 0]
+      use 3
+      intro x hx
+      have hx' : EuclideanSpace'.equiv_Real x ∈ Set.Icc (-2 : ℝ) 2 := hx
+      rw [Metric.mem_closedBall, dist_zero_right, EuclideanSpace'.norm_eq]
+      have hsum : (∑ i : Fin 1, x i ^ 2) = x ⟨0, by omega⟩ ^ 2 := Fin.sum_univ_one _
+      rw [hsum, Real.sqrt_sq_eq_abs]
+      have h1 : EuclideanSpace'.equiv_Real x = x ⟨0, by omega⟩ := rfl
+      simp only [Set.mem_Icc] at hx'
+      rw [h1] at hx'
+      have : |x ⟨0, by omega⟩| ≤ 2 := abs_le.mpr ⟨by linarith, by linarith⟩
+      linarith
+    -- U is open
+    have hU_open : IsOpen U := Remark_1_2_8.U_isOpen (1/3)
+    -- B \ U = B ∩ Uᶜ is closed in B (since Uᶜ is closed)
+    have hU_compl_closed : IsClosed Uᶜ := hU_open.isClosed_compl
+    -- B \ U is compact (closed subset of compact)
+    rw [Set.diff_eq]
+    exact hB_compact.inter_right hU_compl_closed
+  case not_jm =>
+    intro hE_jm
+    -- B is elementary (it's a box), hence Jordan measurable
+    have hB_elem : IsElementary B := by
+      have : B = (BoundedInterval.Icc (-2) 2).toBox.toSet := preimage_Icc_eq_box (-2) 2
+      rw [this]
+      exact IsElementary.box _
+    have hB_jm : JordanMeasurable B := hB_elem.jordanMeasurable
+    -- If E = B \ U is Jordan measurable, then U ∩ B = B \ E is Jordan measurable
+    have h_eq : U ∩ B = B \ (B \ U) := by ext; simp [Set.mem_inter_iff]; tauto
+    have hUB_jm : JordanMeasurable (U ∩ B) := by
+      rw [h_eq]
+      exact JordanMeasurable.sdiff hB_jm hE_jm
+    -- U ⊆ B (since U ⊆ (-1/3, 4/3) ⊆ [-2, 2])
+    have hU_sub_B : U ⊆ B := by
+      intro x hx
+      have h_sub := Remark_1_2_8.U_real_subset (1/3) (by norm_num : (0:ℝ) < 1/3)
+      -- hx : x ∈ U means equiv_Real x ∈ U_real
+      have hx' : EuclideanSpace'.equiv_Real x ∈ Remark_1_2_8.U_real (1/3) := hx
+      have hx_real := h_sub hx'
+      simp only [Set.mem_Ioo] at hx_real
+      -- Need to show x ∈ B, i.e., equiv_Real x ∈ [-2, 2]
+      show EuclideanSpace'.equiv_Real x ∈ Set.Icc (-2) 2
+      simp only [Set.mem_Icc]
+      constructor <;> linarith [hx_real.1, hx_real.2]
+    -- So U ∩ B = U, meaning U is Jordan measurable
+    have hU_eq : U ∩ B = U := Set.inter_eq_self_of_subset_left hU_sub_B
+    rw [hU_eq] at hUB_jm
+    -- But we proved U is not Jordan measurable (from the first example)
+    have hU_not_jm : ¬ JordanMeasurable U := by
+      intro hJM
+      have h_outer : Jordan_outer_measure U ≥ 1 :=
+        Remark_1_2_8.U_jordan_outer_ge (1/3) (by norm_num)
+      have h_lebesgue : Lebesgue_outer_measure U ≤ (2/3 : EReal) := by
+        have := Remark_1_2_8.U_lebesgue_le (1/3) (by norm_num : (0:ℝ) < 1/3)
+        have h_eq : (2 * (1/3 : ℝ) : EReal) = (2/3 : EReal) := by simp only [one_div]; norm_cast
+        calc Lebesgue_outer_measure U ≤ 2 * (1/3 : ℝ) := this
+          _ = (2/3 : EReal) := h_eq
+      have h_inner_le : Jordan_inner_measure U ≤ 2/3 := by
+        apply csSup_le
+        · use 0, ∅, IsElementary.empty 1
+          exact ⟨Set.empty_subset _, (IsElementary.measure_of_empty 1).symm⟩
+        · intro m ⟨A, hA, hA_sub, hm⟩
+          rw [hm]
+          have h_elem : Lebesgue_outer_measure A = hA.measure :=
+            Lebesgue_outer_measure.elementary A hA
+          have h_mono : Lebesgue_outer_measure A ≤ Lebesgue_outer_measure U :=
+            Lebesgue_outer_measure.mono hA_sub
+          have h_bound : (hA.measure : EReal) ≤ (2/3 : EReal) := by
+            calc (hA.measure : EReal) = Lebesgue_outer_measure A := h_elem.symm
+              _ ≤ Lebesgue_outer_measure U := h_mono
+              _ ≤ (2/3 : EReal) := h_lebesgue
+          have h_coe : ((2/3 : ℝ) : EReal) = (2/3 : EReal) := by norm_cast
+          rw [← h_coe] at h_bound
+          exact EReal.coe_le_coe_iff.mp h_bound
+      have h_jm_eq : Jordan_inner_measure U = Jordan_outer_measure U := hJM.2
+      have h_inner_ge : Jordan_inner_measure U ≥ 1 := by rw [h_jm_eq]; exact h_outer
+      linarith
+    exact hU_not_jm hUB_jm
 
 def AlmostDisjoint {d:ℕ} (B B': Box d) : Prop := interior B.toSet ∩ interior B'.toSet = ∅
 
