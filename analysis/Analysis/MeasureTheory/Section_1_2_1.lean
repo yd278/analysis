@@ -20,6 +20,26 @@ theorem Lebesgue_outer_measure.mono {d: ℕ} {E F : Set (EuclideanSpace' d)} (h 
     Lebesgue_outer_measure E ≤ Lebesgue_outer_measure F := by
   sorry
 
+/-- Lebesgue outer measure is non-negative.
+    Since it's the sInf of sums of box volumes, which are all ≥ 0, the result is ≥ 0. -/
+theorem Lebesgue_outer_measure.nonneg {d: ℕ} (E : Set (EuclideanSpace' d)) :
+    0 ≤ Lebesgue_outer_measure E := by
+  unfold Lebesgue_outer_measure
+  -- 0 ≤ sInf S when all elements are ≥ 0 (for complete lattice, sInf ∅ = ⊤ ≥ 0)
+  apply le_sInf
+  intro V hV
+  obtain ⟨X, S, _, rfl⟩ := hV
+  apply tsum_nonneg
+  intro n
+  -- Box volume is non-negative (product of nonneg lengths)
+  have hvol : 0 ≤ |S n|ᵥ := by
+    rw [Box.volume]
+    apply Finset.prod_nonneg
+    intro i _
+    rw [BoundedInterval.length]
+    exact le_max_right _ _
+  exact EReal.coe_nonneg.mpr hvol
+
 /-- Exercise 1.2.3(iii) (Countable subadditivity) -/
 theorem Lebesgue_outer_measure.union_le {d: ℕ} (E : ℕ → Set (EuclideanSpace' d)) :
     Lebesgue_outer_measure (⋃ i, E i) ≤ ∑' i, Lebesgue_outer_measure (E i) := by
@@ -3150,16 +3170,11 @@ noncomputable def U_real (ε : ℝ) : Set ℝ :=
 noncomputable def U (ε : ℝ) : Set (EuclideanSpace' 1) :=
   EuclideanSpace'.equiv_Real ⁻¹' (U_real ε)
 
-/-- Each component interval is open -/
-lemma component_isOpen (n : ℕ) (ε : ℝ) :
-    IsOpen (Set.Ioo (q n - ε / 2^(n+1)) (q n + ε / 2^(n+1))) :=
-  isOpen_Ioo
-
 /-- U_real is open (union of open intervals) -/
 lemma U_real_isOpen (ε : ℝ) : IsOpen (U_real ε) := by
   apply isOpen_iUnion
-  intro n
-  exact component_isOpen n ε
+  intro _
+  exact isOpen_Ioo
 
 /-- U is open in EuclideanSpace' 1 -/
 lemma U_isOpen (ε : ℝ) : IsOpen (U ε) := by
@@ -3169,10 +3184,10 @@ lemma U_isOpen (ε : ℝ) : IsOpen (U ε) := by
 /-- The radius at step n -/
 noncomputable def radius (ε : ℝ) (n : ℕ) : ℝ := ε / 2^(n+1)
 
-lemma radius_pos (ε : ℝ) (hε : 0 < ε) (n : ℕ) : 0 < radius ε n := by
-  unfold radius
-  apply div_pos hε
-  exact pow_pos (by norm_num : (0:ℝ) < 2) (n+1)
+-- lemma radius_pos (ε : ℝ) (hε : 0 < ε) (n : ℕ) : 0 < radius ε n := by
+  -- unfold radius
+  -- apply div_pos hε
+  -- exact pow_pos (by norm_num : (0:ℝ) < 2) (n+1)
 
 /-- U_real is contained in (-ε, 1+ε) -/
 lemma U_real_subset (ε : ℝ) (hε : 0 < ε) : U_real ε ⊆ Set.Ioo (-ε) (1 + ε) := by
@@ -3247,12 +3262,37 @@ lemma tsum_interval_summable (ε : ℝ) : Summable (fun n => 2 * ε / 2^(n+1) : 
   have h_geom : Summable (fun n => (1/2:ℝ)^n) := summable_geometric_of_abs_lt_one h_abs
   exact h_geom.mul_left ε
 
+/-- Preimage of closed interval [a,b] under equiv_Real equals the corresponding 1D box -/
+lemma preimage_Icc_eq_box (a b : ℝ) :
+    EuclideanSpace'.equiv_Real ⁻¹' Set.Icc a b = (BoundedInterval.Icc a b).toBox.toSet := by
+  rw [BoundedInterval.coe_of_box]
+  ext x
+  simp only [Set.mem_preimage, Set.mem_image]
+  constructor
+  · intro hx
+    use EuclideanSpace'.equiv_Real x
+    exact ⟨hx, Equiv.symm_apply_apply _ _⟩
+  · rintro ⟨y, hy, rfl⟩
+    simp [Real.equiv_EuclideanSpace', EuclideanSpace'.equiv_Real] at hy ⊢
+    exact hy
+
 /-- Lebesgue outer measure of a closed interval [a,b] equals b - a -/
 lemma Lebesgue_outer_measure_of_Icc (a b : ℝ) (hab : a ≤ b) :
     Lebesgue_outer_measure (EuclideanSpace'.equiv_Real ⁻¹' Set.Icc a b) = ((b - a : ℝ) : EReal) := by
   -- [a,b] is a single box in 1D, hence elementary with measure b - a
-  -- Uses Lebesgue_outer_measure.elementary
-  sorry
+  let B : Box 1 := (BoundedInterval.Icc a b).toBox
+  rw [preimage_Icc_eq_box]
+  -- B.toSet is elementary (a box is elementary)
+  have h_elem : IsElementary B.toSet := IsElementary.box B
+  -- Lebesgue outer measure of elementary set equals its elementary measure
+  rw [Lebesgue_outer_measure.elementary B.toSet h_elem]
+  -- Elementary measure of a box equals its volume
+  rw [IsElementary.measure_of_box B]
+  -- Volume of B = b - a
+  unfold Box.volume BoundedInterval.length
+  simp only [Finset.univ_unique, Fin.default_eq_zero, Fin.isValue, Finset.prod_singleton]
+  -- max (b - a) 0 = b - a since a ≤ b
+  rw [max_eq_left (sub_nonneg.mpr hab)]
 
 /-- Lebesgue measure of an open interval ≤ length (when a < b) -/
 lemma Lebesgue_outer_measure_of_Ioo_le (a b : ℝ) (h : a < b) :
@@ -3336,19 +3376,8 @@ abbrev unit_interval : BoundedInterval := BoundedInterval.Icc 0 1
 abbrev unit_box_1D : Box 1 := unit_interval.toBox
 
 /-- Unit interval as the preimage of [0,1] equals unit box -/
-lemma unit_interval_eq_box : EuclideanSpace'.equiv_Real ⁻¹' Set.Icc 0 1 = unit_box_1D.toSet := by
-  rw [BoundedInterval.coe_of_box]
-  ext x
-  simp only [Set.mem_preimage, Set.mem_image]
-  constructor
-  · intro hx
-    use EuclideanSpace'.equiv_Real x
-    constructor
-    · exact hx
-    · simp only [Real.equiv_EuclideanSpace', Equiv.symm_apply_apply]
-  · rintro ⟨y, hy, rfl⟩
-    simp [Real.equiv_EuclideanSpace', EuclideanSpace'.equiv_Real] at hy ⊢
-    exact hy
+lemma unit_interval_eq_box : EuclideanSpace'.equiv_Real ⁻¹' Set.Icc 0 1 = unit_box_1D.toSet :=
+  preimage_Icc_eq_box 0 1
 
 /-- Volume of unit box is 1 -/
 lemma unit_box_volume : |unit_box_1D|ᵥ = 1 := by
@@ -3438,16 +3467,48 @@ lemma U_jordan_outer_ge (ε : ℝ) (hε : 0 < ε) :
 
 /-- Lebesgue outer measure of U ≤ 2ε (countable subadditivity).
     U = ⋃_n (q_n - ε/2^{n+1}, q_n + ε/2^{n+1}), each interval has length 2ε/2^{n+1},
-    and ∑ 2ε/2^{n+1} = 2ε. -/
+    and ∑ 2ε/2^{n+1} = 2ε.
+
+    Proof structure:
+    1. Express U as countable union: U = ⋃_n E_n
+    2. By countable subadditivity (union_le): m*(U) ≤ ∑' m*(E_n)
+    3. Each component bounded: m*(E_n) ≤ 2ε/2^{n+1} (component_lebesgue_le)
+    4. Geometric sum: ∑' 2ε/2^{n+1} = 2ε (tsum_interval_lengths)
+    5. EReal tsum comparison: ∑' m*(E_n) ≤ ∑' (2ε/2^{n+1}) = 2ε -/
 lemma U_lebesgue_le (ε : ℝ) (hε : 0 < ε) :
     Lebesgue_outer_measure (U ε) ≤ ((2 * ε : ℝ) : EReal) := by
-  -- Proof sketch:
-  -- 1. U = ⋃_n (component intervals)
-  -- 2. By countable subadditivity: m*(U) ≤ ∑' n, m*(component_n)
-  -- 3. Each component has m*(component_n) ≤ 2ε/2^{n+1} (by component_lebesgue_le)
-  -- 4. ∑' n, 2ε/2^{n+1} = 2ε (geometric series, by tsum_interval_lengths)
-  -- Technical EReal tsum manipulation deferred
-  sorry
+  -- U = ⋃_n (component intervals in EuclideanSpace' 1)
+  let E : ℕ → Set (EuclideanSpace' 1) := fun n =>
+    EuclideanSpace'.equiv_Real ⁻¹' Set.Ioo (q n - ε / 2^(n+1)) (q n + ε / 2^(n+1))
+  -- U ε = ⋃ n, E n
+  have h_U_eq : U ε = ⋃ n, E n := by
+    ext x
+    simp only [U, U_real, Set.mem_preimage, Set.mem_iUnion, E]
+  -- By countable subadditivity: m*(U) ≤ ∑' n, m*(E n)
+  have h_subadditive := Lebesgue_outer_measure.union_le E
+  -- Each component has m*(E n) ≤ 2ε/2^{n+1}
+  have h_component_bound : ∀ n, Lebesgue_outer_measure (E n) ≤ ((2 * ε / 2^(n+1) : ℝ) : EReal) :=
+    fun n => component_lebesgue_le ε hε n
+  -- Sum bound: ∑' n, m*(E n) ≤ 2ε
+  have h_sum_bound : ∑' n, Lebesgue_outer_measure (E n) ≤ ((2 * ε : ℝ) : EReal) := by
+    have h_g_nonneg : ∀ n, 0 ≤ 2 * ε / 2^(n+1) := by
+      intro n
+      apply div_nonneg (by linarith : 0 ≤ 2 * ε)
+      exact pow_nonneg (by norm_num : (0:ℝ) ≤ 2) _
+    have h_tsum_eq := tsum_interval_lengths ε hε
+    rw [← h_tsum_eq]
+    -- Lebesgue outer measure is non-negative (sInf of sums of box volumes ≥ 0)
+    have h_f_nonneg : ∀ n, 0 ≤ Lebesgue_outer_measure (E n) := fun n =>
+      Lebesgue_outer_measure.nonneg (E n)
+    -- Summability of the geometric series
+    have h_summable : Summable (fun n => 2 * ε / 2^(n+1)) := tsum_interval_summable ε
+    -- Use coe_tsum lemma: ↑(∑' g) = ∑' (↑g)
+    rw [EReal.coe_tsum_of_nonneg h_g_nonneg h_summable]
+    -- Apply the helper lemma for pointwise comparison
+    exact EReal.tsum_le_coe_tsum_of_forall_le h_f_nonneg h_g_nonneg h_summable h_component_bound
+  calc Lebesgue_outer_measure (U ε) = Lebesgue_outer_measure (⋃ n, E n) := by rw [h_U_eq]
+    _ ≤ ∑' n, Lebesgue_outer_measure (E n) := h_subadditive
+    _ ≤ ((2 * ε : ℝ) : EReal) := h_sum_bound
 
 end Remark_1_2_8
 
