@@ -2120,6 +2120,71 @@ theorem dist_of_disj_compact_pos {d:ℕ} (E F: Set (EuclideanSpace' d)) (hE: IsC
 -- Start of Helper lemmas for Lemma 1.2.6
 -- ========================================================================
 
+/-- When P_nonempty ⊆ P, the loss from scaling is bounded by δ/4. -/
+lemma card_ratio_bound {P_nonempty P : Finset α} (hP_nonempty_sub : P_nonempty ⊆ P)
+    {δ : ℝ} (hδ_pos : 0 < δ) (hcard_pos : 0 < P.card) :
+    P_nonempty.card * (δ / (4 * P.card)) ≤ δ / 4 := by
+  have hP_card_pos : (0 : ℝ) < P.card := Nat.cast_pos.mpr hcard_pos
+  have h_card_bound : P_nonempty.card ≤ P.card := Finset.card_le_card hP_nonempty_sub
+  have h_div_nonneg : (0 : ℝ) ≤ δ / (4 * P.card) := by positivity
+  calc P_nonempty.card * (δ / (4 * P.card))
+      ≤ P.card * (δ / (4 * P.card)) := by
+        apply mul_le_mul_of_nonneg_right (Nat.cast_le.mpr h_card_bound) h_div_nonneg
+    _ = δ / 4 := by field_simp [hP_card_pos.ne.symm]; ring
+
+/-- Sum bound from partition filter: if volumes B' satisfy B.vol ≤ B'.vol + ε,
+    then summing over P_nonempty gives total bound with card * ε term. -/
+lemma partition_volume_bound {d : ℕ} {P : Finset (Box d)}
+    {P_nonempty : Finset (Box d)} (_hP_nonempty_sub : P_nonempty ⊆ P)
+    {B' : (B : Box d) → B ∈ P_nonempty → Box d}
+    {ε : ℝ} (_hε_pos : 0 < ε)
+    (h_vol_bound : ∀ B (hB : B ∈ P_nonempty), B.volume ≤ (B' B hB).volume + ε) :
+    ∑ B ∈ P_nonempty, B.volume ≤
+      ∑ x : { B // B ∈ P_nonempty }, (B' x.1 x.2).volume + P_nonempty.card * ε := by
+  calc ∑ B ∈ P_nonempty, B.volume
+      = ∑ x : { B // B ∈ P_nonempty }, x.1.volume := by rw [← Finset.sum_coe_sort]
+    _ ≤ ∑ x : { B // B ∈ P_nonempty }, ((B' x.1 x.2).volume + ε) := by
+        apply Finset.sum_le_sum
+        intro ⟨B, hB⟩ _
+        exact h_vol_bound B hB
+    _ = ∑ x : { B // B ∈ P_nonempty }, (B' x.1 x.2).volume + ∑ _ : { B // B ∈ P_nonempty }, ε :=
+        Finset.sum_add_distrib
+    _ = ∑ x : { B // B ∈ P_nonempty }, (B' x.1 x.2).volume + P_nonempty.card * ε := by
+        congr 1
+        rw [Finset.sum_const, Finset.card_univ, ← smul_eq_mul]
+        have : (Finset.univ : Finset { B // B ∈ P_nonempty }).image (fun x => x.val) = P_nonempty := by
+          ext B
+          simp only [Finset.mem_image]
+          constructor
+          · intro ⟨a, _, ha_eq⟩; rw [← ha_eq]; exact a.property
+          · intro hB; exact ⟨⟨B, hB⟩, Finset.mem_univ _, rfl⟩
+        rw [← Finset.card_univ, ← this]
+        rw [Finset.card_image_of_injective _ (fun x y h => Subtype.ext h)]
+        simp [smul_eq_mul]
+
+/-- Shrunk boxes B' inherit injectivity from parent boxes' disjointness when B' are nonempty. -/
+lemma injective_of_shrunk_nonempty {d : ℕ} {P : Finset (Box d)}
+    {P_nonempty : Finset (Box d)} (hP_nonempty_sub : P_nonempty ⊆ P)
+    {B' : (B : Box d) → B ∈ P_nonempty → Box d}
+    (hP_disj : (P : Set (Box d)).PairwiseDisjoint Box.toSet)
+    (h_sub : ∀ B (hB : B ∈ P_nonempty), (B' B hB).toSet ⊆ B.toSet)
+    (h_nonempty : ∀ B (hB : B ∈ P_nonempty), (B' B hB).toSet.Nonempty) :
+    Function.Injective (fun x : { B // B ∈ P_nonempty } => B' x.1 x.2) := by
+  intro ⟨B₁, hB₁⟩ ⟨B₂, hB₂⟩ h_boxes_eq
+  by_contra h_ne
+  have hB₁P : B₁ ∈ P := hP_nonempty_sub hB₁
+  have hB₂P : B₂ ∈ P := hP_nonempty_sub hB₂
+  have h_orig_ne : B₁ ≠ B₂ := fun h_eq_B => h_ne (Subtype.ext h_eq_B)
+  have h_orig_disj : Disjoint B₁.toSet B₂.toSet := hP_disj hB₁P hB₂P h_orig_ne
+  have h_B'₁_nonempty : (B' B₁ hB₁).toSet.Nonempty := h_nonempty B₁ hB₁
+  have h_in_inter : (B' B₁ hB₁).toSet ⊆ B₁.toSet ∩ B₂.toSet := by
+    intro x hx
+    have h_toSet_eq : (B' B₁ hB₁).toSet = (B' B₂ hB₂).toSet := congr_arg Box.toSet h_boxes_eq
+    exact ⟨h_sub B₁ hB₁ hx, h_sub B₂ hB₂ (h_toSet_eq ▸ hx)⟩
+  have h_inter_empty : B₁.toSet ∩ B₂.toSet = ∅ := Set.disjoint_iff_inter_eq_empty.mp h_orig_disj
+  rw [h_inter_empty] at h_in_inter
+  exact Set.not_nonempty_empty (h_B'₁_nonempty.mono h_in_inter)
+
 /-- Every bounded interval (Ioo, Icc, Ioc, Ico) is a bounded set -/
 lemma BoundedInterval.isBounded (I: BoundedInterval) : Bornology.IsBounded I.toSet := by
   cases I with
@@ -2479,49 +2544,6 @@ lemma IsElementary.iUnion_boxes {d : ℕ} {ι : Type*} [Fintype ι] (B : ι → 
   rw [h_eq]
   exact IsElementary.union' hS_elem
 
-/-- ENNReal coercion to EReal commutes with finite sums -/
-lemma EReal.coe_ennreal_finset_sum {α : Type*} {s : Finset α} {f : α → ENNReal} :
-    (∑ a ∈ s, f a : ENNReal).toEReal = ∑ a ∈ s, (f a).toEReal := by
-  induction s using Finset.cons_induction with
-  | empty => simp
-  | cons a t ha ih => simp only [Finset.sum_cons ha, EReal.coe_ennreal_add, ih]
-
-/-- Finite sum embedded in EReal is bounded by tsum.
-    For nonnegative reals, finite partial sums are always ≤ the infinite sum.
-    Strategy: Convert to ENNReal where sum_le_tsum holds, then transfer via coercion. -/
-lemma EReal.finset_sum_le_tsum {f : ℕ → ℝ} (hf : ∀ n, 0 ≤ f n) (t : Finset ℕ) :
-    (∑ n ∈ t, f n : EReal) ≤ ∑' n, (f n).toEReal := by
-  -- Convert LHS to EReal via coe_finset_sum
-  have hf_t : ∀ a ∈ t, 0 ≤ f a := fun a _ => hf a
-  rw [← EReal.coe_finset_sum hf_t]
-  -- Define the ENNReal version of f
-  let g : ℕ → ENNReal := fun n => ENNReal.ofReal (f n)
-  -- Key fact: ENNReal.sum_le_tsum always holds
-  have h_enn : ∑ n ∈ t, g n ≤ ∑' n, g n := ENNReal.sum_le_tsum t
-  -- Show each term equality: (f n).toEReal = (g n).toEReal for nonneg f n
-  have h_term : ∀ n, (f n).toEReal = (g n).toEReal := fun n => by
-    simp only [g, EReal.coe_ennreal_ofReal, max_eq_left (hf n)]
-  -- Show finite sum equality
-  have h_fin : (∑ n ∈ t, f n : ℝ).toEReal = (∑ n ∈ t, g n : ENNReal).toEReal := by
-    rw [EReal.coe_finset_sum hf_t, EReal.coe_ennreal_finset_sum]
-    exact Finset.sum_congr rfl (fun n _ => h_term n)
-  -- Show tsum equality
-  have h_inf : ∑' n, (f n).toEReal = (∑' n, g n : ENNReal).toEReal := by
-    have h_sum : Summable g := ENNReal.summable
-    -- Use that continuous additive maps commute with tsum
-    have h_coe_tsum : (∑' n, g n : ENNReal).toEReal = ∑' n, (g n).toEReal := by
-      let φ : ENNReal →+ EReal := {
-        toFun := (↑·)
-        map_zero' := by simp
-        map_add' := EReal.coe_ennreal_add
-      }
-      exact Summable.map_tsum h_sum φ continuous_coe_ennreal_ereal
-    rw [h_coe_tsum]
-    exact tsum_congr (fun n => h_term n)
-  -- Transfer inequality via monotone coercion
-  rw [h_fin, h_inf]
-  exact EReal.coe_ennreal_le_coe_ennreal_iff.mpr h_enn
-
 /-- The measure of a finite union of boxes (indexed by finset membership) is at most the sum of volumes.
     This is finite subadditivity specialized to boxes with a finset index. -/
 lemma IsElementary.measure_le_finset_boxes_volume' {d : ℕ} (t : Finset ℕ) (B : ℕ → Box d) :
@@ -2597,71 +2619,6 @@ lemma IsElementary.measure_le_finset_boxes_volume' {d : ℕ} (t : Finset ℕ) (B
           _ ≤ ∑ n ∈ t, (B n).volume :=
               Finset.sum_le_sum_of_subset_of_nonneg h_image_sub
                 (fun n _ _ => Box.volume_nonneg (B n))
-
-/-- When P_nonempty ⊆ P, the loss from scaling is bounded by δ/4. -/
-lemma card_ratio_bound {P_nonempty P : Finset α} (hP_nonempty_sub : P_nonempty ⊆ P)
-    {δ : ℝ} (hδ_pos : 0 < δ) (hcard_pos : 0 < P.card) :
-    P_nonempty.card * (δ / (4 * P.card)) ≤ δ / 4 := by
-  have hP_card_pos : (0 : ℝ) < P.card := Nat.cast_pos.mpr hcard_pos
-  have h_card_bound : P_nonempty.card ≤ P.card := Finset.card_le_card hP_nonempty_sub
-  have h_div_nonneg : (0 : ℝ) ≤ δ / (4 * P.card) := by positivity
-  calc P_nonempty.card * (δ / (4 * P.card))
-      ≤ P.card * (δ / (4 * P.card)) := by
-        apply mul_le_mul_of_nonneg_right (Nat.cast_le.mpr h_card_bound) h_div_nonneg
-    _ = δ / 4 := by field_simp [hP_card_pos.ne.symm]; ring
-
-/-- Sum bound from partition filter: if volumes B' satisfy B.vol ≤ B'.vol + ε,
-    then summing over P_nonempty gives total bound with card * ε term. -/
-lemma partition_volume_bound {d : ℕ} {P : Finset (Box d)}
-    {P_nonempty : Finset (Box d)} (_hP_nonempty_sub : P_nonempty ⊆ P)
-    {B' : (B : Box d) → B ∈ P_nonempty → Box d}
-    {ε : ℝ} (_hε_pos : 0 < ε)
-    (h_vol_bound : ∀ B (hB : B ∈ P_nonempty), B.volume ≤ (B' B hB).volume + ε) :
-    ∑ B ∈ P_nonempty, B.volume ≤
-      ∑ x : { B // B ∈ P_nonempty }, (B' x.1 x.2).volume + P_nonempty.card * ε := by
-  calc ∑ B ∈ P_nonempty, B.volume
-      = ∑ x : { B // B ∈ P_nonempty }, x.1.volume := by rw [← Finset.sum_coe_sort]
-    _ ≤ ∑ x : { B // B ∈ P_nonempty }, ((B' x.1 x.2).volume + ε) := by
-        apply Finset.sum_le_sum
-        intro ⟨B, hB⟩ _
-        exact h_vol_bound B hB
-    _ = ∑ x : { B // B ∈ P_nonempty }, (B' x.1 x.2).volume + ∑ _ : { B // B ∈ P_nonempty }, ε :=
-        Finset.sum_add_distrib
-    _ = ∑ x : { B // B ∈ P_nonempty }, (B' x.1 x.2).volume + P_nonempty.card * ε := by
-        congr 1
-        rw [Finset.sum_const, Finset.card_univ, ← smul_eq_mul]
-        have : (Finset.univ : Finset { B // B ∈ P_nonempty }).image (fun x => x.val) = P_nonempty := by
-          ext B
-          simp only [Finset.mem_image]
-          constructor
-          · intro ⟨a, _, ha_eq⟩; rw [← ha_eq]; exact a.property
-          · intro hB; exact ⟨⟨B, hB⟩, Finset.mem_univ _, rfl⟩
-        rw [← Finset.card_univ, ← this]
-        rw [Finset.card_image_of_injective _ (fun x y h => Subtype.ext h)]
-        simp [smul_eq_mul]
-
-/-- Shrunk boxes B' inherit injectivity from parent boxes' disjointness when B' are nonempty. -/
-lemma injective_of_shrunk_nonempty {d : ℕ} {P : Finset (Box d)}
-    {P_nonempty : Finset (Box d)} (hP_nonempty_sub : P_nonempty ⊆ P)
-    {B' : (B : Box d) → B ∈ P_nonempty → Box d}
-    (hP_disj : (P : Set (Box d)).PairwiseDisjoint Box.toSet)
-    (h_sub : ∀ B (hB : B ∈ P_nonempty), (B' B hB).toSet ⊆ B.toSet)
-    (h_nonempty : ∀ B (hB : B ∈ P_nonempty), (B' B hB).toSet.Nonempty) :
-    Function.Injective (fun x : { B // B ∈ P_nonempty } => B' x.1 x.2) := by
-  intro ⟨B₁, hB₁⟩ ⟨B₂, hB₂⟩ h_boxes_eq
-  by_contra h_ne
-  have hB₁P : B₁ ∈ P := hP_nonempty_sub hB₁
-  have hB₂P : B₂ ∈ P := hP_nonempty_sub hB₂
-  have h_orig_ne : B₁ ≠ B₂ := fun h_eq_B => h_ne (Subtype.ext h_eq_B)
-  have h_orig_disj : Disjoint B₁.toSet B₂.toSet := hP_disj hB₁P hB₂P h_orig_ne
-  have h_B'₁_nonempty : (B' B₁ hB₁).toSet.Nonempty := h_nonempty B₁ hB₁
-  have h_in_inter : (B' B₁ hB₁).toSet ⊆ B₁.toSet ∩ B₂.toSet := by
-    intro x hx
-    have h_toSet_eq : (B' B₁ hB₁).toSet = (B' B₂ hB₂).toSet := congr_arg Box.toSet h_boxes_eq
-    exact ⟨h_sub B₁ hB₁ hx, h_sub B₂ hB₂ (h_toSet_eq ▸ hx)⟩
-  have h_inter_empty : B₁.toSet ∩ B₂.toSet = ∅ := Set.disjoint_iff_inter_eq_empty.mp h_orig_disj
-  rw [h_inter_empty] at h_in_inter
-  exact Set.not_nonempty_empty (h_B'₁_nonempty.mono h_in_inter)
 
 /-- For any box cover of an elementary set, the sum of volumes bounds the measure from below.
     This is the key step using Heine-Borel compactness: inflate boxes to open cover,
