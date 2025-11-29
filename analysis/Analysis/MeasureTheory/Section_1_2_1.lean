@@ -3125,6 +3125,114 @@ example {d:ℕ} {hd: 0 < d} : ∃ (S:Type) (E: S → Set (EuclideanSpace' d)), �
   rw [h_cube, h_sum]
   simp
 
+/-! ### General Lemmas for EuclideanSpace' 1 and Measure Theory -/
+
+/-- The distance on EuclideanSpace' 1 equals the distance in ℝ via equiv_Real -/
+lemma EuclideanSpace'_dist_eq_Real_dist (x y : EuclideanSpace' 1) :
+    dist x y = dist (EuclideanSpace'.equiv_Real x) (EuclideanSpace'.equiv_Real y) := by
+  rw [EuclideanSpace.dist_eq, Real.dist_eq]
+  simp only [Fintype.univ_ofSubsingleton, Fin.zero_eta, Finset.sum_singleton, Real.sqrt_sq_eq_abs,
+    EuclideanSpace'.equiv_Real, Equiv.coe_fn_mk]
+  rw [Real.dist_eq, abs_abs]
+
+/-- Preimage of closed interval [a,b] under equiv_Real equals the corresponding 1D box -/
+lemma preimage_Icc_eq_box (a b : ℝ) :
+    EuclideanSpace'.equiv_Real ⁻¹' Set.Icc a b = (BoundedInterval.Icc a b).toBox.toSet := by
+  rw [BoundedInterval.coe_of_box]
+  ext x
+  simp only [Set.mem_preimage, Set.mem_image]
+  constructor
+  · intro hx
+    use EuclideanSpace'.equiv_Real x
+    exact ⟨hx, Equiv.symm_apply_apply _ _⟩
+  · rintro ⟨y, hy, rfl⟩
+    simp [Real.equiv_EuclideanSpace', EuclideanSpace'.equiv_Real] at hy ⊢
+    exact hy
+
+/-- Geometric series: ∑ ε/2^{n+1} = ε -/
+lemma tsum_geometric_eps (ε : ℝ) (_hε : 0 < ε) : ∑' n : ℕ, ε / 2^(n+1) = ε := by
+  have h_eq : (fun n => ε / 2^(n+1)) = (fun n => ε / 2 * (1/2 : ℝ)^n) := by
+    ext n
+    have : (2:ℝ)^(n+1) = 2 * 2^n := by ring
+    rw [this]
+    field_simp
+  rw [h_eq, tsum_mul_left, tsum_geometric_of_lt_one (by norm_num) (by norm_num)]
+  ring
+
+/-- The sum of interval lengths is 2ε -/
+lemma tsum_interval_lengths (ε : ℝ) (hε : 0 < ε) : ∑' n : ℕ, (2 * ε / 2^(n+1)) = 2 * ε := by
+  have h_eq : (fun n => 2 * ε / 2^(n+1)) = (fun n => 2 * (ε / 2^(n+1))) := by
+    ext n; ring
+  rw [h_eq, tsum_mul_left, tsum_geometric_eps ε hε]
+
+/-- Summability of the geometric series -/
+lemma tsum_interval_summable (ε : ℝ) : Summable (fun n => 2 * ε / 2^(n+1) : ℕ → ℝ) := by
+  have h_eq : (fun n => 2 * ε / 2^(n+1)) = (fun n => ε * (1/2 : ℝ)^n) := by
+    ext n
+    have h_pow : (2:ℝ)^(n+1) = 2 * 2^n := by ring
+    field_simp [h_pow]; ring
+  rw [h_eq]
+  have h_abs : |(1/2:ℝ)| < 1 := by
+    simp only [abs_of_pos (by norm_num : (0:ℝ) < 1/2)]
+    norm_num
+  have h_geom : Summable (fun n => (1/2:ℝ)^n) := summable_geometric_of_abs_lt_one h_abs
+  exact h_geom.mul_left ε
+
+namespace Lebesgue_outer_measure
+
+/-- Lebesgue outer measure of a closed interval [a,b] equals b - a -/
+lemma of_Icc (a b : ℝ) (hab : a ≤ b) :
+    Lebesgue_outer_measure (EuclideanSpace'.equiv_Real ⁻¹' Set.Icc a b) = ((b - a : ℝ) : EReal) := by
+  -- [a,b] is a single box in 1D, hence elementary with measure b - a
+  let B : Box 1 := (BoundedInterval.Icc a b).toBox
+  rw [preimage_Icc_eq_box]
+  -- B.toSet is elementary (a box is elementary)
+  have h_elem : IsElementary B.toSet := IsElementary.box B
+  -- Lebesgue outer measure of elementary set equals its elementary measure
+  rw [Lebesgue_outer_measure.elementary B.toSet h_elem]
+  -- Elementary measure of a box equals its volume
+  rw [IsElementary.measure_of_box B]
+  -- Volume of B = b - a
+  unfold Box.volume BoundedInterval.length
+  simp only [Finset.univ_unique, Fin.default_eq_zero, Fin.isValue, Finset.prod_singleton]
+  -- max (b - a) 0 = b - a since a ≤ b
+  rw [max_eq_left (sub_nonneg.mpr hab)]
+
+/-- Lebesgue measure of an open interval ≤ length (when a < b) -/
+lemma of_Ioo_le (a b : ℝ) (h : a < b) :
+    Lebesgue_outer_measure (EuclideanSpace'.equiv_Real ⁻¹' Set.Ioo a b) ≤ ((b - a : ℝ) : EReal) := by
+  have hab : a ≤ b := le_of_lt h
+  calc Lebesgue_outer_measure (EuclideanSpace'.equiv_Real ⁻¹' Set.Ioo a b)
+      ≤ Lebesgue_outer_measure (EuclideanSpace'.equiv_Real ⁻¹' Set.Icc a b) := by
+        apply Lebesgue_outer_measure.mono
+        apply Set.preimage_mono
+        exact Set.Ioo_subset_Icc_self
+    _ = (b - a : EReal) := Lebesgue_outer_measure.of_Icc a b hab
+
+end Lebesgue_outer_measure
+
+/-- Monotonicity of Jordan outer measure, for two bounded sets -/
+lemma Jordan_outer_measure_mono {E F : Set (EuclideanSpace' 1)}
+    (hEF: E ⊆ F) (_hF: Bornology.IsBounded F) :
+    Jordan_outer_measure E ≤ Jordan_outer_measure F := by
+  -- Jordan_outer_measure E = sInf { m | ∃ A elem, E ⊆ A ∧ m = |A| }
+  -- If E ⊆ F and F ⊆ A, then E ⊆ A, so the set for F is a subset of the set for E
+  -- Thus sInf for E ≤ sInf for F
+  apply csInf_le_csInf
+  · -- The set for E is bounded below (by 0, since measures are nonneg)
+    use 0
+    intro m hm
+    obtain ⟨A, hA, _hEA, hm_eq⟩ := hm
+    rw [hm_eq]
+    exact hA.measure_nonneg
+  · -- The set for F is nonempty (since F is bounded, there exists an elem cover)
+    obtain ⟨A, hA, hFA⟩ := IsElementary.contains_bounded _hF
+    exact ⟨hA.measure, A, hA, hFA, rfl⟩
+  · -- The set for F is a subset of the set for E
+    intro m hm
+    obtain ⟨A, hA, hFA, hm_eq⟩ := hm
+    exact ⟨A, hA, Set.Subset.trans hEF hFA, hm_eq⟩
+
 /-! ### Remark 1.2.8: Not every bounded open set is Jordan measurable -/
 
 namespace Remark_1_2_8
@@ -3233,78 +3341,6 @@ lemma U_isBounded (ε : ℝ) (hε : 0 < ε) : Bornology.IsBounded (U ε) := by
     apply abs_le_max_abs_abs <;> linarith [hx'.1, hx'.2]
   linarith
 
-/-- Geometric series: ∑ ε/2^{n+1} = ε -/
-lemma tsum_geometric_eps (ε : ℝ) (_hε : 0 < ε) : ∑' n : ℕ, ε / 2^(n+1) = ε := by
-  have h_eq : (fun n => ε / 2^(n+1)) = (fun n => ε / 2 * (1/2 : ℝ)^n) := by
-    ext n
-    have : (2:ℝ)^(n+1) = 2 * 2^n := by ring
-    rw [this]
-    field_simp
-  rw [h_eq, tsum_mul_left, tsum_geometric_of_lt_one (by norm_num) (by norm_num)]
-  ring
-
-/-- The sum of interval lengths is 2ε -/
-lemma tsum_interval_lengths (ε : ℝ) (hε : 0 < ε) : ∑' n : ℕ, (2 * ε / 2^(n+1)) = 2 * ε := by
-  have h_eq : (fun n => 2 * ε / 2^(n+1)) = (fun n => 2 * (ε / 2^(n+1))) := by
-    ext n; ring
-  rw [h_eq, tsum_mul_left, tsum_geometric_eps ε hε]
-
-/-- Summability of the geometric series -/
-lemma tsum_interval_summable (ε : ℝ) : Summable (fun n => 2 * ε / 2^(n+1) : ℕ → ℝ) := by
-  have h_eq : (fun n => 2 * ε / 2^(n+1)) = (fun n => ε * (1/2 : ℝ)^n) := by
-    ext n
-    have h_pow : (2:ℝ)^(n+1) = 2 * 2^n := by ring
-    field_simp [h_pow]; ring
-  rw [h_eq]
-  have h_abs : |(1/2:ℝ)| < 1 := by
-    simp only [abs_of_pos (by norm_num : (0:ℝ) < 1/2)]
-    norm_num
-  have h_geom : Summable (fun n => (1/2:ℝ)^n) := summable_geometric_of_abs_lt_one h_abs
-  exact h_geom.mul_left ε
-
-/-- Preimage of closed interval [a,b] under equiv_Real equals the corresponding 1D box -/
-lemma preimage_Icc_eq_box (a b : ℝ) :
-    EuclideanSpace'.equiv_Real ⁻¹' Set.Icc a b = (BoundedInterval.Icc a b).toBox.toSet := by
-  rw [BoundedInterval.coe_of_box]
-  ext x
-  simp only [Set.mem_preimage, Set.mem_image]
-  constructor
-  · intro hx
-    use EuclideanSpace'.equiv_Real x
-    exact ⟨hx, Equiv.symm_apply_apply _ _⟩
-  · rintro ⟨y, hy, rfl⟩
-    simp [Real.equiv_EuclideanSpace', EuclideanSpace'.equiv_Real] at hy ⊢
-    exact hy
-
-/-- Lebesgue outer measure of a closed interval [a,b] equals b - a -/
-lemma Lebesgue_outer_measure_of_Icc (a b : ℝ) (hab : a ≤ b) :
-    Lebesgue_outer_measure (EuclideanSpace'.equiv_Real ⁻¹' Set.Icc a b) = ((b - a : ℝ) : EReal) := by
-  -- [a,b] is a single box in 1D, hence elementary with measure b - a
-  let B : Box 1 := (BoundedInterval.Icc a b).toBox
-  rw [preimage_Icc_eq_box]
-  -- B.toSet is elementary (a box is elementary)
-  have h_elem : IsElementary B.toSet := IsElementary.box B
-  -- Lebesgue outer measure of elementary set equals its elementary measure
-  rw [Lebesgue_outer_measure.elementary B.toSet h_elem]
-  -- Elementary measure of a box equals its volume
-  rw [IsElementary.measure_of_box B]
-  -- Volume of B = b - a
-  unfold Box.volume BoundedInterval.length
-  simp only [Finset.univ_unique, Fin.default_eq_zero, Fin.isValue, Finset.prod_singleton]
-  -- max (b - a) 0 = b - a since a ≤ b
-  rw [max_eq_left (sub_nonneg.mpr hab)]
-
-/-- Lebesgue measure of an open interval ≤ length (when a < b) -/
-lemma Lebesgue_outer_measure_of_Ioo_le (a b : ℝ) (h : a < b) :
-    Lebesgue_outer_measure (EuclideanSpace'.equiv_Real ⁻¹' Set.Ioo a b) ≤ ((b - a : ℝ) : EReal) := by
-  have hab : a ≤ b := le_of_lt h
-  calc Lebesgue_outer_measure (EuclideanSpace'.equiv_Real ⁻¹' Set.Ioo a b)
-      ≤ Lebesgue_outer_measure (EuclideanSpace'.equiv_Real ⁻¹' Set.Icc a b) := by
-        apply Lebesgue_outer_measure.mono
-        apply Set.preimage_mono
-        exact Set.Ioo_subset_Icc_self
-    _ = (b - a : EReal) := Lebesgue_outer_measure_of_Icc a b hab
-
 /-- Bound on each component interval's Lebesgue measure -/
 lemma component_lebesgue_le (ε : ℝ) (hε : 0 < ε) (n : ℕ) :
     Lebesgue_outer_measure (EuclideanSpace'.equiv_Real ⁻¹' Set.Ioo (q n - ε / 2^(n+1)) (q n + ε / 2^(n+1)))
@@ -3312,7 +3348,7 @@ lemma component_lebesgue_le (ε : ℝ) (hε : 0 < ε) (n : ℕ) :
   have h_rad_pos : 0 < ε / 2^(n+1) := div_pos hε (pow_pos (by norm_num : (0:ℝ) < 2) (n+1))
   have h_lt : q n - ε / 2^(n+1) < q n + ε / 2^(n+1) := by linarith
   have h_length : (q n + ε / 2^(n+1)) - (q n - ε / 2^(n+1)) = 2 * ε / 2^(n+1) := by ring
-  have h1 := Lebesgue_outer_measure_of_Ioo_le (q n - ε / 2^(n+1)) (q n + ε / 2^(n+1)) h_lt
+  have h1 := Lebesgue_outer_measure.of_Ioo_le (q n - ε / 2^(n+1)) (q n + ε / 2^(n+1)) h_lt
   simp only [h_length] at h1
   exact h1
 
@@ -3384,28 +3420,6 @@ lemma unit_box_volume : |unit_box_1D|ᵥ = 1 := by
   unfold unit_box_1D unit_interval Box.volume BoundedInterval.length
   norm_num
 
-/-- Monotonicity of Jordan outer measure -/
-lemma Jordan_outer_measure_mono {E F : Set (EuclideanSpace' 1)}
-    (hEF: E ⊆ F) (_hF: Bornology.IsBounded F) :
-    Jordan_outer_measure E ≤ Jordan_outer_measure F := by
-  -- Jordan_outer_measure E = sInf { m | ∃ A elem, E ⊆ A ∧ m = |A| }
-  -- If E ⊆ F and F ⊆ A, then E ⊆ A, so the set for F is a subset of the set for E
-  -- Thus sInf for E ≤ sInf for F
-  apply csInf_le_csInf
-  · -- The set for E is bounded below (by 0, since measures are nonneg)
-    use 0
-    intro m hm
-    obtain ⟨A, hA, _hEA, hm_eq⟩ := hm
-    rw [hm_eq]
-    exact hA.measure_nonneg
-  · -- The set for F is nonempty (since F is bounded, there exists an elem cover)
-    obtain ⟨A, hA, hFA⟩ := IsElementary.contains_bounded _hF
-    exact ⟨hA.measure, A, hA, hFA, rfl⟩
-  · -- The set for F is a subset of the set for E
-    intro m hm
-    obtain ⟨A, hA, hFA, hm_eq⟩ := hm
-    exact ⟨A, hA, Set.Subset.trans hEF hFA, hm_eq⟩
-
 /-- Jordan outer measure of unit box is 1 -/
 lemma Jordan_outer_unit_box : Jordan_outer_measure unit_box_1D.toSet = 1 := by
   have h_elem := IsElementary.box unit_box_1D
@@ -3414,14 +3428,6 @@ lemma Jordan_outer_unit_box : Jordan_outer_measure unit_box_1D.toSet = 1 := by
   rw [JordanMeasurable.mes_of_elementary h_elem]
   rw [IsElementary.measure_of_box unit_box_1D]
   exact unit_box_volume
-
-/-- The distance on EuclideanSpace' 1 equals the distance in ℝ via equiv_Real -/
-lemma EuclideanSpace'_dist_eq_Real_dist (x y : EuclideanSpace' 1) :
-    dist x y = dist (EuclideanSpace'.equiv_Real x) (EuclideanSpace'.equiv_Real y) := by
-  rw [EuclideanSpace.dist_eq, Real.dist_eq]
-  simp only [Fintype.univ_ofSubsingleton, Fin.zero_eta, Finset.sum_singleton, Real.sqrt_sq_eq_abs,
-    EuclideanSpace'.equiv_Real, Equiv.coe_fn_mk]
-  rw [Real.dist_eq, abs_abs]
 
 /-- Closure of U contains the preimage of [0,1] -/
 lemma U_closure_contains_unit_box (ε : ℝ) (hε : 0 < ε) :
