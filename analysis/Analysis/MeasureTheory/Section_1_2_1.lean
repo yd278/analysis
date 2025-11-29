@@ -2120,6 +2120,17 @@ theorem dist_of_disj_compact_pos {d:ℕ} (E F: Set (EuclideanSpace' d)) (hE: IsC
 -- Start of Helper lemmas for Lemma 1.2.6
 -- ========================================================================
 
+/-- Sum of geometric series δ/2^{n+2} equals δ/2 -/
+lemma tsum_geometric_inflate {δ : ℝ} (_hδ : 0 < δ) :
+    ∑' n : ℕ, δ / 2^(n+2) = δ / 2 := by
+  -- ∑ δ/2^{n+2} = δ/4 * ∑ (1/2)^n = δ/4 * 2 = δ/2
+  have h_eq : (fun n => δ / 2^(n+2)) = (fun n => δ / 4 * (1/2 : ℝ)^n) := by
+    ext n
+    have : (2 : ℝ)^(n+2) = 4 * 2^n := by ring
+    rw [this]
+    field_simp
+  rw [h_eq, tsum_mul_left, tsum_geometric_of_lt_one (by norm_num : (0:ℝ) ≤ 1/2) (by norm_num : (1:ℝ)/2 < 1)]
+  field_simp; ring
 /-- When P_nonempty ⊆ P, the loss from scaling is bounded by δ/4. -/
 lemma card_ratio_bound {P_nonempty P : Finset α} (hP_nonempty_sub : P_nonempty ⊆ P)
     {δ : ℝ} (hδ_pos : 0 < δ) (hcard_pos : 0 < P.card) :
@@ -2512,17 +2523,6 @@ lemma IsElementary.measure_of_empty_eq {d : ℕ} {E : Set (EuclideanSpace' d)}
     IsElementary.measure_eq_of_set_eq hE (IsElementary.empty d) hempty
   rw [this, IsElementary.measure_of_empty]
 
-/-- Sum of geometric series δ/2^{n+2} equals δ/2 -/
-lemma tsum_geometric_inflate {δ : ℝ} (_hδ : 0 < δ) :
-    ∑' n : ℕ, δ / 2^(n+2) = δ / 2 := by
-  -- ∑ δ/2^{n+2} = δ/4 * ∑ (1/2)^n = δ/4 * 2 = δ/2
-  have h_eq : (fun n => δ / 2^(n+2)) = (fun n => δ / 4 * (1/2 : ℝ)^n) := by
-    ext n
-    have : (2 : ℝ)^(n+2) = 4 * 2^n := by ring
-    rw [this]
-    field_simp
-  rw [h_eq, tsum_mul_left, tsum_geometric_of_lt_one (by norm_num : (0:ℝ) ≤ 1/2) (by norm_num : (1:ℝ)/2 < 1)]
-  field_simp; ring
 
 /-- Finite indexed union of boxes is elementary (uses IsElementary.union' which takes a finset of sets) -/
 lemma IsElementary.iUnion_boxes {d : ℕ} {ι : Type*} [Fintype ι] (B : ι → Box d) :
