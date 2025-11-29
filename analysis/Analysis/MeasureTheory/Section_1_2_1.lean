@@ -2211,15 +2211,6 @@ lemma Box.isBounded {d:ℕ} (B: Box d) : Bornology.IsBounded B.toSet := by
   intro i
   exact BoundedInterval.isBounded (B.side i)
 
-/-- Elementary sets are bounded (finite union of bounded boxes) -/
-lemma IsElementary.isBounded {d:ℕ} {E: Set (EuclideanSpace' d)} (hE: IsElementary E) :
-    Bornology.IsBounded E := by
-  obtain ⟨S, hS_eq⟩ := hE
-  rw [hS_eq]
-  rw [Bornology.isBounded_biUnion_finset]
-  intro B _
-  exact Box.isBounded B
-
 /-- Enlarge a box to an open box with controlled volume increase -/
 lemma Box.inflate {d:ℕ} (B: Box d) (δ: ℝ) (hδ: 0 < δ) :
     ∃ B': Box d, B.toSet ⊆ interior B'.toSet ∧ IsOpen (interior B'.toSet) ∧ |B'|ᵥ ≤ |B|ᵥ + δ := by
@@ -2516,8 +2507,18 @@ lemma Box.shrink_to_closed {d:ℕ} (B: Box d) (hB: B.toSet.Nonempty) (δ: ℝ) (
       intro i _
       simp only [B', BoundedInterval.toSet, Set.mem_Icc, le_refl, and_self]
 
+namespace IsElementary
+/-- Elementary sets are bounded (finite union of bounded boxes) -/
+lemma isBounded {d:ℕ} {E: Set (EuclideanSpace' d)} (hE: IsElementary E) :
+    Bornology.IsBounded E := by
+  obtain ⟨S, hS_eq⟩ := hE
+  rw [hS_eq]
+  rw [Bornology.isBounded_biUnion_finset]
+  intro B _
+  exact Box.isBounded B
+
 /-- Elementary measure of empty set is zero (handles proof term mismatch) -/
-lemma IsElementary.measure_of_empty_eq {d : ℕ} {E : Set (EuclideanSpace' d)}
+lemma measure_of_empty_eq {d : ℕ} {E : Set (EuclideanSpace' d)}
     (hE : IsElementary E) (hempty : E = ∅) : hE.measure = 0 := by
   have : hE.measure = (IsElementary.empty d).measure :=
     IsElementary.measure_eq_of_set_eq hE (IsElementary.empty d) hempty
@@ -2525,7 +2526,7 @@ lemma IsElementary.measure_of_empty_eq {d : ℕ} {E : Set (EuclideanSpace' d)}
 
 
 /-- Finite indexed union of boxes is elementary (uses IsElementary.union' which takes a finset of sets) -/
-lemma IsElementary.iUnion_boxes {d : ℕ} {ι : Type*} [Fintype ι] (B : ι → Box d) :
+lemma iUnion_boxes {d : ℕ} {ι : Type*} [Fintype ι] (B : ι → Box d) :
     IsElementary (⋃ i, (B i).toSet) := by
   classical
   -- Convert indexed union to finset-based union
@@ -2546,7 +2547,7 @@ lemma IsElementary.iUnion_boxes {d : ℕ} {ι : Type*} [Fintype ι] (B : ι → 
 
 /-- The measure of a finite union of boxes (indexed by finset membership) is at most the sum of volumes.
     This is finite subadditivity specialized to boxes with a finset index. -/
-lemma IsElementary.measure_le_finset_boxes_volume' {d : ℕ} (t : Finset ℕ) (B : ℕ → Box d) :
+lemma measure_le_finset_boxes_volume' {d : ℕ} (t : Finset ℕ) (B : ℕ → Box d) :
     (IsElementary.iUnion_boxes (fun (n : { n // n ∈ t }) => B n.1)).measure ≤ ∑ n ∈ t, (B n).volume := by
   classical
   -- Convert to the Finset of sets form and use IsElementary.measure_of_union'
@@ -2623,7 +2624,7 @@ lemma IsElementary.measure_le_finset_boxes_volume' {d : ℕ} (t : Finset ℕ) (B
 /-- For any box cover of an elementary set, the sum of volumes bounds the measure from below.
     This is the key step using Heine-Borel compactness: inflate boxes to open cover,
     extract finite subcover of compact approximation, use finite subadditivity. -/
-lemma IsElementary.measure_le_cover_sum {d : ℕ} (_hd : 0 < d) {E : Set (EuclideanSpace' d)}
+lemma measure_le_cover_sum {d : ℕ} (_hd : 0 < d) {E : Set (EuclideanSpace' d)}
     (hE : IsElementary E) (S : ℕ → Box d) (hS_cover : E ⊆ ⋃ n, (S n).toSet) :
     (hE.measure : EReal) ≤ ∑' n, (S n).volume.toEReal := by
   -- Handle empty case directly
@@ -2952,7 +2953,7 @@ lemma IsElementary.measure_le_cover_sum {d : ℕ} (_hd : 0 < d) {E : Set (Euclid
 /-- Direction 1: Elementary measure is a lower bound for outer measure
     (Partition gives a finite cover, outer measure is infimum over covers)
     Uses measure_le_cover_sum for the core Heine-Borel argument. -/
-lemma IsElementary.measure_le_outer_measure {d:ℕ} (hd: 0 < d) {E: Set (EuclideanSpace' d)}
+lemma measure_le_outer_measure {d:ℕ} (hd: 0 < d) {E: Set (EuclideanSpace' d)}
     (hE: IsElementary E) : (hE.measure : EReal) ≤ Lebesgue_outer_measure E := by
   -- Use ε-argument: show ∀ ε > 0, hE.measure ≤ m*(E) + ε
   apply EReal.le_of_forall_pos_le_add'
@@ -2981,7 +2982,7 @@ lemma IsElementary.measure_le_outer_measure {d:ℕ} (hd: 0 < d) {E: Set (Euclide
 
 /-- Direction 2: Outer measure is bounded by elementary measure
     (Uses: m*(E) ≤ J*(E) for bounded E, and J*(E) ≤ hE.measure for elementary E) -/
-lemma IsElementary.outer_measure_le_measure {d:ℕ} (_hd: 0 < d) {E: Set (EuclideanSpace' d)}
+lemma outer_measure_le_measure {d:ℕ} (_hd: 0 < d) {E: Set (EuclideanSpace' d)}
     (hE: IsElementary E) : Lebesgue_outer_measure E ≤ (hE.measure : EReal) := by
   -- Step 1: Lebesgue outer measure ≤ Jordan outer measure (for bounded sets)
   have h_le_jordan : Lebesgue_outer_measure E ≤ Jordan_outer_measure E :=
@@ -2993,6 +2994,8 @@ lemma IsElementary.outer_measure_le_measure {d:ℕ} (_hd: 0 < d) {E: Set (Euclid
   calc Lebesgue_outer_measure E
       ≤ Jordan_outer_measure E := h_le_jordan
     _ ≤ hE.measure := by exact_mod_cast h_jordan_le
+
+end IsElementary
 
 /-- Dimension 0 case of Lemma 1.2.6 -/
 lemma Lebesgue_outer_measure.elementary_dim_zero (E: Set (EuclideanSpace' 0)) (hE: IsElementary E) :
