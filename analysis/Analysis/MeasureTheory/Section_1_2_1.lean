@@ -3125,7 +3125,9 @@ example {d:ℕ} {hd: 0 < d} : ∃ (S:Type) (E: S → Set (EuclideanSpace' d)), �
   rw [h_cube, h_sum]
   simp
 
-/-! ### General Lemmas for EuclideanSpace' 1 and Measure Theory -/
+-- ========================================================================
+--  Start of Helpers for remark 1.2.8 -/
+-- ========================================================================
 
 /-- The distance on EuclideanSpace' 1 equals the distance in ℝ via equiv_Real -/
 lemma EuclideanSpace'_dist_eq_Real_dist (x y : EuclideanSpace' 1) :
@@ -3233,7 +3235,6 @@ lemma Jordan_outer_measure_mono {E F : Set (EuclideanSpace' 1)}
     obtain ⟨A, hA, hFA, hm_eq⟩ := hm
     exact ⟨A, hA, Set.Subset.trans hEF hFA, hm_eq⟩
 
-/-! ### Remark 1.2.8: Not every bounded open set is Jordan measurable -/
 
 namespace Remark_1_2_8
 
@@ -3517,6 +3518,9 @@ lemma U_lebesgue_le (ε : ℝ) (hε : 0 < ε) :
     _ ≤ ((2 * ε : ℝ) : EReal) := h_sum_bound
 
 end Remark_1_2_8
+-- ========================================================================
+--  End of Helpers for remark 1.2.8 -/
+-- ========================================================================
 
 /-- Remark 1.2.8: There exists a bounded open set that is not Jordan measurable.
     Proof sketch: Take U = ⋃_{n} (q_n - ε/2^{n+1}, q_n + ε/2^{n+1}) where {q_n} enumerates ℚ ∩ [0,1].
