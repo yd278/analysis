@@ -11,17 +11,6 @@ A companion to (the introduction to) Section 1.2 of the book "An introduction to
 
 open BoundedInterval
 
--- /-- Exercise 1.2.1 -/
--- example : ∃ E: ℕ → Set ℝ, (∀ n, Bornology.IsBounded (E n)) ∧
---   (∀ n, JordanMeasurable (Real.equiv_EuclideanSpace' '' (E n)))
---   ∧ ¬ JordanMeasurable (⋃ n, Real.equiv_EuclideanSpace' '' (E n)) := by
---   sorry
-
--- /-- Exercise 1.2.1 -/
--- example : ∃ E: ℕ → Set ℝ, (∀ n, Bornology.IsBounded (E n)) ∧
---   (∀ n, JordanMeasurable (Real.equiv_EuclideanSpace' '' (E n)))
---   ∧ ¬ JordanMeasurable (⋂ n, Real.equiv_EuclideanSpace' '' (E n)) := by
---   sorry
 /-- Exercise 1.2.1 (countable union) -/
 lemma exercise_1_2_1_union :
     ∃ E: ℕ → Set ℝ, (∀ n, Bornology.IsBounded (E n)) ∧
