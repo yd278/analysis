@@ -215,7 +215,72 @@ theorem LebesgueMeasurable.complement {d:ℕ} {E: Set (EuclideanSpace' d)} (hE: 
 
 /-- Lemma 1.2.13(vi) (Countable union of measurable sets is measurable). This lemma requires proof.  -/
 theorem LebesgueMeasurable.countable_union {d:ℕ} {E: ℕ → Set (EuclideanSpace' d)} (hE: ∀ n, LebesgueMeasurable (E n)) : LebesgueMeasurable (⋃ n, E n) := by
-  sorry
+  -- Use the ε/2^n trick: let ε > 0 be arbitrary
+  intro ε hε
+  -- Convert EReal ε to a real number ε' with 0 < ε' ≤ ε
+  obtain ⟨ε', hε'_pos, hε'_le⟩ : ∃ ε' : ℝ, 0 < ε' ∧ (ε' : EReal) ≤ ε := by
+    cases ε with
+    | bot => exact absurd hε (not_lt.mpr bot_le)
+    | top => exact ⟨1, one_pos, le_top⟩
+    | coe r =>
+      have hr : 0 < r := EReal.coe_pos.mp hε
+      exact ⟨r, hr, le_refl _⟩
+  -- For each n, get U_n open with E_n ⊆ U_n and m*(U_n \ E_n) ≤ ε'/2^(n+1)
+  have hδ_pos : ∀ n, (0:EReal) < ε' / 2^(n+1) := fun n => by
+    apply EReal.div_pos (EReal.coe_pos.mpr hε'_pos)
+    · exact EReal.coe_pow 2 (n+1) ▸ EReal.coe_pos.mpr (by positivity)
+    · exact EReal.coe_pow 2 (n+1) ▸ EReal.coe_ne_top ((2:ℝ)^(n+1))
+  -- Apply measurability of each E_n with ε'/2^(n+1)
+  choose U hU_open hE_sub hU_diff using fun n => hE n (ε' / 2^(n+1)) (hδ_pos n)
+  -- The open set is ⋃ n, U n
+  use ⋃ n, U n
+  constructor
+  · -- ⋃ n, U n is open (union of open sets)
+    exact isOpen_iUnion hU_open
+  constructor
+  · -- ⋃ n, E n ⊆ ⋃ n, U n
+    apply Set.iUnion_mono
+    intro n; exact hE_sub n
+  · -- m*((⋃ n, U n) \ (⋃ n, E n)) ≤ ε
+    -- Key: (⋃ U_n) \ (⋃ E_n) ⊆ ⋃ (U_n \ E_n)
+    have h_diff_subset : (⋃ n, U n) \ (⋃ n, E n) ⊆ ⋃ n, (U n \ E n) := by
+      intro x ⟨hx_in_U, hx_not_in_E⟩
+      simp only [Set.mem_iUnion] at hx_in_U hx_not_in_E ⊢
+      obtain ⟨k, hxk⟩ := hx_in_U
+      use k
+      constructor
+      · exact hxk
+      · intro hx_Ek
+        exact hx_not_in_E ⟨k, hx_Ek⟩
+    calc Lebesgue_outer_measure ((⋃ n, U n) \ (⋃ n, E n))
+        ≤ Lebesgue_outer_measure (⋃ n, (U n \ E n)) :=
+          Lebesgue_outer_measure.mono h_diff_subset
+      _ ≤ ∑' n, Lebesgue_outer_measure (U n \ E n) :=
+          Lebesgue_outer_measure.union_le _
+      _ ≤ ∑' n, ((ε' / 2^(n+1) : ℝ) : EReal) := by
+          -- Use EReal.tsum_le_coe_tsum_of_forall_le
+          have h_nonneg : ∀ n, 0 ≤ ε' / 2^(n+1) := fun n => by positivity
+          have h_summable : Summable (fun n => ε' / 2^(n+1)) :=
+            (summable_geometric_two' ε').congr (fun n => by ring)
+          have h_f_nonneg : ∀ n, 0 ≤ Lebesgue_outer_measure (U n \ E n) :=
+            fun n => Lebesgue_outer_measure.nonneg _
+          have h_le_coe : ∀ n, Lebesgue_outer_measure (U n \ E n) ≤ ((ε' / 2^(n+1) : ℝ) : EReal) := by
+            intro n
+            calc Lebesgue_outer_measure (U n \ E n)
+                ≤ (↑ε' : EReal) / 2^(n+1) := hU_diff n
+              _ = ↑(ε' / 2^(n+1)) := by
+                  rw [EReal.coe_div]
+                  congr 1
+                  exact Eq.symm (EReal.coe_pow 2 (n + 1))
+          exact EReal.tsum_le_coe_tsum_of_forall_le h_f_nonneg h_nonneg h_summable h_le_coe
+      _ = ε' := by
+          -- ∑ n, ε'/2^(n+1) = ε' (geometric series)
+          have h_sum : ∑' n : ℕ, (ε' : ℝ) / 2^(n+1) = ε' := tsum_geometric_eps ε' hε'_pos
+          have h_summable : Summable (fun n => ε' / 2^(n+1)) :=
+            (summable_geometric_two' ε').congr (fun n => by ring)
+          have h_nonneg : ∀ n, 0 ≤ ε' / 2^(n+1) := fun n => by positivity
+          rw [← EReal.coe_tsum_of_nonneg h_nonneg h_summable, h_sum]
+      _ ≤ ε := hε'_le
 
 theorem LebesgueMeasurable.finite_union {d n:ℕ} {E: Fin n → Set (EuclideanSpace' d)} (hE: ∀ i, LebesgueMeasurable (E i)) : LebesgueMeasurable (⋃ i, E i) := by
   sorry
