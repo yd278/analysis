@@ -3692,11 +3692,146 @@ example : ∃ (E: Set (EuclideanSpace' 1)), Bornology.IsBounded E ∧
 
 def AlmostDisjoint {d:ℕ} (B B': Box d) : Prop := interior B.toSet ∩ interior B'.toSet = ∅
 
+/-- Measure is additive on unions of elementary sets with disjoint interiors: μ(E ∪ F) = μ(E) + μ(F). -/
 lemma IsElementary.measure_of_almostDisjUnion {d:ℕ} {E F: Set (EuclideanSpace' d)}
     (hE: IsElementary E) (hF: IsElementary F)
     (h: interior E ∩ interior F = ∅) :
     (hE.union hF).measure = hE.measure + hF.measure := by
-  sorry
+  -- Strategy: Use decomposition E ∪ F = E ∪ (F \ E) which is disjoint,
+  -- then show (F \ E).measure = hF.measure by using that E ∩ F has measure zero
+  -- when interiors are disjoint.
+  classical
+  -- Step 1: Decompose E ∪ F = E ∪ (F \ E) (disjoint union)
+  have h_union_decomp : E ∪ F = E ∪ (F \ E) := by
+    ext x
+    constructor
+    · rintro (hx_E | hx_F)
+      · exact Or.inl hx_E
+      · by_cases hx_E : x ∈ E
+        · exact Or.inl hx_E
+        · exact Or.inr ⟨hx_F, hx_E⟩
+    · rintro (hx_E | ⟨hx_F, _⟩)
+      · exact Or.inl hx_E
+      · exact Or.inr hx_F
+  -- Step 2: F \ E is elementary and disjoint from E
+  have hF_sdiff_E : IsElementary (F \ E) := IsElementary.sdiff hF hE
+  have h_disj : Disjoint E (F \ E) := by
+    rw [Set.disjoint_iff]
+    intro x ⟨hx_E, _, hx_not_E⟩
+    exact hx_not_E hx_E
+  -- Step 3: Apply measure_of_disjUnion
+  have h_decomp_measure : (hE.union hF_sdiff_E).measure = hE.measure + hF_sdiff_E.measure :=
+    IsElementary.measure_of_disjUnion hE hF_sdiff_E h_disj
+  -- Step 4: Show both unions represent the same set
+  set T := (hE.union hF).partition.choose
+  have hT_disj : T.toSet.PairwiseDisjoint Box.toSet := (hE.union hF).partition.choose_spec.1
+  have h_eq : E ∪ F = ⋃ B ∈ T, B.toSet := (hE.union hF).partition.choose_spec.2
+  have h_measure_eq : (hE.union hF_sdiff_E).measure = (hE.union hF).measure := by
+    rw [(hE.union hF_sdiff_E).measure_eq hT_disj (by rw [← h_union_decomp, h_eq]),
+        (hE.union hF).measure_eq hT_disj h_eq]
+  -- Step 5: Show (F \ E).measure = hF.measure when interiors are disjoint
+  -- This follows because E ∩ F ⊆ frontier E ∪ frontier F, and the overlap has measure zero
+  have h_sdiff_measure : hF_sdiff_E.measure = hF.measure := by
+    -- By monotonicity: (F \ E).measure ≤ hF.measure (since F \ E ⊆ F)
+    have h_mono : hF_sdiff_E.measure ≤ hF.measure :=
+      IsElementary.measure_mono hF_sdiff_E hF (fun _ hx => hx.1)
+    -- By additivity: hF.measure ≤ (E ∩ F).measure + (F \ E).measure
+    -- But E ∩ F is elementary and has empty interior, so measure ≤ 0
+    -- For disjoint interiors, we can show measure_mono in reverse direction
+    have h_decomp_F : F = (E ∩ F) ∪ (F \ E) := by
+      ext x; simp only [Set.mem_union, Set.mem_inter_iff, Set.mem_diff]
+      constructor
+      · intro hx
+        by_cases hxE : x ∈ E
+        · exact Or.inl ⟨hxE, hx⟩
+        · exact Or.inr ⟨hx, hxE⟩
+      · rintro (⟨_, hx⟩ | ⟨hx, _⟩) <;> exact hx
+    have h_disj_decomp : Disjoint (E ∩ F) (F \ E) := by
+      rw [Set.disjoint_iff]
+      intro x ⟨⟨hxE, _⟩, _, hxnE⟩
+      exact hxnE hxE
+    have hEF_inter : IsElementary (E ∩ F) := IsElementary.inter hE hF
+    have h_F_measure : hF.measure = (hEF_inter.union hF_sdiff_E).measure := by
+      set T_F := hF.partition.choose
+      have hT_F_disj : T_F.toSet.PairwiseDisjoint Box.toSet := hF.partition.choose_spec.1
+      have hF_eq : F = ⋃ B ∈ T_F, B.toSet := hF.partition.choose_spec.2
+      rw [(hEF_inter.union hF_sdiff_E).measure_eq hT_F_disj (by rw [← h_decomp_F, hF_eq]),
+          hF.measure_eq hT_F_disj hF_eq]
+    have h_union_add : (hEF_inter.union hF_sdiff_E).measure = hEF_inter.measure + hF_sdiff_E.measure :=
+      IsElementary.measure_of_disjUnion hEF_inter hF_sdiff_E h_disj_decomp
+    -- Key: show hEF_inter.measure = 0 when interior E ∩ interior F = ∅
+    -- This requires showing that elementary sets with empty interior have measure zero
+    have h_inter_empty_interior : interior (E ∩ F) = ∅ := by
+      rw [interior_inter, h]
+    -- For an elementary set with empty interior, all its partition boxes must be degenerate
+    have h_inter_measure_zero : hEF_inter.measure = 0 := by
+      set T_EF := hEF_inter.partition.choose
+      have hT_EF_disj : T_EF.toSet.PairwiseDisjoint Box.toSet := hEF_inter.partition.choose_spec.1
+      have hEF_eq : E ∩ F = ⋃ B ∈ T_EF, B.toSet := hEF_inter.partition.choose_spec.2
+      rw [hEF_inter.measure_eq hT_EF_disj hEF_eq]
+      apply Finset.sum_eq_zero
+      intro B hB
+      -- Show B has empty interior and thus volume 0
+      have hB_subset : B.toSet ⊆ E ∩ F := by
+        rw [hEF_eq]
+        exact Set.subset_biUnion_of_mem hB
+      have hB_interior_empty : interior B.toSet = ∅ := by
+        apply Set.eq_empty_of_subset_empty
+        calc interior B.toSet ⊆ interior (E ∩ F) := interior_mono hB_subset
+          _ = ∅ := h_inter_empty_interior
+      -- Use that a box with empty interior has volume zero
+      -- interior B = ∅ means some side has empty interior, i.e., is a single point or empty
+      -- For a box, this means some BoundedInterval has a = b (degenerate)
+      rw [Box.toSet] at hB_interior_empty
+      rw [interior_pi_set Set.finite_univ] at hB_interior_empty
+      -- The interior of a box is empty iff some side interval has empty interior
+      have hB_empty_or_degenerate : B.toSet = ∅ ∨ ∃ i, interior (B.side i).toSet = ∅ := by
+        by_cases hB_nonempty : B.toSet.Nonempty
+        · right
+          by_contra h_all_nonempty
+          push_neg at h_all_nonempty
+          have : (Set.univ.pi fun i => interior (B.side i).toSet).Nonempty := by
+            apply Set.univ_pi_nonempty_iff.mpr
+            intro i
+            exact h_all_nonempty i
+          rw [Set.eq_empty_iff_forall_notMem] at hB_interior_empty
+          obtain ⟨x, hx⟩ := this
+          exact hB_interior_empty x hx
+        · left
+          exact Set.not_nonempty_iff_eq_empty.mp hB_nonempty
+      rcases hB_empty_or_degenerate with hB_empty | ⟨i, hi⟩
+      · exact Box.volume_eq_zero_of_empty B hB_empty
+      · -- A BoundedInterval with empty interior has length 0
+        rw [Box.volume]
+        apply Finset.prod_eq_zero (Finset.mem_univ i)
+        -- Show |B.side i|ₗ = 0 when interior (B.side i).toSet = ∅
+        have h_length_zero : |B.side i|ₗ = 0 := by
+          cases hI : B.side i with
+          | Ioo a b =>
+            simp only [hI, BoundedInterval.toSet, interior_Ioo, Set.Ioo_eq_empty_iff] at hi
+            simp only [BoundedInterval.length, BoundedInterval.a, BoundedInterval.b]
+            have hab : b ≤ a := le_of_not_gt hi
+            simp only [max_eq_right (sub_nonpos.mpr hab)]
+          | Icc a b =>
+            simp only [hI, BoundedInterval.toSet, interior_Icc, Set.Ioo_eq_empty_iff] at hi
+            simp only [BoundedInterval.length, BoundedInterval.a, BoundedInterval.b]
+            have hab : b ≤ a := le_of_not_gt hi
+            simp only [max_eq_right (sub_nonpos.mpr hab)]
+          | Ioc a b =>
+            simp only [hI, BoundedInterval.toSet, interior_Ioc, Set.Ioo_eq_empty_iff] at hi
+            simp only [BoundedInterval.length, BoundedInterval.a, BoundedInterval.b]
+            have hab : b ≤ a := le_of_not_gt hi
+            simp only [max_eq_right (sub_nonpos.mpr hab)]
+          | Ico a b =>
+            simp only [hI, BoundedInterval.toSet, interior_Ico, Set.Ioo_eq_empty_iff] at hi
+            simp only [BoundedInterval.length, BoundedInterval.a, BoundedInterval.b]
+            have hab : b ≤ a := le_of_not_gt hi
+            simp only [max_eq_right (sub_nonpos.mpr hab)]
+        exact h_length_zero
+    -- Now combine: hF.measure = 0 + hF_sdiff_E.measure = hF_sdiff_E.measure
+    rw [h_F_measure, h_union_add, h_inter_measure_zero, zero_add]
+  -- Final step: combine everything
+  rw [← h_measure_eq, h_decomp_measure, h_sdiff_measure]
 
 /-- Split a Fin (n+1) indexed union into a Fin n indexed union plus the last element.
     This is a general helper for induction on finite unions. -/
@@ -3737,14 +3872,48 @@ lemma AlmostDisjoint.castSucc_last {d n : ℕ} {B : Fin (n + 1) → Box d}
   rw [heq] at h1
   simp at h1
 
+/-- For any BoundedInterval, interior (closure I) ⊆ closure (interior I).
+    This holds because all interval types (Ioo, Icc, Ioc, Ico) have closure = Icc
+    and interior = Ioo, so interior(closure(I)) = Ioo ⊆ Icc = closure(interior(I)). -/
+lemma BoundedInterval.interior_closure_subset_closure_interior (I : BoundedInterval) :
+    interior (closure (I : Set ℝ)) ⊆ closure (interior (I : Set ℝ)) := by
+  cases I with
+  | Ioo a b =>
+    simp only [BoundedInterval.set_Ioo]
+    by_cases hab : a < b
+    · simp only [closure_Ioo (ne_of_lt hab), interior_Icc, interior_Ioo]
+      exact Set.Ioo_subset_Icc_self
+    · simp only [Set.Ioo_eq_empty hab, closure_empty, interior_empty]; exact Set.empty_subset _
+  | Icc a b =>
+    simp only [BoundedInterval.set_Icc]
+    by_cases hab : a < b
+    · simp only [closure_Icc, interior_Icc, closure_Ioo (ne_of_lt hab)]
+      exact Set.Ioo_subset_Icc_self
+    · simp only [interior_Icc, Set.Ioo_eq_empty hab, closure_Icc, closure_empty]
+      exact Set.empty_subset _
+  | Ioc a b =>
+    simp only [BoundedInterval.set_Ioc]
+    by_cases hab : a < b
+    · simp only [closure_Ioc (ne_of_lt hab), interior_Icc, interior_Ioc, closure_Ioo (ne_of_lt hab)]
+      exact Set.Ioo_subset_Icc_self
+    · simp only [Set.Ioc_eq_empty hab, closure_empty, interior_empty]; exact Set.empty_subset _
+  | Ico a b =>
+    simp only [BoundedInterval.set_Ico]
+    by_cases hab : a < b
+    · simp only [closure_Ico (ne_of_lt hab), interior_Icc, interior_Ico, closure_Ioo (ne_of_lt hab)]
+      exact Set.Ioo_subset_Icc_self
+    · simp only [Set.Ico_eq_empty hab, closure_empty, interior_empty]; exact Set.empty_subset _
+
 /-- For any box, the interior of its frontier is empty. This holds regardless of whether
     the box uses closed intervals (Icc), open intervals (Ioo), or half-open intervals,
     because the frontier of a box is a lower-dimensional set (union of faces). -/
 lemma Box.interior_frontier_eq_empty {d : ℕ} (B : Box d) : interior (frontier B.toSet) = ∅ := by
-  -- The frontier of a box is the set of points where at least one coordinate
-  -- lies on the boundary of its interval. This is a lower-dimensional set
-  -- (union of hyperplanes), so it has empty interior in ℝᵈ.
-  sorry
+  rw [Box.toSet, frontier, closure_pi_set, interior_pi_set Set.finite_univ, Set.diff_eq,
+      interior_inter, interior_pi_set Set.finite_univ, interior_compl, closure_pi_set]
+  apply Set.eq_empty_iff_forall_notMem.mpr
+  intro x ⟨hx1, hx2⟩
+  apply hx2
+  exact Set.pi_mono (fun i _ => BoundedInterval.interior_closure_subset_closure_interior _) hx1
 
 /-- The interior of a finite union of box frontiers is empty. This is because each box frontier
     is a closed set with empty interior, and we can apply `interior_union_isClosed_of_interior_empty`
