@@ -34,7 +34,7 @@ theorem IsClosed.measurable {d:ℕ} {E: Set (EuclideanSpace' d)} (hE: IsClosed E
 
 abbrev IsNull {d:ℕ} (E: Set (EuclideanSpace' d)) : Prop := Lebesgue_outer_measure E = 0
 
-/-- Lemma 1.2.13(iii) (Every null set is Lebesgue measurable).  This lemma requires proof. -/
+/-- Lemma 1.2.13(iii) (Every null set is Lebesgue measurable).-/
 theorem IsNull.measurable {d:ℕ} {E: Set (EuclideanSpace' d)} (hE: IsNull E) : LebesgueMeasurable E := by
   -- Strategy: For any ε > 0, since m*(E) = 0, get a box cover with total volume < ε,
   -- then inflate boxes to open sets. The union is open and contains E.
