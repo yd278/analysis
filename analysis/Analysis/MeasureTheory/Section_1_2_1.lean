@@ -3692,6 +3692,7 @@ example : ∃ (E: Set (EuclideanSpace' 1)), Bornology.IsBounded E ∧
 
 def AlmostDisjoint {d:ℕ} (B B': Box d) : Prop := interior B.toSet ∩ interior B'.toSet = ∅
 
+-- Helpers for theorem IsElementary.almost_disjoint
 /-- Measure is additive on unions of elementary sets with disjoint interiors: μ(E ∪ F) = μ(E) + μ(F). -/
 lemma IsElementary.measure_of_almostDisjUnion {d:ℕ} {E F: Set (EuclideanSpace' d)}
     (hE: IsElementary E) (hF: IsElementary F)
