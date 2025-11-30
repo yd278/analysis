@@ -4161,7 +4161,7 @@ theorem Lebesgue_outer_measure.union_of_almost_disjoint {d:ℕ} {B : ℕ → Box
     -- Step 3: Apply EReal.tsum_le_of_sum_range_le
     exact EReal.tsum_le_of_sum_range_le (fun n => Box.volume_nonneg (B n)) h_range_le
 
-theorem Lebesgue_outer_measure.univ {d:ℕ} : Lebesgue_outer_measure (Set.univ : Set (EuclideanSpace' d)) = ⊤ := by
+theorem Lebesgue_outer_measure.univ {d:ℕ} {hd: 0 < d} : Lebesgue_outer_measure (Set.univ : Set (EuclideanSpace' d)) = ⊤ := by
   sorry
 
 /-- Remark 1.2.10 -/
