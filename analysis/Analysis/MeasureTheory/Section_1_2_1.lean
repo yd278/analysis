@@ -4284,11 +4284,223 @@ def IsCube {d:ℕ} (B: Box d) : Prop := ∃ r, ∀ i, |B.side i|ₗ = r
 noncomputable def DyadicCube {d:ℕ} (n:ℤ) (a: Fin d → ℤ) : Box d := { side := fun i ↦ Icc (a i/2^n) ((a i + 1)/2^n) }
 
 lemma DyadicCube.isCube {d:ℕ} (n:ℤ) (a: Fin d → ℤ) : IsCube (DyadicCube n a) := by
-  sorry
+  -- All sides have length 1/2^n
+  use |2^(-n : ℤ)|
+  intro i
+  simp only [DyadicCube, BoundedInterval.length, BoundedInterval.b, BoundedInterval.a]
+  -- Show ((a i + 1)/2^n - a i/2^n) = 1/2^n
+  have h : (↑(a i) + 1) / (2:ℝ) ^ n - ↑(a i) / (2:ℝ) ^ n = (2:ℝ) ^ (-n) := by field_simp
+  rw [h]
+  simp only [max_eq_left (zpow_nonneg (by norm_num : (0:ℝ) ≤ 2) (-n))]
+  exact (abs_of_nonneg (zpow_nonneg (by norm_num : (0:ℝ) ≤ 2) (-n))).symm
 
 def Box.IsDyadicAtScale {d:ℕ} (B: Box d) (n:ℤ) : Prop := ∃ a: Fin d → ℤ, B = DyadicCube n a
 
 def Box.IsDyadic {d:ℕ} (B: Box d) : Prop := ∃ n:ℕ, B.IsDyadicAtScale n
+
+-- Helper lemmas for Lemma 1.2.11
+
+/-- The sidelength of a dyadic cube at scale n is 2^(-n). -/
+lemma DyadicCube.sidelength {d:ℕ} (n:ℤ) (a: Fin d → ℤ) (i : Fin d) :
+    |(DyadicCube n a).side i|ₗ = (2:ℝ)^(-n) := by
+  simp only [DyadicCube, BoundedInterval.length, BoundedInterval.b, BoundedInterval.a]
+  have h : (↑(a i) + 1) / (2:ℝ) ^ n - ↑(a i) / (2:ℝ) ^ n = (2:ℝ) ^ (-n) := by field_simp
+  rw [h, max_eq_left (zpow_nonneg (by norm_num : (0:ℝ) ≤ 2) (-n))]
+
+/-- Dyadic cubes at scale n ≥ 0 have sidelength at most 1. -/
+lemma DyadicCube.sidelength_le_one {d:ℕ} {n:ℕ} (a: Fin d → ℤ) (i : Fin d) :
+    |(DyadicCube (n:ℤ) a).side i|ₗ ≤ 1 := by
+  rw [DyadicCube.sidelength]
+  have h1 : (1:ℝ) ≤ 2^n := by
+    calc (1:ℝ) = 2^(0:ℕ) := by norm_num
+      _ ≤ 2^n := pow_le_pow_right₀ (by norm_num : 1 ≤ (2:ℝ)) (Nat.zero_le n)
+  calc (2:ℝ)^(-(n:ℤ)) = 1 / 2^n := by rw [zpow_neg, zpow_natCast]; ring
+    _ ≤ 1 / 1 := by apply div_le_div_of_nonneg_left (by norm_num) (by norm_num) h1
+    _ = 1 := by norm_num
+
+/-- The interior of a dyadic cube. -/
+lemma DyadicCube.interior {d:ℕ} (n:ℤ) (a: Fin d → ℤ) :
+    interior (DyadicCube n a).toSet =
+    Set.univ.pi (fun i => Set.Ioo ((a i : ℝ) / 2^n) (((a i : ℝ) + 1) / 2^n)) := by
+  simp only [Box.toSet, BoundedInterval.toSet, DyadicCube]
+  rw [interior_pi_set (Set.finite_univ)]
+  congr 1
+  ext i
+  simp only [interior_Icc]
+
+/-- Dyadic cubes at the same scale with different indices have disjoint interiors. -/
+lemma DyadicCube.almost_disjoint_same_scale {d:ℕ} {n:ℤ} {a b : Fin d → ℤ} (hab : a ≠ b) :
+    AlmostDisjoint (DyadicCube n a) (DyadicCube n b) := by
+  simp only [AlmostDisjoint]
+  rw [DyadicCube.interior, DyadicCube.interior]
+  ext x
+  simp only [Set.mem_inter_iff, Set.mem_empty_iff_false, iff_false, not_and]
+  intro ha hb
+  apply hab
+  funext i
+  have hai : x i ∈ Set.Ioo ((a i : ℝ) / 2^n) (((a i : ℝ) + 1) / 2^n) := by
+    have := ha i (Set.mem_univ i)
+    simp only [Set.mem_Ioo] at this ⊢
+    exact this
+  have hbi : x i ∈ Set.Ioo ((b i : ℝ) / 2^n) (((b i : ℝ) + 1) / 2^n) := by
+    have := hb i (Set.mem_univ i)
+    simp only [Set.mem_Ioo] at this ⊢
+    exact this
+  rw [Set.mem_Ioo] at hai hbi
+  -- Both intervals contain x i, so a i = b i
+  have h2n_pos : (0:ℝ) < 2^n := zpow_pos (by norm_num : (0:ℝ) < 2) n
+  have ha_floor : ⌊x i * 2^n⌋ = a i := by
+    apply Int.floor_eq_iff.mpr
+    constructor
+    · calc (a i : ℝ) = (a i : ℝ) / 2^n * 2^n := by field_simp
+        _ ≤ x i * 2^n := by nlinarith [hai.1]
+    · calc x i * 2^n < ((a i : ℝ) + 1) / 2^n * 2^n := by nlinarith [hai.2]
+        _ = (a i : ℝ) + 1 := by field_simp
+  have hb_floor : ⌊x i * 2^n⌋ = b i := by
+    apply Int.floor_eq_iff.mpr
+    constructor
+    · calc (b i : ℝ) = (b i : ℝ) / 2^n * 2^n := by field_simp
+        _ ≤ x i * 2^n := by nlinarith [hbi.1]
+    · calc x i * 2^n < ((b i : ℝ) + 1) / 2^n * 2^n := by nlinarith [hbi.2]
+        _ = (b i : ℝ) + 1 := by field_simp
+  exact ha_floor.symm.trans hb_floor
+
+/-- The dyadic cubes at scale n cover all of ℝᵈ. -/
+lemma DyadicCube.cover_univ {d:ℕ} (n:ℤ) :
+    (⋃ (a : Fin d → ℤ), (DyadicCube n a).toSet) = Set.univ := by
+  ext x
+  simp only [Set.mem_iUnion, Set.mem_univ, iff_true]
+  use fun i => ⌊x i * 2^n⌋
+  intro i _
+  simp only [DyadicCube, BoundedInterval.toSet, Set.mem_Icc]
+  have h2n_pos : (0:ℝ) < 2^n := zpow_pos (by norm_num : (0:ℝ) < 2) n
+  constructor
+  · have h1 : (⌊x i * 2^n⌋ : ℝ) ≤ x i * 2^n := Int.floor_le _
+    calc (⌊x i * 2^n⌋ : ℝ) / 2^n ≤ x i * 2^n / 2^n :=
+        div_le_div_of_nonneg_right h1 h2n_pos.le
+      _ = x i := by field_simp
+  · have h2 : x i * 2^n < ⌊x i * 2^n⌋ + 1 := Int.lt_floor_add_one _
+    have hle : x i < ((⌊x i * 2^n⌋ : ℝ) + 1) / 2^n := by
+      calc x i = x i * 2^n / 2^n := by field_simp
+        _ < (⌊x i * 2^n⌋ + 1) / 2^n := div_lt_div_of_pos_right h2 h2n_pos
+        _ = ((⌊x i * 2^n⌋ : ℝ) + 1) / 2^n := by ring
+    exact hle.le
+
+/-- Dyadic cubes at the same scale are pairwise almost disjoint. -/
+lemma DyadicCube.pairwise_almost_disjoint {d:ℕ} (n:ℤ) :
+    Pairwise (Function.onFun AlmostDisjoint (DyadicCube n : (Fin d → ℤ) → Box d)) := by
+  intro a b hab
+  simp only [Function.onFun]
+  exact DyadicCube.almost_disjoint_same_scale hab
+
+/-- Two dyadic cubes are either almost disjoint or one contains the other. -/
+lemma DyadicCube.nesting {d:ℕ} {n m : ℤ} {a : Fin d → ℤ} {b : Fin d → ℤ} :
+    AlmostDisjoint (DyadicCube n a) (DyadicCube m b) ∨
+    (DyadicCube n a).toSet ⊆ (DyadicCube m b).toSet ∨
+    (DyadicCube m b).toSet ⊆ (DyadicCube n a).toSet := by
+  -- Case analysis on the relationship between n and m
+  rcases lt_trichotomy n m with hn | rfl | hm
+  · -- n < m: DyadicCube n a has larger cells, check containment
+    -- At scale n, cell width is 2^(-n). At scale m > n, cell width is 2^(-m) < 2^(-n)
+    -- Either DyadicCube m b ⊆ DyadicCube n a or they're disjoint
+    right; right
+    -- The smaller cube at scale m either fits inside the larger cube at scale n or not
+    sorry
+  · -- n = m: Same scale, use almost_disjoint_same_scale or equality
+    by_cases hab : a = b
+    · subst hab
+      right; left
+      exact Set.Subset.refl _
+    · left
+      exact DyadicCube.almost_disjoint_same_scale hab
+  · -- m < n: symmetric case
+    right; left
+    sorry
+
+/-- For any point x in an open set E, there exists a dyadic cube containing x with the cube contained in E. -/
+lemma IsOpen.exists_dyadic_cube_subset {d:ℕ} {E : Set (EuclideanSpace' d)} (hE : IsOpen E)
+    {x : EuclideanSpace' d} (hx : x ∈ E) :
+    ∃ n : ℕ, ∃ a : Fin d → ℤ, x ∈ (DyadicCube (n:ℤ) a).toSet ∧
+    (DyadicCube (n:ℤ) a).toSet ⊆ E := by
+  -- Since E is open, there exists ε > 0 such that B(x, ε) ⊆ E
+  rw [Metric.isOpen_iff] at hE
+  obtain ⟨ε, hε_pos, hball⟩ := hE x hx
+  -- Choose n large enough that the dyadic cube containing x has diameter < ε
+  -- Diameter of dyadic cube at scale n is ≤ √d * 2^(-n)
+  -- We need √d * 2^(-n) < ε, i.e., √d / ε < 2^n
+  obtain ⟨n, hn⟩ := pow_unbounded_of_one_lt (Real.sqrt d / ε) (by norm_num : (1:ℝ) < 2)
+  use n
+  -- Find the dyadic cube containing x at scale n
+  let a : Fin d → ℤ := fun i => ⌊x i * 2^n⌋
+  use a
+  have h2n_pos : (0:ℝ) < 2^n := by positivity
+  constructor
+  · -- x ∈ DyadicCube n a
+    intro i _
+    simp only [DyadicCube, BoundedInterval.toSet, Set.mem_Icc]
+    constructor
+    · have h1 : (⌊x i * 2^n⌋ : ℝ) ≤ x i * 2^n := Int.floor_le _
+      have h2 := div_le_div_of_nonneg_right h1 (le_of_lt h2n_pos)
+      simp only [mul_div_cancel_right₀ _ (ne_of_gt h2n_pos)] at h2
+      exact h2
+    · have h2 : x i * 2^n < ⌊x i * 2^n⌋ + 1 := Int.lt_floor_add_one _
+      have h3 := div_lt_div_of_pos_right h2 h2n_pos
+      simp only [mul_div_cancel_right₀ _ (ne_of_gt h2n_pos)] at h3
+      exact h3.le
+  · -- DyadicCube n a ⊆ E
+    intro y hy
+    apply hball
+    simp only [Metric.mem_ball]
+    -- y is in the dyadic cube containing x, so |y i - x i| ≤ 2^(-n) for all i
+    have h2n_inv : (2:ℝ)^(-n:ℤ) = 1 / 2^n := by rw [zpow_neg, zpow_natCast]; ring
+    have h_zpow : (2:ℝ) ^ (↑n:ℤ) = 2 ^ n := zpow_natCast 2 n
+    have hyi : ∀ i, |y i - x i| ≤ 2^(-n:ℤ) := fun i => by
+      have hyi_mem := hy i (Set.mem_univ i)
+      simp only [DyadicCube, BoundedInterval.toSet, Set.mem_Icc, h_zpow] at hyi_mem
+      -- hyi_mem : ⌊x i * 2^n⌋ / 2^n ≤ y i ∧ y i ≤ (⌊x i * 2^n⌋ + 1) / 2^n
+      have hxi_floor : (⌊x i * 2^n⌋ : ℝ) / 2^n ≤ x i := by
+        have h1 := Int.floor_le (x i * 2^n)
+        have h2 := div_le_div_of_nonneg_right h1 (le_of_lt h2n_pos)
+        simp only [mul_div_cancel_right₀ _ (ne_of_gt h2n_pos)] at h2
+        exact h2
+      rw [abs_le, h2n_inv]
+      -- We need: -1/2^n ≤ y i - x i ≤ 1/2^n
+      have hbound : x i - 1 / 2^n ≤ (⌊x i * 2^n⌋ : ℝ) / 2^n := by
+        have h1 := (Int.lt_floor_add_one (x i * 2^n)).le
+        have h2 := div_le_div_of_nonneg_right h1 (le_of_lt h2n_pos)
+        simp only [mul_div_cancel_right₀ _ (ne_of_gt h2n_pos)] at h2
+        have heq : ((⌊x i * 2^n⌋ : ℝ) + 1) / 2^n = (⌊x i * 2^n⌋ : ℝ) / 2^n + 1 / 2^n := by ring
+        linarith [heq, h2]
+      have hwidth : ((⌊x i * 2^n⌋ : ℝ) + 1) / 2^n - (⌊x i * 2^n⌋ : ℝ) / 2^n = 1 / 2^n := by ring
+      -- Lower bound: floor/2^n ≤ y i and x i - 1/2^n ≤ floor/2^n, so x i - 1/2^n ≤ y i
+      refine ⟨?_, ?_⟩
+      · linarith [hyi_mem.1, hbound]
+      · -- Upper bound: y i ≤ (floor+1)/2^n and floor/2^n ≤ x i
+        -- So y i - x i ≤ (floor+1)/2^n - floor/2^n = 1/2^n
+        linarith [hyi_mem.2, hxi_floor, hwidth]
+    -- dist y x ≤ √d * 2^(-n) < ε
+    have hdist : dist y x ≤ Real.sqrt d * (2:ℝ)^(-n:ℤ) := by
+      rw [EuclideanSpace.dist_eq]
+      have hdist_eq : ∀ i, dist (y i) (x i) = |y i - x i| := fun i => Real.dist_eq (y i) (x i)
+      simp_rw [hdist_eq]
+      have hsqrt_mul : Real.sqrt d * (2:ℝ)^(-n:ℤ) = Real.sqrt (d * ((2:ℝ)^(-n:ℤ))^2) := by
+        rw [Real.sqrt_mul (by positivity : (d:ℝ) ≥ 0), Real.sqrt_sq (by positivity)]
+      rw [hsqrt_mul]
+      apply Real.sqrt_le_sqrt
+      calc ∑ i, |y i - x i|^2
+          ≤ ∑ _i : Fin d, ((2:ℝ)^(-n:ℤ))^2 := by
+            apply Finset.sum_le_sum
+            intro i _
+            have h := hyi i
+            have h2n_nn : (0:ℝ) ≤ (2:ℝ)^(-n:ℤ) := by positivity
+            exact sq_le_sq' (by nlinarith [abs_nonneg (y i - x i)]) h
+        _ = d * ((2:ℝ)^(-n:ℤ))^2 := by rw [Finset.sum_const, Finset.card_fin]; ring
+    calc dist y x ≤ Real.sqrt d * (2:ℝ)^(-n:ℤ) := hdist
+      _ = Real.sqrt d / 2^n := by rw [h2n_inv]; ring
+      _ < ε := by
+          rw [div_lt_iff₀ h2n_pos]
+          calc Real.sqrt d = Real.sqrt d / ε * ε := by field_simp
+            _ < ε * 2^n := by nlinarith [hn, hε_pos]
 
 /-- Lemma 1.2.11.  Proof has not been formalized yet. -/
 theorem IsOpen.eq_union_boxes {d:ℕ} (E: Set (EuclideanSpace' d)) (hE: IsOpen E) : ∃ B: ℕ → Box d, (E = ⋃ n, (B n).toSet) ∧ (∀ n, (B n).IsDyadic) ∧ Pairwise (Function.onFun AlmostDisjoint B) := by
