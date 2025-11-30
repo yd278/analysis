@@ -2288,19 +2288,19 @@ lemma Box.inflate {d:ℕ} (B: Box d) (δ: ℝ) (hδ: 0 < δ) :
     cases hside : (B.side i) with
     | Ioo a b =>
       have hxi := hx i (Set.mem_univ i)
-      simp only [BoundedInterval.toSet, hside, Set.mem_Ioo, BoundedInterval.a, BoundedInterval.b] at hxi ⊢
+      simp only [BoundedInterval.toSet, hside, Set.mem_Ioo] at hxi ⊢
       exact ⟨by linarith, by linarith⟩
     | Icc a b =>
       have hxi := hx i (Set.mem_univ i)
-      simp only [BoundedInterval.toSet, hside, Set.mem_Icc, BoundedInterval.a, BoundedInterval.b] at hxi ⊢
+      simp only [BoundedInterval.toSet, hside, Set.mem_Icc] at hxi ⊢
       exact ⟨by linarith, by linarith⟩
     | Ioc a b =>
       have hxi := hx i (Set.mem_univ i)
-      simp only [BoundedInterval.toSet, hside, Set.mem_Ioc, BoundedInterval.a, BoundedInterval.b] at hxi ⊢
+      simp only [BoundedInterval.toSet, hside, Set.mem_Ioc] at hxi ⊢
       exact ⟨by linarith, by linarith⟩
     | Ico a b =>
       have hxi := hx i (Set.mem_univ i)
-      simp only [BoundedInterval.toSet, hside, Set.mem_Ico, BoundedInterval.a, BoundedInterval.b] at hxi ⊢
+      simp only [BoundedInterval.toSet, hside, Set.mem_Ico] at hxi ⊢
       exact ⟨by linarith, by linarith⟩
   constructor
   · -- IsOpen (interior B'.toSet) is trivially true
@@ -4039,10 +4039,127 @@ theorem IsElementary.almost_disjoint {d k:ℕ} {E: Set (EuclideanSpace' d)} (hE:
     -- Final computation
     rw [Fin.sum_univ_castSucc, h_measure_eq, h_measure_add, hE'_measure, h_B_last_measure]
 
-/-- Lemma 1.2.9 (Outer measure of countable unions of almost disjoint boxes).  Proof has not been formalized yet. -/
+/-- Restricting pairwise almost-disjoint from ℕ to Fin N preserves the property. -/
+lemma AlmostDisjoint.restrict_fin {d : ℕ} {B : ℕ → Box d}
+    (h : Pairwise (Function.onFun AlmostDisjoint B)) (N : ℕ) :
+    Pairwise (Function.onFun AlmostDisjoint (fun i : Fin N => B i.val)) := by
+  intro i j hij
+  simp only [Function.onFun]
+  apply h
+  intro heq
+  exact hij (Fin.ext heq)
+
+/-- For nonneg Real sequences, if all partial sums are ≤ c (an EReal bound), then tsum ≤ c.
+    This is the converse direction of `EReal.finset_sum_le_tsum`. -/
+lemma EReal.tsum_le_of_sum_range_le {f : ℕ → ℝ} {c : EReal}
+    (hf : ∀ n, 0 ≤ f n) (h : ∀ N, (∑ i ∈ Finset.range N, f i : EReal) ≤ c) :
+    ∑' n, (f n).toEReal ≤ c := by
+  -- Convert to ENNReal where tsum_le_of_sum_range_le is available
+  let g : ℕ → ENNReal := fun n => ENNReal.ofReal (f n)
+  -- Show (f n).toEReal = (g n : EReal)
+  have hf_eq : ∀ n, (f n).toEReal = (g n : EReal) := fun n => by
+    simp only [g, EReal.coe_ennreal_ofReal, max_eq_left (hf n)]
+  -- Rewrite tsum using term equality
+  have h_tsum_eq : ∑' n, (f n).toEReal = (∑' n, g n : ENNReal).toEReal := by
+    have h1 : ∑' n, (f n).toEReal = ∑' n, (g n : EReal) := tsum_congr hf_eq
+    have h2 : ∑' n, (g n : EReal) = (∑' n, g n : ENNReal).toEReal := by
+      let φ : ENNReal →+ EReal := {
+        toFun := (↑·)
+        map_zero' := by simp
+        map_add' := EReal.coe_ennreal_add
+      }
+      have h_map : φ (∑' n, g n) = ∑' n, φ (g n) :=
+        Summable.map_tsum (f := g) ENNReal.summable φ continuous_coe_ennreal_ereal
+      exact h_map.symm
+    exact h1.trans h2
+  rw [h_tsum_eq]
+  -- If c = ⊤, trivially true
+  by_cases hc : c = ⊤
+  · rw [hc]; exact le_top
+  -- c ≥ 0 since it bounds nonneg partial sums
+  have hc_nn : 0 ≤ c := by
+    have h0 : (∑ i ∈ Finset.range 0, f i : EReal) ≤ c := h 0
+    simp at h0; exact h0
+  -- Get partial sum bounds in ENNReal
+  have h_enn : ∀ N, ∑ i ∈ Finset.range N, g i ≤ c.toENNReal := by
+    intro N
+    have h_sum_eq : (∑ i ∈ Finset.range N, g i : ENNReal).toEReal = (∑ i ∈ Finset.range N, f i : EReal) := by
+      rw [EReal.coe_ennreal_finset_sum]
+      exact Finset.sum_congr rfl (fun n _ => (hf_eq n).symm)
+    have h_le : (∑ i ∈ Finset.range N, g i : ENNReal).toEReal ≤ c := by rw [h_sum_eq]; exact h N
+    rw [← EReal.coe_toENNReal hc_nn] at h_le
+    exact EReal.coe_ennreal_le_coe_ennreal_iff.mp h_le
+  have h_tsum_enn : ∑' n, g n ≤ c.toENNReal := ENNReal.tsum_le_of_sum_range_le h_enn
+  -- Convert back: ↑(∑' g) ≤ ↑(c.toENNReal) and c.toENNReal.toEReal = c (when 0 ≤ c)
+  have h_coe_le : (∑' n, g n : ENNReal).toEReal ≤ (c.toENNReal).toEReal :=
+    EReal.coe_ennreal_le_coe_ennreal_iff.mpr h_tsum_enn
+  calc (∑' n, g n : ENNReal).toEReal ≤ (c.toENNReal).toEReal := h_coe_le
+    _ = c := EReal.coe_toENNReal hc_nn
+
+/-- Lemma 1.2.9 (Outer measure of countable unions of almost disjoint boxes).
+    For pairwise almost disjoint boxes, m*(⋃ Bᵢ) = ∑' m*(Bᵢ) = ∑' |Bᵢ|. -/
 theorem Lebesgue_outer_measure.union_of_almost_disjoint {d:ℕ} {B : ℕ → Box d} (h : Pairwise (Function.onFun AlmostDisjoint B)) :
     Lebesgue_outer_measure (⋃ i, (B i).toSet) = ∑' i, Lebesgue_outer_measure (B i).toSet := by
-  sorry
+  -- Simplify: m*(Bᵢ) = |Bᵢ| for each box (Lemma 1.2.6 + measure_of_box)
+  have h_box_measure : ∀ i, Lebesgue_outer_measure (B i).toSet = (B i).volume.toEReal := by
+    intro i
+    rw [Lebesgue_outer_measure.elementary _ (IsElementary.box (B i)),
+        IsElementary.measure_of_box]
+  simp_rw [h_box_measure]
+  -- The proof establishes equality by showing both ≤ and ≥
+  apply le_antisymm
+  -- Upper bound: m*(⋃ Bᵢ) ≤ ∑' |Bᵢ| by countable subadditivity
+  · calc Lebesgue_outer_measure (⋃ i, (B i).toSet)
+        ≤ ∑' i, Lebesgue_outer_measure (B i).toSet := Lebesgue_outer_measure.union_le _
+      _ = ∑' i, (B i).volume.toEReal := by simp_rw [h_box_measure]
+  -- Lower bound: ∑' |Bᵢ| ≤ m*(⋃ Bᵢ) by taking limit of finite partial sums
+  · -- For each N, the finite union ⋃ i : Fin N, (B i) is contained in ⋃ i, (B i)
+    -- So m*(⋃ i : Fin N, (B i)) ≤ m*(⋃ i, (B i)) by monotonicity
+    -- And m*(⋃ i : Fin N, (B i)) = ∑ i : Fin N, |B i| by IsElementary.almost_disjoint
+    -- Taking N → ∞ gives the result
+
+    -- Step 1: For each N, show finite partial sum ≤ outer measure
+    have h_finite_le : ∀ N : ℕ, (∑ i : Fin N, (B i.val).volume : EReal) ≤
+        Lebesgue_outer_measure (⋃ i, (B i).toSet) := by
+      intro N
+      -- The finite union is contained in the countable union
+      have h_subset : (⋃ i : Fin N, (B i.val).toSet) ⊆ (⋃ i, (B i).toSet) := by
+        apply Set.iUnion_subset
+        intro i
+        exact Set.subset_iUnion (fun n => (B n).toSet) i.val
+      -- By monotonicity: m*(finite union) ≤ m*(countable union)
+      have h_mono := Lebesgue_outer_measure.mono h_subset
+      -- The finite union is elementary (union of boxes)
+      have hElem : IsElementary (⋃ i : Fin N, (B i.val).toSet) :=
+        IsElementary.iUnion_boxes (fun i : Fin N => B i.val)
+      -- m*(finite union) = m(finite union) since it's elementary
+      have h_elem_eq : Lebesgue_outer_measure (⋃ i : Fin N, (B i.val).toSet) = hElem.measure :=
+        Lebesgue_outer_measure.elementary _ hElem
+      -- Pairwise almost disjoint for Fin N
+      have h_pw : Pairwise (Function.onFun AlmostDisjoint (fun i : Fin N => B i.val)) :=
+        AlmostDisjoint.restrict_fin h N
+      -- m(finite union) = ∑ |B i| by IsElementary.almost_disjoint
+      have h_sum_eq : hElem.measure = ∑ i : Fin N, (B i.val).volume :=
+        IsElementary.almost_disjoint hElem (fun i : Fin N => B i.val) rfl h_pw
+      have h_coe_sum : (∑ i : Fin N, (B i.val).volume : EReal) = (∑ i : Fin N, (B i.val).volume : ℝ).toEReal := by
+        rw [EReal.coe_finset_sum (fun i _ => Box.volume_nonneg (B i.val))]
+      calc (∑ i : Fin N, (B i.val).volume : EReal)
+          = ((∑ i : Fin N, (B i.val).volume : ℝ) : EReal) := h_coe_sum
+        _ = (hElem.measure : EReal) := by rw [h_sum_eq]
+        _ = Lebesgue_outer_measure (⋃ i : Fin N, (B i.val).toSet) := h_elem_eq.symm
+        _ ≤ Lebesgue_outer_measure (⋃ i, (B i).toSet) := h_mono
+
+    -- Step 2: Take limit - convert Fin N sum to Finset.range N sum and use EReal lemma
+    have h_range_le : ∀ N : ℕ, (∑ i ∈ Finset.range N, (B i).volume : EReal) ≤
+        Lebesgue_outer_measure (⋃ i, (B i).toSet) := by
+      intro N
+      have h_eq : (∑ i ∈ Finset.range N, ((B i).volume : EReal)) = (∑ i : Fin N, ((B i.val).volume : EReal)) := by
+        conv_lhs => rw [← Fin.sum_univ_eq_sum_range (fun i => ((B i).volume : EReal)) N]
+      rw [h_eq]
+      exact h_finite_le N
+
+    -- Step 3: Apply EReal.tsum_le_of_sum_range_le
+    exact EReal.tsum_le_of_sum_range_le (fun n => Box.volume_nonneg (B n)) h_range_le
 
 theorem Lebesgue_outer_measure.univ {d:ℕ} : Lebesgue_outer_measure (Set.univ : Set (EuclideanSpace' d)) = ⊤ := by
   sorry
