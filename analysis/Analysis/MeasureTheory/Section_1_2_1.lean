@@ -3692,8 +3692,182 @@ example : ∃ (E: Set (EuclideanSpace' 1)), Bornology.IsBounded E ∧
 
 def AlmostDisjoint {d:ℕ} (B B': Box d) : Prop := interior B.toSet ∩ interior B'.toSet = ∅
 
-theorem IsElementary.almost_disjoint {d k:ℕ} {E: Set (EuclideanSpace' d)} (hE: IsElementary E) (B: Fin k → Box d) (hEB: E = ⋃ i, (B i).toSet) (hdisj : Pairwise (Function.onFun AlmostDisjoint B)) : hE.measure = ∑ i, |B i|ᵥ := by
+lemma IsElementary.measure_of_almostDisjUnion {d:ℕ} {E F: Set (EuclideanSpace' d)}
+    (hE: IsElementary E) (hF: IsElementary F)
+    (h: interior E ∩ interior F = ∅) :
+    (hE.union hF).measure = hE.measure + hF.measure := by
   sorry
+
+/-- Split a Fin (n+1) indexed union into a Fin n indexed union plus the last element.
+    This is a general helper for induction on finite unions. -/
+lemma Fin.iUnion_succ_eq_union_last {α : Type*} {n : ℕ} (f : Fin (n + 1) → Set α) :
+    (⋃ i, f i) = (⋃ i : Fin n, f (Fin.castSucc i)) ∪ f (Fin.last n) := by
+  ext x
+  simp only [Set.mem_iUnion, Set.mem_union]
+  constructor
+  · intro ⟨i, hi⟩
+    by_cases hlt : (i : ℕ) < n
+    · left; exact ⟨⟨i, hlt⟩, by simp [Fin.castSucc]; exact hi⟩
+    · right
+      have : i = Fin.last n := Fin.ext (Nat.eq_of_lt_succ_of_not_lt i.isLt hlt)
+      exact this ▸ hi
+  · intro h
+    rcases h with ⟨i, hi⟩ | h
+    · exact ⟨Fin.castSucc i, hi⟩
+    · exact ⟨Fin.last n, h⟩
+
+/-- When boxes are pairwise almost-disjoint, restricting to the first n boxes preserves this. -/
+lemma AlmostDisjoint.pairwise_castSucc {d n : ℕ} {B : Fin (n + 1) → Box d}
+    (hdisj : Pairwise (Function.onFun AlmostDisjoint B)) :
+    Pairwise (Function.onFun AlmostDisjoint (fun i => B (Fin.castSucc i))) := by
+  intro i j hij
+  simp only [Function.onFun]
+  apply hdisj
+  simp [Fin.ext_iff]
+  intro heq
+  exact hij (Fin.ext heq)
+
+/-- When boxes are pairwise almost-disjoint, any of the first n is almost-disjoint from the last. -/
+lemma AlmostDisjoint.castSucc_last {d n : ℕ} {B : Fin (n + 1) → Box d}
+    (hdisj : Pairwise (Function.onFun AlmostDisjoint B)) (i : Fin n) :
+    AlmostDisjoint (B (Fin.castSucc i)) (B (Fin.last n)) := by
+  apply hdisj
+  intro heq
+  have h1 : (Fin.castSucc i).val < n := Fin.castSucc_lt_last i
+  rw [heq] at h1
+  simp at h1
+
+/-- For any box, the interior of its frontier is empty. This holds regardless of whether
+    the box uses closed intervals (Icc), open intervals (Ioo), or half-open intervals,
+    because the frontier of a box is a lower-dimensional set (union of faces). -/
+lemma Box.interior_frontier_eq_empty {d : ℕ} (B : Box d) : interior (frontier B.toSet) = ∅ := by
+  -- The frontier of a box is the set of points where at least one coordinate
+  -- lies on the boundary of its interval. This is a lower-dimensional set
+  -- (union of hyperplanes), so it has empty interior in ℝᵈ.
+  sorry
+
+/-- The interior of a finite union of box frontiers is empty. This is because each box frontier
+    is a closed set with empty interior, and we can apply `interior_union_isClosed_of_interior_empty`
+    iteratively. -/
+lemma interior_iUnion_Box_frontier_eq_empty {d n : ℕ} (B : Fin n → Box d) :
+    interior (⋃ i, frontier (B i).toSet) = ∅ := by
+  induction n with
+  | zero => simp
+  | succ m ih =>
+    rw [Fin.iUnion_succ_eq_union_last, Set.union_comm,
+        interior_union_isClosed_of_interior_empty isClosed_frontier]
+    · exact Box.interior_frontier_eq_empty (B (Fin.last m))
+    · exact ih (fun i => B (Fin.castSucc i))
+
+theorem IsElementary.almost_disjoint {d k:ℕ} {E: Set (EuclideanSpace' d)} (hE: IsElementary E) (B: Fin k → Box d) (hEB: E = ⋃ i, (B i).toSet) (hdisj : Pairwise (Function.onFun AlmostDisjoint B)) : hE.measure = ∑ i, |B i|ᵥ := by
+  induction k generalizing E with
+  | zero =>
+    -- E = ⋃ i : Fin 0, (B i).toSet = ∅, so hE.measure = 0 = ∑ i : Fin 0, ...
+    simp_all
+  | succ n ih =>
+    -- Define B' : Fin n → Box d as the first n boxes, and B_last as the last
+    let B' : Fin n → Box d := fun i => B (Fin.castSucc i)
+    let E' : Set (EuclideanSpace' d) := ⋃ i : Fin n, (B' i).toSet
+    let B_last := B (Fin.last n)
+
+    -- Split E using the helper lemma
+    have hE_split : E = E' ∪ B_last.toSet := by
+      simp only [hEB, E', B', B_last]
+      exact Fin.iUnion_succ_eq_union_last (fun i => (B i).toSet)
+
+    -- Show B' is almost disjoint using helper
+    have hdisj' : Pairwise (Function.onFun AlmostDisjoint B') :=
+      AlmostDisjoint.pairwise_castSucc hdisj
+
+    -- E' is elementary (finite union of boxes)
+    have hE'_elem : IsElementary E' := by
+      classical
+      have h_eq : E' = ⋃ E ∈ (Finset.univ : Finset (Fin n)).image (fun i => (B' i).toSet), E := by
+        ext x
+        simp only [E', Set.mem_iUnion, Finset.mem_image, Finset.mem_univ, true_and, exists_prop]
+        constructor
+        · intro ⟨i, hi⟩; exact ⟨(B' i).toSet, ⟨i, rfl⟩, hi⟩
+        · intro ⟨_, ⟨i, rfl⟩, hi⟩; exact ⟨i, hi⟩
+      rw [h_eq]
+      apply IsElementary.union'
+      intro E hE
+      simp only [Finset.mem_image, Finset.mem_univ, true_and] at hE
+      obtain ⟨i, rfl⟩ := hE
+      exact IsElementary.box _
+
+    -- Apply induction hypothesis to get measure of E'
+    have hE'_eq : E' = ⋃ i, (B' i).toSet := rfl
+    have hE'_measure : hE'_elem.measure = ∑ i : Fin n, (B' i).volume := ih hE'_elem B' hE'_eq hdisj'
+
+    -- B_last is elementary (single box)
+    have hB_last_elem : IsElementary B_last.toSet := IsElementary.box B_last
+
+    -- Each B' i is almost-disjoint from B_last using helper
+    have h_almost_disj_last : ∀ i : Fin n, AlmostDisjoint (B' i) B_last :=
+      fun i => AlmostDisjoint.castSucc_last hdisj i
+
+    -- Show interior E' ∩ interior B_last = ∅ (almost-disjoint as sets)
+    have h_interior_disj : interior E' ∩ interior B_last.toSet = ∅ := by
+      rw [← interior_inter]
+      have h_inter_eq : E' ∩ B_last.toSet = ⋃ i : Fin n, ((B' i).toSet ∩ B_last.toSet) := by
+        simp only [E', Set.iUnion_inter]
+      rw [h_inter_eq]
+      -- Prove interior of union is empty
+      apply Set.eq_empty_of_forall_notMem
+      intro y hy
+      rw [mem_interior_iff_mem_nhds] at hy
+      obtain ⟨U, hU_sub, hU_open, hy_in_U⟩ := mem_nhds_iff.mp hy
+      -- y ∈ interior B_last (since the union is contained in B_last)
+      have hy_int_Blast : y ∈ interior B_last.toSet := by
+        apply interior_mono (Set.iUnion_subset fun i => Set.inter_subset_right)
+        rw [mem_interior_iff_mem_nhds]
+        exact mem_nhds_iff.mpr ⟨U, hU_sub, hU_open, hy_in_U⟩
+      -- Define U' = U ∩ interior B_last
+      let U' := U ∩ interior B_last.toSet
+      have hU'_open : IsOpen U' := hU_open.inter isOpen_interior
+      have hU'_nonempty : U'.Nonempty := ⟨y, hy_in_U, hy_int_Blast⟩
+      -- U' ⊆ ⋃ i, frontier (B' i) (each point is in some B' i but not its interior)
+      have h_U'_in_frontier : U' ⊆ ⋃ i : Fin n, frontier (B' i).toSet := by
+        intro z ⟨hz_U, hz_int_Blast⟩
+        have hz_union : z ∈ ⋃ i : Fin n, ((B' i).toSet ∩ B_last.toSet) := hU_sub hz_U
+        simp only [Set.mem_iUnion] at hz_union ⊢
+        obtain ⟨i, hz_Bi, _⟩ := hz_union
+        use i
+        rw [frontier_eq_closure_inter_closure]
+        refine ⟨subset_closure hz_Bi, ?_⟩
+        rw [mem_closure_iff]
+        intro V hV_open hz_V
+        by_contra h_empty
+        push_neg at h_empty
+        rw [Set.eq_empty_iff_forall_not_mem] at h_empty
+        have hV_sub : V ⊆ (B' i).toSet := fun w hw => by
+          by_contra h_not_in
+          exact h_empty w ⟨hw, h_not_in⟩
+        have hz_int_Bi : z ∈ interior (B' i).toSet := by
+          rw [mem_interior_iff_mem_nhds]
+          exact Filter.mem_of_superset (hV_open.mem_nhds hz_V) hV_sub
+        have h_disj := h_almost_disj_last i
+        rw [AlmostDisjoint, Set.eq_empty_iff_forall_not_mem] at h_disj
+        exact h_disj z ⟨hz_int_Bi, hz_int_Blast⟩
+      -- Use the helper: finite union of box frontiers has empty interior
+      have h_union_empty_int : interior (⋃ i : Fin n, frontier (B' i).toSet) = ∅ :=
+        interior_iUnion_Box_frontier_eq_empty B'
+      -- U' ⊆ set with empty interior, but U' is open nonempty. Contradiction!
+      have : interior U' ⊆ interior (⋃ i : Fin n, frontier (B' i).toSet) := interior_mono h_U'_in_frontier
+      rw [h_union_empty_int] at this
+      exact Set.not_nonempty_empty ((Set.eq_empty_of_subset_empty this).symm ▸ (hU'_open.interior_eq ▸ hU'_nonempty))
+
+    -- Apply measure additivity for almost-disjoint sets
+    have h_union_elem : IsElementary (E' ∪ B_last.toSet) := hE'_elem.union hB_last_elem
+    have h_measure_add : h_union_elem.measure = hE'_elem.measure + hB_last_elem.measure :=
+      IsElementary.measure_of_almostDisjUnion hE'_elem hB_last_elem h_interior_disj
+    have h_measure_eq : hE.measure = h_union_elem.measure :=
+      IsElementary.measure_eq_of_set_eq hE h_union_elem hE_split
+    have h_B_last_measure : hB_last_elem.measure = B_last.volume :=
+      IsElementary.measure_of_box B_last
+
+    -- Final computation
+    rw [Fin.sum_univ_castSucc, h_measure_eq, h_measure_add, hE'_measure, h_B_last_measure]
 
 /-- Lemma 1.2.9 (Outer measure of countable unions of almost disjoint boxes).  Proof has not been formalized yet. -/
 theorem Lebesgue_outer_measure.union_of_almost_disjoint {d:ℕ} {B : ℕ → Box d} (h : Pairwise (Function.onFun AlmostDisjoint B)) :
