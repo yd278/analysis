@@ -4162,7 +4162,113 @@ theorem Lebesgue_outer_measure.union_of_almost_disjoint {d:ℕ} {B : ℕ → Box
     exact EReal.tsum_le_of_sum_range_le (fun n => Box.volume_nonneg (B n)) h_range_le
 
 theorem Lebesgue_outer_measure.univ {d:ℕ} {hd: 0 < d} : Lebesgue_outer_measure (Set.univ : Set (EuclideanSpace' d)) = ⊤ := by
-  sorry
+  -- Strategy: Show m*(univ) ≥ N for any N by taking N disjoint unit boxes, hence m*(univ) = ⊤
+
+  -- Define unit box at integer lattice point a
+  let UnitBox : (Fin d → ℤ) → Box d := fun a => { side := fun i => Icc (a i : ℝ) ((a i : ℝ) + 1) }
+
+  -- Each unit box has volume 1
+  have h_vol : ∀ a : Fin d → ℤ, (UnitBox a).volume = 1 := by
+    intro a
+    simp only [Box.volume, UnitBox]
+    simp only [BoundedInterval.length, BoundedInterval.b, BoundedInterval.a]
+    simp only [add_sub_cancel_left]
+    simp only [max_eq_left (by norm_num : (0:ℝ) ≤ 1)]
+    simp only [Finset.prod_const_one]
+
+  -- Unit boxes at different lattice points have disjoint interiors
+  have h_almost_disj : ∀ a b : Fin d → ℤ, a ≠ b → AlmostDisjoint (UnitBox a) (UnitBox b) := by
+    intro a b hab
+    simp only [AlmostDisjoint]
+    -- Interior of Icc-box is Ioo-box
+    have h_int : ∀ c : Fin d → ℤ, interior (UnitBox c).toSet =
+        Set.univ.pi (fun i => Set.Ioo (c i : ℝ) ((c i : ℝ) + 1)) := by
+      intro c
+      simp only [Box.toSet, BoundedInterval.toSet, UnitBox]
+      rw [interior_pi_set (Set.finite_univ)]
+      congr 1
+      ext i
+      simp only [interior_Icc]
+    rw [h_int a, h_int b]
+    ext x
+    simp only [Set.mem_inter_iff, Set.mem_empty_iff_false, iff_false, not_and]
+    intro ha hb
+    apply hab
+    funext i
+    -- ha says: ∀ j ∈ univ, x j ∈ Ioo (a j) (a j + 1)
+    -- So for coordinate i: a i < x i < a i + 1, meaning ⌊x i⌋ = a i
+    have hai : x i ∈ Set.Ioo (a i : ℝ) ((a i : ℝ) + 1) := by
+      have := ha i (Set.mem_univ i)
+      simp only [Set.mem_Ioo] at this ⊢
+      exact this
+    have hbi : x i ∈ Set.Ioo (b i : ℝ) ((b i : ℝ) + 1) := by
+      have := hb i (Set.mem_univ i)
+      simp only [Set.mem_Ioo] at this ⊢
+      exact this
+    rw [Set.mem_Ioo] at hai hbi
+    have ha_floor : (⌊x i⌋ : ℤ) = a i := by
+      apply Int.floor_eq_iff.mpr
+      constructor
+      · exact_mod_cast hai.1.le
+      · exact_mod_cast hai.2
+    have hb_floor : (⌊x i⌋ : ℤ) = b i := by
+      apply Int.floor_eq_iff.mpr
+      constructor
+      · exact_mod_cast hbi.1.le
+      · exact_mod_cast hbi.2
+    exact ha_floor.symm.trans hb_floor
+
+  -- For any N, take N disjoint unit boxes (all with first coordinate 0,..,N-1, rest 0)
+  have h_arb_large : ∀ N : ℕ, (N : EReal) ≤ Lebesgue_outer_measure (Set.univ : Set (EuclideanSpace' d)) := by
+    intro N
+    -- Define N unit boxes at (0,0,...), (1,0,...), ..., (N-1,0,...)
+    let pts : Fin N → (Fin d → ℤ) := fun n => fun i =>
+      if i = ⟨0, hd⟩ then (n : ℤ) else 0
+    -- These points are all distinct
+    have h_pts_inj : Function.Injective pts := by
+      intro m n hmn
+      have : pts m ⟨0, hd⟩ = pts n ⟨0, hd⟩ := by rw [hmn]
+      simp only [pts, ↓reduceIte] at this
+      exact Fin.ext (Int.ofNat_injective this)
+    -- The union of these N unit boxes is contained in univ
+    have h_subset : (⋃ n : Fin N, (UnitBox (pts n)).toSet) ⊆ Set.univ := Set.subset_univ _
+    -- By monotonicity
+    -- The boxes are pairwise almost disjoint
+    have h_pw : Pairwise (Function.onFun AlmostDisjoint (fun n : Fin N => UnitBox (pts n))) := by
+      intro i j hij
+      simp only [Function.onFun]
+      apply h_almost_disj
+      intro heq
+      exact hij (h_pts_inj heq)
+    -- Apply IsElementary.almost_disjoint for finite unions
+    have hElem : IsElementary (⋃ n : Fin N, (UnitBox (pts n)).toSet) :=
+      IsElementary.iUnion_boxes (fun n => UnitBox (pts n))
+
+    -- N = ∑ |UnitBox| because each has volume 1
+    have h_sum_vol : (∑ n : Fin N, (UnitBox (pts n)).volume) = N := by
+      simp only [h_vol, Finset.sum_const, Finset.card_fin, nsmul_eq_mul, mul_one]
+
+    -- ∑ volumes = measure of union (by IsElementary.almost_disjoint)
+    have h_elem_eq : hElem.measure = ∑ n : Fin N, (UnitBox (pts n)).volume :=
+      IsElementary.almost_disjoint hElem (fun n => UnitBox (pts n)) rfl h_pw
+
+    calc (N : EReal)
+        = ((N : ℕ) : ℝ) := (EReal.coe_coe_eq_natCast N).symm
+      _ = ↑(∑ n : Fin N, (UnitBox (pts n)).volume) := by rw [h_sum_vol]
+      _ = ↑hElem.measure := by rw [h_elem_eq]
+      _ = Lebesgue_outer_measure (⋃ n : Fin N, (UnitBox (pts n)).toSet) := by
+          rw [← Lebesgue_outer_measure.elementary _ hElem]
+      _ ≤ Lebesgue_outer_measure (Set.univ : Set (EuclideanSpace' d)) :=
+          Lebesgue_outer_measure.mono h_subset
+
+  -- Since m*(univ) ≥ N for all N, we have m*(univ) = ⊤
+  rw [EReal.eq_top_iff_forall_lt]
+  intro r
+  -- Find N > r
+  obtain ⟨N, hN⟩ := exists_nat_gt r
+  calc (r : EReal) < (N : ℝ) := EReal.coe_lt_coe hN
+    _ = (N : EReal) := EReal.coe_coe_eq_natCast N
+    _ ≤ Lebesgue_outer_measure (Set.univ : Set (EuclideanSpace' d)) := h_arb_large N
 
 /-- Remark 1.2.10 -/
 theorem Box.sum_volume_eq {d:ℕ} (B B': ℕ → Box d) (hdisj: Pairwise (Function.onFun AlmostDisjoint B)) (hdisj': Pairwise (Function.onFun AlmostDisjoint B)) (hcover: (⋃ n, (B n).toSet) = (⋃ n, (B' n).toSet)) :
