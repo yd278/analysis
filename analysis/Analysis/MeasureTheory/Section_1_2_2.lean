@@ -36,7 +36,160 @@ abbrev IsNull {d:ℕ} (E: Set (EuclideanSpace' d)) : Prop := Lebesgue_outer_meas
 
 /-- Lemma 1.2.13(iii) (Every null set is Lebesgue measurable).  This lemma requires proof. -/
 theorem IsNull.measurable {d:ℕ} {E: Set (EuclideanSpace' d)} (hE: IsNull E) : LebesgueMeasurable E := by
-  sorry
+  -- Strategy: For any ε > 0, since m*(E) = 0, get a box cover with total volume < ε,
+  -- then inflate boxes to open sets. The union is open and contains E.
+  intro ε hε
+  -- Handle dimension 0 separately
+  by_cases hd : d = 0
+  · -- In dimension 0, EuclideanSpace' 0 is a single point.
+    -- Since m*(E) = 0 and m*(univ) = 1 for nonempty sets in d=0, E must be empty.
+    -- Use U = E = ∅, which is open, E ⊆ U, and U \ E = ∅ has measure 0.
+    subst hd
+    -- In d=0: m*(E) = if E.Nonempty then 1 else 0
+    -- hE : IsNull E is an abbrev for Lebesgue_outer_measure E = 0
+    have hE' : Lebesgue_outer_measure E = 0 := hE
+    rw [Lebesgue_outer_measure_of_dim_zero] at hE'
+    simp only [ite_eq_right_iff, one_ne_zero] at hE'
+    -- hE' : E.Nonempty → False, i.e., E = ∅
+    have hE_empty : E = ∅ := Set.not_nonempty_iff_eq_empty.mp hE'
+    use ∅
+    refine ⟨isOpen_empty, ?_, ?_⟩
+    · rw [hE_empty]
+    · simp only [Set.empty_diff]
+      rw [Lebesgue_outer_measure.of_empty]
+      exact le_of_lt hε
+  -- Now d > 0
+  push_neg at hd
+  have hd_pos : 0 < d := Nat.pos_of_ne_zero hd
+  -- m*(E) = 0 implies m*(E) ≠ ⊤
+  have h_finite : Lebesgue_outer_measure E ≠ ⊤ := by rw [hE]; exact EReal.zero_ne_top
+  -- Convert EReal ε to a real number
+  -- Since ε > 0, get a real ε' with 0 < ε' and ε' ≤ ε
+  obtain ⟨ε', hε'_pos, hε'_le⟩ : ∃ ε' : ℝ, 0 < ε' ∧ (ε' : EReal) ≤ ε := by
+    cases ε with
+    | bot => exact absurd hε (not_lt.mpr bot_le)
+    | top => exact ⟨1, one_pos, le_top⟩
+    | coe r =>
+      have hr : 0 < r := EReal.coe_pos.mp hε
+      exact ⟨r, hr, le_refl _⟩
+  -- Get an ε'/2-close box cover
+  have hε2_pos : 0 < ε' / 2 := by linarith
+  obtain ⟨S, hS_cover, hS_vol⟩ := Lebesgue_outer_measure.exists_cover_close hd_pos E (ε' / 2) hε2_pos h_finite
+  -- hS_vol : ∑' n, (S n).volume.toEReal ≤ m*(E) + ε'/2 = 0 + ε'/2 = ε'/2
+  rw [hE] at hS_vol
+  simp only [zero_add] at hS_vol
+  -- Inflate each box to get an open set containing it
+  -- Use δₙ = ε' / 2^(n+2) so that ∑ δₙ = ε'/2
+  let δ : ℕ → ℝ := fun n => ε' / 2 / 2 ^ (n + 1)
+  have hδ_pos : ∀ n, 0 < δ n := fun n => by simp only [δ]; positivity
+  -- Get inflated boxes using Box.inflate
+  have h_inflate := fun n => Box.inflate (S n) (δ n) (hδ_pos n)
+  choose U' hU'_subset hU'_open hU'_vol using h_inflate
+  -- Define U as union of interiors of inflated boxes
+  let U := ⋃ n, interior (U' n).toSet
+  use U
+  constructor
+  · -- U is open (union of open sets)
+    exact isOpen_iUnion (fun n => isOpen_interior)
+  constructor
+  · -- E ⊆ U
+    calc E ⊆ ⋃ n, (S n).toSet := hS_cover
+         _ ⊆ ⋃ n, interior (U' n).toSet := Set.iUnion_mono (fun n => hU'_subset n)
+  · -- m*(U \ E) ≤ ε
+    -- Key bounds: m*(U \ E) ≤ m*(U) ≤ ∑ |U' n|ᵥ ≤ ∑ (|S n|ᵥ + δ n) ≤ ε'/2 + ε'/2 = ε' ≤ ε
+    have h1 : Lebesgue_outer_measure (U \ E) ≤ Lebesgue_outer_measure U :=
+      Lebesgue_outer_measure.mono Set.diff_subset
+    have h2 : Lebesgue_outer_measure U ≤ ∑' n, Lebesgue_outer_measure (interior (U' n).toSet) := by
+      have : U = ⋃ n, interior (U' n).toSet := rfl
+      rw [this]
+      exact Lebesgue_outer_measure.union_le _
+    -- Each interior has measure ≤ box volume
+    have h3 : ∀ n, Lebesgue_outer_measure (interior (U' n).toSet) ≤ (U' n).volume.toEReal := by
+      intro n
+      calc Lebesgue_outer_measure (interior (U' n).toSet)
+          ≤ Lebesgue_outer_measure (U' n).toSet := Lebesgue_outer_measure.mono interior_subset
+        _ = (IsElementary.box (U' n)).measure.toEReal := by
+            rw [Lebesgue_outer_measure.elementary _ (IsElementary.box _)]
+        _ = (U' n).volume.toEReal := by rw [IsElementary.measure_of_box]
+    -- Each inflated box volume ≤ original + δ
+    have h4 : ∀ n, (U' n).volume.toEReal ≤ ((S n).volume + δ n).toEReal := by
+      intro n
+      exact EReal.coe_le_coe_iff.mpr (hU'_vol n)
+    -- The sum splits: ∑ (|S n|ᵥ + δ n) = ∑ |S n|ᵥ + ∑ δ n ≤ ε'/2 + ε'/2 = ε' ≤ ε
+    have hδ_sum : ∑' n, (δ n : ℝ) = ε' / 2 := by
+      simp only [δ, div_div]
+      have h := tsum_geometric_two' (ε' / 2)
+      convert h using 1
+      congr 1
+      ext n
+      ring_nf
+    -- Combine the bounds to show m*(U \ E) ≤ ε' ≤ ε
+    -- Strategy:
+    -- m*(U\E) ≤ m*(U) ≤ ∑ m*(interior U'_n) ≤ ∑ vol(U'_n) ≤ ∑ (vol(S_n) + δ_n)
+    --         ≤ ∑ vol(S_n) + ∑ δ_n ≤ ε'/2 + ε'/2 = ε' ≤ ε
+    -- The key steps use h1, h2, h3, h4, hS_vol, hδ_sum, hε'_le
+    have h_sum_le : ∑' n, Lebesgue_outer_measure (interior (U' n).toSet) ≤ ε' := by
+      -- Each interior measure ≤ vol(U' n) ≤ vol(S n) + δ n
+      -- Sum: ∑ vol(S n) ≤ ε'/2, ∑ δ n = ε'/2, so total ≤ ε'
+      -- First show δ is summable (geometric series)
+      have hδ_summable : Summable δ := by
+        simp only [δ, div_div]
+        exact (summable_geometric_two' (ε' / 2)).congr (fun n => by ring_nf)
+      -- Show volumes are summable (from the bound hS_vol)
+      have hvol_nonneg : ∀ n, 0 ≤ (S n).volume := fun n => Box.volume_nonneg _
+      have hvol_sum : Summable (fun n => (S n).volume) := by
+        -- Key: use that the partial sums in EReal are bounded
+        have h_partial_bound : ∀ t : Finset ℕ, (∑ n ∈ t, (S n).volume : EReal) ≤ ε' / 2 := by
+          intro t
+          calc (∑ n ∈ t, (S n).volume : EReal)
+              ≤ ∑' n, ((S n).volume : EReal) := EReal.finset_sum_le_tsum hvol_nonneg t
+            _ ≤ ε' / 2 := hS_vol
+        -- In ℝ: partial sums bounded implies summable for nonneg sequences
+        have h_partial_real : ∀ t : Finset ℕ, ∑ n ∈ t, (S n).volume ≤ ε' / 2 := by
+          intro t
+          have h := h_partial_bound t
+          have h_coe : (∑ n ∈ t, (S n).volume : EReal) = ↑(∑ n ∈ t, (S n).volume) :=
+            (EReal.coe_finset_sum (fun n _ => hvol_nonneg n)).symm
+          rw [h_coe] at h; exact EReal.coe_le_coe_iff.mp h
+        exact summable_of_sum_le hvol_nonneg h_partial_real
+      have hsum_combined : Summable (fun n => (S n).volume + δ n) := hvol_sum.add hδ_summable
+      -- Use transitivity through ε' bound:
+      -- ∑ m*(interior U'_n) ≤ ∑ vol(U'_n) ≤ ∑ (vol S_n + δ_n) = ∑ vol S_n + ∑ δ_n ≤ ε'/2 + ε'/2 = ε'
+      have h_interior_bound : ∀ n, Lebesgue_outer_measure (interior (U' n).toSet) ≤ ((S n).volume + δ n : EReal) := by
+        intro n
+        calc Lebesgue_outer_measure (interior (U' n).toSet)
+            ≤ (U' n).volume.toEReal := h3 n
+          _ ≤ ((S n).volume + δ n).toEReal := h4 n
+          _ = ((S n).volume + δ n : EReal) := rfl
+      -- Sum bound: use EReal.tsum_le_coe_tsum_of_forall_le
+      have hg_nonneg : ∀ n, 0 ≤ (S n).volume + δ n := fun n => by linarith [hvol_nonneg n, hδ_pos n]
+      have h_tsum_bound : ∑' n, Lebesgue_outer_measure (interior (U' n).toSet) ≤ ∑' n, ((S n).volume + δ n : EReal) :=
+        EReal.tsum_le_coe_tsum_of_forall_le (fun n => Lebesgue_outer_measure.nonneg _)
+          hg_nonneg hsum_combined h_interior_bound
+      -- Key equality: tsums in EReal with coercion can be rewritten
+      have h_tsum_eq : ∑' n, (↑(S n).volume + ↑(δ n) : EReal) = ↑(∑' n, ((S n).volume + δ n)) := by
+        have h1 : ∑' n, (↑(S n).volume + ↑(δ n) : EReal) = ∑' n, ↑((S n).volume + δ n) := by
+          apply tsum_congr
+          intro n; exact (EReal.coe_add _ _).symm
+        have h2 : ∑' n, (↑((S n).volume + δ n) : EReal) = ↑(∑' n, ((S n).volume + δ n)) :=
+          (EReal.coe_tsum_of_nonneg hg_nonneg hsum_combined).symm
+        rw [h1, h2]
+      calc ∑' n, Lebesgue_outer_measure (interior (U' n).toSet)
+          ≤ ∑' n, (↑(S n).volume + ↑(δ n) : EReal) := h_tsum_bound
+        _ = ↑(∑' n, ((S n).volume + δ n)) := h_tsum_eq
+        _ = ↑(∑' n, (S n).volume + ∑' n, δ n) := by rw [hvol_sum.tsum_add hδ_summable]
+        _ = ↑(∑' n, (S n).volume) + ↑(∑' n, δ n) := by rw [EReal.coe_add]
+        _ ≤ ↑(ε' / 2) + ↑(ε' / 2) := by
+            apply add_le_add
+            · have := EReal.coe_tsum_of_nonneg hvol_nonneg hvol_sum
+              rw [this]; exact hS_vol
+            · rw [hδ_sum]
+        _ = ε' := by rw [← EReal.coe_add]; norm_cast; ring
+    calc Lebesgue_outer_measure (U \ E)
+        ≤ Lebesgue_outer_measure U := h1
+      _ ≤ ∑' n, Lebesgue_outer_measure (interior (U' n).toSet) := h2
+      _ ≤ ε' := h_sum_le
+      _ ≤ ε := hε'_le
 
 /-- Lemma 1.2.13(iv) (Empty set is measurable). This lemma requires proof.  -/
 theorem LebesgueMeasurable.empty {d:ℕ} : LebesgueMeasurable (∅: Set (EuclideanSpace' d)) :=
