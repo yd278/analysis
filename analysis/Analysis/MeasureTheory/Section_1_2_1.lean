@@ -4400,12 +4400,105 @@ lemma DyadicCube.nesting {d:ℕ} {n m : ℤ} {a : Fin d → ℤ} {b : Fin d → 
     (DyadicCube m b).toSet ⊆ (DyadicCube n a).toSet := by
   -- Case analysis on the relationship between n and m
   rcases lt_trichotomy n m with hn | rfl | hm
-  · -- n < m: DyadicCube n a has larger cells, check containment
-    -- At scale n, cell width is 2^(-n). At scale m > n, cell width is 2^(-m) < 2^(-n)
-    -- Either DyadicCube m b ⊆ DyadicCube n a or they're disjoint
-    right; right
-    -- The smaller cube at scale m either fits inside the larger cube at scale n or not
-    sorry
+  · -- n < m: The cube at scale m has smaller cells (2^(-m) < 2^(-n))
+    -- Either DyadicCube m b ⊆ DyadicCube n a (if b is in the right position) or almost disjoint
+    -- Check if DyadicCube m b ⊆ DyadicCube n a by checking containment of intervals
+    by_cases h_subset : ∀ i, (a i : ℝ) / 2^n ≤ (b i : ℝ) / 2^m ∧ ((b i : ℝ) + 1) / 2^m ≤ ((a i : ℝ) + 1) / 2^n
+    · -- DyadicCube m b ⊆ DyadicCube n a
+      right; right
+      intro x hx i hi
+      simp only [DyadicCube, BoundedInterval.toSet, Set.mem_Icc] at hx ⊢
+      have hxi := hx i hi
+      exact ⟨le_trans (h_subset i).1 hxi.1, le_trans hxi.2 (h_subset i).2⟩
+    · -- Not contained, so they are almost disjoint
+      left
+      push_neg at h_subset
+      obtain ⟨i, hi⟩ := h_subset
+      simp only [AlmostDisjoint, DyadicCube.interior]
+      ext x
+      simp only [Set.mem_inter_iff, Set.mem_empty_iff_false, iff_false, not_and]
+      intro ha hb
+      have hai := ha i (Set.mem_univ i)
+      have hbi := hb i (Set.mem_univ i)
+      have h2n_pos : (0:ℝ) < 2^n := zpow_pos (by norm_num : (0:ℝ) < 2) n
+      have h2m_pos : (0:ℝ) < 2^m := zpow_pos (by norm_num : (0:ℝ) < 2) m
+      have h_mn_pos : 0 < m - n := Int.sub_pos_of_lt hn
+      have h_zpow_eq : (2:ℝ)^(m-n) * 2^n = 2^m := by
+        rw [← zpow_add₀ (by norm_num : (2:ℝ) ≠ 0)]
+        congr 1
+        omega
+      -- hi says: if a_i/2^n ≤ b_i/2^m then (a_i+1)/2^n < (b_i+1)/2^m
+      -- Case 1: a_i/2^n > b_i/2^m (the hypothesis of hi fails)
+      -- Case 2: a_i/2^n ≤ b_i/2^m but (a_i+1)/2^n < (b_i+1)/2^m (hi applies)
+      by_cases h_left : (b i : ℝ) / 2^m < (a i : ℝ) / 2^n
+      · -- b_i/2^m < a_i/2^n: left endpoint of b is before left endpoint of a
+        by_cases h_disj : ((b i : ℝ) + 1) / 2^m ≤ (a i : ℝ) / 2^n
+        · -- Intervals (b_i/2^m, (b_i+1)/2^m) and (a_i/2^n, (a_i+1)/2^n) don't overlap
+          linarith [hai.1, hbi.2]
+        · -- Intervals overlap: b_i/2^m < a_i/2^n < (b_i+1)/2^m
+          push_neg at h_disj
+          -- a_i * 2^(m-n) lies strictly between b_i and b_i+1
+          -- But a_i * 2^(m-n) is an integer (since m > n implies m-n > 0)
+          have hlo : (b i : ℝ) < (a i : ℝ) * 2^(m-n) := by
+            have h1 : (b i : ℝ) / 2^m * 2^m < (a i : ℝ) / 2^n * 2^m := by nlinarith
+            simp only [div_mul_cancel₀ _ (ne_of_gt h2m_pos)] at h1
+            calc (b i : ℝ) < (a i : ℝ) / 2^n * 2^m := h1
+              _ = (a i : ℝ) * (2^m / 2^n) := by ring
+              _ = (a i : ℝ) * 2^(m-n) := by rw [← zpow_sub₀ (by norm_num : (2:ℝ) ≠ 0)]
+          have hhi : (a i : ℝ) * 2^(m-n) < (b i : ℝ) + 1 := by
+            have h1 : (a i : ℝ) / 2^n * 2^m < ((b i : ℝ) + 1) / 2^m * 2^m := by nlinarith
+            simp only [div_mul_cancel₀ _ (ne_of_gt h2m_pos)] at h1
+            calc (a i : ℝ) * 2^(m-n) = (a i : ℝ) * (2^m / 2^n) := by
+                    rw [← zpow_sub₀ (by norm_num : (2:ℝ) ≠ 0)]
+              _ = (a i : ℝ) / 2^n * 2^m := by ring
+              _ < (b i : ℝ) + 1 := h1
+          -- a_i * 2^(m-n) is an integer in (b_i, b_i+1), contradiction
+          have h_int : ∃ k : ℤ, (a i : ℝ) * 2^(m-n) = k := by
+            have h_pos_exp : ∃ p : ℕ, m - n = p ∧ 0 < p := ⟨(m-n).toNat, (Int.toNat_of_nonneg (le_of_lt h_mn_pos)).symm, by omega⟩
+            obtain ⟨p, hp, _⟩ := h_pos_exp
+            use a i * 2^p
+            simp only [Int.cast_mul, Int.cast_pow, Int.cast_ofNat]
+            congr 1
+            rw [hp, zpow_natCast]
+          obtain ⟨k, hk⟩ := h_int
+          rw [hk] at hlo hhi
+          have : (b i : ℤ) < k ∧ k < b i + 1 := ⟨by exact_mod_cast hlo, by exact_mod_cast hhi⟩
+          omega
+      · -- ¬(b_i/2^m < a_i/2^n), so a_i/2^n ≤ b_i/2^m
+        push_neg at h_left
+        -- By hi: (a_i+1)/2^n < (b_i+1)/2^m
+        have h_right := hi h_left
+        by_cases h_disj : ((a i : ℝ) + 1) / 2^n ≤ (b i : ℝ) / 2^m
+        · -- Intervals don't overlap
+          linarith [hai.2, hbi.1]
+        · -- Intervals overlap: b_i/2^m < (a_i+1)/2^n < (b_i+1)/2^m
+          push_neg at h_disj
+          -- (a_i+1) * 2^(m-n) lies strictly between b_i and b_i+1
+          have hlo : (b i : ℝ) < ((a i : ℝ) + 1) * 2^(m-n) := by
+            have h1 : (b i : ℝ) / 2^m * 2^m < ((a i : ℝ) + 1) / 2^n * 2^m := by nlinarith
+            simp only [div_mul_cancel₀ _ (ne_of_gt h2m_pos)] at h1
+            calc (b i : ℝ) < ((a i : ℝ) + 1) / 2^n * 2^m := h1
+              _ = ((a i : ℝ) + 1) * (2^m / 2^n) := by ring
+              _ = ((a i : ℝ) + 1) * 2^(m-n) := by rw [← zpow_sub₀ (by norm_num : (2:ℝ) ≠ 0)]
+          have hhi : ((a i : ℝ) + 1) * 2^(m-n) < (b i : ℝ) + 1 := by
+            have h1 : ((a i : ℝ) + 1) / 2^n * 2^m < ((b i : ℝ) + 1) / 2^m * 2^m := by nlinarith
+            simp only [div_mul_cancel₀ _ (ne_of_gt h2m_pos)] at h1
+            calc ((a i : ℝ) + 1) * 2^(m-n) = ((a i : ℝ) + 1) * (2^m / 2^n) := by
+                    rw [← zpow_sub₀ (by norm_num : (2:ℝ) ≠ 0)]
+              _ = ((a i : ℝ) + 1) / 2^n * 2^m := by ring
+              _ < (b i : ℝ) + 1 := h1
+          -- (a_i+1) * 2^(m-n) is an integer in (b_i, b_i+1), contradiction
+          have h_int : ∃ k : ℤ, ((a i : ℝ) + 1) * 2^(m-n) = k := by
+            have h_pos_exp : ∃ p : ℕ, m - n = p ∧ 0 < p := ⟨(m-n).toNat, (Int.toNat_of_nonneg (le_of_lt h_mn_pos)).symm, by omega⟩
+            obtain ⟨p, hp, _⟩ := h_pos_exp
+            use (a i + 1) * 2^p
+            simp only [Int.cast_mul, Int.cast_pow, Int.cast_ofNat, Int.cast_add, Int.cast_one]
+            congr 1
+            rw [hp, zpow_natCast]
+          obtain ⟨k, hk⟩ := h_int
+          rw [hk] at hlo hhi
+          have : (b i : ℤ) < k ∧ k < b i + 1 := ⟨by exact_mod_cast hlo, by exact_mod_cast hhi⟩
+          omega
   · -- n = m: Same scale, use almost_disjoint_same_scale or equality
     by_cases hab : a = b
     · subst hab
@@ -4413,9 +4506,97 @@ lemma DyadicCube.nesting {d:ℕ} {n m : ℤ} {a : Fin d → ℤ} {b : Fin d → 
       exact Set.Subset.refl _
     · left
       exact DyadicCube.almost_disjoint_same_scale hab
-  · -- m < n: symmetric case
-    right; left
-    sorry
+  · -- m < n: The cube at scale n has smaller cells (2^(-n) < 2^(-m))
+    -- Either DyadicCube n a ⊆ DyadicCube m b (if a is in the right position) or almost disjoint
+    by_cases h_subset : ∀ i, (b i : ℝ) / 2^m ≤ (a i : ℝ) / 2^n ∧ ((a i : ℝ) + 1) / 2^n ≤ ((b i : ℝ) + 1) / 2^m
+    · -- DyadicCube n a ⊆ DyadicCube m b
+      right; left
+      intro x hx i hi
+      simp only [DyadicCube, BoundedInterval.toSet, Set.mem_Icc] at hx ⊢
+      have hxi := hx i hi
+      exact ⟨le_trans (h_subset i).1 hxi.1, le_trans hxi.2 (h_subset i).2⟩
+    · -- Not contained, so they are almost disjoint
+      left
+      push_neg at h_subset
+      obtain ⟨i, hi⟩ := h_subset
+      simp only [AlmostDisjoint, DyadicCube.interior]
+      ext x
+      simp only [Set.mem_inter_iff, Set.mem_empty_iff_false, iff_false, not_and]
+      intro ha hb
+      have hai := ha i (Set.mem_univ i)
+      have hbi := hb i (Set.mem_univ i)
+      have h2n_pos : (0:ℝ) < 2^n := zpow_pos (by norm_num : (0:ℝ) < 2) n
+      have h2m_pos : (0:ℝ) < 2^m := zpow_pos (by norm_num : (0:ℝ) < 2) m
+      have h_nm_pos : 0 < n - m := Int.sub_pos_of_lt hm
+      -- hi says: if b_i/2^m ≤ a_i/2^n then (a_i+1)/2^n > (b_i+1)/2^m
+      by_cases h_left : (a i : ℝ) / 2^n < (b i : ℝ) / 2^m
+      · -- a_i/2^n < b_i/2^m: left endpoint of a is before left endpoint of b
+        by_cases h_disj : ((a i : ℝ) + 1) / 2^n ≤ (b i : ℝ) / 2^m
+        · -- Intervals don't overlap
+          linarith [hai.2, hbi.1]
+        · -- Intervals overlap: a_i/2^n < b_i/2^m < (a_i+1)/2^n
+          push_neg at h_disj
+          -- b_i * 2^(n-m) lies strictly between a_i and a_i+1
+          have hlo : (a i : ℝ) < (b i : ℝ) * 2^(n-m) := by
+            have h1 : (a i : ℝ) / 2^n * 2^n < (b i : ℝ) / 2^m * 2^n := by nlinarith
+            simp only [div_mul_cancel₀ _ (ne_of_gt h2n_pos)] at h1
+            calc (a i : ℝ) < (b i : ℝ) / 2^m * 2^n := h1
+              _ = (b i : ℝ) * (2^n / 2^m) := by ring
+              _ = (b i : ℝ) * 2^(n-m) := by rw [← zpow_sub₀ (by norm_num : (2:ℝ) ≠ 0)]
+          have hhi : (b i : ℝ) * 2^(n-m) < (a i : ℝ) + 1 := by
+            have h1 : (b i : ℝ) / 2^m * 2^n < ((a i : ℝ) + 1) / 2^n * 2^n := by nlinarith
+            simp only [div_mul_cancel₀ _ (ne_of_gt h2n_pos)] at h1
+            calc (b i : ℝ) * 2^(n-m) = (b i : ℝ) * (2^n / 2^m) := by
+                    rw [← zpow_sub₀ (by norm_num : (2:ℝ) ≠ 0)]
+              _ = (b i : ℝ) / 2^m * 2^n := by ring
+              _ < (a i : ℝ) + 1 := h1
+          -- b_i * 2^(n-m) is an integer in (a_i, a_i+1), contradiction
+          have h_int : ∃ k : ℤ, (b i : ℝ) * 2^(n-m) = k := by
+            have h_pos_exp : ∃ p : ℕ, n - m = p ∧ 0 < p := ⟨(n-m).toNat, (Int.toNat_of_nonneg (le_of_lt h_nm_pos)).symm, by omega⟩
+            obtain ⟨p, hp, _⟩ := h_pos_exp
+            use b i * 2^p
+            simp only [Int.cast_mul, Int.cast_pow, Int.cast_ofNat]
+            congr 1
+            rw [hp, zpow_natCast]
+          obtain ⟨k, hk⟩ := h_int
+          rw [hk] at hlo hhi
+          have : (a i : ℤ) < k ∧ k < a i + 1 := ⟨by exact_mod_cast hlo, by exact_mod_cast hhi⟩
+          omega
+      · -- ¬(a_i/2^n < b_i/2^m), so b_i/2^m ≤ a_i/2^n
+        push_neg at h_left
+        -- By hi: (a_i+1)/2^n > (b_i+1)/2^m
+        have h_right := hi h_left
+        by_cases h_disj : ((b i : ℝ) + 1) / 2^m ≤ (a i : ℝ) / 2^n
+        · -- Intervals don't overlap
+          linarith [hai.1, hbi.2]
+        · -- Intervals overlap: a_i/2^n < (b_i+1)/2^m < (a_i+1)/2^n
+          push_neg at h_disj
+          -- (b_i+1) * 2^(n-m) lies strictly between a_i and a_i+1
+          have hlo : (a i : ℝ) < ((b i : ℝ) + 1) * 2^(n-m) := by
+            have h1 : (a i : ℝ) / 2^n * 2^n < ((b i : ℝ) + 1) / 2^m * 2^n := by nlinarith
+            simp only [div_mul_cancel₀ _ (ne_of_gt h2n_pos)] at h1
+            calc (a i : ℝ) < ((b i : ℝ) + 1) / 2^m * 2^n := h1
+              _ = ((b i : ℝ) + 1) * (2^n / 2^m) := by ring
+              _ = ((b i : ℝ) + 1) * 2^(n-m) := by rw [← zpow_sub₀ (by norm_num : (2:ℝ) ≠ 0)]
+          have hhi : ((b i : ℝ) + 1) * 2^(n-m) < (a i : ℝ) + 1 := by
+            have h1 : ((b i : ℝ) + 1) / 2^m * 2^n < ((a i : ℝ) + 1) / 2^n * 2^n := by nlinarith
+            simp only [div_mul_cancel₀ _ (ne_of_gt h2n_pos)] at h1
+            calc ((b i : ℝ) + 1) * 2^(n-m) = ((b i : ℝ) + 1) * (2^n / 2^m) := by
+                    rw [← zpow_sub₀ (by norm_num : (2:ℝ) ≠ 0)]
+              _ = ((b i : ℝ) + 1) / 2^m * 2^n := by ring
+              _ < (a i : ℝ) + 1 := h1
+          -- (b_i+1) * 2^(n-m) is an integer in (a_i, a_i+1), contradiction
+          have h_int : ∃ k : ℤ, ((b i : ℝ) + 1) * 2^(n-m) = k := by
+            have h_pos_exp : ∃ p : ℕ, n - m = p ∧ 0 < p := ⟨(n-m).toNat, (Int.toNat_of_nonneg (le_of_lt h_nm_pos)).symm, by omega⟩
+            obtain ⟨p, hp, _⟩ := h_pos_exp
+            use (b i + 1) * 2^p
+            simp only [Int.cast_mul, Int.cast_pow, Int.cast_ofNat, Int.cast_add, Int.cast_one]
+            congr 1
+            rw [hp, zpow_natCast]
+          obtain ⟨k, hk⟩ := h_int
+          rw [hk] at hlo hhi
+          have : (a i : ℤ) < k ∧ k < a i + 1 := ⟨by exact_mod_cast hlo, by exact_mod_cast hhi⟩
+          omega
 
 /-- For any point x in an open set E, there exists a dyadic cube containing x with the cube contained in E. -/
 lemma IsOpen.exists_dyadic_cube_subset {d:ℕ} {E : Set (EuclideanSpace' d)} (hE : IsOpen E)
@@ -4502,9 +4683,282 @@ lemma IsOpen.exists_dyadic_cube_subset {d:ℕ} {E : Set (EuclideanSpace' d)} (hE
           calc Real.sqrt d = Real.sqrt d / ε * ε := by field_simp
             _ < ε * 2^n := by nlinarith [hn, hε_pos]
 
-/-- Lemma 1.2.11.  Proof has not been formalized yet. -/
-theorem IsOpen.eq_union_boxes {d:ℕ} (E: Set (EuclideanSpace' d)) (hE: IsOpen E) : ∃ B: ℕ → Box d, (E = ⋃ n, (B n).toSet) ∧ (∀ n, (B n).IsDyadic) ∧ Pairwise (Function.onFun AlmostDisjoint B) := by
-  sorry
+/-- For a point x, the unique dyadic cube at scale n containing x. -/
+noncomputable def dyadicCubeContaining {d:ℕ} (n:ℤ) (x : EuclideanSpace' d) : Box d :=
+  DyadicCube n (fun i => ⌊x i * 2^n⌋)
+
+/-- The dyadic cube containing x at scale n indeed contains x. -/
+lemma dyadicCubeContaining_mem {d:ℕ} (n:ℤ) (x : EuclideanSpace' d) :
+    x ∈ (dyadicCubeContaining n x).toSet := by
+  intro i _
+  simp only [dyadicCubeContaining, DyadicCube, BoundedInterval.toSet, Set.mem_Icc]
+  have h2n_pos : (0:ℝ) < 2^n := zpow_pos (by norm_num : (0:ℝ) < 2) n
+  constructor
+  · have h1 : (⌊x i * 2^n⌋ : ℝ) ≤ x i * 2^n := Int.floor_le _
+    calc (⌊x i * 2^n⌋ : ℝ) / 2^n ≤ x i * 2^n / 2^n := div_le_div_of_nonneg_right h1 (le_of_lt h2n_pos)
+      _ = x i := by field_simp
+  · have h2 : x i * 2^n < ⌊x i * 2^n⌋ + 1 := Int.lt_floor_add_one _
+    have h3 : x i < ((⌊x i * 2^n⌋ : ℝ) + 1) / 2^n := by
+      calc x i = x i * 2^n / 2^n := by field_simp
+        _ < (⌊x i * 2^n⌋ + 1) / 2^n := div_lt_div_of_pos_right h2 h2n_pos
+        _ = ((⌊x i * 2^n⌋ : ℝ) + 1) / 2^n := by ring
+    exact h3.le
+
+/-- Lemma 1.2.11: Every open set is a countable union of almost disjoint dyadic cubes.
+    Proof outline:
+    1. For each x ∈ E, by exists_dyadic_cube_subset, there exists a dyadic cube containing x ⊆ E
+    2. The set of all such dyadic cubes is countable (subset of ℕ × (Fin d → ℤ))
+    3. Take maximal cubes (not strictly contained in another cube in the collection)
+    4. By DyadicCube.nesting, distinct maximal cubes are almost disjoint
+    5. E equals the union of these maximal cubes -/
+theorem IsOpen.eq_union_boxes {d:ℕ} (E: Set (EuclideanSpace' d)) (hE: IsOpen E) :
+    ∃ B: ℕ → Box d, (E = ⋃ n, (B n).toSet) ∧ (∀ n, (B n).IsDyadic) ∧
+    Pairwise (Function.onFun AlmostDisjoint B) := by
+  classical
+  -- Handle empty case separately
+  by_cases hE_nonempty : E.Nonempty
+  swap
+  · -- For E = ∅: The theorem statement using ℕ → Box d (infinitely many boxes) cannot
+    -- express the empty set as a union of nonempty boxes with pairwise almost disjoint property.
+    -- This is a limitation of the statement - mathematically, ∅ is the union of zero boxes.
+    -- We leave this edge case with sorry as the main interest is the nonempty case.
+    simp only [Set.not_nonempty_iff_eq_empty] at hE_nonempty
+    -- Note: Any sequence of dyadic boxes has nonempty union (since boxes are nonempty),
+    -- which cannot equal ∅. The empty case requires a different formulation.
+    sorry
+  -- Non-empty case: construct maximal dyadic cubes
+  obtain ⟨x₀, hx₀⟩ := hE_nonempty
+  -- Define the set of all dyadic cubes (at scale n ≥ 0) contained in E
+  let Q : Set (ℕ × (Fin d → ℤ)) := { p | (DyadicCube (p.1 : ℤ) p.2).toSet ⊆ E }
+  -- Q is countable as a subset of ℕ × (Fin d → ℤ)
+  have hQ_countable : Q.Countable := Set.countable_of_injective_of_countable_image
+    (f := id) (fun _ _ _ _ h => h) (Set.countable_univ.mono (Set.subset_univ _))
+  -- For each x ∈ E, find the minimal scale n such that the dyadic cube at scale n containing x is in Q
+  -- Minimal scale corresponds to maximal cube (smaller n = coarser = larger cubes)
+  have h_exists_min_scale : ∀ x ∈ E, ∃ n₀ : ℕ, ∃ a : Fin d → ℤ,
+      x ∈ (DyadicCube (n₀:ℤ) a).toSet ∧ (DyadicCube (n₀:ℤ) a).toSet ⊆ E ∧
+      (∀ m < n₀, ∀ b : Fin d → ℤ, x ∈ (DyadicCube (m:ℤ) b).toSet → ¬(DyadicCube (m:ℤ) b).toSet ⊆ E) := by
+    intro x hx
+    -- By exists_dyadic_cube_subset, there exists some scale with cube ⊆ E
+    obtain ⟨n, a, hxa, hcube⟩ := hE.exists_dyadic_cube_subset hx
+    -- Find the minimal such scale using Nat.find
+    let P : ℕ → Prop := fun m => ∃ b : Fin d → ℤ, x ∈ (DyadicCube (m:ℤ) b).toSet ∧ (DyadicCube (m:ℤ) b).toSet ⊆ E
+    have hP : ∃ m, P m := ⟨n, a, hxa, hcube⟩
+    let n₀ := Nat.find hP
+    obtain ⟨a₀, ha₀_mem, ha₀_sub⟩ := Nat.find_spec hP
+    use n₀, a₀, ha₀_mem, ha₀_sub
+    intro m hm b hb_mem
+    intro hsub
+    exact Nat.find_min hP hm ⟨b, hb_mem, hsub⟩
+  -- Define maximal cubes: for each x ∈ E, pick the cube at minimal scale
+  -- Define the set of maximal cube indices
+  let Q_max : Set (ℕ × (Fin d → ℤ)) := { p | (DyadicCube (p.1 : ℤ) p.2).toSet ⊆ E ∧
+    ∀ q : ℕ × (Fin d → ℤ), q.1 < p.1 →
+      (DyadicCube (p.1 : ℤ) p.2).toSet ⊆ (DyadicCube (q.1 : ℤ) q.2).toSet →
+      ¬(DyadicCube (q.1 : ℤ) q.2).toSet ⊆ E }
+  -- Q_max is countable
+  have hQ_max_countable : Q_max.Countable :=
+    Set.countable_of_injective_of_countable_image (f := id) (fun _ _ _ _ h => h)
+      (Set.countable_univ.mono (Set.subset_univ _))
+  -- Q_max is nonempty (since E is nonempty)
+  have hQ_max_nonempty : Q_max.Nonempty := by
+    obtain ⟨n₀, a₀, hx₀_mem, hsub, hmin⟩ := h_exists_min_scale x₀ hx₀
+    use ⟨n₀, a₀⟩
+    simp only [Set.mem_setOf_eq, Q_max]
+    constructor
+    · exact hsub
+    · intro q hq hsub'
+      -- If DyadicCube n₀ a₀ ⊆ DyadicCube q.1 q.2 with q.1 < n₀, then q.1 is a smaller scale
+      -- containing x₀, contradicting minimality
+      have hx₀_in_q : x₀ ∈ (DyadicCube (q.1 : ℤ) q.2).toSet := hsub' hx₀_mem
+      exact hmin q.1 hq q.2 hx₀_in_q
+  -- Q_max is infinite: for each scale n, there exist maximal cubes at that scale
+  -- (points near boundary of E have maximal cubes at arbitrarily fine scales)
+  have hQ_max_infinite : Q_max.Infinite := by
+    -- The set of scales appearing in Q_max is unbounded
+    -- For any N, there exist points x ∈ E whose maximal cube is at scale > N
+    -- This is because near the boundary of E, cubes must be arbitrarily small
+    sorry
+  -- Enumerate Q_max using the Denumerable structure (since Q_max is infinite and countable)
+  obtain ⟨p₀, hp₀⟩ := hQ_max_nonempty
+  -- For infinite countable sets, we can get an injective enumeration
+  haveI : Infinite Q_max := Set.infinite_coe_iff.mpr hQ_max_infinite
+  haveI : Countable Q_max := hQ_max_countable.to_subtype
+  haveI : Denumerable Q_max := Denumerable.ofEncodableOfInfinite Q_max
+  -- Use the denumerable equiv to get a bijection
+  let B_enum : ℕ ≃ Q_max := (Denumerable.eqv Q_max).symm
+  let B_idx : ℕ → ℕ × (Fin d → ℤ) := fun n => (B_enum n).val
+  have hB_idx_inj : Function.Injective B_idx := by
+    intro i j hij
+    have : B_enum i = B_enum j := Subtype.ext hij
+    exact (Equiv.injective B_enum) this
+  let B : ℕ → Box d := fun n => DyadicCube ((B_idx n).1 : ℤ) (B_idx n).2
+  use B
+  constructor
+  · -- E = ⋃ n, (B n).toSet
+    ext x
+    constructor
+    · -- x ∈ E → x ∈ ⋃ n, (B n).toSet
+      intro hx
+      obtain ⟨n₀, a₀, hxa₀, hsub, hmin⟩ := h_exists_min_scale x hx
+      -- (n₀, a₀) ∈ Q_max
+      have h_in_Qmax : (⟨n₀, a₀⟩ : ℕ × (Fin d → ℤ)) ∈ Q_max := by
+        simp only [Set.mem_setOf_eq, Q_max]
+        constructor
+        · exact hsub
+        · intro q hq hsub'
+          have hx_in_q : x ∈ (DyadicCube (q.1 : ℤ) q.2).toSet := hsub' hxa₀
+          exact hmin q.1 hq q.2 hx_in_q
+      -- B_enum is a bijection ℕ ≃ Q_max, so (n₀, a₀) ∈ Q_max has a preimage
+      rw [Set.mem_iUnion]
+      -- h_in_Qmax : (n₀, a₀) ∈ Q_max, and B_enum is surjective
+      let elem : Q_max := ⟨(n₀, a₀), h_in_Qmax⟩
+      have h_in_range : elem ∈ Set.range B_enum := by
+        rw [Equiv.range_eq_univ]
+        exact Set.mem_univ _
+      obtain ⟨k, hk⟩ := h_in_range
+      use k
+      show x ∈ (DyadicCube ((B_idx k).1 : ℤ) (B_idx k).2).toSet
+      have heq : B_idx k = (n₀, a₀) := by
+        simp only [B_idx]
+        exact congrArg Subtype.val hk
+      rw [heq]
+      exact hxa₀
+    · -- x ∈ ⋃ n, (B n).toSet → x ∈ E
+      intro hx
+      rw [Set.mem_iUnion] at hx
+      obtain ⟨n, hn⟩ := hx
+      have h_Bn_mem : B_idx n ∈ Q_max := (B_enum n).property
+      exact h_Bn_mem.1 hn
+  constructor
+  · -- ∀ n, (B n).IsDyadic
+    intro n
+    simp only [B, Box.IsDyadic]
+    use (B_idx n).1, (B_idx n).2
+  · -- Pairwise almost disjoint
+    intro i j hij
+    simp only [Function.onFun]
+    have hi_mem : B_idx i ∈ Q_max := (B_enum i).property
+    have hj_mem : B_idx j ∈ Q_max := (B_enum j).property
+    -- Two distinct maximal cubes are almost disjoint
+    -- By DyadicCube.nesting: either almost disjoint, or one ⊆ other
+    rcases DyadicCube.nesting (n := (B_idx i).1) (m := (B_idx j).1)
+        (a := (B_idx i).2) (b := (B_idx j).2) with h_ad | h_ij | h_ji
+    · exact h_ad
+    · -- B i ⊆ B j: analyze by scale comparison
+      exfalso
+      -- h_ij : (DyadicCube (B_idx i).1 (B_idx i).2).toSet ⊆ (DyadicCube (B_idx j).1 (B_idx j).2).toSet
+      -- If B_i ⊆ B_j strictly, then (B_idx j).1 < (B_idx i).1 (j is coarser)
+      -- By maximality of B_i, since B_i ⊆ B_j and j.1 < i.1, we have B_j ⊈ E
+      -- But B_j ∈ Q_max implies B_j ⊆ E. Contradiction.
+      rcases lt_trichotomy (B_idx j).1 (B_idx i).1 with hji_lt | hji_eq | hji_gt
+      · -- (B_idx j).1 < (B_idx i).1: j is coarser scale
+        -- B_i ⊆ B_j and j.1 < i.1 contradicts maximality of B_i
+        exact hi_mem.2 (B_idx j) hji_lt h_ij hj_mem.1
+      · -- Same scale: cubes are either equal or disjoint
+        -- If B_i ⊆ B_j at same scale, they must be equal
+        have heq : (B_idx i).2 = (B_idx j).2 := by
+          -- At same scale, proper containment is impossible for dyadic cubes
+          -- The only way B_i ⊆ B_j at same scale n is if their indices are equal
+          by_contra hne
+          have h_ad := DyadicCube.almost_disjoint_same_scale (n := (B_idx i).1)
+            (a := (B_idx i).2) (b := (B_idx j).2) (by simp; exact hne)
+          -- h_ad says interiors are disjoint, h_ij says B_i ⊆ B_j
+          -- interior B_i ⊆ interior B_j, and interior B_i ∩ interior B_j = ∅
+          -- implies interior B_i = ∅, but dyadic cubes have nonempty interior
+          simp only [AlmostDisjoint] at h_ad
+          -- Rewrite h_ij to use the same scale
+          have h_ij' : (DyadicCube (↑(B_idx i).1) (B_idx i).2).toSet ⊆
+              (DyadicCube (↑(B_idx i).1) (B_idx j).2).toSet := by
+            convert h_ij using 3
+            simp only [Nat.cast_inj]
+            exact hji_eq.symm
+          have h_int_sub : interior (DyadicCube (↑(B_idx i).1) (B_idx i).2).toSet ⊆
+              interior (DyadicCube (↑(B_idx i).1) (B_idx j).2).toSet := interior_mono h_ij'
+          have h_int_eq : interior (DyadicCube (↑(B_idx i).1) (B_idx i).2).toSet = ∅ := by
+            rw [Set.eq_empty_iff_forall_notMem]
+            intro x hx
+            have hx' := h_int_sub hx
+            have hx_both : x ∈ interior (DyadicCube (↑(B_idx i).1) (B_idx i).2).toSet ∩
+                interior (DyadicCube (↑(B_idx i).1) (B_idx j).2).toSet := ⟨hx, hx'⟩
+            rw [h_ad] at hx_both
+            exact hx_both
+          -- But dyadic cubes have nonempty interior
+          rw [DyadicCube.interior] at h_int_eq
+          -- The interior is a product of open intervals (a_k/2^n, (a_k+1)/2^n) for each k
+          -- These are nonempty since a_k/2^n < (a_k+1)/2^n
+          have h_nonempty : (Set.univ.pi fun k : Fin d =>
+              Set.Ioo (((B_idx i).2 k : ℝ) / 2 ^ ((B_idx i).1 : ℤ))
+                      ((((B_idx i).2 k : ℝ) + 1) / 2 ^ ((B_idx i).1 : ℤ))).Nonempty := by
+            apply Set.univ_pi_nonempty_iff.mpr
+            intro k
+            apply Set.nonempty_Ioo.mpr
+            have h2n_pos : (0 : ℝ) < 2 ^ ((B_idx i).1 : ℤ) := zpow_pos (by norm_num) _
+            apply div_lt_div_of_pos_right _ h2n_pos
+            linarith
+          exact Set.not_nonempty_empty (h_int_eq ▸ h_nonempty)
+        -- If scales and indices equal, B_i = B_j, so B_idx i = B_idx j
+        have hidx_eq : B_idx i = B_idx j := Prod.ext hji_eq.symm (funext fun x => congrFun heq x)
+        -- By injectivity of B_idx (from Denumerable enumeration), i = j
+        exact hij (hB_idx_inj hidx_eq)
+      · -- (B_idx i).1 < (B_idx j).1: i is coarser scale (i.e., i has LARGER cube, j has smaller)
+        -- h_ij : B_i ⊆ B_j says the larger cube is inside the smaller - impossible for d > 0
+        -- By maximality of B_i: if B_i ⊆ B_j and j is finer, B_i is NOT maximal
+        -- Actually, let's use maximality of B_i more directly:
+        -- hji_gt says (B_idx i).1 < (B_idx j).1
+        -- h_ij says B_i ⊆ B_j
+        -- But B_i ∈ Q_max means: for all coarser cubes q (q.1 < (B_idx i).1),
+        --   if B_i ⊆ DyadicCube q, then DyadicCube q ⊈ E
+        -- We don't directly get a contradiction from this since j is FINER, not coarser.
+        -- The geometric impossibility: a larger cube can't fit inside a smaller one.
+        -- For dyadic cubes, side_i = 2^{-(B_idx i).1}, side_j = 2^{-(B_idx j).1}
+        -- (B_idx i).1 < (B_idx j).1 means side_i > side_j
+        -- B_i ⊆ B_j with side_i > side_j is impossible in d > 0 dimensions.
+        -- This requires a geometric argument about interval containment.
+        -- For now, leave as sorry - the key case (j coarser) is handled above.
+        sorry
+    · -- B j ⊆ B i: symmetric case
+      exfalso
+      rcases lt_trichotomy (B_idx i).1 (B_idx j).1 with hij_lt | hij_eq | hij_gt
+      · -- i coarser (larger), j finer (smaller), B_j ⊆ B_i is geometrically valid
+        -- This contradicts maximality of B_j: B_j ⊆ B_i ⊆ E, and i is coarser
+        exact hj_mem.2 (B_idx i) hij_lt h_ji hi_mem.1
+      · -- Same scale: use injectivity as in the symmetric case above
+        have heq : (B_idx j).2 = (B_idx i).2 := by
+          by_contra hne
+          have h_ad := DyadicCube.almost_disjoint_same_scale (n := (B_idx j).1)
+            (a := (B_idx j).2) (b := (B_idx i).2) (by simp; exact hne)
+          simp only [AlmostDisjoint] at h_ad
+          have h_ij' : (DyadicCube (↑(B_idx j).1) (B_idx j).2).toSet ⊆
+              (DyadicCube (↑(B_idx j).1) (B_idx i).2).toSet := by
+            convert h_ji using 3
+            simp only [Nat.cast_inj]
+            exact hij_eq.symm
+          have h_int_sub := interior_mono h_ij'
+          have h_int_eq : interior (DyadicCube (↑(B_idx j).1) (B_idx j).2).toSet = ∅ := by
+            rw [Set.eq_empty_iff_forall_notMem]
+            intro x hx
+            have hx' := h_int_sub hx
+            have hx_both : x ∈ interior (DyadicCube (↑(B_idx j).1) (B_idx j).2).toSet ∩
+                interior (DyadicCube (↑(B_idx j).1) (B_idx i).2).toSet := ⟨hx, hx'⟩
+            rw [h_ad] at hx_both
+            exact hx_both
+          rw [DyadicCube.interior] at h_int_eq
+          have h_nonempty : (Set.univ.pi fun k : Fin d =>
+              Set.Ioo (((B_idx j).2 k : ℝ) / 2 ^ ((B_idx j).1 : ℤ))
+                      ((((B_idx j).2 k : ℝ) + 1) / 2 ^ ((B_idx j).1 : ℤ))).Nonempty := by
+            apply Set.univ_pi_nonempty_iff.mpr
+            intro k
+            apply Set.nonempty_Ioo.mpr
+            have h2n_pos : (0 : ℝ) < 2 ^ ((B_idx j).1 : ℤ) := zpow_pos (by norm_num) _
+            apply div_lt_div_of_pos_right _ h2n_pos
+            linarith
+          exact Set.not_nonempty_empty (h_int_eq ▸ h_nonempty)
+        have hidx_eq : B_idx j = B_idx i := Prod.ext hij_eq.symm (funext fun x => congrFun heq x)
+        exact hij (hB_idx_inj hidx_eq).symm
+      · -- j coarser (larger), i finer (smaller), B_j ⊆ B_i means larger inside smaller
+        -- Geometric impossibility for d > 0
+        sorry
 
 theorem Lebesgue_outer_measure.of_open {d:ℕ} (E: Set (EuclideanSpace' d)) (hE: IsOpen E) : Lebesgue_outer_measure E = Jordan_inner_measure E := by
   sorry
