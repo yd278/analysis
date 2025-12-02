@@ -4346,16 +4346,16 @@ def Box.IsDyadicAtScale {d:ℕ} (B: Box d) (n:ℤ) : Prop := ∃ a: Fin d → �
 def Box.IsDyadic {d:ℕ} (B: Box d) : Prop := ∃ n:ℕ, B.IsDyadicAtScale n
 
 -- Helper lemmas for Lemma 1.2.11
-
+namespace DyadicCube
 /-- The sidelength of a dyadic cube at scale n is 2^(-n). -/
-lemma DyadicCube.sidelength {d:ℕ} (n:ℤ) (a: Fin d → ℤ) (i : Fin d) :
+lemma sidelength {d:ℕ} (n:ℤ) (a: Fin d → ℤ) (i : Fin d) :
     |(DyadicCube n a).side i|ₗ = (2:ℝ)^(-n) := by
   simp only [DyadicCube, BoundedInterval.length, BoundedInterval.b, BoundedInterval.a]
   have h : (↑(a i) + 1) / (2:ℝ) ^ n - ↑(a i) / (2:ℝ) ^ n = (2:ℝ) ^ (-n) := by field_simp
   rw [h, max_eq_left (zpow_nonneg (by norm_num : (0:ℝ) ≤ 2) (-n))]
 
 /-- Dyadic cubes at scale n ≥ 0 have sidelength at most 1. -/
-lemma DyadicCube.sidelength_le_one {d:ℕ} {n:ℕ} (a: Fin d → ℤ) (i : Fin d) :
+lemma sidelength_le_one {d:ℕ} {n:ℕ} (a: Fin d → ℤ) (i : Fin d) :
     |(DyadicCube (n:ℤ) a).side i|ₗ ≤ 1 := by
   rw [DyadicCube.sidelength]
   have h1 : (1:ℝ) ≤ 2^n := by
@@ -4366,7 +4366,7 @@ lemma DyadicCube.sidelength_le_one {d:ℕ} {n:ℕ} (a: Fin d → ℤ) (i : Fin d
     _ = 1 := by norm_num
 
 /-- The interior of a dyadic cube. -/
-lemma DyadicCube.interior {d:ℕ} (n:ℤ) (a: Fin d → ℤ) :
+lemma interior {d:ℕ} (n:ℤ) (a: Fin d → ℤ) :
     interior (DyadicCube n a).toSet =
     Set.univ.pi (fun i => Set.Ioo ((a i : ℝ) / 2^n) (((a i : ℝ) + 1) / 2^n)) := by
   simp only [Box.toSet, BoundedInterval.toSet, DyadicCube]
@@ -4376,7 +4376,7 @@ lemma DyadicCube.interior {d:ℕ} (n:ℤ) (a: Fin d → ℤ) :
   simp only [interior_Icc]
 
 /-- Dyadic cubes at the same scale with different indices have disjoint interiors. -/
-lemma DyadicCube.almost_disjoint_same_scale {d:ℕ} {n:ℤ} {a b : Fin d → ℤ} (hab : a ≠ b) :
+lemma almost_disjoint_same_scale {d:ℕ} {n:ℤ} {a b : Fin d → ℤ} (hab : a ≠ b) :
     AlmostDisjoint (DyadicCube n a) (DyadicCube n b) := by
   simp only [AlmostDisjoint]
   rw [DyadicCube.interior, DyadicCube.interior]
@@ -4413,7 +4413,7 @@ lemma DyadicCube.almost_disjoint_same_scale {d:ℕ} {n:ℤ} {a b : Fin d → ℤ
   exact ha_floor.symm.trans hb_floor
 
 /-- The dyadic cubes at scale n cover all of ℝᵈ. -/
-lemma DyadicCube.cover_univ {d:ℕ} (n:ℤ) :
+lemma cover_univ {d:ℕ} (n:ℤ) :
     (⋃ (a : Fin d → ℤ), (DyadicCube n a).toSet) = Set.univ := by
   ext x
   simp only [Set.mem_iUnion, Set.mem_univ, iff_true]
@@ -4434,14 +4434,14 @@ lemma DyadicCube.cover_univ {d:ℕ} (n:ℤ) :
     exact hle.le
 
 /-- Dyadic cubes at the same scale are pairwise almost disjoint. -/
-lemma DyadicCube.pairwise_almost_disjoint {d:ℕ} (n:ℤ) :
+lemma pairwise_almost_disjoint {d:ℕ} (n:ℤ) :
     Pairwise (Function.onFun AlmostDisjoint (DyadicCube n : (Fin d → ℤ) → Box d)) := by
   intro a b hab
   simp only [Function.onFun]
   exact DyadicCube.almost_disjoint_same_scale hab
 
 /-- Two dyadic cubes are either almost disjoint or one contains the other. -/
-lemma DyadicCube.nesting {d:ℕ} {n m : ℤ} {a : Fin d → ℤ} {b : Fin d → ℤ} :
+lemma nesting {d:ℕ} {n m : ℤ} {a : Fin d → ℤ} {b : Fin d → ℤ} :
     AlmostDisjoint (DyadicCube n a) (DyadicCube m b) ∨
     (DyadicCube n a).toSet ⊆ (DyadicCube m b).toSet ∨
     (DyadicCube m b).toSet ⊆ (DyadicCube n a).toSet := by
@@ -4645,6 +4645,7 @@ lemma DyadicCube.nesting {d:ℕ} {n m : ℤ} {a : Fin d → ℤ} {b : Fin d → 
           have : (a i : ℤ) < k ∧ k < a i + 1 := ⟨by exact_mod_cast hlo, by exact_mod_cast hhi⟩
           omega
 
+end DyadicCube
 /-- For any point x in an open set E, there exists a dyadic cube containing x with the cube contained in E. -/
 lemma IsOpen.exists_dyadic_cube_subset {d:ℕ} {E : Set (EuclideanSpace' d)} (hE : IsOpen E)
     {x : EuclideanSpace' d} (hx : x ∈ E) :
