@@ -60,15 +60,36 @@ private lemma exists_open_superset_measure_le {d:ℕ} (E: Set (EuclideanSpace' d
     use Set.univ
     refine ⟨isOpen_univ, Set.subset_univ E, ?_⟩
     rw [h_outer_reg, h_top]
-    exact le_top
+    -- ⊤ ≤ ⊤ + ε when ε > 0
+    cases ε with
+    | bot => exact absurd hε (not_lt.mpr bot_le)
+    | top => simp
+    | coe r => exact le_top
   · -- sInf S ≠ ⊤, so sInf S < sInf S + ε
-    have h_lt : sInf S < sInf S + ε := EReal.lt_add_of_pos hε h_ne_bot h_top
+    have h_lt : sInf S < sInf S + ε := by
+      cases ε with
+      | bot => exact absurd hε (not_lt.mpr bot_le)
+      | top =>
+        -- sInf S + ⊤ = ⊤ when sInf S ≠ ⊥, so sInf S < ⊤
+        have h_sum_top : sInf S + ⊤ = ⊤ := by
+          cases h : sInf S with
+          | bot => exact absurd h h_ne_bot
+          | top => exact absurd h h_top
+          | coe r => rfl
+        rw [h_sum_top]
+        exact lt_top_iff_ne_top.mpr h_top
+      | coe r =>
+        have hr_pos : 0 < r := EReal.coe_pos.mp hε
+        exact EReal.lt_add_of_pos_coe hr_pos h_ne_bot h_top
     -- So sInf S + ε is not in lowerBounds S
     have h_not_lb : sInf S + ε ∉ lowerBounds S := by
       intro h_is_lb
       have h_le : sInf S + ε ≤ sInf S := h_inf.2 h_is_lb
       exact not_lt.mpr h_le h_lt
     -- Therefore ∃ v ∈ S, v < sInf S + ε
+    -- h_not_lb : sInf S + ε ∉ lowerBounds S means ∃ v ∈ S, v < sInf S + ε
+    unfold lowerBounds at h_not_lb
+    simp only [Set.mem_setOf_eq] at h_not_lb
     push_neg at h_not_lb
     obtain ⟨v, hv_in_S, hv_lt⟩ := h_not_lb
     -- Extract the open set U from v ∈ S
@@ -78,55 +99,150 @@ private lemma exists_open_superset_measure_le {d:ℕ} (E: Set (EuclideanSpace' d
     rw [h_outer_reg, ← hv_eq]
     exact le_of_lt hv_lt
 
-/-- Lemma 1.2.13(ii) (Every closed set is Lebesgue measurable).
-    Proof outline from textbook:
-    1. Reduce to bounded closed sets (compact by Heine-Borel)
-    2. For compact E: use outer regularity to find U with m*(U) ≤ m*(E) + ε
-    3. Show m*(U \ E) ≤ ε using properties of almost disjoint cubes and compactness -/
-theorem IsClosed.measurable {d:ℕ} {E: Set (EuclideanSpace' d)} (hE: IsClosed E) : LebesgueMeasurable E := by
-  -- We need: ∀ ε > 0, ∃ U open, E ⊆ U ∧ m*(U \ E) ≤ ε
+/-- Helper: Bounded closed sets are measurable (Lemma 1.2.13(ii) for bounded case).
+    For bounded closed E (compact by Heine-Borel), show that for any ε > 0,
+    there exists open U ⊇ E with m*(U \ E) ≤ ε. -/
+private lemma IsClosed.measurable_of_bounded {d:ℕ} {E: Set (EuclideanSpace' d)}
+    (hE: IsClosed E) (hE_bounded : Bornology.IsBounded E) : LebesgueMeasurable E := by
   intro ε hε
-  -- If E = ∅, use U = ∅
+  -- Empty case
   by_cases hE_empty : E = ∅
   · use ∅
     refine ⟨isOpen_empty, ?_, ?_⟩
     · rw [hE_empty]
-    · simp only [Set.empty_diff]
-      rw [Lebesgue_outer_measure.of_empty]
-      exact le_of_lt hε
-  push_neg at hE_empty
-  -- E is nonempty and closed, hence Eᶜ is open
-  have hEc_open : IsOpen Eᶜ := hE.isOpen_compl
-  -- Use helper to get open U ⊇ E with m*(U) close to m*(E)
+    · simp [Lebesgue_outer_measure.of_empty]; exact le_of_lt hε
+  -- Non-empty bounded closed E is compact
+  have hE_nonempty : E.Nonempty := Set.nonempty_iff_ne_empty.mpr hE_empty
+  -- Get open U with m*(U) ≤ m*(E) + ε/2
   have hε_half_pos : (0 : EReal) < ε / 2 := by
     cases ε with
     | bot => exact absurd hε (not_lt.mpr bot_le)
     | top =>
-      have h : (⊤ : EReal) / 2 = ⊤ := by
-        rw [show (2 : EReal) = (2 : ℝ) from rfl]
-        simp only [EReal.top_div_coe, ↓reduceIte]
-        norm_num
-      rw [h]
+      show (0 : EReal) < ⊤ / 2
+      -- ⊤ / 2 = ⊤ in EReal since 2 > 0 and 2 ≠ ⊤
+      have : (⊤ : EReal) / 2 = ⊤ := by
+        have h2_pos : (0 : EReal) < 2 := by norm_num
+        have h2_ne_top : (2 : EReal) ≠ ⊤ := by
+          intro h
+          have : (2 : EReal) = (2 : ℝ) := rfl
+          rw [this] at h
+          exact EReal.coe_ne_top 2 h
+        exact EReal.top_div_of_pos_ne_top h2_pos h2_ne_top
+      rw [this]
       exact EReal.zero_lt_top
     | coe r =>
-      have h2 : (2 : EReal) = (2 : ℝ) := rfl
-      rw [h2, ← EReal.coe_div r 2]
-      exact EReal.coe_pos.mpr (half_pos (EReal.coe_pos.mp hε))
+      have hr_pos : 0 < r := EReal.coe_pos.mp hε
+      rw [show (2 : EReal) = (2 : ℝ) from rfl, ← EReal.coe_div r 2]
+      exact EReal.coe_pos.mpr (half_pos hr_pos)
   obtain ⟨U, hU_open, hE_sub_U, hU_meas⟩ := exists_open_superset_measure_le E (ε/2) hε_half_pos
   use U
   refine ⟨hU_open, hE_sub_U, ?_⟩
-  -- Need to show: m*(U \ E) ≤ ε
-  -- Key insight: U \ E is open (since E is closed)
+  -- Key: show m*(U \ E) ≤ ε
+  -- U \ E is open
   have h_diff_open : IsOpen (U \ E) := hU_open.sdiff hE
-  -- The main argument uses:
-  -- 1. U \ E = ⋃ Qₙ (almost disjoint dyadic cubes) by Lemma 1.2.11
-  -- 2. m*(U \ E) = Σ|Qₙ| by Lemma 1.2.9
-  -- 3. For compact E, finite unions ⋃ₙ₌₁ᴺ Qₙ are separated from E
-  -- 4. By additivity on separated sets: m*(E ∪ ⋃ₙ₌₁ᴺ Qₙ) = m*(E) + Σₙ₌₁ᴺ|Qₙ|
-  -- 5. By monotonicity: m*(E) + Σₙ₌₁ᴺ|Qₙ| ≤ m*(U)
-  -- 6. Taking N → ∞: m*(E) + m*(U \ E) ≤ m*(U) ≤ m*(E) + ε/2
-  -- 7. Hence m*(U \ E) ≤ ε/2 ≤ ε
-  -- This requires substantial machinery for the general case
+  -- Handle d = 0 separately
+  by_cases hd : d = 0
+  · -- In dimension 0, the outer measure is at most 1
+    -- So m*(U \ E) ≤ m*(U) ≤ m*(E) + ε/2 ≤ 1 + ε/2
+    -- For ε > 0, this is ≤ ε when ε ≥ 1 or when we use a better bound
+    -- Simpler: m*(U \ E) ≤ m*(U) ≤ m*(E) + ε/2, and in d=0, adding ε/2 to any measure gives something ≤ ε
+    have h1 : Lebesgue_outer_measure (U \ E) ≤ Lebesgue_outer_measure E + ε / 2 := by
+      calc Lebesgue_outer_measure (U \ E)
+          ≤ Lebesgue_outer_measure U := Lebesgue_outer_measure.mono Set.diff_subset
+        _ ≤ Lebesgue_outer_measure E + ε / 2 := hU_meas
+    -- In dimension 0, use the bound m*(U\E) ≤ m*(E) + ε/2
+    -- In d=0, m*(E) = 0 (since E is bounded and closed, hence compact, and nonempty compact sets in d=0 have measure 1, so E must be empty)
+    -- Wait, but we already handled E = ∅ earlier. So if E is nonempty in d=0, it has measure 1.
+    -- Then m*(U\E) ≤ 1 + ε/2. We need to show this is ≤ ε.
+    -- This is only true if ε ≥ 1 + ε/2, i.e., ε/2 ≥ 1, i.e., ε ≥ 2.
+    -- So the dimension 0 case is subtle. Let me just use a simpler bound.
+    calc Lebesgue_outer_measure (U \ E)
+        ≤ Lebesgue_outer_measure E + ε / 2 := h1
+      _ ≤ Lebesgue_outer_measure E + ε := by
+          apply add_le_add_left
+          cases ε with
+          | bot => exact absurd hε (not_lt.mpr bot_le)
+          | top => simp
+          | coe r =>
+            have hr_pos : 0 < r := EReal.coe_pos.mp hε
+            rw [show (2 : EReal) = (2 : ℝ) from rfl, ← EReal.coe_div r 2]
+            have : r / 2 ≤ r := by linarith
+            exact EReal.coe_le_coe_iff.mpr this
+      _ ≤ ε := by
+          -- In dimension 0 with bounded E: if E is nonempty, m*(E) = 1
+          -- We need 1 + ε ≤ ε, which is impossible for ε > 0
+          -- However, in the LebesgueMeasurable definition, we need to show
+          -- for all ε > 0, there exists U with m*(U\E) ≤ ε
+          -- In d=0, if we choose ε ≥ 1, this works; for ε < 1, it may not
+          -- The resolution is that in d=0, the statement holds vacuously or
+          -- requires a different proof strategy
+          -- This is a technical edge case; the main mathematical content is d > 0
+          sorry  -- Dimension 0 edge case
+  push_neg at hd
+  have hd_pos : 0 < d := Nat.pos_of_ne_zero hd
+  -- If U \ E is empty, trivial
+  by_cases h_diff_empty : U \ E = ∅
+  · rw [h_diff_empty, Lebesgue_outer_measure.of_empty]; exact le_of_lt hε
+  -- Main argument: U \ E is nonempty open, decompose into cubes
+  have h_diff_nonempty : (U \ E).Nonempty := Set.nonempty_iff_ne_empty.mpr h_diff_empty
+  obtain ⟨Q, hQ_union, _, hQ_pairwise⟩ := h_diff_open.eq_union_boxes hd_pos (U \ E) h_diff_nonempty
+  rw [hQ_union]
+  -- m*(⋃ Q_n) = ∑ |Q_n|
+  have h_measure_eq : Lebesgue_outer_measure (⋃ n, (Q n).toSet) = ∑' n, (Q n).volume.toEReal := by
+    have h1 := Lebesgue_outer_measure.union_of_almost_disjoint hQ_pairwise
+    simp_rw [Lebesgue_outer_measure.elementary _ (IsElementary.box _),
+             IsElementary.measure_of_box] at h1
+    exact h1
+  rw [h_measure_eq]
+  -- Use compactness: E is compact, so finite unions of Q_n are separated from E
+  -- This allows us to apply Lebesgue_outer_measure.union_of_separated
+  -- The key: Show ∑' |Q_n| ≤ ε
+  -- We have m*(U) ≤ m*(E) + ε/2
+  -- Since U = E ∪ (U\E) and U\E = ⋃ Q_n, we can show:
+  -- m*(U) ≥ m*(E) + m*(U\E) (approximately, using separation)
+  -- So m*(U\E) ≤ m*(U) - m*(E) ≤ ε/2 < ε
+  -- The textbook uses compactness to show finite unions are separated from E
+  -- Then applies additivity and takes limits
+  -- For now, we use a simpler bound: m*(U\E) ≤ m*(U) ≤ m*(E) + ε/2 < ε
+  -- The textbook proof uses: E compact and Q_n ⊆ U\E (disjoint from E)
+  -- For finite N: F_N := ⋃_{i<N} Q_i is closed and disjoint from E
+  -- By compactness: dist(E, F_N) > 0, so they're separated
+  -- By Lebesgue_outer_measure.union_of_separated: m*(E ∪ F_N) = m*(E) + m*(F_N)
+  -- By monotonicity: m*(E) + m*(F_N) = m*(E ∪ F_N) ≤ m*(U)
+  -- So m*(F_N) ≤ m*(U) - m*(E) ≤ ε/2 for all N
+  -- Taking N → ∞: m*(U\E) = ∑' |Q_n| ≤ ε/2 < ε
+
+  -- For now, use a simpler but incomplete argument:
+  calc ∑' n, (Q n).volume.toEReal
+      = Lebesgue_outer_measure (⋃ n, (Q n).toSet) := h_measure_eq.symm
+    _ = Lebesgue_outer_measure (U \ E) := by rw [← hQ_union]
+    _ ≤ Lebesgue_outer_measure U := Lebesgue_outer_measure.mono Set.diff_subset
+    _ ≤ Lebesgue_outer_measure E + ε / 2 := hU_meas
+    _ ≤ Lebesgue_outer_measure E + ε := by
+        apply add_le_add_left
+        cases ε with
+        | bot => exact absurd hε (not_lt.mpr bot_le)
+        | top => simp
+        | coe r =>
+          have hr_pos : 0 < r := EReal.coe_pos.mp hε
+          rw [show (2 : EReal) = (2 : ℝ) from rfl, ← EReal.coe_div r 2]
+          exact EReal.coe_le_coe_iff.mpr (by linarith : r / 2 ≤ r)
+    _ ≤ ε := by
+        -- This step requires: m*(E) + ε ≤ ε, i.e., m*(E) ≤ 0
+        -- But m*(E) ≥ 0 always, so we need m*(E) = 0
+        -- This isn't true in general for non-empty E
+        -- The correct proof uses the separation argument above to show
+        -- m*(U\E) ≤ m*(U) - m*(E) directly (via additivity on separated sets)
+        -- This gives m*(U\E) ≤ (m*(E) + ε/2) - m*(E) = ε/2 ≤ ε
+        sorry  -- Requires full compactness-based separation argument from textbook
+
+/-- Lemma 1.2.13(ii) (Every closed set is Lebesgue measurable). -/
+theorem IsClosed.measurable {d:ℕ} {E: Set (EuclideanSpace' d)} (hE: IsClosed E) : LebesgueMeasurable E := by
+  -- Reduce to the bounded case
+  -- The general case follows by writing E as a countable union of bounded closed sets:
+  -- E = ⋃_{n=1}^∞ (E ∩ B(0,n)) where B(0,n) is the closed ball of radius n
+  -- Each E ∩ B(0,n) is closed and bounded, hence measurable by the helper
+  -- Then use that measurable sets are closed under countable unions (proved later)
   sorry
 
 abbrev IsNull {d:ℕ} (E: Set (EuclideanSpace' d)) : Prop := Lebesgue_outer_measure E = 0
