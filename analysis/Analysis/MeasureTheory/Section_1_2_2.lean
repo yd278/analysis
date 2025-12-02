@@ -28,8 +28,105 @@ theorem IsOpen.measurable {d:ℕ} {E: Set (EuclideanSpace' d)} (hE: IsOpen E) : 
     rw [h_zero]
     exact le_of_lt hε
 
-/-- Lemma 1.2.13(ii) (Every closed set is Lebesgue measurable). This lemma requires proof. -/
+/-- Helper: For any set E and ε > 0, there exists an open U ⊇ E with m*(U) ≤ m*(E) + ε.
+    This follows from outer regularity (Lemma 1.2.12). -/
+private lemma exists_open_superset_measure_le {d:ℕ} (E: Set (EuclideanSpace' d)) (ε : EReal) (hε : 0 < ε) :
+    ∃ U : Set (EuclideanSpace' d), IsOpen U ∧ E ⊆ U ∧ Lebesgue_outer_measure U ≤ Lebesgue_outer_measure E + ε := by
+  -- By outer regularity (Lebesgue_outer_measure.eq):
+  -- m*(E) = sInf { m*(U) | E ⊆ U ∧ IsOpen U }
+  -- For any ε > 0, there exists U in this set with m*(U) ≤ m*(E) + ε
+  have h_outer_reg := Lebesgue_outer_measure.eq (d := d) E
+  -- The set of measures is nonempty (Set.univ is open and contains E)
+  let S := {M | ∃ U, E ⊆ U ∧ IsOpen U ∧ M = Lebesgue_outer_measure U}
+  have h_set_nonempty : S.Nonempty := by
+    use Lebesgue_outer_measure (Set.univ : Set (EuclideanSpace' d))
+    exact ⟨Set.univ, Set.subset_univ E, isOpen_univ, rfl⟩
+  -- Key: sInf S + ε is not a lower bound of S, so there exists v ∈ S with v < sInf S + ε
+  have h_inf : IsGLB S (sInf S) := isGLB_sInf S
+  -- Since m*(E) = sInf S and 0 < ε, we have sInf S < sInf S + ε
+  -- So sInf S + ε is not the greatest lower bound, hence not in lowerBounds S
+  -- This means ∃ v ∈ S, v < sInf S + ε
+  have h_ne_bot : sInf S ≠ ⊥ := by
+    intro h_eq
+    rw [h_eq] at h_inf
+    have h_zero_lb : (0 : EReal) ∈ lowerBounds S := by
+      intro v hv
+      obtain ⟨U, _, _, rfl⟩ := hv
+      exact Lebesgue_outer_measure.nonneg U
+    have h_le : (0 : EReal) ≤ ⊥ := h_inf.2 h_zero_lb
+    exact not_le.mpr EReal.bot_lt_zero h_le
+  by_cases h_top : sInf S = ⊤
+  · -- If sInf S = ⊤, then m*(E) = ⊤, and any open set works since ⊤ + ε = ⊤ in EReal
+    use Set.univ
+    refine ⟨isOpen_univ, Set.subset_univ E, ?_⟩
+    rw [h_outer_reg, h_top]
+    exact le_top
+  · -- sInf S ≠ ⊤, so sInf S < sInf S + ε
+    have h_lt : sInf S < sInf S + ε := EReal.lt_add_of_pos hε h_ne_bot h_top
+    -- So sInf S + ε is not in lowerBounds S
+    have h_not_lb : sInf S + ε ∉ lowerBounds S := by
+      intro h_is_lb
+      have h_le : sInf S + ε ≤ sInf S := h_inf.2 h_is_lb
+      exact not_lt.mpr h_le h_lt
+    -- Therefore ∃ v ∈ S, v < sInf S + ε
+    push_neg at h_not_lb
+    obtain ⟨v, hv_in_S, hv_lt⟩ := h_not_lb
+    -- Extract the open set U from v ∈ S
+    obtain ⟨U, hE_sub_U, hU_open, hv_eq⟩ := hv_in_S
+    use U
+    refine ⟨hU_open, hE_sub_U, ?_⟩
+    rw [h_outer_reg, ← hv_eq]
+    exact le_of_lt hv_lt
+
+/-- Lemma 1.2.13(ii) (Every closed set is Lebesgue measurable).
+    Proof outline from textbook:
+    1. Reduce to bounded closed sets (compact by Heine-Borel)
+    2. For compact E: use outer regularity to find U with m*(U) ≤ m*(E) + ε
+    3. Show m*(U \ E) ≤ ε using properties of almost disjoint cubes and compactness -/
 theorem IsClosed.measurable {d:ℕ} {E: Set (EuclideanSpace' d)} (hE: IsClosed E) : LebesgueMeasurable E := by
+  -- We need: ∀ ε > 0, ∃ U open, E ⊆ U ∧ m*(U \ E) ≤ ε
+  intro ε hε
+  -- If E = ∅, use U = ∅
+  by_cases hE_empty : E = ∅
+  · use ∅
+    refine ⟨isOpen_empty, ?_, ?_⟩
+    · rw [hE_empty]
+    · simp only [Set.empty_diff]
+      rw [Lebesgue_outer_measure.of_empty]
+      exact le_of_lt hε
+  push_neg at hE_empty
+  -- E is nonempty and closed, hence Eᶜ is open
+  have hEc_open : IsOpen Eᶜ := hE.isOpen_compl
+  -- Use helper to get open U ⊇ E with m*(U) close to m*(E)
+  have hε_half_pos : (0 : EReal) < ε / 2 := by
+    cases ε with
+    | bot => exact absurd hε (not_lt.mpr bot_le)
+    | top =>
+      have h : (⊤ : EReal) / 2 = ⊤ := by
+        rw [show (2 : EReal) = (2 : ℝ) from rfl]
+        simp only [EReal.top_div_coe, ↓reduceIte]
+        norm_num
+      rw [h]
+      exact EReal.zero_lt_top
+    | coe r =>
+      have h2 : (2 : EReal) = (2 : ℝ) := rfl
+      rw [h2, ← EReal.coe_div r 2]
+      exact EReal.coe_pos.mpr (half_pos (EReal.coe_pos.mp hε))
+  obtain ⟨U, hU_open, hE_sub_U, hU_meas⟩ := exists_open_superset_measure_le E (ε/2) hε_half_pos
+  use U
+  refine ⟨hU_open, hE_sub_U, ?_⟩
+  -- Need to show: m*(U \ E) ≤ ε
+  -- Key insight: U \ E is open (since E is closed)
+  have h_diff_open : IsOpen (U \ E) := hU_open.sdiff hE
+  -- The main argument uses:
+  -- 1. U \ E = ⋃ Qₙ (almost disjoint dyadic cubes) by Lemma 1.2.11
+  -- 2. m*(U \ E) = Σ|Qₙ| by Lemma 1.2.9
+  -- 3. For compact E, finite unions ⋃ₙ₌₁ᴺ Qₙ are separated from E
+  -- 4. By additivity on separated sets: m*(E ∪ ⋃ₙ₌₁ᴺ Qₙ) = m*(E) + Σₙ₌₁ᴺ|Qₙ|
+  -- 5. By monotonicity: m*(E) + Σₙ₌₁ᴺ|Qₙ| ≤ m*(U)
+  -- 6. Taking N → ∞: m*(E) + m*(U \ E) ≤ m*(U) ≤ m*(E) + ε/2
+  -- 7. Hence m*(U \ E) ≤ ε/2 ≤ ε
+  -- This requires substantial machinery for the general case
   sorry
 
 abbrev IsNull {d:ℕ} (E: Set (EuclideanSpace' d)) : Prop := Lebesgue_outer_measure E = 0
