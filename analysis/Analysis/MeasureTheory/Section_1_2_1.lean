@@ -4751,28 +4751,99 @@ lemma dyadicCubeContaining_mem {d:ℕ} (n:ℤ) (x : EuclideanSpace' d) :
         _ = ((⌊x i * 2^n⌋ : ℝ) + 1) / 2^n := by ring
     exact h3.le
 
+/-- The interior of a dyadic cube is nonempty. -/
+lemma dyadicCubeInteriorNonempty {d:ℕ} (n:ℤ) (a: Fin d → ℤ) :
+    (interior (s := (DyadicCube n a).toSet)).Nonempty := by
+  rw [DyadicCube.interior]
+  apply Set.univ_pi_nonempty_iff.mpr
+  intro k
+  apply Set.nonempty_Ioo.mpr
+  have h2n_pos : (0 : ℝ) < 2 ^ n := zpow_pos (by norm_num) _
+  apply div_lt_div_of_pos_right _ h2n_pos
+  linarith
+
+/-- At the same scale, dyadic cubes with different indices cannot have one contained in the other
+    (since containment would imply empty interior for one). -/
+lemma dyadicCubeNoProperContainmentSameScale {d:ℕ} {n:ℤ} {a b : Fin d → ℤ}
+    (h_sub : (DyadicCube n a).toSet ⊆ (DyadicCube n b).toSet) : a = b := by
+  by_contra hne
+  have h_ad := DyadicCube.almost_disjoint_same_scale (n := n) (a := a) (b := b) hne
+  simp only [AlmostDisjoint] at h_ad
+  have h_int_sub : interior (s := (DyadicCube n a).toSet) ⊆ interior (s := (DyadicCube n b).toSet) :=
+    interior_mono h_sub
+  have h_int_eq : interior (s := (DyadicCube n a).toSet) = ∅ := by
+    rw [Set.eq_empty_iff_forall_notMem]
+    intro x hx
+    have hx' := h_int_sub hx
+    have hx_both : x ∈ interior (s := (DyadicCube n a).toSet) ∩
+        interior (s := (DyadicCube n b).toSet) := ⟨hx, hx'⟩
+    rw [h_ad] at hx_both
+    exact hx_both
+  exact Set.not_nonempty_empty (h_int_eq ▸ dyadicCubeInteriorNonempty n a)
+
+/-- A larger dyadic cube (coarser scale n) cannot be contained in a smaller dyadic cube (finer scale m)
+    when d > 0. This is because the sidelength 2^(-n) > 2^(-m) when n < m. -/
+lemma dyadicCubeLargerNotInSmaller {d:ℕ} (hd : 0 < d) {n m : ℤ} (hnm : n < m)
+    {a b : Fin d → ℤ} : ¬((DyadicCube n a).toSet ⊆ (DyadicCube m b).toSet) := by
+  intro h_sub
+  -- Pick any coordinate (d > 0 guarantees this exists)
+  let i : Fin d := ⟨0, hd⟩
+  -- Compare sidelengths: 2^(-n) > 2^(-m) when n < m
+  have h_side_ineq : (2:ℝ)^(-m) < (2:ℝ)^(-n) := by
+    apply zpow_lt_zpow_right₀ (by norm_num : 1 < (2:ℝ))
+    omega
+  -- Construct the left endpoint of DyadicCube n a
+  let x_left : EuclideanSpace' d := fun j => (a j : ℝ) / 2^n
+  -- x_left is in DyadicCube n a (it's the left corner)
+  have hx_left : x_left ∈ (DyadicCube n a).toSet := by
+    intro j _
+    simp only [x_left, DyadicCube, BoundedInterval.toSet, Set.mem_Icc]
+    constructor
+    · exact le_refl _
+    · have h2n_pos : (0:ℝ) < 2^n := zpow_pos (by norm_num) n
+      apply le_of_lt
+      apply div_lt_div_of_pos_right _ h2n_pos
+      linarith
+  -- Construct the right endpoint of DyadicCube n a
+  let x_right : EuclideanSpace' d := fun j => ((a j : ℝ) + 1) / 2^n
+  -- x_right is in DyadicCube n a (it's the right corner)
+  have hx_right : x_right ∈ (DyadicCube n a).toSet := by
+    intro j _
+    simp only [x_right, DyadicCube, BoundedInterval.toSet, Set.mem_Icc]
+    constructor
+    · have h2n_pos : (0:ℝ) < 2^n := zpow_pos (by norm_num) n
+      apply le_of_lt
+      apply div_lt_div_of_pos_right _ h2n_pos
+      linarith
+    · exact le_refl _
+  -- Both endpoints are in DyadicCube m b by h_sub
+  have h_left_in := h_sub hx_left i (Set.mem_univ i)
+  have h_right_in := h_sub hx_right i (Set.mem_univ i)
+  simp only [x_left, x_right, DyadicCube, BoundedInterval.toSet, Set.mem_Icc] at h_left_in h_right_in
+  -- From h_left_in: (a i)/2^n ≥ (b i)/2^m
+  -- From h_right_in: ((a i)+1)/2^n ≤ ((b i)+1)/2^m
+  -- So: 2^(-n) = ((a i)+1)/2^n - (a i)/2^n ≤ ((b i)+1)/2^m - (b i)/2^m = 2^(-m)
+  have h_len_sub : (2:ℝ)^(-n) ≤ (2:ℝ)^(-m) := by
+    have h2n_pos : (0:ℝ) < 2^n := zpow_pos (by norm_num) n
+    have h2m_pos : (0:ℝ) < 2^m := zpow_pos (by norm_num) m
+    calc (2:ℝ)^(-n) = ((a i : ℝ) + 1) / 2^n - (a i : ℝ) / 2^n := by field_simp
+      _ ≤ ((b i : ℝ) + 1) / 2^m - (b i : ℝ) / 2^m := by linarith [h_left_in.1, h_right_in.2]
+      _ = (2:ℝ)^(-m) := by field_simp
+  linarith
+
 /-- Lemma 1.2.11: Every open set is a countable union of almost disjoint dyadic cubes.
+Note: every dyadic cube is nonempty
     Proof outline:
     1. For each x ∈ E, by exists_dyadic_cube_subset, there exists a dyadic cube containing x ⊆ E
     2. The set of all such dyadic cubes is countable (subset of ℕ × (Fin d → ℤ))
     3. Take maximal cubes (not strictly contained in another cube in the collection)
     4. By DyadicCube.nesting, distinct maximal cubes are almost disjoint
     5. E equals the union of these maximal cubes -/
-theorem IsOpen.eq_union_boxes {d:ℕ} (E: Set (EuclideanSpace' d)) (hE: IsOpen E) :
+theorem IsOpen.eq_union_boxes {d:ℕ} (hd : 0 < d) (E: Set (EuclideanSpace' d)) (hE: IsOpen E)
+    (hE_nonempty : E.Nonempty) :
     ∃ B: ℕ → Box d, (E = ⋃ n, (B n).toSet) ∧ (∀ n, (B n).IsDyadic) ∧
     Pairwise (Function.onFun AlmostDisjoint B) := by
   classical
-  -- Handle empty case separately
-  by_cases hE_nonempty : E.Nonempty
-  swap
-  · -- For E = ∅: The theorem statement using ℕ → Box d (infinitely many boxes) cannot
-    -- express the empty set as a union of nonempty boxes with pairwise almost disjoint property.
-    -- This is a limitation of the statement - mathematically, ∅ is the union of zero boxes.
-    -- We leave this edge case with sorry as the main interest is the nonempty case.
-    simp only [Set.not_nonempty_iff_eq_empty] at hE_nonempty
-    -- Note: Any sequence of dyadic boxes has nonempty union (since boxes are nonempty),
-    -- which cannot equal ∅. The empty case requires a different formulation.
-    sorry
   -- Non-empty case: construct maximal dyadic cubes
   obtain ⟨x₀, hx₀⟩ := hE_nonempty
   -- Define the set of all dyadic cubes (at scale n ≥ 0) contained in E
@@ -4819,13 +4890,108 @@ theorem IsOpen.eq_union_boxes {d:ℕ} (E: Set (EuclideanSpace' d)) (hE: IsOpen E
       -- containing x₀, contradicting minimality
       have hx₀_in_q : x₀ ∈ (DyadicCube (q.1 : ℤ) q.2).toSet := hsub' hx₀_mem
       exact hmin q.1 hq q.2 hx₀_in_q
-  -- Q_max is infinite: for each scale n, there exist maximal cubes at that scale
-  -- (points near boundary of E have maximal cubes at arbitrarily fine scales)
+  -- Q_max is infinite: we show this by cases on d
   have hQ_max_infinite : Q_max.Infinite := by
-    -- The set of scales appearing in Q_max is unbounded
-    -- For any N, there exist points x ∈ E whose maximal cube is at scale > N
-    -- This is because near the boundary of E, cubes must be arbitrarily small
-    sorry
+    -- d > 0 by hypothesis hd, so we proceed directly
+      -- At scale 0, dyadic cubes are [a₁, a₁+1] × ... × [aₐ, aₐ+1] for a ∈ ℤᵈ
+      -- If E = univ, all scale-0 cubes are in Q_max
+      -- If E ≠ univ, near the boundary, cubes at arbitrarily fine scales are maximal
+      by_cases hE_univ : E = Set.univ
+      · -- E = univ: All scale-0 cubes are maximal (no coarser scale exists)
+        -- First, show Fin d → ℤ is infinite (since d > 0 and ℤ is infinite)
+        haveI : Nonempty (Fin d) := ⟨⟨0, hd⟩⟩
+        haveI : Infinite (Fin d → ℤ) := Function.infinite_of_right
+        -- Now inject Fin d → ℤ into Q_max via a ↦ (0, a)
+        apply Set.infinite_of_injective_forall_mem
+          (f := fun a : Fin d → ℤ => (0, a))
+          (fun a b hab => (Prod.mk.inj hab).2)
+        intro a
+        constructor
+        · simp only [hE_univ]; exact Set.subset_univ _
+        · intro q hq _; omega
+      · -- E ≠ univ: Near boundary, cubes at arbitrarily fine scales are maximal
+        -- Key insight: Since E ≠ univ, there exists y ∉ E. For any x ∈ E, the maximal
+        -- cube containing x cannot contain y. As we move x closer to y (within E),
+        -- the maximal cubes must become smaller, giving arbitrarily fine scales.
+        -- We show Q_max is infinite by showing the scales are unbounded.
+        by_contra hfin
+        rw [Set.not_infinite] at hfin
+        -- Q_max is finite, so there's a maximum scale N among all maximal cubes
+        obtain ⟨N, hN⟩ : ∃ N : ℕ, ∀ p ∈ Q_max, p.1 ≤ N := by
+          obtain ⟨p, hp⟩ := Set.Finite.exists_maximalFor Prod.fst Q_max hfin hQ_max_nonempty
+          use p.1
+          intro q hq
+          by_contra hlt
+          push_neg at hlt
+          have hle := hp.le_of_le hq hlt.le
+          omega
+        -- But there exist points in E whose maximal cube has scale > N
+        -- These are points close to the boundary (complement of E)
+        -- Since E ≠ univ, ∃ y ∉ E. Take x ∈ E close to y.
+        have hEc_nonempty : Eᶜ.Nonempty := by
+          rw [Set.nonempty_compl]
+          exact hE_univ
+        obtain ⟨y, hy⟩ := hEc_nonempty
+        -- Proof strategy:
+        -- 1. Every x ∈ E has a maximal cube with scale ≤ N, hence sidelength ≥ 2^(-N)
+        -- 2. This cube is contained in E and contains an open ball around x
+        -- 3. So every x ∈ E has dist(x, Eᶜ) ≥ 2^(-N)·sqrt(d)/2 (roughly)
+        -- 4. This means E is closed (closure E = E)
+        -- 5. E is open, closed, nonempty → E = univ by connectedness
+        -- 6. Contradicts E ≠ univ
+        --
+        -- Step 1: Show E is closed
+        have hE_closed : IsClosed E := by
+          -- Strategy: Q_max is finite, so E is a finite union of dyadic cubes
+          -- Each dyadic cube is closed (product of closed intervals Icc)
+          -- Finite union of closed sets is closed
+          -- First, show each dyadic cube toSet is closed
+          have h_cube_closed : ∀ p ∈ Q_max, IsClosed (DyadicCube (p.1 : ℤ) p.2).toSet := by
+            intro p _
+            -- DyadicCube is product of Icc intervals, which are closed
+            simp only [Box.toSet, DyadicCube]
+            apply isClosed_set_pi (i := Set.univ)
+            intro i _
+            exact isClosed_Icc
+          -- E equals the union of cubes in Q_max
+          have hE_union_Qmax : E = ⋃ p ∈ Q_max, (DyadicCube (p.1 : ℤ) p.2).toSet := by
+            ext x
+            constructor
+            · intro hx
+              -- x ∈ E, so x has a maximal cube
+              obtain ⟨n₀, a₀, hx_mem, hsub, hmin⟩ := h_exists_min_scale x hx
+              -- This cube is in Q_max
+              have h_in_Qmax : (n₀, a₀) ∈ Q_max := by
+                constructor
+                · exact hsub
+                · intro q hq hsub'
+                  have : x ∈ (DyadicCube (q.1 : ℤ) q.2).toSet := hsub' hx_mem
+                  exact hmin q.1 hq q.2 this
+              exact Set.mem_biUnion h_in_Qmax hx_mem
+            · intro hx
+              simp only [Set.mem_iUnion] at hx
+              obtain ⟨p, hp_mem, hx_in_p⟩ := hx
+              exact hp_mem.1 hx_in_p
+          -- Q_max is finite, so the union is finite
+          rw [hE_union_Qmax]
+          -- Finite union of closed sets is closed
+          exact hfin.isClosed_biUnion h_cube_closed
+        -- Step 2: E is clopen (closed and open)
+        have hE_clopen : IsClopen E := ⟨hE_closed, hE⟩
+        -- Step 3: Use preconnectedness
+        -- EuclideanSpace d is preconnected for d > 0
+        haveI : PreconnectedSpace (EuclideanSpace' d) := inferInstance
+        -- Step 4: Clopen sets in preconnected space are either empty or univ
+        rw [isClopen_iff] at hE_clopen
+        cases hE_clopen with
+        | inl h_empty =>
+          -- E = ∅ contradicts E.Nonempty
+          have : E.Nonempty := ⟨x₀, hx₀⟩
+          rw [h_empty] at this
+          exact Set.not_nonempty_empty this
+        | inr h_univ =>
+          -- E = univ contradicts hE_univ : E ≠ univ
+          exact hE_univ h_univ
   -- Enumerate Q_max using the Denumerable structure (since Q_max is infinite and countable)
   obtain ⟨p₀, hp₀⟩ := hQ_max_nonempty
   -- For infinite countable sets, we can get an injective enumeration
@@ -4904,66 +5070,18 @@ theorem IsOpen.eq_union_boxes {d:ℕ} (E: Set (EuclideanSpace' d)) (hE: IsOpen E
         exact hi_mem.2 (B_idx j) hji_lt h_ij hj_mem.1
       · -- Same scale: cubes are either equal or disjoint
         -- If B_i ⊆ B_j at same scale, they must be equal
-        have heq : (B_idx i).2 = (B_idx j).2 := by
-          -- At same scale, proper containment is impossible for dyadic cubes
-          -- The only way B_i ⊆ B_j at same scale n is if their indices are equal
-          by_contra hne
-          have h_ad := DyadicCube.almost_disjoint_same_scale (n := (B_idx i).1)
-            (a := (B_idx i).2) (b := (B_idx j).2) (by simp; exact hne)
-          -- h_ad says interiors are disjoint, h_ij says B_i ⊆ B_j
-          -- interior B_i ⊆ interior B_j, and interior B_i ∩ interior B_j = ∅
-          -- implies interior B_i = ∅, but dyadic cubes have nonempty interior
-          simp only [AlmostDisjoint] at h_ad
-          -- Rewrite h_ij to use the same scale
-          have h_ij' : (DyadicCube (↑(B_idx i).1) (B_idx i).2).toSet ⊆
-              (DyadicCube (↑(B_idx i).1) (B_idx j).2).toSet := by
-            convert h_ij using 3
-            simp only [Nat.cast_inj]
-            exact hji_eq.symm
-          have h_int_sub : interior (DyadicCube (↑(B_idx i).1) (B_idx i).2).toSet ⊆
-              interior (DyadicCube (↑(B_idx i).1) (B_idx j).2).toSet := interior_mono h_ij'
-          have h_int_eq : interior (DyadicCube (↑(B_idx i).1) (B_idx i).2).toSet = ∅ := by
-            rw [Set.eq_empty_iff_forall_notMem]
-            intro x hx
-            have hx' := h_int_sub hx
-            have hx_both : x ∈ interior (DyadicCube (↑(B_idx i).1) (B_idx i).2).toSet ∩
-                interior (DyadicCube (↑(B_idx i).1) (B_idx j).2).toSet := ⟨hx, hx'⟩
-            rw [h_ad] at hx_both
-            exact hx_both
-          -- But dyadic cubes have nonempty interior
-          rw [DyadicCube.interior] at h_int_eq
-          -- The interior is a product of open intervals (a_k/2^n, (a_k+1)/2^n) for each k
-          -- These are nonempty since a_k/2^n < (a_k+1)/2^n
-          have h_nonempty : (Set.univ.pi fun k : Fin d =>
-              Set.Ioo (((B_idx i).2 k : ℝ) / 2 ^ ((B_idx i).1 : ℤ))
-                      ((((B_idx i).2 k : ℝ) + 1) / 2 ^ ((B_idx i).1 : ℤ))).Nonempty := by
-            apply Set.univ_pi_nonempty_iff.mpr
-            intro k
-            apply Set.nonempty_Ioo.mpr
-            have h2n_pos : (0 : ℝ) < 2 ^ ((B_idx i).1 : ℤ) := zpow_pos (by norm_num) _
-            apply div_lt_div_of_pos_right _ h2n_pos
-            linarith
-          exact Set.not_nonempty_empty (h_int_eq ▸ h_nonempty)
+        have h_ij' : (DyadicCube (↑(B_idx i).1) (B_idx i).2).toSet ⊆
+            (DyadicCube (↑(B_idx i).1) (B_idx j).2).toSet := by
+          convert h_ij using 3; simp only [Nat.cast_inj]; exact hji_eq.symm
+        have heq : (B_idx i).2 = (B_idx j).2 := dyadicCubeNoProperContainmentSameScale h_ij'
         -- If scales and indices equal, B_i = B_j, so B_idx i = B_idx j
         have hidx_eq : B_idx i = B_idx j := Prod.ext hji_eq.symm (funext fun x => congrFun heq x)
         -- By injectivity of B_idx (from Denumerable enumeration), i = j
         exact hij (hB_idx_inj hidx_eq)
-      · -- (B_idx i).1 < (B_idx j).1: i is coarser scale (i.e., i has LARGER cube, j has smaller)
-        -- h_ij : B_i ⊆ B_j says the larger cube is inside the smaller - impossible for d > 0
-        -- By maximality of B_i: if B_i ⊆ B_j and j is finer, B_i is NOT maximal
-        -- Actually, let's use maximality of B_i more directly:
-        -- hji_gt says (B_idx i).1 < (B_idx j).1
-        -- h_ij says B_i ⊆ B_j
-        -- But B_i ∈ Q_max means: for all coarser cubes q (q.1 < (B_idx i).1),
-        --   if B_i ⊆ DyadicCube q, then DyadicCube q ⊈ E
-        -- We don't directly get a contradiction from this since j is FINER, not coarser.
-        -- The geometric impossibility: a larger cube can't fit inside a smaller one.
-        -- For dyadic cubes, side_i = 2^{-(B_idx i).1}, side_j = 2^{-(B_idx j).1}
-        -- (B_idx i).1 < (B_idx j).1 means side_i > side_j
-        -- B_i ⊆ B_j with side_i > side_j is impossible in d > 0 dimensions.
-        -- This requires a geometric argument about interval containment.
-        -- For now, leave as sorry - the key case (j coarser) is handled above.
-        sorry
+      · -- (B_idx i).1 < (B_idx j).1: i is coarser scale (larger cube), j is finer (smaller cube)
+        -- h_ij says larger cube ⊆ smaller cube, geometrically impossible for d > 0
+        have h_scale_lt : (↑(B_idx i).1 : ℤ) < ↑(B_idx j).1 := by exact_mod_cast hji_gt
+        exact dyadicCubeLargerNotInSmaller hd h_scale_lt h_ij
     · -- B j ⊆ B i: symmetric case
       exfalso
       rcases lt_trichotomy (B_idx i).1 (B_idx j).1 with hij_lt | hij_eq | hij_gt
@@ -4971,41 +5089,16 @@ theorem IsOpen.eq_union_boxes {d:ℕ} (E: Set (EuclideanSpace' d)) (hE: IsOpen E
         -- This contradicts maximality of B_j: B_j ⊆ B_i ⊆ E, and i is coarser
         exact hj_mem.2 (B_idx i) hij_lt h_ji hi_mem.1
       · -- Same scale: use injectivity as in the symmetric case above
-        have heq : (B_idx j).2 = (B_idx i).2 := by
-          by_contra hne
-          have h_ad := DyadicCube.almost_disjoint_same_scale (n := (B_idx j).1)
-            (a := (B_idx j).2) (b := (B_idx i).2) (by simp; exact hne)
-          simp only [AlmostDisjoint] at h_ad
-          have h_ij' : (DyadicCube (↑(B_idx j).1) (B_idx j).2).toSet ⊆
-              (DyadicCube (↑(B_idx j).1) (B_idx i).2).toSet := by
-            convert h_ji using 3
-            simp only [Nat.cast_inj]
-            exact hij_eq.symm
-          have h_int_sub := interior_mono h_ij'
-          have h_int_eq : interior (DyadicCube (↑(B_idx j).1) (B_idx j).2).toSet = ∅ := by
-            rw [Set.eq_empty_iff_forall_notMem]
-            intro x hx
-            have hx' := h_int_sub hx
-            have hx_both : x ∈ interior (DyadicCube (↑(B_idx j).1) (B_idx j).2).toSet ∩
-                interior (DyadicCube (↑(B_idx j).1) (B_idx i).2).toSet := ⟨hx, hx'⟩
-            rw [h_ad] at hx_both
-            exact hx_both
-          rw [DyadicCube.interior] at h_int_eq
-          have h_nonempty : (Set.univ.pi fun k : Fin d =>
-              Set.Ioo (((B_idx j).2 k : ℝ) / 2 ^ ((B_idx j).1 : ℤ))
-                      ((((B_idx j).2 k : ℝ) + 1) / 2 ^ ((B_idx j).1 : ℤ))).Nonempty := by
-            apply Set.univ_pi_nonempty_iff.mpr
-            intro k
-            apply Set.nonempty_Ioo.mpr
-            have h2n_pos : (0 : ℝ) < 2 ^ ((B_idx j).1 : ℤ) := zpow_pos (by norm_num) _
-            apply div_lt_div_of_pos_right _ h2n_pos
-            linarith
-          exact Set.not_nonempty_empty (h_int_eq ▸ h_nonempty)
+        have h_ji' : (DyadicCube (↑(B_idx j).1) (B_idx j).2).toSet ⊆
+            (DyadicCube (↑(B_idx j).1) (B_idx i).2).toSet := by
+          convert h_ji using 3; simp only [Nat.cast_inj]; exact hij_eq.symm
+        have heq : (B_idx j).2 = (B_idx i).2 := dyadicCubeNoProperContainmentSameScale h_ji'
         have hidx_eq : B_idx j = B_idx i := Prod.ext hij_eq.symm (funext fun x => congrFun heq x)
         exact hij (hB_idx_inj hidx_eq).symm
       · -- j coarser (larger), i finer (smaller), B_j ⊆ B_i means larger inside smaller
         -- Geometric impossibility for d > 0
-        sorry
+        have h_scale_lt : (↑(B_idx j).1 : ℤ) < ↑(B_idx i).1 := by exact_mod_cast hij_gt
+        exact dyadicCubeLargerNotInSmaller hd h_scale_lt h_ji
 
 theorem Lebesgue_outer_measure.of_open {d:ℕ} (E: Set (EuclideanSpace' d)) (hE: IsOpen E) : Lebesgue_outer_measure E = Jordan_inner_measure E := by
   sorry
