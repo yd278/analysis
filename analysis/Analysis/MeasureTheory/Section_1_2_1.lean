@@ -1513,6 +1513,19 @@ lemma volume_nonneg {d : ℕ} (B : Box d) : 0 ≤ B.volume := by
   unfold BoundedInterval.length
   exact le_max_right _ _
 
+/-- Closed boxes (all sides are Icc) in Euclidean space are compact sets. -/
+lemma isCompact {d : ℕ} (B : Box d) (h_closed : ∀ i, ∃ a b, B.side i = BoundedInterval.Icc a b) :
+    IsCompact B.toSet := by
+  unfold Box.toSet
+  -- Use Tychonoff: product of compact sets is compact
+  apply isCompact_univ_pi
+  intro i
+  -- Each side is Icc a b, which is compact
+  obtain ⟨a, b, hi⟩ := h_closed i
+  rw [hi]
+  -- IsCompact ↑(BoundedInterval.Icc a b) = IsCompact (Set.Icc a b)
+  exact isCompact_Icc
+
 end Box
 
 namespace Lebesgue_outer_measure
@@ -4348,6 +4361,14 @@ def Box.IsDyadicAtScale {d:ℕ} (B: Box d) (n:ℤ) : Prop := ∃ a: Fin d → �
 
 def Box.IsDyadic {d:ℕ} (B: Box d) : Prop := ∃ n:ℕ, B.IsDyadicAtScale n
 
+/-- Dyadic boxes have all sides as closed intervals (Icc). -/
+lemma Box.IsDyadic.all_sides_Icc {d : ℕ} {B : Box d} (hB : B.IsDyadic) :
+    ∀ i, ∃ a b, B.side i = BoundedInterval.Icc a b := by
+  obtain ⟨n, ⟨a, rfl⟩⟩ := hB
+  intro i
+  use a i / 2^n, (a i + 1) / 2^n
+  rfl
+
 -- Helper lemmas for Lemma 1.2.11
 namespace DyadicCube
 /-- The sidelength of a dyadic cube at scale n is 2^(-n). -/
@@ -5243,6 +5264,98 @@ theorem Lebesgue_outer_measure.of_open {d:ℕ} (E: Set (EuclideanSpace' d)) (hE:
 /-- Lemma 1.2.12 (Outer regularity).  Proof has not been formalized yet. -/
 theorem Lebesgue_outer_measure.eq {d:ℕ} (E: Set (EuclideanSpace' d)) : Lebesgue_outer_measure E = sInf { M | ∃ U, E ⊆ U ∧ IsOpen U ∧ M = Lebesgue_outer_measure U} := by
   sorry
+
+/-- For any set E and ε > 0, there exists an open U ⊇ E with m*(U) ≤ m*(E) + ε.
+    This follows from outer regularity (Lemma 1.2.12). -/
+lemma Lebesgue_outer_measure.exists_open_superset_measure_le {d:ℕ} (E: Set (EuclideanSpace' d)) (ε : EReal) (hε : 0 < ε) :
+    ∃ U : Set (EuclideanSpace' d), IsOpen U ∧ E ⊆ U ∧ Lebesgue_outer_measure U ≤ Lebesgue_outer_measure E + ε := by
+  -- By outer regularity (Lebesgue_outer_measure.eq):
+  -- m*(E) = sInf { m*(U) | E ⊆ U ∧ IsOpen U }
+  have h_outer_reg := Lebesgue_outer_measure.eq (d := d) E
+  let S := {M | ∃ U, E ⊆ U ∧ IsOpen U ∧ M = Lebesgue_outer_measure U}
+  have h_set_nonempty : S.Nonempty := by
+    use Lebesgue_outer_measure (Set.univ : Set (EuclideanSpace' d))
+    exact ⟨Set.univ, Set.subset_univ E, isOpen_univ, rfl⟩
+  have h_inf : IsGLB S (sInf S) := isGLB_sInf S
+  have h_ne_bot : sInf S ≠ ⊥ := by
+    intro h_eq
+    rw [h_eq] at h_inf
+    have h_zero_lb : (0 : EReal) ∈ lowerBounds S := by
+      intro v hv
+      obtain ⟨U, _, _, rfl⟩ := hv
+      exact Lebesgue_outer_measure.nonneg U
+    have h_le : (0 : EReal) ≤ ⊥ := h_inf.2 h_zero_lb
+    exact not_le.mpr EReal.bot_lt_zero h_le
+  by_cases h_top : sInf S = ⊤
+  · use Set.univ
+    refine ⟨isOpen_univ, Set.subset_univ E, ?_⟩
+    rw [h_outer_reg, h_top]
+    cases ε with
+    | bot => exact absurd hε (not_lt.mpr bot_le)
+    | top => simp
+    | coe r => exact le_top
+  · have h_lt : sInf S < sInf S + ε := by
+      cases ε with
+      | bot => exact absurd hε (not_lt.mpr bot_le)
+      | top =>
+        have h_sum_top : sInf S + ⊤ = ⊤ := by
+          cases h : sInf S with
+          | bot => exact absurd h h_ne_bot
+          | top => exact absurd h h_top
+          | coe r => rfl
+        rw [h_sum_top]
+        exact lt_top_iff_ne_top.mpr h_top
+      | coe r =>
+        have hr_pos : 0 < r := EReal.coe_pos.mp hε
+        exact EReal.lt_add_of_pos_coe hr_pos h_ne_bot h_top
+    have h_not_lb : sInf S + ε ∉ lowerBounds S := by
+      intro h_is_lb
+      have h_le : sInf S + ε ≤ sInf S := h_inf.2 h_is_lb
+      exact not_lt.mpr h_le h_lt
+    unfold lowerBounds at h_not_lb
+    simp only [Set.mem_setOf_eq] at h_not_lb
+    push_neg at h_not_lb
+    obtain ⟨v, hv_in_S, hv_lt⟩ := h_not_lb
+    obtain ⟨U, hE_sub_U, hU_open, hv_eq⟩ := hv_in_S
+    use U
+    refine ⟨hU_open, hE_sub_U, ?_⟩
+    rw [h_outer_reg, ← hv_eq]
+    exact le_of_lt hv_lt
+
+/-- Compact sets in Euclidean space have finite Lebesgue outer measure. -/
+lemma Lebesgue_outer_measure.finite_of_compact {d : ℕ} {E : Set (EuclideanSpace' d)}
+    (hE : IsCompact E) : Lebesgue_outer_measure E ≠ ⊤ := by
+  -- Empty case is trivial
+  by_cases hE_empty : E = ∅
+  · rw [hE_empty, Lebesgue_outer_measure.of_empty]; exact EReal.zero_ne_top
+  -- For nonempty E: E compact → E bounded → E ⊆ closedBall x R → E ⊆ box [-M,M]^d
+  have ⟨x, hx⟩ : E.Nonempty := Set.nonempty_iff_ne_empty.mpr hE_empty
+  have h_bounded : Bornology.IsBounded E := IsCompact.isBounded hE
+  have ⟨r, h_sub_ball⟩ : ∃ (r : ℝ), E ⊆ Metric.closedBall x r := by
+    rwa [← Metric.isBounded_iff_subset_closedBall x]
+  -- Create a large box B that contains the closed ball
+  let M := ‖x‖ + |r| + 2
+  let B : Box d := { side := fun _ => BoundedInterval.Icc (-M) M }
+  have h_E_sub_B : E ⊆ B.toSet := by
+    intro y hy
+    have h_in_ball : y ∈ Metric.closedBall x r := h_sub_ball hy
+    rw [Set.mem_pi]
+    intro i _
+    rw [Metric.mem_closedBall] at h_in_ball
+    have h_dist : ‖y - x‖ ≤ r := h_in_ball
+    have h_coord_diff : |(y - x) i| ≤ ‖y - x‖ := EuclideanSpace'.coord_le_norm (y - x) i
+    have h_abs : |y i - x i| ≤ r := le_trans h_coord_diff h_dist
+    have h_xi : |x i| ≤ ‖x‖ := EuclideanSpace'.coord_le_norm x i
+    show y i ∈ (BoundedInterval.Icc (-M) M : Set ℝ)
+    rw [BoundedInterval.set_Icc, Set.mem_Icc]
+    rw [abs_le] at h_abs h_xi
+    have h_r_bound : r ≤ |r| := le_abs_self r
+    constructor <;> linarith
+  have : IsElementary B.toSet := IsElementary.box B
+  have h_B_finite : Lebesgue_outer_measure B.toSet ≠ ⊤ := by
+    rw [Lebesgue_outer_measure.elementary B.toSet this]
+    exact EReal.coe_ne_top _
+  exact ne_top_of_le_ne_top h_B_finite (Lebesgue_outer_measure.mono h_E_sub_B)
 
 /-- Exercise 1.2.6 -/
 example : ∃ (d:ℕ) (E: Set (EuclideanSpace' d)), Lebesgue_outer_measure E ≠ sSup { M | ∃ U, U ⊆ E ∧ IsOpen U ∧ M = Lebesgue_outer_measure U} := by sorry
