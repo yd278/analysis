@@ -1513,6 +1513,19 @@ lemma volume_nonneg {d : ℕ} (B : Box d) : 0 ≤ B.volume := by
   unfold BoundedInterval.length
   exact le_max_right _ _
 
+/-- Closed boxes (all sides are Icc) in Euclidean space are compact sets. -/
+lemma isCompact {d : ℕ} (B : Box d) (h_closed : ∀ i, ∃ a b, B.side i = BoundedInterval.Icc a b) :
+    IsCompact B.toSet := by
+  unfold Box.toSet
+  -- Use Tychonoff: product of compact sets is compact
+  apply isCompact_univ_pi
+  intro i
+  -- Each side is Icc a b, which is compact
+  obtain ⟨a, b, hi⟩ := h_closed i
+  rw [hi]
+  -- IsCompact ↑(BoundedInterval.Icc a b) = IsCompact (Set.Icc a b)
+  exact isCompact_Icc
+
 end Box
 
 namespace Lebesgue_outer_measure
@@ -4322,8 +4335,11 @@ theorem Box.sum_volume_eq {d:ℕ} (B B': ℕ → Box d) (hdisj: Pairwise (Functi
   simp only [f, f', ENNReal.toReal_ofReal (h_vol_nn _), ENNReal.toReal_ofReal (h_vol_nn' _)] at h_toReal_eq
   exact h_toReal_eq
 
-/-- Exercise 1.2.5 -/
-example {d:ℕ} (E: Set (EuclideanSpace' d)) (B: ℕ → Box d) (hE: E = ⋃ n, (B n).toSet) (hdisj: Pairwise (Function.onFun AlmostDisjoint B)) : Lebesgue_outer_measure E = Jordan_inner_measure E := by
+/-- Exercise 1.2.5: For any set that equals a countable union of almost disjoint boxes,
+    the Lebesgue outer measure equals the Jordan inner measure. -/
+theorem Lebesgue_outer_measure.eq_Jordan_inner_of_boxes {d:ℕ} (E: Set (EuclideanSpace' d)) (B: ℕ → Box d)
+    (hE: E = ⋃ n, (B n).toSet) (hdisj: Pairwise (Function.onFun AlmostDisjoint B)) :
+    Lebesgue_outer_measure E = Jordan_inner_measure E := by
   sorry
 
 def IsCube {d:ℕ} (B: Box d) : Prop := ∃ r, ∀ i, |B.side i|ₗ = r
@@ -4344,6 +4360,14 @@ lemma DyadicCube.isCube {d:ℕ} (n:ℤ) (a: Fin d → ℤ) : IsCube (DyadicCube 
 def Box.IsDyadicAtScale {d:ℕ} (B: Box d) (n:ℤ) : Prop := ∃ a: Fin d → ℤ, B = DyadicCube n a
 
 def Box.IsDyadic {d:ℕ} (B: Box d) : Prop := ∃ n:ℕ, B.IsDyadicAtScale n
+
+/-- Dyadic boxes have all sides as closed intervals (Icc). -/
+lemma Box.IsDyadic.all_sides_Icc {d : ℕ} {B : Box d} (hB : B.IsDyadic) :
+    ∀ i, ∃ a b, B.side i = BoundedInterval.Icc a b := by
+  obtain ⟨n, ⟨a, rfl⟩⟩ := hB
+  intro i
+  use a i / 2^n, (a i + 1) / 2^n
+  rfl
 
 -- Helper lemmas for Lemma 1.2.11
 namespace DyadicCube
@@ -5102,11 +5126,236 @@ theorem IsOpen.eq_union_boxes {d:ℕ} (hd : 0 < d) (E: Set (EuclideanSpace' d)) 
         exact dyadicCubeLargerNotInSmaller hd h_scale_lt h_ji
 
 theorem Lebesgue_outer_measure.of_open {d:ℕ} (E: Set (EuclideanSpace' d)) (hE: IsOpen E) : Lebesgue_outer_measure E = Jordan_inner_measure E := by
-  sorry
+  by_cases hd : d = 0
+  · -- Dimension 0: In dim 0, open sets are either ∅ or Set.univ
+    subst hd
+    rw [Lebesgue_outer_measure_of_dim_zero]
+    by_cases hne : E.Nonempty
+    · -- Case: E is nonempty → E = Set.univ in dimension 0
+      simp only [hne, ↓reduceIte]
+      -- Show Jordan_inner_measure E = 1
+      -- E = Set.univ since EuclideanSpace' 0 is singleton and E is nonempty
+      have hE_univ : E = Set.univ := by
+        ext x
+        constructor
+        · intro _; exact Set.mem_univ x
+        · intro _
+          obtain ⟨y, hy⟩ := hne
+          have : x = y := by ext i; exact i.elim0
+          rw [this]; exact hy
+      -- Set.univ is elementary with measure 1 in dimension 0
+      let B : Box 0 := ⟨fun i => i.elim0⟩
+      have hB_univ : B.toSet = Set.univ := by
+        ext x; simp only [Box.toSet, Set.mem_univ, iff_true]; intro i; exact i.elim0
+      have hB_vol : |B|ᵥ = 1 := by simp only [Box.volume, Finset.univ_eq_empty, Finset.prod_empty]
+      -- Jordan_inner_measure E ≥ measure of B (since B ⊆ E = univ)
+      have h_ge : (IsElementary.box B).measure ≤ Jordan_inner_measure E := by
+        unfold Jordan_inner_measure
+        apply le_csSup
+        · use 1
+          intro m hm
+          obtain ⟨A, hA, hA_subset, rfl⟩ := hm
+          -- Any elementary subset of Set.univ in dim 0 has measure ≤ 1
+          by_cases hA_ne : A.Nonempty
+          · have hA_univ : A = Set.univ := by
+              ext x; constructor; intro _; exact Set.mem_univ x
+              intro _; obtain ⟨y, hy⟩ := hA_ne; have : x = y := by ext i; exact i.elim0
+              rw [this]; exact hy
+            have : hA.measure = 1 := by
+              have h_eq : hA.measure = (IsElementary.box B).measure := by
+                apply IsElementary.measure_eq_of_set_eq; rw [hA_univ, hB_univ]
+              rw [h_eq, IsElementary.measure_of_box, hB_vol]
+            rw [this]
+          · have hA_empty : A = ∅ := Set.not_nonempty_iff_eq_empty.mp hA_ne
+            have : hA.measure = 0 := by
+              have h_eq : hA.measure = (IsElementary.empty 0).measure :=
+                IsElementary.measure_eq_of_set_eq hA (IsElementary.empty 0) hA_empty
+              rw [h_eq, IsElementary.measure_of_empty]
+            rw [this]; norm_num
+        · use B.toSet, IsElementary.box B; simp [hE_univ, hB_univ]
+      -- Jordan_inner_measure E ≤ 1 (since E ⊆ Set.univ and univ has outer measure 1)
+      have h_le : Jordan_inner_measure E ≤ 1 := by
+        unfold Jordan_inner_measure
+        apply csSup_le
+        · use 0, ∅, IsElementary.empty 0; simp [IsElementary.measure_of_empty]
+        · intro m hm
+          obtain ⟨A, hA, hA_subset, rfl⟩ := hm
+          by_cases hA_ne : A.Nonempty
+          · have hA_univ : A = Set.univ := by
+              ext x; constructor; intro _; exact Set.mem_univ x
+              intro _; obtain ⟨y, hy⟩ := hA_ne; have : x = y := by ext i; exact i.elim0
+              rw [this]; exact hy
+            have : hA.measure = 1 := by
+              have h_eq : hA.measure = (IsElementary.box B).measure := by
+                apply IsElementary.measure_eq_of_set_eq; rw [hA_univ, hB_univ]
+              rw [h_eq, IsElementary.measure_of_box, hB_vol]
+            rw [this]
+          · have hA_empty : A = ∅ := Set.not_nonempty_iff_eq_empty.mp hA_ne
+            have : hA.measure = 0 := by
+              have h_eq : hA.measure = (IsElementary.empty 0).measure :=
+                IsElementary.measure_eq_of_set_eq hA (IsElementary.empty 0) hA_empty
+              rw [h_eq, IsElementary.measure_of_empty]
+            rw [this]; norm_num
+      -- Combine h_ge and h_le to get Jordan_inner_measure E = 1
+      have h_jordan_eq_1 : Jordan_inner_measure E = 1 := by
+        rw [IsElementary.measure_of_box, hB_vol] at h_ge
+        exact (h_ge.antisymm h_le).symm
+      rw [h_jordan_eq_1]
+      norm_num
+    · -- Case: E is empty
+      have hE_empty : E = ∅ := Set.not_nonempty_iff_eq_empty.mp hne
+      simp only [hne, if_false]
+      subst hE_empty
+      -- Show (0 : EReal) = ↑(Jordan_inner_measure ∅)
+      -- First prove Jordan_inner_measure ∅ = 0
+      have h_jordan_empty : Jordan_inner_measure (∅ : Set (EuclideanSpace' 0)) = 0 := by
+        unfold Jordan_inner_measure
+        apply le_antisymm
+        · apply csSup_le
+          · use 0, ∅, IsElementary.empty 0; simp [IsElementary.measure_of_empty]
+          · intro m hm
+            obtain ⟨A, hA, hA_subset, rfl⟩ := hm
+            have hA_empty : A = ∅ := Set.subset_empty_iff.mp hA_subset
+            subst hA_empty
+            exact le_of_eq (IsElementary.measure_of_empty 0)
+        · apply le_csSup
+          · use 0; intro m hm
+            obtain ⟨A, hA, hA_subset, rfl⟩ := hm
+            have hA_empty : A = ∅ := Set.subset_empty_iff.mp hA_subset
+            subst hA_empty
+            exact le_of_eq (IsElementary.measure_of_empty 0)
+          · use ∅, IsElementary.empty 0; simp [IsElementary.measure_of_empty]
+      rw [h_jordan_empty]
+      norm_num
+  · push_neg at hd
+    have hd' : 0 < d := Nat.pos_of_ne_zero hd
+    by_cases hE_empty : E = ∅
+    · -- Empty set case: use Lebesgue_outer_measure.of_empty and Jordan_inner_measure ∅ = 0
+      subst hE_empty
+      rw [Lebesgue_outer_measure.of_empty]
+      -- Show (0 : EReal) = ↑(Jordan_inner_measure ∅)
+      -- First prove Jordan_inner_measure ∅ = 0
+      have h_jordan_empty : Jordan_inner_measure (∅ : Set (EuclideanSpace' d)) = 0 := by
+        unfold Jordan_inner_measure
+        apply le_antisymm
+        · apply csSup_le
+          · use 0, ∅, IsElementary.empty d; simp [IsElementary.measure_of_empty]
+          · intro m hm
+            obtain ⟨A, hA, hA_subset, rfl⟩ := hm
+            have hA_empty : A = ∅ := Set.subset_empty_iff.mp hA_subset
+            subst hA_empty
+            exact le_of_eq (IsElementary.measure_of_empty d)
+        · apply le_csSup
+          · use 0; intro m hm
+            obtain ⟨A, hA, hA_subset, rfl⟩ := hm
+            have hA_empty : A = ∅ := Set.subset_empty_iff.mp hA_subset
+            subst hA_empty
+            exact le_of_eq (IsElementary.measure_of_empty d)
+          · use ∅, IsElementary.empty d; simp [IsElementary.measure_of_empty]
+      rw [h_jordan_empty]
+      norm_num
+    · -- Main case: E nonempty open set in dimension > 0
+      have hE_nonempty : E.Nonempty := Set.nonempty_iff_ne_empty.mpr hE_empty
+      -- Decompose E into almost-disjoint dyadic boxes
+      obtain ⟨B, hE_eq, hB_dyadic, hB_disj⟩ := IsOpen.eq_union_boxes hd' E hE hE_nonempty
+      -- Apply lemma eq_Jordan_inner_of_boxes (Exercise 1.2.5)
+      exact Lebesgue_outer_measure.eq_Jordan_inner_of_boxes E B hE_eq hB_disj
 
 /-- Lemma 1.2.12 (Outer regularity).  Proof has not been formalized yet. -/
 theorem Lebesgue_outer_measure.eq {d:ℕ} (E: Set (EuclideanSpace' d)) : Lebesgue_outer_measure E = sInf { M | ∃ U, E ⊆ U ∧ IsOpen U ∧ M = Lebesgue_outer_measure U} := by
   sorry
+
+/-- For any set E and ε > 0, there exists an open U ⊇ E with m*(U) ≤ m*(E) + ε.
+    This follows from outer regularity (Lemma 1.2.12). -/
+lemma Lebesgue_outer_measure.exists_open_superset_measure_le {d:ℕ} (E: Set (EuclideanSpace' d)) (ε : EReal) (hε : 0 < ε) :
+    ∃ U : Set (EuclideanSpace' d), IsOpen U ∧ E ⊆ U ∧ Lebesgue_outer_measure U ≤ Lebesgue_outer_measure E + ε := by
+  -- By outer regularity (Lebesgue_outer_measure.eq):
+  -- m*(E) = sInf { m*(U) | E ⊆ U ∧ IsOpen U }
+  have h_outer_reg := Lebesgue_outer_measure.eq (d := d) E
+  let S := {M | ∃ U, E ⊆ U ∧ IsOpen U ∧ M = Lebesgue_outer_measure U}
+  have h_set_nonempty : S.Nonempty := by
+    use Lebesgue_outer_measure (Set.univ : Set (EuclideanSpace' d))
+    exact ⟨Set.univ, Set.subset_univ E, isOpen_univ, rfl⟩
+  have h_inf : IsGLB S (sInf S) := isGLB_sInf S
+  have h_ne_bot : sInf S ≠ ⊥ := by
+    intro h_eq
+    rw [h_eq] at h_inf
+    have h_zero_lb : (0 : EReal) ∈ lowerBounds S := by
+      intro v hv
+      obtain ⟨U, _, _, rfl⟩ := hv
+      exact Lebesgue_outer_measure.nonneg U
+    have h_le : (0 : EReal) ≤ ⊥ := h_inf.2 h_zero_lb
+    exact not_le.mpr EReal.bot_lt_zero h_le
+  by_cases h_top : sInf S = ⊤
+  · use Set.univ
+    refine ⟨isOpen_univ, Set.subset_univ E, ?_⟩
+    rw [h_outer_reg, h_top]
+    cases ε with
+    | bot => exact absurd hε (not_lt.mpr bot_le)
+    | top => simp
+    | coe r => exact le_top
+  · have h_lt : sInf S < sInf S + ε := by
+      cases ε with
+      | bot => exact absurd hε (not_lt.mpr bot_le)
+      | top =>
+        have h_sum_top : sInf S + ⊤ = ⊤ := by
+          cases h : sInf S with
+          | bot => exact absurd h h_ne_bot
+          | top => exact absurd h h_top
+          | coe r => rfl
+        rw [h_sum_top]
+        exact lt_top_iff_ne_top.mpr h_top
+      | coe r =>
+        have hr_pos : 0 < r := EReal.coe_pos.mp hε
+        exact EReal.lt_add_of_pos_coe hr_pos h_ne_bot h_top
+    have h_not_lb : sInf S + ε ∉ lowerBounds S := by
+      intro h_is_lb
+      have h_le : sInf S + ε ≤ sInf S := h_inf.2 h_is_lb
+      exact not_lt.mpr h_le h_lt
+    unfold lowerBounds at h_not_lb
+    simp only [Set.mem_setOf_eq] at h_not_lb
+    push_neg at h_not_lb
+    obtain ⟨v, hv_in_S, hv_lt⟩ := h_not_lb
+    obtain ⟨U, hE_sub_U, hU_open, hv_eq⟩ := hv_in_S
+    use U
+    refine ⟨hU_open, hE_sub_U, ?_⟩
+    rw [h_outer_reg, ← hv_eq]
+    exact le_of_lt hv_lt
+
+/-- Compact sets in Euclidean space have finite Lebesgue outer measure. -/
+lemma Lebesgue_outer_measure.finite_of_compact {d : ℕ} {E : Set (EuclideanSpace' d)}
+    (hE : IsCompact E) : Lebesgue_outer_measure E ≠ ⊤ := by
+  -- Empty case is trivial
+  by_cases hE_empty : E = ∅
+  · rw [hE_empty, Lebesgue_outer_measure.of_empty]; exact EReal.zero_ne_top
+  -- For nonempty E: E compact → E bounded → E ⊆ closedBall x R → E ⊆ box [-M,M]^d
+  have ⟨x, hx⟩ : E.Nonempty := Set.nonempty_iff_ne_empty.mpr hE_empty
+  have h_bounded : Bornology.IsBounded E := IsCompact.isBounded hE
+  have ⟨r, h_sub_ball⟩ : ∃ (r : ℝ), E ⊆ Metric.closedBall x r := by
+    rwa [← Metric.isBounded_iff_subset_closedBall x]
+  -- Create a large box B that contains the closed ball
+  let M := ‖x‖ + |r| + 2
+  let B : Box d := { side := fun _ => BoundedInterval.Icc (-M) M }
+  have h_E_sub_B : E ⊆ B.toSet := by
+    intro y hy
+    have h_in_ball : y ∈ Metric.closedBall x r := h_sub_ball hy
+    rw [Set.mem_pi]
+    intro i _
+    rw [Metric.mem_closedBall] at h_in_ball
+    have h_dist : ‖y - x‖ ≤ r := h_in_ball
+    have h_coord_diff : |(y - x) i| ≤ ‖y - x‖ := EuclideanSpace'.coord_le_norm (y - x) i
+    have h_abs : |y i - x i| ≤ r := le_trans h_coord_diff h_dist
+    have h_xi : |x i| ≤ ‖x‖ := EuclideanSpace'.coord_le_norm x i
+    show y i ∈ (BoundedInterval.Icc (-M) M : Set ℝ)
+    rw [BoundedInterval.set_Icc, Set.mem_Icc]
+    rw [abs_le] at h_abs h_xi
+    have h_r_bound : r ≤ |r| := le_abs_self r
+    constructor <;> linarith
+  have : IsElementary B.toSet := IsElementary.box B
+  have h_B_finite : Lebesgue_outer_measure B.toSet ≠ ⊤ := by
+    rw [Lebesgue_outer_measure.elementary B.toSet this]
+    exact EReal.coe_ne_top _
+  exact ne_top_of_le_ne_top h_B_finite (Lebesgue_outer_measure.mono h_E_sub_B)
 
 /-- Exercise 1.2.6 -/
 example : ∃ (d:ℕ) (E: Set (EuclideanSpace' d)), Lebesgue_outer_measure E ≠ sSup { M | ∃ U, U ⊆ E ∧ IsOpen U ∧ M = Lebesgue_outer_measure U} := by sorry
