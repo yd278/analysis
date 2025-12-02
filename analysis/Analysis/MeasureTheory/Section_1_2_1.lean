@@ -4844,7 +4844,7 @@ theorem IsOpen.eq_union_boxes {d:ℕ} (hd : 0 < d) (E: Set (EuclideanSpace' d)) 
     ∃ B: ℕ → Box d, (E = ⋃ n, (B n).toSet) ∧ (∀ n, (B n).IsDyadic) ∧
     Pairwise (Function.onFun AlmostDisjoint B) := by
   classical
-  -- Non-empty case: construct maximal dyadic cubes
+  -- Construct maximal dyadic cubes
   obtain ⟨x₀, hx₀⟩ := hE_nonempty
   -- Define the set of all dyadic cubes (at scale n ≥ 0) contained in E
   let Q : Set (ℕ × (Fin d → ℤ)) := { p | (DyadicCube (p.1 : ℤ) p.2).toSet ⊆ E }
