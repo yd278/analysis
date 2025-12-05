@@ -526,10 +526,6 @@ theorem LebesgueMeasurable.empty' {d:ℕ} : LebesgueMeasurable (∅: Set (Euclid
     rw [Lebesgue_outer_measure.of_empty d]
     exact le_of_lt hε
 
-/-- Lemma 1.2.13(v) (Complement of a measurable set is measurable). This lemma requires proof.  -/
-theorem LebesgueMeasurable.complement {d:ℕ} {E: Set (EuclideanSpace' d)} (hE: LebesgueMeasurable E) : LebesgueMeasurable (Eᶜ) := by
-  sorry
-
 /-- Lemma 1.2.13(vi) (Countable union of measurable sets is measurable). This lemma requires proof.  -/
 theorem LebesgueMeasurable.countable_union {d:ℕ} {E: ℕ → Set (EuclideanSpace' d)} (hE: ∀ n, LebesgueMeasurable (E n)) : LebesgueMeasurable (⋃ n, E n) := by
   -- Use the ε/2^n trick: let ε > 0 be arbitrary
@@ -598,6 +594,131 @@ theorem LebesgueMeasurable.countable_union {d:ℕ} {E: ℕ → Set (EuclideanSpa
           have h_nonneg : ∀ n, 0 ≤ ε' / 2^(n+1) := fun n => by positivity
           rw [← EReal.coe_tsum_of_nonneg h_nonneg h_summable, h_sum]
       _ ≤ ε := hε'_le
+
+/-- Lemma 1.2.13(v) (Complement of a measurable set is measurable). -/
+theorem LebesgueMeasurable.complement {d:ℕ} {E: Set (EuclideanSpace' d)} (hE: LebesgueMeasurable E) : LebesgueMeasurable (Eᶜ) := by
+  -- Strategy: For each n, find open Uₙ ⊇ E with m*(Uₙ \ E) ≤ 1/(n+1).
+  -- Let Fₙ = Uₙᶜ (closed). Then Eᶜ ⊇ Fₙ and m*(Eᶜ \ Fₙ) = m*(Uₙ \ E) ≤ 1/(n+1).
+  -- Let F = ⋃ Fₙ. Then m*(Eᶜ \ F) = 0 and Eᶜ = F ∪ (Eᶜ \ F).
+  -- F is measurable (countable union of closed sets), Eᶜ \ F is null (hence measurable).
+
+  -- Step 1: For each n, get open Uₙ with E ⊆ Uₙ and m*(Uₙ \ E) ≤ 1/(n+1)
+  have h_eps_pos : ∀ n : ℕ, (0 : EReal) < 1 / (n + 1 : ℕ) := fun n => by
+    have h1 : (0 : EReal) < 1 := EReal.coe_pos.mpr (by norm_num : (0 : ℝ) < 1)
+    have h2 : (0 : EReal) < (n + 1 : ℕ) := by
+      simp only [Nat.cast_add, Nat.cast_one]
+      exact EReal.coe_pos.mpr (by linarith : (0 : ℝ) < n + 1)
+    exact EReal.div_pos h1 h2 (EReal.coe_ne_top _)
+  choose U hU_open hE_sub_U hU_diff using fun n => hE (1 / (n + 1 : ℕ)) (h_eps_pos n)
+
+  -- Step 2: Define Fₙ = Uₙᶜ (closed sets)
+  let F_n : ℕ → Set (EuclideanSpace' d) := fun n => (U n)ᶜ
+  have hF_closed : ∀ n, IsClosed (F_n n) := fun n => (hU_open n).isClosed_compl
+
+  -- Key set-theoretic fact: Eᶜ \ Fₙ = Uₙ \ E
+  have h_diff_eq : ∀ n, Eᶜ \ F_n n = U n \ E := fun n => by
+    simp only [F_n, Set.diff_compl]
+    ext x
+    simp only [Set.mem_inter_iff, Set.mem_compl_iff, Set.mem_diff]
+    tauto
+
+  -- Step 3: Define F = ⋃ Fₙ (F-sigma set)
+  let F := ⋃ n, F_n n
+
+  -- Step 4: Show m*(Eᶜ \ F) = 0
+  have h_diff_F : ∀ n, Eᶜ \ F ⊆ U n \ E := fun n => by
+    have h1 : Eᶜ \ F ⊆ Eᶜ \ F_n n := Set.diff_subset_diff_right (Set.subset_iUnion F_n n)
+    rw [h_diff_eq n] at h1
+    exact h1
+
+  have h_measure_bound : ∀ n, Lebesgue_outer_measure (Eᶜ \ F) ≤ 1 / (n + 1 : ℕ) := fun n =>
+    calc Lebesgue_outer_measure (Eᶜ \ F)
+        ≤ Lebesgue_outer_measure (U n \ E) := Lebesgue_outer_measure.mono (h_diff_F n)
+      _ ≤ 1 / (n + 1 : ℕ) := hU_diff n
+
+  have h_null : IsNull (Eᶜ \ F) := by
+    apply le_antisymm
+    · -- Show m*(Eᶜ \ F) ≤ 0 by showing it's ≤ 1/(n+1) for all n
+      by_contra h_ne
+      push_neg at h_ne
+      have h_pos : 0 < Lebesgue_outer_measure (Eᶜ \ F) := h_ne
+      -- Get a real ε with 0 < ε ≤ m*(Eᶜ \ F)
+      obtain ⟨ε, hε_pos, hε_le⟩ : ∃ ε : ℝ, 0 < ε ∧ (ε : EReal) ≤ Lebesgue_outer_measure (Eᶜ \ F) := by
+        cases hm : Lebesgue_outer_measure (Eᶜ \ F) with
+        | bot => rw [hm] at h_pos; exact absurd h_pos (not_lt.mpr bot_le)
+        | top => exact ⟨1, one_pos, le_top⟩
+        | coe r =>
+          rw [hm] at h_pos
+          have hr : 0 < r := EReal.coe_pos.mp h_pos
+          exact ⟨r, hr, le_refl _⟩
+      -- Find N with 1/(N+1) < ε
+      obtain ⟨N, hN⟩ := exists_nat_gt (1 / ε)
+      have hNp1_pos : (0 : ℝ) < (N : ℝ) + 1 := by positivity
+      have hN1 : 1 / ((N : ℝ) + 1) < ε := by
+        have h1 : 1 / ε < (N : ℝ) + 1 := lt_of_lt_of_le hN (by norm_cast; exact Nat.le_succ N)
+        rw [one_div_lt hNp1_pos hε_pos]; exact h1
+      -- h_measure_bound N says m*(Eᶜ \ F) ≤ 1/(N+1)
+      have h_bound : Lebesgue_outer_measure (Eᶜ \ F) ≤ 1 / (N + 1 : ℕ) := h_measure_bound N
+      have h_eq : (1 : EReal) / (N + 1 : ℕ) = ↑(1 / ((N : ℝ) + 1)) := by
+        rw [EReal.coe_div, EReal.coe_one]; norm_cast
+      rw [h_eq] at h_bound
+      -- ε ≤ m*(Eᶜ \ F) ≤ 1/(N+1) < ε, contradiction
+      have h_final : (ε : EReal) < (ε : EReal) := calc
+        (ε : EReal) ≤ Lebesgue_outer_measure (Eᶜ \ F) := hε_le
+        _ ≤ ↑(1 / ((N : ℝ) + 1)) := h_bound
+        _ < ε := EReal.coe_lt_coe_iff.mpr hN1
+      exact lt_irrefl (ε : EReal) h_final
+    · exact Lebesgue_outer_measure.nonneg _
+
+  -- Step 5: Show Eᶜ = F ∪ (Eᶜ \ F)
+  have h_decomp : Eᶜ = F ∪ (Eᶜ \ F) := by
+    ext x
+    simp only [Set.mem_union, Set.mem_diff]
+    constructor
+    · intro hx
+      by_cases hxF : x ∈ F
+      · left; exact hxF
+      · right; exact ⟨hx, hxF⟩
+    · intro h
+      cases h with
+      | inl hxF =>
+        simp only [F, Set.mem_iUnion] at hxF
+        obtain ⟨n, hxFn⟩ := hxF
+        simp only [F_n, Set.mem_compl_iff] at hxFn
+        have hxE : x ∉ E := fun h => hxFn (hE_sub_U n h)
+        exact hxE
+      | inr hxEcF => exact hxEcF.1
+
+  -- Step 6: Apply measurability results
+  rw [h_decomp]
+  have hF_meas : LebesgueMeasurable F := by
+    have : F = ⋃ n, F_n n := rfl
+    rw [this]
+    exact LebesgueMeasurable.countable_union (fun n => (hF_closed n).measurable)
+  have hN_meas : LebesgueMeasurable (Eᶜ \ F) := h_null.measurable
+  -- Union of two measurable sets
+  let S : ℕ → Set (EuclideanSpace' d) := fun n => if n = 0 then F else if n = 1 then Eᶜ \ F else ∅
+  have hS_meas : ∀ n, LebesgueMeasurable (S n) := fun n => by
+    simp only [S]
+    split_ifs with h0 h1
+    · exact hF_meas
+    · exact hN_meas
+    · exact LebesgueMeasurable.empty
+  have h_eq : F ∪ (Eᶜ \ F) = ⋃ n, S n := by
+    ext x
+    simp only [Set.mem_union, Set.mem_iUnion, S]
+    constructor
+    · intro h
+      cases h with
+      | inl hF => exact ⟨0, by simp [hF]⟩
+      | inr hN => exact ⟨1, by simp [hN]⟩
+    · intro ⟨n, hn⟩
+      split_ifs at hn with h0 h1
+      · left; exact hn
+      · right; exact hn
+      · exact absurd hn (Set.notMem_empty x)
+  rw [h_eq]
+  exact LebesgueMeasurable.countable_union hS_meas
 
 theorem LebesgueMeasurable.finite_union {d n:ℕ} {E: Fin n → Set (EuclideanSpace' d)} (hE: ∀ i, LebesgueMeasurable (E i)) : LebesgueMeasurable (⋃ i, E i) := by
   sorry
