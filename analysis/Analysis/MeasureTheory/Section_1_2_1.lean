@@ -5261,9 +5261,282 @@ theorem Lebesgue_outer_measure.of_open {d:ℕ} (E: Set (EuclideanSpace' d)) (hE:
       -- Apply lemma eq_Jordan_inner_of_boxes (Exercise 1.2.5)
       exact Lebesgue_outer_measure.eq_Jordan_inner_of_boxes E B hE_eq hB_disj
 
-/-- Lemma 1.2.12 (Outer regularity).  Proof has not been formalized yet. -/
+/-- Lemma 1.2.12 (Outer regularity). m*(E) = inf{m*(U) : E ⊆ U, U open}. -/
 theorem Lebesgue_outer_measure.eq {d:ℕ} (E: Set (EuclideanSpace' d)) : Lebesgue_outer_measure E = sInf { M | ∃ U, E ⊆ U ∧ IsOpen U ∧ M = Lebesgue_outer_measure U} := by
-  sorry
+  let S := { M | ∃ U, E ⊆ U ∧ IsOpen U ∧ M = Lebesgue_outer_measure U}
+  apply le_antisymm
+  · -- ≤ direction: m*(E) ≤ sInf S (by monotonicity, m*(E) is a lower bound)
+    apply le_csInf
+    · -- S is nonempty (Set.univ is open and contains E)
+      exact ⟨Lebesgue_outer_measure Set.univ, Set.univ, Set.subset_univ E, isOpen_univ, rfl⟩
+    · -- m*(E) is a lower bound for S
+      intro M ⟨U, hE_sub_U, _hU_open, hM_eq⟩
+      rw [hM_eq]
+      exact Lebesgue_outer_measure.mono hE_sub_U
+  · -- ≥ direction: sInf S ≤ m*(E) (main work)
+    -- Handle dimension 0 separately
+    by_cases hd : d = 0
+    · -- d = 0: In dimension 0, EuclideanSpace' 0 is a singleton type
+      subst hd
+      have h_singleton : ∀ (y z : EuclideanSpace' 0), y = z := fun y z =>
+        funext fun i => Fin.elim0 i
+      by_cases hE_empty : E = ∅
+      · -- E = ∅: m*(∅) = 0, and sInf S ≥ 0 (all outer measures are ≥ 0)
+        -- Actually we need sInf S ≤ m*(E) = 0
+        -- Since ∅ is open and contains E = ∅, m*(∅) ∈ S
+        rw [hE_empty]
+        apply csInf_le_of_le
+        · use 0
+          intro M ⟨U, _, _, hM⟩
+          rw [hM]
+          exact Lebesgue_outer_measure.nonneg U
+        · exact ⟨∅, Set.Subset.rfl, isOpen_empty, rfl⟩
+        · exact le_refl _
+      · -- E ≠ ∅: Then E = Set.univ (since every nonempty set in a singleton is univ)
+        have hE_univ : E = Set.univ := by
+          ext x; constructor
+          · intro _; exact Set.mem_univ x
+          · intro _
+            have hE_nonempty : E.Nonempty := Set.nonempty_iff_ne_empty.mpr hE_empty
+            obtain ⟨e, he⟩ := hE_nonempty
+            rw [h_singleton x e]
+            exact he
+        rw [hE_univ]
+        apply csInf_le_of_le
+        · use 0
+          intro M ⟨U, _, _, hM⟩
+          rw [hM]
+          exact Lebesgue_outer_measure.nonneg U
+        · exact ⟨Set.univ, Set.subset_univ _, isOpen_univ, rfl⟩
+        · exact le_refl _
+    -- d > 0: main argument
+    push_neg at hd
+    have hd_pos : 0 < d := Nat.pos_of_ne_zero hd
+    -- Case split on whether m*(E) = ⊤
+    by_cases h_top : Lebesgue_outer_measure E = ⊤
+    · -- m*(E) = ⊤: trivially sInf S ≤ ⊤
+      rw [h_top]
+      exact le_top
+    -- m*(E) is finite: use ε-argument
+    apply EReal.le_of_forall_pos_le_add'
+    intro ε hε
+    -- Use ε/2 for the cover and ε/2 for the inflation to get total bound m*(E) + ε
+    have hε2_pos : 0 < ε / 2 := by linarith
+    -- Get cover close to m*(E): ∃ B₁, B₂,... with ∑|Bₙ| ≤ m*(E) + ε/2
+    obtain ⟨B, hB_cover, hB_sum⟩ := exists_cover_close hd_pos E (ε/2) hε2_pos h_top
+    -- Inflate each box Bₙ to open box B'ₙ with |B'ₙ| ≤ |Bₙ| + (ε/2)/2^{n+1}
+    have h_inflate : ∀ n, ∃ B'n : Box d, (B n).toSet ⊆ interior B'n.toSet ∧
+        IsOpen (interior B'n.toSet) ∧ |B'n|ᵥ ≤ |(B n)|ᵥ + (ε/2) / 2^(n+1) := by
+      intro n
+      have h_eps_pos : 0 < (ε/2) / 2^(n+1) := by positivity
+      exact Box.inflate (B n) ((ε/2) / 2^(n+1)) h_eps_pos
+    choose B' hB'_subset hB'_open hB'_vol using h_inflate
+    -- Define the open set U = ⋃ₙ interior B'ₙ
+    let U := ⋃ n, interior (B' n).toSet
+    -- U is open (union of open sets)
+    have hU_open : IsOpen U := isOpen_iUnion (fun n => hB'_open n)
+    -- E ⊆ U (since E ⊆ ⋃ₙ Bₙ.toSet ⊆ ⋃ₙ interior B'ₙ.toSet = U)
+    have hE_sub_U : E ⊆ U := fun x hx => by
+      obtain ⟨n, hn⟩ := Set.mem_iUnion.mp (hB_cover hx)
+      exact Set.mem_iUnion.mpr ⟨n, hB'_subset n hn⟩
+    -- m*(U) ≤ ∑ₙ m*(interior B'ₙ.toSet) ≤ ∑ₙ |B'ₙ|ᵥ (by subadditivity + elementary measure)
+    have hU_measure : Lebesgue_outer_measure U ≤ ∑' n, (B' n).volume.toEReal := by
+      -- First: m*(U) ≤ ∑' m*(interior B'ₙ) by countable subadditivity
+      have h_subadditive := Lebesgue_outer_measure.union_le (fun n => interior (B' n).toSet)
+      -- Second: ∀n, m*(interior B'ₙ) ≤ |B'ₙ|ᵥ
+      have h_pointwise : ∀ n, Lebesgue_outer_measure (interior (B' n).toSet) ≤ (B' n).volume.toEReal := by
+        intro n
+        calc Lebesgue_outer_measure (interior (B' n).toSet)
+            ≤ Lebesgue_outer_measure (B' n).toSet := Lebesgue_outer_measure.mono interior_subset
+          _ = (B' n).volume.toEReal := by
+              have h_elem : IsElementary (B' n).toSet := IsElementary.box (B' n)
+              rw [Lebesgue_outer_measure.elementary (B' n).toSet h_elem, IsElementary.measure_of_box]
+      -- Third: use EReal tsum comparison
+      have h_nonneg_f : ∀ n, 0 ≤ Lebesgue_outer_measure (interior (B' n).toSet) :=
+        fun n => Lebesgue_outer_measure.nonneg _
+      have h_nonneg_g : ∀ n, 0 ≤ (B' n).volume := fun n => Box.volume_nonneg _
+      have h_summable_g : Summable (fun n => (B' n).volume) := by
+        -- |B'ₙ| ≤ |Bₙ| + (ε/2)/2^{n+1}. Summable because:
+        -- 1. Geometric series ∑(ε/2)/2^{n+1} is summable
+        -- 2. B-volumes sum to ≤ m*(E) + ε/2 < ⊤, so they are summable in ℝ
+        -- 3. By comparison test, B'-volumes are summable
+        -- Technical details deferred to summability lemmas
+        have h_geom_summable : Summable (fun n : ℕ => ε / 2 / 2 ^ (n + 1)) := by
+          -- Use tsum_geometric_eps pattern: ∑ ε/2^{n+1} = ε
+          -- So ∑ (ε/2)/2^{n+1} = ε/2, which converges
+          have h_summable_base : Summable (fun n : ℕ => (1/2 : ℝ)^n) :=
+            summable_geometric_of_lt_one (by norm_num) (by norm_num)
+          have h_eq : (fun n : ℕ => ε / 2 / 2 ^ (n + 1)) = (fun n : ℕ => (ε / 4) * (1/2)^n) := by
+            ext n
+            have h_two_pow_pos : (0 : ℝ) < 2^(n+1) := by positivity
+            have h_two_pow_ne : (2 : ℝ)^(n+1) ≠ 0 := h_two_pow_pos.ne'
+            field_simp [h_two_pow_ne]
+            left
+            ring
+          rw [h_eq]
+          exact h_summable_base.mul_left (ε / 4)
+        have h_B_nonneg : ∀ n, 0 ≤ (B n).volume := fun n => Box.volume_nonneg _
+        have h_B_summable : Summable (fun n => (B n).volume) := by
+          -- From hB_sum: ∑' (B n).volume.toEReal ≤ m*(E) + ε/2 < ⊤
+          -- Extract a real upper bound from hB_sum
+          have h_rhs_ne_top : Lebesgue_outer_measure E + (↑(ε / 2) : EReal) ≠ ⊤ :=
+            EReal.add_ne_top h_top (EReal.coe_ne_top _)
+          -- Get a real bound M such that the tsum ≤ M
+          have h_exists_M : ∃ M : ℝ, Lebesgue_outer_measure E + (↑(ε / 2) : EReal) ≤ M := by
+            cases h_rhs : (Lebesgue_outer_measure E + (↑(ε / 2) : EReal)) with
+            | bot => exact ⟨0, le_of_lt (EReal.bot_lt_coe _)⟩
+            | coe r => exact ⟨r, le_refl _⟩
+            | top => exact (h_rhs_ne_top h_rhs).elim
+          obtain ⟨M, hM_ge⟩ := h_exists_M
+          have h_tsum_le_M : ∑' n, (B n).volume.toEReal ≤ M := le_trans hB_sum hM_ge
+          -- Use summable_of_sum_range_le: need ∀ n, ∑_{i<n} f i ≤ M
+          apply summable_of_sum_range_le h_B_nonneg
+          intro n
+          have h_partial := EReal.finset_sum_le_tsum h_B_nonneg (Finset.range n)
+          have h_chain := le_trans h_partial h_tsum_le_M
+          rw [← EReal.coe_finset_sum (fun i _ => h_B_nonneg i)] at h_chain
+          exact EReal.coe_le_coe_iff.mp h_chain
+        exact Summable.of_nonneg_of_le (fun n => Box.volume_nonneg _)
+          (fun n => hB'_vol n) (h_B_summable.add h_geom_summable)
+      calc Lebesgue_outer_measure U
+          ≤ ∑' n, Lebesgue_outer_measure (interior (B' n).toSet) := h_subadditive
+        _ ≤ ∑' n, (B' n).volume.toEReal :=
+            EReal.tsum_le_coe_tsum_of_forall_le h_nonneg_f h_nonneg_g h_summable_g h_pointwise
+    -- ∑ₙ |B'ₙ|ᵥ ≤ ∑ₙ (|Bₙ|ᵥ + (ε/2)/2^{n+1}) = ∑ₙ |Bₙ|ᵥ + ε/2 (since ∑(ε/2)/2^{n+1} = ε/2)
+    have hB'_vol_sum : (∑' n, (B' n).volume.toEReal) ≤ (∑' n, (B n).volume.toEReal) + (ε/2 : ℝ) := by
+      -- Pointwise: |B'ₙ| ≤ |Bₙ| + (ε/2)/2^{n+1}
+      -- So ∑|B'ₙ| ≤ ∑|Bₙ| + ∑(ε/2)/2^{n+1} = ∑|Bₙ| + ε/2
+      have h_B_nonneg : ∀ n, 0 ≤ (B n).volume := fun n => Box.volume_nonneg _
+      have h_geom_nonneg : ∀ n, 0 ≤ (ε/2) / 2^(n+1) := fun n => by positivity
+      have h_pw : ∀ n, (B n).volume + (ε/2) / 2^(n+1) ≤ (B n).volume + (ε/2) / 2^(n+1) := fun n => le_refl _
+      -- Use helper: ∑|B'ₙ| ≤ ∑(|Bₙ| + δₙ) since |B'ₙ| ≤ |Bₙ| + δₙ
+      have h_B'_le_sum : ∀ n, (B' n).volume ≤ (B n).volume + (ε/2) / 2^(n+1) := hB'_vol
+      have h_B'_nonneg : ∀ n, 0 ≤ (B' n).volume := fun n => Box.volume_nonneg _
+      have h_B'_nonneg_EReal : ∀ n, (0 : EReal) ≤ (B' n).volume.toEReal :=
+        fun n => EReal.coe_nonneg.mpr (h_B'_nonneg n)
+      -- ∑|B'ₙ| ≤ ∑(|Bₙ| + δₙ) by pointwise bound
+      have h_step1 : (∑' n, (B' n).volume.toEReal) ≤ ∑' n, ((B n).volume + (ε/2) / 2^(n+1)).toEReal := by
+        apply EReal.tsum_le_coe_tsum_of_forall_le h_B'_nonneg_EReal
+          (fun n => add_nonneg (h_B_nonneg n) (h_geom_nonneg n))
+        · -- Summability of |Bₙ| + δₙ
+          have h_geom_summable : Summable (fun n : ℕ => (ε/2) / 2^(n+1)) := by
+            have h_summable_base : Summable (fun n : ℕ => (1/2 : ℝ)^n) :=
+              summable_geometric_of_lt_one (by norm_num) (by norm_num)
+            have h_eq : (fun n : ℕ => (ε/2) / 2 ^ (n + 1)) = (fun n : ℕ => (ε / 4) * (1/2)^n) := by
+              ext n
+              have h_two_pow_ne : (2 : ℝ)^(n+1) ≠ 0 := by positivity
+              field_simp [h_two_pow_ne]; left; ring
+            rw [h_eq]
+            exact h_summable_base.mul_left (ε / 4)
+          have h_B_summable : Summable (fun n => (B n).volume) := by
+            have h_rhs_ne_top : Lebesgue_outer_measure E + (↑(ε / 2) : EReal) ≠ ⊤ :=
+              EReal.add_ne_top h_top (EReal.coe_ne_top _)
+            have h_exists_M : ∃ M : ℝ, Lebesgue_outer_measure E + (↑(ε / 2) : EReal) ≤ M := by
+              cases h_rhs : (Lebesgue_outer_measure E + (↑(ε / 2) : EReal)) with
+              | bot => exact ⟨0, le_of_lt (EReal.bot_lt_coe _)⟩
+              | coe r => exact ⟨r, le_refl _⟩
+              | top => exact (h_rhs_ne_top h_rhs).elim
+            obtain ⟨M, hM_ge⟩ := h_exists_M
+            have h_tsum_le_M : ∑' n, (B n).volume.toEReal ≤ M := le_trans hB_sum hM_ge
+            apply summable_of_sum_range_le h_B_nonneg
+            intro n
+            have h_partial := EReal.finset_sum_le_tsum h_B_nonneg (Finset.range n)
+            have h_chain := le_trans h_partial h_tsum_le_M
+            rw [← EReal.coe_finset_sum (fun i _ => h_B_nonneg i)] at h_chain
+            exact EReal.coe_le_coe_iff.mp h_chain
+          exact h_B_summable.add h_geom_summable
+        · exact fun n => EReal.coe_le_coe_iff.mpr (h_B'_le_sum n)
+      -- Now split ∑(|Bₙ| + δₙ) = ∑|Bₙ| + ∑δₙ
+      have h_step2 : (∑' n, ((B n).volume + (ε/2) / 2^(n+1)).toEReal) =
+          (∑' n, (B n).volume.toEReal) + (∑' n, ((ε/2) / 2^(n+1)).toEReal) := by
+        -- For Real, we have ∑(f + g) = ∑f + ∑g when summable
+        have h_geom_summable : Summable (fun n : ℕ => (ε/2) / 2^(n+1)) := by
+          have h_summable_base : Summable (fun n : ℕ => (1/2 : ℝ)^n) :=
+            summable_geometric_of_lt_one (by norm_num) (by norm_num)
+          have h_eq : (fun n : ℕ => (ε/2) / 2 ^ (n + 1)) = (fun n : ℕ => (ε / 4) * (1/2)^n) := by
+            ext n
+            have h_two_pow_ne : (2 : ℝ)^(n+1) ≠ 0 := by positivity
+            field_simp [h_two_pow_ne]; left; ring
+          rw [h_eq]
+          exact h_summable_base.mul_left (ε / 4)
+        have h_B_summable : Summable (fun n => (B n).volume) := by
+          have h_rhs_ne_top : Lebesgue_outer_measure E + (↑(ε / 2) : EReal) ≠ ⊤ :=
+            EReal.add_ne_top h_top (EReal.coe_ne_top _)
+          have h_exists_M : ∃ M : ℝ, Lebesgue_outer_measure E + (↑(ε / 2) : EReal) ≤ M := by
+            cases h_rhs : (Lebesgue_outer_measure E + (↑(ε / 2) : EReal)) with
+            | bot => exact ⟨0, le_of_lt (EReal.bot_lt_coe _)⟩
+            | coe r => exact ⟨r, le_refl _⟩
+            | top => exact (h_rhs_ne_top h_rhs).elim
+          obtain ⟨M, hM_ge⟩ := h_exists_M
+          have h_tsum_le_M : ∑' n, (B n).volume.toEReal ≤ M := le_trans hB_sum hM_ge
+          apply summable_of_sum_range_le h_B_nonneg
+          intro n
+          have h_partial := EReal.finset_sum_le_tsum h_B_nonneg (Finset.range n)
+          have h_chain := le_trans h_partial h_tsum_le_M
+          rw [← EReal.coe_finset_sum (fun i _ => h_B_nonneg i)] at h_chain
+          exact EReal.coe_le_coe_iff.mp h_chain
+        -- Use tsum_add for Real
+        have h_real_tsum : ∑' n, ((B n).volume + (ε/2) / 2^(n+1)) =
+            (∑' n, (B n).volume) + (∑' n, (ε/2) / 2^(n+1)) :=
+          h_B_summable.tsum_add h_geom_summable
+        -- Convert to EReal
+        have h_sum_nonneg : ∀ n, 0 ≤ (B n).volume + (ε/2) / 2^(n+1) :=
+          fun n => add_nonneg (h_B_nonneg n) (h_geom_nonneg n)
+        -- Use symm to get: ∑' ↑(...) = ↑(∑' ...)
+        rw [← EReal.coe_tsum_of_nonneg h_sum_nonneg (h_B_summable.add h_geom_summable)]
+        rw [← EReal.coe_tsum_of_nonneg h_B_nonneg h_B_summable]
+        rw [← EReal.coe_tsum_of_nonneg h_geom_nonneg h_geom_summable]
+        rw [h_real_tsum]
+        simp only [EReal.coe_add]
+      -- ∑δₙ = ε/2
+      have h_geom_sum : (∑' n, ((ε/2) / 2^(n+1)).toEReal) = (ε/2 : EReal) := by
+        -- ∑ (ε/2)/2^{n+1} = (ε/2) * ∑ 1/2^{n+1} = (ε/2) * 1 = ε/2
+        have h_geom_summable' : Summable (fun n : ℕ => (ε/2) / 2^(n+1)) := by
+          have h_summable_base : Summable (fun n : ℕ => (1/2 : ℝ)^n) :=
+            summable_geometric_of_lt_one (by norm_num) (by norm_num)
+          have h_eq : (fun n : ℕ => (ε/2) / 2 ^ (n + 1)) = (fun n : ℕ => (ε / 4) * (1/2)^n) := by
+            ext n
+            have h_two_pow_ne : (2 : ℝ)^(n+1) ≠ 0 := by positivity
+            field_simp [h_two_pow_ne]; left; ring
+          rw [h_eq]
+          exact h_summable_base.mul_left (ε / 4)
+        have h_real_sum : ∑' n : ℕ, (ε/2) / 2^(n+1) = ε/2 := by
+          have h_eq : (fun n : ℕ => (ε/2) / 2^(n+1)) = (fun n : ℕ => (ε/2) * (1/2)^(n+1)) := by
+            ext n; field_simp
+          rw [h_eq, tsum_mul_left]
+          have h_geom_sum_one : ∑' n : ℕ, (1/2 : ℝ)^(n+1) = 1 := by
+            have h_summable : Summable (fun n : ℕ => (1/2 : ℝ)^n) :=
+              summable_geometric_of_lt_one (by norm_num) (by norm_num)
+            have h_formula := h_summable.sum_add_tsum_nat_add 1
+            simp only [Finset.range_one, Finset.sum_singleton, pow_zero] at h_formula
+            rw [tsum_geometric_of_lt_one (by norm_num : (0:ℝ) ≤ 1/2) (by norm_num : (1:ℝ)/2 < 1)] at h_formula
+            linarith
+          rw [h_geom_sum_one]; ring
+        -- Convert EReal tsum: ∑' n, (ε/2 / 2^(n+1)).toEReal = (ε/2 : EReal)
+        rw [← EReal.coe_tsum_of_nonneg h_geom_nonneg h_geom_summable', h_real_sum, EReal.coe_div]
+        norm_cast
+      calc ∑' n, (B' n).volume.toEReal
+          ≤ ∑' n, ((B n).volume + (ε/2) / 2^(n+1)).toEReal := h_step1
+        _ = (∑' n, (B n).volume.toEReal) + (∑' n, ((ε/2) / 2^(n+1)).toEReal) := h_step2
+        _ = (∑' n, (B n).volume.toEReal) + (ε/2 : EReal) := by rw [h_geom_sum]
+    -- Combine: m*(U) ≤ m*(E) + ε
+    have hU_bound : Lebesgue_outer_measure U ≤ Lebesgue_outer_measure E + ε := by
+      calc Lebesgue_outer_measure U
+          ≤ ∑' n, (B' n).volume.toEReal := hU_measure
+        _ ≤ (∑' n, (B n).volume.toEReal) + (ε/2 : ℝ) := hB'_vol_sum
+        _ ≤ (Lebesgue_outer_measure E + (ε/2 : ℝ)) + (ε/2 : ℝ) := by
+            apply add_le_add_right hB_sum
+        _ = Lebesgue_outer_measure E + ε := by
+            rw [add_assoc]
+            congr 1
+            norm_cast
+            ring
+    -- sInf S ≤ m*(U) since U ∈ S
+    have h_U_in_S : Lebesgue_outer_measure U ∈ S :=
+      ⟨U, hE_sub_U, hU_open, rfl⟩
+    calc sInf S
+        ≤ Lebesgue_outer_measure U := csInf_le ⟨0, fun M ⟨V, _, _, hM⟩ => hM ▸ Lebesgue_outer_measure.nonneg V⟩ h_U_in_S
+      _ ≤ Lebesgue_outer_measure E + ε := hU_bound
 
 /-- For any set E and ε > 0, there exists an open U ⊇ E with m*(U) ≤ m*(E) + ε.
     This follows from outer regularity (Lemma 1.2.12). -/
