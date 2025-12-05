@@ -721,10 +721,43 @@ theorem LebesgueMeasurable.complement {d:ℕ} {E: Set (EuclideanSpace' d)} (hE: 
   exact LebesgueMeasurable.countable_union hS_meas
 
 theorem LebesgueMeasurable.finite_union {d n:ℕ} {E: Fin n → Set (EuclideanSpace' d)} (hE: ∀ i, LebesgueMeasurable (E i)) : LebesgueMeasurable (⋃ i, E i) := by
-  sorry
+  -- Extend E to ℕ-indexed family by padding with empty sets
+  let E' : ℕ → Set (EuclideanSpace' d) := fun k => if h : k < n then E ⟨k, h⟩ else ∅
+  have hE'_meas : ∀ k, LebesgueMeasurable (E' k) := fun k => by
+    simp only [E']
+    split_ifs with hk
+    · exact hE ⟨k, hk⟩
+    · exact LebesgueMeasurable.empty
+  -- Show ⋃ i : Fin n, E i = ⋃ k : ℕ, E' k
+  have h_eq : (⋃ i : Fin n, E i) = ⋃ k : ℕ, E' k := by
+    ext x
+    simp only [Set.mem_iUnion, E']
+    constructor
+    · intro ⟨i, hx⟩
+      use i.val
+      simp only [i.isLt, ↓reduceDIte, hx]
+    · intro ⟨k, hx⟩
+      split_ifs at hx with hk
+      · exact ⟨⟨k, hk⟩, hx⟩
+      · exact absurd hx (Set.notMem_empty x)
+  rw [h_eq]
+  exact LebesgueMeasurable.countable_union hE'_meas
 
-theorem LebesgueMeasurable.union {d n:ℕ} {E F: Set (EuclideanSpace' d)} (hE: LebesgueMeasurable E) (hF: LebesgueMeasurable F) : LebesgueMeasurable (E ∪ F) := by
-  sorry
+theorem LebesgueMeasurable.union {d :ℕ} {E F: Set (EuclideanSpace' d)} (hE: LebesgueMeasurable E) (hF: LebesgueMeasurable F) : LebesgueMeasurable (E ∪ F) := by
+  -- Express E ∪ F as union over Fin 2
+  let S : Fin 2 → Set (EuclideanSpace' d) := ![E, F]
+  have hS : ∀ i, LebesgueMeasurable (S i) := fun i => by fin_cases i <;> simp [S, hE, hF]
+  have h_eq : E ∪ F = ⋃ i : Fin 2, S i := by
+    ext x
+    simp only [Set.mem_union, Set.mem_iUnion, S]
+    constructor
+    · rintro (hx | hx)
+      · exact ⟨0, by simp [hx]⟩
+      · exact ⟨1, by simp [hx]⟩
+    · rintro ⟨i, hi⟩
+      fin_cases i <;> simp_all
+  rw [h_eq]
+  exact LebesgueMeasurable.finite_union hS
 
 /-- Lemma 1.2.13(vii) (Countable intersection of measurable sets is measurable). This lemma requires proof. -/
 theorem LebesgueMeasurable.countable_inter {d:ℕ} {E: ℕ → Set (EuclideanSpace' d)} (hE: ∀ n, LebesgueMeasurable (E n)) : LebesgueMeasurable (⋂ n, E n) := by
