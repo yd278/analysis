@@ -5278,16 +5278,6 @@ theorem Lebesgue_outer_measure.eq {d:ℕ} (E: Set (EuclideanSpace' d)) : Lebesgu
     by_cases hd : d = 0
     · -- d = 0: In dimension 0, EuclideanSpace' 0 is a singleton type
       subst hd
-      -- In dimension 0, Set.univ is open and contains E
-      -- So sInf S ≤ m*(Set.univ) and we just need sInf S ≤ m*(E)
-      -- But since Set.univ contains E, by ≤ direction we have m*(E) ≤ m*(Set.univ) = m*(E)
-      -- Actually easier: Set.univ is in S, so sInf S ≤ m*(Set.univ) = m*(E) when E = Set.univ
-      -- But E may not equal Set.univ if E = ∅
-      -- Key: sInf S is bounded below by 0, and m*(E) ≥ 0, so we need sInf S ≤ m*(E)
-      -- Since Set.univ ∈ S (open, contains E), sInf S ≤ m*(Set.univ)
-      -- And m*(E) ≤ m*(Set.univ) by monotonicity
-      -- For the other direction: in dim 0, EuclideanSpace' 0 has exactly one point
-      -- All elements are equal, so every set is either ∅ or univ
       have h_singleton : ∀ (y z : EuclideanSpace' 0), y = z := fun y z =>
         funext fun i => Fin.elim0 i
       by_cases hE_empty : E = ∅
