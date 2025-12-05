@@ -761,13 +761,57 @@ theorem LebesgueMeasurable.union {d :ℕ} {E F: Set (EuclideanSpace' d)} (hE: Le
 
 /-- Lemma 1.2.13(vii) (Countable intersection of measurable sets is measurable). This lemma requires proof. -/
 theorem LebesgueMeasurable.countable_inter {d:ℕ} {E: ℕ → Set (EuclideanSpace' d)} (hE: ∀ n, LebesgueMeasurable (E n)) : LebesgueMeasurable (⋂ n, E n) := by
-  sorry
+  -- By de Morgan: ⋂ Eₙ = (⋃ Eₙᶜ)ᶜ
+  have h_eq : (⋂ n, E n) = (⋃ n, (E n)ᶜ)ᶜ := by
+    rw [Set.compl_iUnion]
+    simp only [compl_compl]
+  rw [h_eq]
+  -- Each Eₙᶜ is measurable by (v)
+  have hE_compl : ∀ n, LebesgueMeasurable ((E n)ᶜ) := fun n => (hE n).complement
+  -- ⋃ Eₙᶜ is measurable by (vi)
+  have h_union : LebesgueMeasurable (⋃ n, (E n)ᶜ) := LebesgueMeasurable.countable_union hE_compl
+  -- (⋃ Eₙᶜ)ᶜ is measurable by (v) again
+  exact h_union.complement
 
 theorem LebesgueMeasurable.finite_inter {d n:ℕ} {E: Fin n → Set (EuclideanSpace' d)} (hE: ∀ i, LebesgueMeasurable (E i)) : LebesgueMeasurable (⋂ i, E i) := by
-  sorry
+  -- Extend Fin n indexed family to ℕ indexed family with univ for k ≥ n
+  let E' : ℕ → Set (EuclideanSpace' d) := fun k => if h : k < n then E ⟨k, h⟩ else Set.univ
+  have hE'_meas : ∀ k, LebesgueMeasurable (E' k) := fun k => by
+    simp only [E']
+    split_ifs with hk
+    · exact hE ⟨k, hk⟩
+    · -- univ = ∅ᶜ, so measurable by complement of empty
+      rw [← Set.compl_empty]
+      exact LebesgueMeasurable.empty.complement
+  have h_eq : (⋂ i : Fin n, E i) = ⋂ k : ℕ, E' k := by
+    ext x
+    simp only [Set.mem_iInter, E']
+    constructor
+    · intro hx k
+      split_ifs with hk
+      · exact hx ⟨k, hk⟩
+      · exact Set.mem_univ x
+    · intro hx ⟨i, hi⟩
+      have := hx i
+      simp only [hi, dite_true] at this
+      exact this
+  rw [h_eq]
+  exact LebesgueMeasurable.countable_inter hE'_meas
 
-theorem LebesgueMeasurable.inter {d n:ℕ} {E F: Set (EuclideanSpace' d)} (hE: LebesgueMeasurable E) (hF: LebesgueMeasurable F) : LebesgueMeasurable (E ∩ F) := by
-  sorry
+theorem LebesgueMeasurable.inter {d :ℕ} {E F: Set (EuclideanSpace' d)} (hE: LebesgueMeasurable E) (hF: LebesgueMeasurable F) : LebesgueMeasurable (E ∩ F) := by
+  -- Express E ∩ F as intersection over Fin 2
+  let S : Fin 2 → Set (EuclideanSpace' d) := ![E, F]
+  have hS : ∀ i, LebesgueMeasurable (S i) := fun i => by fin_cases i <;> simp [S, hE, hF]
+  have h_eq : E ∩ F = ⋂ i : Fin 2, S i := by
+    ext x
+    simp only [Set.mem_inter_iff, Set.mem_iInter, S]
+    constructor
+    · intro ⟨hxE, hxF⟩ i
+      fin_cases i <;> simp_all
+    · intro hx
+      exact ⟨hx 0, hx 1⟩
+  rw [h_eq]
+  exact LebesgueMeasurable.finite_inter hS
 
 /-- Exercise 1.2.7 (Criteria for measurability)-/
 theorem LebesgueMeasurable.TFAE {d:ℕ} (E: Set (EuclideanSpace' d)) :
