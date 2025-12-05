@@ -759,7 +759,7 @@ theorem LebesgueMeasurable.union {d :ℕ} {E F: Set (EuclideanSpace' d)} (hE: Le
   rw [h_eq]
   exact LebesgueMeasurable.finite_union hS
 
-/-- Lemma 1.2.13(vii) (Countable intersection of measurable sets is measurable). This lemma requires proof. -/
+/-- Lemma 1.2.13(vii) (Countable intersection of measurable sets is measurable). -/
 theorem LebesgueMeasurable.countable_inter {d:ℕ} {E: ℕ → Set (EuclideanSpace' d)} (hE: ∀ n, LebesgueMeasurable (E n)) : LebesgueMeasurable (⋂ n, E n) := by
   -- By de Morgan: ⋂ Eₙ = (⋃ Eₙᶜ)ᶜ
   have h_eq : (⋂ n, E n) = (⋃ n, (E n)ᶜ)ᶜ := by
