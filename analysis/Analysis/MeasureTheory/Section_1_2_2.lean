@@ -508,7 +508,7 @@ theorem IsNull.measurable {d:ℕ} {E: Set (EuclideanSpace' d)} (hE: IsNull E) : 
       _ ≤ ε' := h_sum_le
       _ ≤ ε := hε'_le
 
-/-- Lemma 1.2.13(iv) (Empty set is measurable). This lemma requires proof.  -/
+/-- Lemma 1.2.13(iv) (Empty set is measurable).-/
 theorem LebesgueMeasurable.empty {d:ℕ} : LebesgueMeasurable (∅: Set (EuclideanSpace' d)) :=
 -- use (i) directly
   IsOpen.measurable isOpen_empty
@@ -526,7 +526,7 @@ theorem LebesgueMeasurable.empty' {d:ℕ} : LebesgueMeasurable (∅: Set (Euclid
     rw [Lebesgue_outer_measure.of_empty d]
     exact le_of_lt hε
 
-/-- Lemma 1.2.13(vi) (Countable union of measurable sets is measurable). This lemma requires proof.  -/
+/-- Lemma 1.2.13(vi) (Countable union of measurable sets is measurable).-/
 theorem LebesgueMeasurable.countable_union {d:ℕ} {E: ℕ → Set (EuclideanSpace' d)} (hE: ∀ n, LebesgueMeasurable (E n)) : LebesgueMeasurable (⋃ n, E n) := by
   -- Use the ε/2^n trick: let ε > 0 be arbitrary
   intro ε hε
