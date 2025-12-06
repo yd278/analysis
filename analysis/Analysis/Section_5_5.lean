@@ -198,7 +198,7 @@ instance ExtendedReal.inst_Top : Top ExtendedReal where
 
 /-- Mathlib prefers ⊥ to denote the -∞ element.-/
 instance ExtendedReal.inst_Bot: Bot ExtendedReal where
-  bot := infty
+  bot := neg_infty
 
 instance ExtendedReal.coe_real : Coe Real ExtendedReal where
   coe x := ExtendedReal.real x
