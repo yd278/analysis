@@ -857,18 +857,297 @@ theorem Jordan_measurable.Lebesgue_measure {d:ℕ} {E: Set (EuclideanSpace' d)} 
 
 /-- Lemma 1.2.15(a) (Empty set has zero Lebesgue measure). The proof is missing. -/
 @[simp]
-theorem Lebesgue_measure.empty {d:ℕ} : Lebesgue_measure (∅: Set (EuclideanSpace' d)) = 0 := by
-  sorry
+theorem Lebesgue_measure.empty {d:ℕ} : Lebesgue_measure (∅: Set (EuclideanSpace' d)) = 0 :=
+  -- Direct application of Lebesgue_outer_measure.of_empty since Lebesgue_measure = Lebesgue_outer_measure
+  Lebesgue_outer_measure.of_empty d
 
-/-- Lemma 1.2.15(b) (Countable additivity). The proof is missing. -/
+/-- Helper: Countable additivity for compact sets.
+    When all E_n are compact and pairwise disjoint, m(⋃ E_n) = ∑' m(E_n).
+    Key: compact disjoint sets have positive separation, so we can use Lemma 1.2.5. -/
+private lemma Lebesgue_measure.countable_union_compact {d:ℕ} (hd : 0 < d)
+    {E: ℕ → Set (EuclideanSpace' d)}
+    (hcompact: ∀ n, IsCompact (E n))
+    (hdisj: Set.univ.PairwiseDisjoint E) :
+    Lebesgue_measure (⋃ n, E n) = ∑' n, Lebesgue_measure (E n) := by
+  -- Direction ≤: Countable subadditivity
+  have h_le : Lebesgue_measure (⋃ n, E n) ≤ ∑' n, Lebesgue_measure (E n) :=
+    Lebesgue_outer_measure.union_le E
+  -- Direction ≥: For each N, m(⋃_{n<N} E_n) = ∑_{n<N} m(E_n) by finite additivity + separation
+  have h_ge : ∑' n, Lebesgue_measure (E n) ≤ Lebesgue_measure (⋃ n, E n) := by
+    -- For each N, by induction, m(⋃_{n≤N} E_n) = ∑_{n≤N} m(E_n)
+    have h_finite_sum : ∀ N : ℕ, Lebesgue_measure (⋃ n ∈ Finset.range N, E n) =
+        ∑ n ∈ Finset.range N, Lebesgue_measure (E n) := by
+      intro N
+      induction N with
+      | zero =>
+        simp only [Finset.range_zero, Finset.sum_empty]
+        -- ⋃ n ∈ ∅, E n = ∅
+        have : (⋃ n ∈ (∅ : Finset ℕ), E n) = ∅ := by simp
+        rw [this, Lebesgue_measure.empty]
+      | succ N ih =>
+        -- ⋃_{n<N+1} E_n = (⋃_{n<N} E_n) ∪ E_N
+        have h_union_eq : (⋃ n ∈ Finset.range (N + 1), E n) =
+            (⋃ n ∈ Finset.range N, E n) ∪ E N := by
+          ext x
+          simp only [Set.mem_iUnion, Finset.mem_range, Set.mem_union]
+          constructor
+          · intro ⟨n, ⟨hn, hx⟩⟩
+            by_cases hnN : n < N
+            · left; exact ⟨n, ⟨hnN, hx⟩⟩
+            · right
+              have : n = N := Nat.eq_of_lt_succ_of_not_lt hn hnN
+              rw [← this]; exact hx
+          · intro h
+            cases h with
+            | inl hl =>
+              obtain ⟨n, ⟨hn, hx⟩⟩ := hl
+              exact ⟨n, ⟨Nat.lt_succ_of_lt hn, hx⟩⟩
+            | inr hr => exact ⟨N, ⟨Nat.lt_succ_self N, hr⟩⟩
+        rw [h_union_eq]
+        -- The two parts are disjoint
+        have h_disj_parts : (⋃ n ∈ Finset.range N, E n) ∩ E N = ∅ := by
+          ext x
+          simp only [Set.mem_inter_iff, Set.mem_iUnion, Finset.mem_range, Set.mem_empty_iff_false,
+            iff_false, not_and]
+          intro ⟨n, ⟨hn, hxn⟩⟩ hxN
+          have hne : n ≠ N := Nat.ne_of_lt hn
+          have hdisj_pair : Disjoint (E n) (E N) := hdisj (Set.mem_univ n) (Set.mem_univ N) hne
+          exact Set.disjoint_iff.mp hdisj_pair ⟨hxn, hxN⟩
+        -- The finite union is compact
+        have hcompact_finite : IsCompact (⋃ n ∈ Finset.range N, E n) :=
+          Finset.isCompact_biUnion _ (fun n _ => hcompact n)
+        -- Use separation of compact disjoint sets
+        by_cases h_empty_N : E N = ∅
+        · -- If E_N is empty, the union doesn't change
+          simp only [h_empty_N, Set.union_empty]
+          rw [Finset.sum_range_succ, ih]
+          simp [h_empty_N, Lebesgue_measure.empty]
+        · by_cases h_empty_union : (⋃ n ∈ Finset.range N, E n) = ∅
+          · simp only [h_empty_union, Set.empty_union, Finset.sum_range_succ]
+            have h_sum_zero : ∑ n ∈ Finset.range N, Lebesgue_measure (E n) = 0 := by
+              have h_all_empty : ∀ n ∈ Finset.range N, E n = ∅ := by
+                intro n hn
+                by_contra hne
+                have hnonempty : (E n).Nonempty := Set.nonempty_iff_ne_empty.mpr hne
+                have hsub : (E n) ⊆ ⋃ n ∈ Finset.range N, E n := Set.subset_biUnion_of_mem hn
+                rw [h_empty_union] at hsub
+                obtain ⟨x, hx⟩ := hnonempty
+                exact Set.not_mem_empty x (hsub hx)
+              apply Finset.sum_eq_zero
+              intro n hn
+              rw [h_all_empty n hn, Lebesgue_measure.empty]
+            rw [h_sum_zero, zero_add]
+          · -- Both parts are nonempty compact and disjoint
+            have h_nonempty_N : (E N).Nonempty := Set.nonempty_iff_ne_empty.mpr h_empty_N
+            have h_nonempty_union : (⋃ n ∈ Finset.range N, E n).Nonempty :=
+              Set.nonempty_iff_ne_empty.mpr h_empty_union
+            have h_sep : set_dist (⋃ n ∈ Finset.range N, E n) (E N) > 0 :=
+              dist_of_disj_compact_pos _ _ hcompact_finite (hcompact N) h_disj_parts
+            have h_add := Lebesgue_outer_measure.union_of_separated hd h_sep
+            -- h_add : Lebesgue_outer_measure (...) = Lebesgue_outer_measure (...) + Lebesgue_outer_measure (E N)
+            -- Since Lebesgue_measure = Lebesgue_outer_measure, we can use this directly
+            calc Lebesgue_measure ((⋃ n ∈ Finset.range N, E n) ∪ E N)
+                = Lebesgue_outer_measure ((⋃ n ∈ Finset.range N, E n) ∪ E N) := rfl
+              _ = Lebesgue_outer_measure (⋃ n ∈ Finset.range N, E n) + Lebesgue_outer_measure (E N) := h_add
+              _ = Lebesgue_measure (⋃ n ∈ Finset.range N, E n) + Lebesgue_measure (E N) := rfl
+              _ = ∑ n ∈ Finset.range N, Lebesgue_measure (E n) + Lebesgue_measure (E N) := by rw [ih]
+              _ = ∑ n ∈ Finset.range (N + 1), Lebesgue_measure (E n) := by rw [Finset.sum_range_succ]
+    -- Now: ∑' m(E_n) = sup_N ∑_{n < N} m(E_n) ≤ sup_N m(⋃_{n < N} E_n) ≤ m(⋃ E_n)
+    have h_mono : ∀ N : ℕ, (⋃ n ∈ Finset.range N, E n) ⊆ (⋃ n, E n) := by
+      intro N x hx
+      simp only [Set.mem_iUnion, Finset.mem_range] at hx ⊢
+      obtain ⟨n, ⟨_, hxn⟩⟩ := hx
+      exact ⟨n, hxn⟩
+    have h_sum_le : ∀ N : ℕ, ∑ n ∈ Finset.range N, Lebesgue_measure (E n) ≤
+        Lebesgue_measure (⋃ n, E n) := by
+      intro N
+      rw [← h_finite_sum N]
+      exact Lebesgue_outer_measure.mono (h_mono N)
+    sorry
+  exact le_antisymm h_le h_ge
+
+/-- Helper: Countable additivity for bounded sets.
+    When all E_n are bounded and measurable, use ε/2ⁿ trick to approximate each by compact.
+    Key insight from textbook: For bounded measurable E_n, by Exercise 1.2.7,
+    for any ε > 0, there exists compact K_n ⊆ E_n with m(E_n) ≤ m(K_n) + ε/2^{n+1}.
+    The K_n are pairwise disjoint, so m(⋃ K_n) = ∑' m(K_n) by the compact case,
+    and m(⋃ E_n) ≥ m(⋃ K_n) = ∑' m(K_n) ≥ ∑' m(E_n) - ε. -/
+private lemma Lebesgue_measure.countable_union_bounded {d:ℕ} (hd : 0 < d)
+    {E: ℕ → Set (EuclideanSpace' d)}
+    (hmes: ∀ n, LebesgueMeasurable (E n))
+    (hbdd: ∀ n, Bornology.IsBounded (E n))
+    (hdisj: Set.univ.PairwiseDisjoint E) :
+    Lebesgue_measure (⋃ n, E n) = ∑' n, Lebesgue_measure (E n) := by
+  -- Direction ≤: Countable subadditivity
+  have h_le : Lebesgue_measure (⋃ n, E n) ≤ ∑' n, Lebesgue_measure (E n) :=
+    Lebesgue_outer_measure.union_le E
+  -- Direction ≥: Use the same finite additivity + monotonicity argument
+  -- Since the sets are bounded, we have finite measure for each
+  have h_ge : ∑' n, Lebesgue_measure (E n) ≤ Lebesgue_measure (⋃ n, E n) := by
+    -- For bounded sets, we can use the same finite additivity argument
+    -- Each bounded measurable set has finite outer measure
+    have h_finite : ∀ n, Lebesgue_measure (E n) ≠ ⊤ := by
+      intro n
+      have h_closure_compact : IsCompact (closure (E n)) :=
+        Metric.isCompact_of_isClosed_isBounded isClosed_closure (hbdd n).closure
+      have h_closure_finite : Lebesgue_measure (closure (E n)) ≠ ⊤ :=
+        Lebesgue_outer_measure.finite_of_compact h_closure_compact
+      have h_mono_closure : Lebesgue_measure (E n) ≤ Lebesgue_measure (closure (E n)) :=
+        Lebesgue_outer_measure.mono subset_closure
+      intro h_eq_top
+      rw [h_eq_top] at h_mono_closure
+      exact h_closure_finite (eq_top_iff.mpr h_mono_closure)
+    -- The proof follows the same structure as the compact case
+    -- For now, use sorry (requires inner regularity / Exercise 1.2.7)
+    sorry
+  exact le_antisymm h_le h_ge
+
+/-- Lemma 1.2.15(b) (Countable additivity).
+    Strategy: m(⋃ E_n) = ∑' m(E_n) for pairwise disjoint measurable sets.
+    - Direction ≤: Countable subadditivity (Lebesgue_outer_measure.union_le)
+    - Direction ≥: Decompose ℝᵈ into annuli Aₘ, express each E_n = ⋃_m (E_n ∩ Aₘ),
+      apply bounded case to the doubly-indexed family (E_n ∩ Aₘ). -/
 theorem Lebesgue_measure.countable_union {d:ℕ} {E: ℕ → Set (EuclideanSpace' d)} (hmes: ∀ n, LebesgueMeasurable (E n)) (hdisj: Set.univ.PairwiseDisjoint E) : Lebesgue_measure (⋃ n, E n) = ∑' n, Lebesgue_measure (E n) := by
-  sorry
+  -- Direction ≤: Countable subadditivity
+  have h_le : Lebesgue_measure (⋃ n, E n) ≤ ∑' n, Lebesgue_measure (E n) :=
+    Lebesgue_outer_measure.union_le E
+  -- Direction ≥: Use annuli decomposition for general case
+  have h_ge : ∑' n, Lebesgue_measure (E n) ≤ Lebesgue_measure (⋃ n, E n) := by
+    -- Handle d = 0 case separately (trivial)
+    by_cases hd : d = 0
+    · -- In dimension 0, everything is trivial (single point space)
+      subst hd
+      sorry
+    · -- For d ≥ 1, use the annuli decomposition from the textbook
+      push_neg at hd
+      have hd_pos : 0 < d := Nat.pos_of_ne_zero hd
+      -- Define annuli: A_m = { x : m - 1 ≤ |x| < m } for m ≥ 1
+      -- Then ℝᵈ = ⋃_m A_m (disjoint union) and each A_m is bounded
+      -- Each E_n = ⋃_m (E_n ∩ A_m), a countable disjoint union of bounded sets
+      -- So m(E_n) = ∑'_m m(E_n ∩ A_m) by the bounded case
+      -- And ⋃_n E_n = ⋃_{n,m} (E_n ∩ A_m)
+      -- The family (E_n ∩ A_m) is pairwise disjoint, and each is bounded measurable
+      -- So m(⋃_n E_n) = ∑'_{n,m} m(E_n ∩ A_m) = ∑'_n ∑'_m m(E_n ∩ A_m) = ∑'_n m(E_n)
+      sorry
+  exact le_antisymm h_le h_ge
 
 theorem Lebesgue_measure.finite_union {d n:ℕ} {E: Fin n → Set (EuclideanSpace' d)} (hmes: ∀ n, LebesgueMeasurable (E n)) (hdisj: Set.univ.PairwiseDisjoint E) : Lebesgue_measure (⋃ n, E n) = ∑' n, Lebesgue_measure (E n) := by
-  sorry
+  -- Strategy: Extend E to ℕ-indexed family by padding with empty sets, then use countable_union
+  -- Define E' : ℕ → Set by E'(k) = E(k) if k < n, else ∅
+  let E' : ℕ → Set (EuclideanSpace' d) := fun k =>
+    if h : k < n then E ⟨k, h⟩ else ∅
+
+  -- The union over Fin n equals the union over ℕ with E'
+  have h_union : (⋃ i : Fin n, E i) = (⋃ k, E' k) := by
+    ext x
+    simp only [Set.mem_iUnion, E']
+    constructor
+    · intro ⟨i, hi⟩
+      use i.val
+      simp [hi]
+    · intro ⟨k, hx⟩
+      by_cases hk : k < n
+      · use ⟨k, hk⟩
+        simpa [dif_pos hk] using hx
+      · simp [dif_neg hk] at hx
+
+  -- E' is measurable (E(k) is measurable, ∅ is measurable)
+  have hmes' : ∀ k, LebesgueMeasurable (E' k) := by
+    intro k
+    simp only [E']
+    by_cases hk : k < n
+    · simp [dif_pos hk]
+      exact hmes ⟨k, hk⟩
+    · simp [dif_neg hk]
+      exact LebesgueMeasurable.empty
+
+  -- E' is pairwise disjoint
+  have hdisj' : Set.univ.PairwiseDisjoint E' := by
+    intro i _ j _ hij
+    simp only [E', Function.onFun]
+    by_cases hi : i < n <;> by_cases hj : j < n
+    · simp only [dif_pos hi, dif_pos hj]
+      have hne : (⟨i, hi⟩ : Fin n) ≠ ⟨j, hj⟩ := by
+        intro heq
+        apply hij
+        exact congrArg Fin.val heq
+      exact hdisj (Set.mem_univ _) (Set.mem_univ _) hne
+    · simp only [dif_pos hi, dif_neg hj]
+      exact disjoint_bot_right
+    · simp only [dif_neg hi, dif_pos hj]
+      exact disjoint_bot_left
+    · simp only [dif_neg hi, dif_neg hj]
+      exact disjoint_bot_left
+
+  -- Apply countable_union
+  rw [h_union, Lebesgue_measure.countable_union hmes' hdisj']
+
+  -- The tsum over ℕ equals the tsum over Fin n (since E' k = ∅ for k ≥ n)
+  have h_empty : ∀ k ≥ n, E' k = ∅ := fun k hk => dif_neg (not_lt.mpr hk)
+  have h_measure_empty : ∀ k ≥ n, Lebesgue_measure (E' k) = 0 := by
+    intro k hk
+    rw [h_empty k hk, Lebesgue_measure.empty]
+
+  -- Convert tsum over ℕ to tsum over Fin n
+  -- Key: E' k = E ⟨k, h⟩ for k < n, and E' k = ∅ for k ≥ n
+
+  -- Direct approach: show term-by-term equality using the embedding
+  have h_eq_terms : ∀ i : Fin n, Lebesgue_measure (E' i.val) = Lebesgue_measure (E i) := by
+    intro i
+    simp only [E', dif_pos i.isLt]
+
+  -- The tsum over ℕ equals the tsum over Fin n via reindexing
+  -- Show that the support of E' is contained in {k : k < n}
+  have h_support : Function.support (fun k => Lebesgue_measure (E' k)) ⊆ Set.Iio n := by
+    intro k hk
+    simp only [Set.mem_Iio]
+    contrapose! hk
+    simp only [Function.mem_support, not_not]
+    exact h_measure_empty k hk
+  -- Reindex from ℕ to Set.Iio n
+  rw [← tsum_subtype_eq_of_support_subset h_support]
+  -- Define equivalence between ↑(Set.Iio n) and Fin n
+  let e : ↑(Set.Iio n) ≃ Fin n := {
+    toFun := fun ⟨k, hk⟩ => ⟨k, Set.mem_Iio.mp hk⟩
+    invFun := fun i => ⟨i.val, Set.mem_Iio.mpr i.isLt⟩
+    left_inv := fun ⟨k, hk⟩ => rfl
+    right_inv := fun i => rfl
+  }
+  -- Use the equivalence to reindex the tsum
+  rw [← Equiv.tsum_eq e]
+  congr 1
+  ext ⟨k, hk⟩
+  simp only [e, Equiv.coe_fn_mk]
+  exact h_eq_terms ⟨k, Set.mem_Iio.mp hk⟩
 
 theorem Lebesgue_measure.union {d:ℕ} {E F: Set (EuclideanSpace' d)} (hE: LebesgueMeasurable E) (hF: LebesgueMeasurable F) (hdisj: E ∩ F = ∅) : Lebesgue_measure (E ∪ F) = Lebesgue_measure E + Lebesgue_measure F := by
-  sorry
+  -- Apply finite_union with n=2
+  let S : Fin 2 → Set (EuclideanSpace' d) := ![E, F]
+  have h_union : E ∪ F = ⋃ n, S n := by
+    ext x
+    simp only [S, Set.mem_union, Set.mem_iUnion]
+    constructor
+    · intro h
+      cases h with
+      | inl hl => exact ⟨0, hl⟩
+      | inr hr => exact ⟨1, hr⟩
+    · intro ⟨n, hn⟩
+      fin_cases n
+      · left; exact hn
+      · right; exact hn
+  have hmes : ∀ n, LebesgueMeasurable (S n) := by intro n; fin_cases n <;> simp [S, hE, hF]
+  have hdisj' : Set.univ.PairwiseDisjoint S := by
+    intro i _ j _ hij
+    fin_cases i <;> fin_cases j
+    · exact (hij rfl).elim
+    · simp only [S, Function.onFun]
+      exact Set.disjoint_iff_inter_eq_empty.mpr hdisj
+    · simp only [S, Function.onFun]
+      exact Set.disjoint_iff_inter_eq_empty.mpr (Set.inter_comm F E ▸ hdisj)
+    · exact (hij rfl).elim
+  rw [h_union, Lebesgue_measure.finite_union hmes hdisj']
+  rw [tsum_fintype]
+  simp only [S, Fin.sum_univ_two, Fin.isValue, Matrix.cons_val_zero, Matrix.cons_val_one]
 
 /-- Exercise 1.2.11(a) (Upward monotone convergence)-/
 theorem Lebesgue_measure.upward_monotone_convergence {d:ℕ} {E: ℕ → Set (EuclideanSpace' d)} (hE: ∀ n, LebesgueMeasurable (E n)) (hmono: ∀ n, E n ⊆ E (n + 1)) : Filter.atTop.Tendsto (fun n ↦ Lebesgue_measure (E n)) (nhds (Lebesgue_measure (⋃ n, E n))) := by
