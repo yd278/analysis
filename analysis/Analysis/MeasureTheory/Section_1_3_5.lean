@@ -113,11 +113,11 @@ theorem PointwiseAeConvergesTo.uniformlyConverges_outside_small {d:ℕ} {f : ℕ
   (hf: ∀ n, ComplexMeasurable (f n))
   (hfg: PointwiseAeConvergesTo f g)
   (S: Set (EuclideanSpace' d))
-  (hS: Lebesgue_measure S < ∞)
+  (hS: Lebesgue_measure S < ⊤)
   (ε : ℝ) (hε : 0 < ε) :
   ∃ (E: Set (EuclideanSpace' d)), MeasurableSet E ∧
     Lebesgue_measure E ≤ ε ∧
-    UniformlyConvergesToOn f g Sᶜ ∪ E := by sorry
+    UniformlyConvergesToOn f g (Sᶜ ∪ E) := by sorry
 
 /-- Theorem 1.3.28 (Lusin's theorem) -/
 theorem ComplexAbsolutelyIntegrable.approx_by_continuous_outside_small {d:ℕ} {f : EuclideanSpace' d → ℂ}
