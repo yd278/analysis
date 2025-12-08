@@ -288,7 +288,7 @@ theorem Real.LIM_mono_fail :
   sorry
 
 /-- Proposition 5.4.12 (Bounding reals by rationals) -/
-theorem Real.exists_rat_le_and_nat_ge {x:Real} (hx: x.IsPos) :
+theorem Real.exists_rat_le_and_nat_gt {x:Real} (hx: x.IsPos) :
     (∃ q:ℚ, q > 0 ∧ (q:Real) ≤ x) ∧ ∃ N:ℕ, x < (N:Real) := by
   -- This proof is written to follow the structure of the original text.
   rw [isPos_def] at hx; choose a hbound hcauchy heq using hx
