@@ -314,7 +314,7 @@ theorem Real.le_mul {ε:Real} (hε: ε.IsPos) (x:Real) : ∃ M:ℕ, M > 0 ∧ M 
   -- This proof is written to follow the structure of the original text.
   obtain rfl | hx | hx := trichotomous x
   . use 1; simpa [isPos_iff] using hε
-  . choose N hN using (exists_rat_le_and_nat_ge (div_of_pos hx hε)).2
+  . choose N hN using (exists_rat_le_and_nat_gt (div_of_pos hx hε)).2
     set M := N+1; refine ⟨ M, by positivity, ?_ ⟩
     replace hN : x/ε < M := hN.trans (by simp [M])
     simp
