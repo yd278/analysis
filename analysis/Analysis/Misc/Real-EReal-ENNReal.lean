@@ -396,3 +396,38 @@ lemma EReal.tsum_le_of_sum_range_le_of_nonneg {f : ℕ → EReal} {M : EReal}
     EReal.coe_ennreal_le_coe_ennreal_iff.mpr h_tsum_enn
   calc (∑' n, g n : ENNReal).toEReal ≤ (M.toENNReal).toEReal := h_coe_le
     _ = M := EReal.coe_toENNReal hM_nn
+
+/-- If tsum in ENNReal equals ⊤, then tsum of coerced values in EReal equals ⊤.
+    Uses that ENNReal → EReal coercion is continuous and additive. -/
+lemma EReal.tsum_coe_ennreal_eq_top_of_tsum_eq_top {α : Type*} {f : α → ENNReal}
+    (h : ∑' i, f i = ⊤) : ∑' i, (f i : EReal) = ⊤ := by
+  let φ : ENNReal →+ EReal := {
+    toFun := (↑·)
+    map_zero' := by simp
+    map_add' := EReal.coe_ennreal_add
+  }
+  have h_map : φ (∑' i, f i) = ∑' i, φ (f i) :=
+    Summable.map_tsum (f := f) ENNReal.summable φ continuous_coe_ennreal_ereal
+  simp only [h] at h_map
+  exact h_map.symm
+
+/-- Tsum of a positive constant over an infinite type is ⊤ in EReal -/
+lemma EReal.tsum_const_eq_top_of_pos {α : Type*} [Infinite α] {c : EReal} (hc : 0 < c) :
+    ∑' (_ : α), c = ⊤ := by
+  by_cases h_top : c = ⊤
+  · -- c = ⊤: convert through ENNReal
+    rw [h_top, ← EReal.coe_ennreal_top]
+    apply EReal.tsum_coe_ennreal_eq_top_of_tsum_eq_top
+    exact ENNReal.tsum_const_eq_top_of_ne_zero (by simp : (⊤ : ENNReal) ≠ 0)
+  · -- c is finite and positive
+    have hc_nn : 0 ≤ c := le_of_lt hc
+    have c_eq : c = ↑(c.toENNReal) := (EReal.coe_toENNReal hc_nn).symm
+    rw [c_eq]
+    have hc_ne_zero : c.toENNReal ≠ 0 := by
+      intro h_eq
+      rw [h_eq] at c_eq
+      norm_num [ENNReal.coe_zero] at c_eq
+      rw [c_eq] at hc
+      norm_num at hc
+    apply EReal.tsum_coe_ennreal_eq_top_of_tsum_eq_top
+    exact ENNReal.tsum_const_eq_top_of_ne_zero hc_ne_zero
