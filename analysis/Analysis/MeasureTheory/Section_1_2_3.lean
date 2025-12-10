@@ -192,6 +192,98 @@ lemma translates_bounded :
 lemma rat_Icc_countable : Set.Countable {q : ℚ | q ∈ Set.Icc (-1:ℚ) 1} := by
   exact Set.countable_univ.mono (Set.subset_univ _)
 
+/-- The Lebesgue measure of a closed interval [a,b] in ℝ (embedded in EuclideanSpace' 1) equals b - a -/
+lemma Lebesgue_measure.Icc_eq (a b : ℝ) (hab : a ≤ b) :
+    Lebesgue_measure (Real.equiv_EuclideanSpace' '' Set.Icc a b) = (b - a : ℝ) := by
+  -- Use the fact that Set.Icc a b = (BoundedInterval.Icc a b).toSet
+  have h_interval : Set.Icc a b = (BoundedInterval.Icc a b).toSet := by rfl
+  -- And (I:Box 1).toSet = Real.equiv_EuclideanSpace' '' I.toSet
+  have h_box : Real.equiv_EuclideanSpace' '' Set.Icc a b = (BoundedInterval.Icc a b : Box 1).toSet := by
+    rw [h_interval, ← BoundedInterval.coe_of_box]
+  rw [h_box]
+  -- Now use Lebesgue_outer_measure.elementary (Lebesgue_measure = Lebesgue_outer_measure)
+  have hE : IsElementary (BoundedInterval.Icc a b : Box 1).toSet := IsElementary.box _
+  unfold Lebesgue_measure
+  rw [Lebesgue_outer_measure.elementary _ hE, IsElementary.measure_of_box]
+  -- Box volume = product of side lengths = b - a for 1D
+  simp only [Box.volume, Finset.univ_unique, Fin.default_eq_zero, Finset.prod_singleton]
+  simp only [BoundedInterval.length, BoundedInterval.b, BoundedInterval.a]
+  -- max (b - a) 0 = b - a since a ≤ b
+  rw [max_eq_left (sub_nonneg.mpr hab)]
+
+/-- Helper: Finite sum commutes with ENNReal → EReal coercion -/
+private lemma coe_ennreal_finset_sum_helper (s : Finset ℕ) (f : ℕ → ENNReal) :
+    ((s.sum f : ENNReal) : EReal) = s.sum (fun i => (f i : EReal)) := by
+  induction s using Finset.cons_induction with
+  | empty =>
+    simp [EReal.coe_ennreal_zero]
+  | cons a s ha ih =>
+    simp only [Finset.sum_cons]
+    rw [EReal.coe_ennreal_add, ih]
+
+/-- Helper: If tsum in ENNReal equals ⊤, then tsum of coerced values in EReal equals ⊤ -/
+private lemma EReal.tsum_coe_ennreal_eq_top_of_tsum_eq_top {f : ℕ → ENNReal}
+    (h : ∑' (i : ℕ), f i = ⊤) : ∑' (i : ℕ), (f i : EReal) = ⊤ := by
+  -- Key: The coercion ENNReal → EReal is continuous and additive,
+  -- so we can use Summable.map_tsum to relate the tsums
+  let φ : ENNReal →+ EReal := {
+    toFun := (↑·)
+    map_zero' := by simp
+    map_add' := EReal.coe_ennreal_add
+  }
+  have h_map : φ (∑' n, f n) = ∑' n, φ (f n) :=
+    Summable.map_tsum (f := f) ENNReal.summable φ continuous_coe_ennreal_ereal
+  -- h_map : (∑' n, f n : ENNReal).toEReal = ∑' n, (f n : EReal)
+  -- Since ∑' n, f n = ⊤, we have φ ⊤ = ⊤
+  simp only [h] at h_map
+  exact h_map.symm
+
+/-- Tsum of a positive constant over ℕ is ⊤ in EReal -/
+lemma EReal.tsum_const_eq_top_of_pos {c : EReal} (hc : 0 < c) :
+    ∑' (_ : ℕ), c = ⊤ := by
+  -- Case analysis on whether c is finite or infinite
+  by_cases h_top : c = ⊤
+  · -- If c = ⊤, then ∑' (_ : ℕ), ⊤ = ⊤
+    rw [h_top]
+    -- The sum of infinite copies of ⊤ is ⊤
+    -- Key: any partial sum containing even one ⊤ equals ⊤
+    -- So the infinite sum (supremum of partials) is ⊤
+    have h1 : ∀ n : ℕ, n > 0 → (Finset.range n).sum (fun _ => (⊤ : EReal)) = ⊤ := by
+      intro n hn
+      induction n with
+      | zero => omega
+      | succ n' ih =>
+        rw [Finset.sum_range_succ]
+        by_cases h : n' = 0
+        · simp [h]
+        · rw [ih (Nat.pos_of_ne_zero h)]
+          -- (Finset.range n').sum _ + ⊤ = ⊤ + ⊤ = ⊤
+          exact EReal.add_top_of_ne_bot top_ne_bot
+    -- Since all partial sums (for n > 0) equal ⊤, the tsum = ⊤
+    -- This follows because tsum is defined as a limit/supremum
+    -- Strategy: convert through ENNReal
+    have ennreal_eq : (⊤ : EReal) = ↑(⊤ : ENNReal) := EReal.coe_ennreal_top.symm
+    rw [ennreal_eq]
+    -- Use the helper lemma
+    apply EReal.tsum_coe_ennreal_eq_top_of_tsum_eq_top
+    exact ENNReal.tsum_const_eq_top_of_ne_zero (by simp : (⊤ : ENNReal) ≠ 0)
+  · -- c is finite and positive
+    -- Convert c to ENNReal using coe_toENNReal since 0 < c
+    have hc_nn : 0 ≤ c := le_of_lt hc
+    have c_eq : c = ↑(c.toENNReal) := (EReal.coe_toENNReal hc_nn).symm
+    rw [c_eq]
+    -- Now we have ∑' (_ : ℕ), ↑(c.toENNReal)
+    -- c.toENNReal ≠ 0 since 0 < c and c = ↑(c.toENNReal)
+    have hc_ne_zero : c.toENNReal ≠ 0 := by
+      intro h_eq
+      rw [h_eq] at c_eq
+      norm_num [ENNReal.coe_zero] at c_eq
+      rw [c_eq] at hc
+      norm_num at hc
+    -- Use the helper lemma
+    apply EReal.tsum_coe_ennreal_eq_top_of_tsum_eq_top
+    exact @ENNReal.tsum_const_eq_top_of_ne_zero ℕ inferInstance c.toENNReal hc_ne_zero
+
 /-- Proposition 1.2.18 -/
 theorem LebesgueMeasurable.nonmeasurable : ∃ E : Set (EuclideanSpace' 1), E ⊆ Real.equiv_EuclideanSpace' '' (Set.Icc 0 1) ∧ ¬ LebesgueMeasurable E := by
   -- Convert VitaliSet to EuclideanSpace' 1
@@ -333,7 +425,8 @@ theorem LebesgueMeasurable.nonmeasurable : ∃ E : Set (EuclideanSpace' 1), E �
           rw [hlhs, hrhs, hy_eq]
       -- m(Image [0,1]) = 1
       have h_interval_measure : Lebesgue_measure (Real.equiv_EuclideanSpace' '' Set.Icc 0 1) = 1 := by
-        sorry -- This follows from the definition of Lebesgue measure
+        rw [Lebesgue_measure.Icc_eq 0 1 (by norm_num)]
+        norm_num
       have h_ge_one : Lebesgue_measure (⋃ n, translateE n) ≥ 1 := by
         calc Lebesgue_measure (⋃ n, translateE n)
             ≥ Lebesgue_measure (Real.equiv_EuclideanSpace' '' Set.Icc 0 1) :=
@@ -353,7 +446,7 @@ theorem LebesgueMeasurable.nonmeasurable : ∃ E : Set (EuclideanSpace' 1), E �
       have h_sum_top : ∑' n, Lebesgue_measure (translateE n) = ⊤ := by
         simp only [h_translate_measure]
         -- ∑' n, m(E) = ⊤ when m(E) > 0 and we sum over an infinite type
-        sorry -- Need: tsum of constant positive EReal over ℕ is ⊤
+        exact EReal.tsum_const_eq_top_of_pos hE_pos
       rw [h_sum_top] at h_union_measure
       -- But the union is bounded: ⋃ translateE ⊆ [-1,2]
       have h_bounded : ⋃ n, translateE n ⊆ Real.equiv_EuclideanSpace' '' Set.Icc (-1) 2 := by
@@ -384,7 +477,8 @@ theorem LebesgueMeasurable.nonmeasurable : ∃ E : Set (EuclideanSpace' 1), E �
           have hrhs' : (Real.equiv_EuclideanSpace' v + Real.equiv_EuclideanSpace' (qSeq n : ℝ)) ⟨0, by omega⟩ = v + (qSeq n : ℝ) := rfl
           rw [hlhs, hrhs, hrhs']
       have h_interval_measure2 : Lebesgue_measure (Real.equiv_EuclideanSpace' '' Set.Icc (-1) 2) = 3 := by
-        sorry -- This follows from the definition of Lebesgue measure
+        rw [Lebesgue_measure.Icc_eq (-1) 2 (by norm_num)]
+        norm_cast
       have h_le_three : Lebesgue_measure (⋃ n, translateE n) ≤ 3 := by
         calc Lebesgue_measure (⋃ n, translateE n)
             ≤ Lebesgue_measure (Real.equiv_EuclideanSpace' '' Set.Icc (-1) 2) :=
