@@ -72,16 +72,6 @@ lemma VitaliSet_subset_unit_interval : VitaliSet ⊆ Set.Icc 0 1 := by
   obtain ⟨c, rfl⟩ := hx
   exact (coset_intersects_unit_interval c).choose_spec.1
 
-/-- Each element of the Vitali set represents a distinct coset -/
-lemma VitaliSet_representatives (x : ℝ) (hx : x ∈ VitaliSet) :
-    ∃! c : RealModRat, QuotientAddGroup.mk (s := Rat.addSubgroup) x = c ∧ x ∈ Set.Icc 0 1 := by
-  obtain ⟨c, rfl⟩ := hx
-  refine ⟨c, ?_, ?_⟩
-  · exact ⟨(coset_intersects_unit_interval c).choose_spec.2,
-          (coset_intersects_unit_interval c).choose_spec.1⟩
-  · intro c' ⟨hc', _⟩
-    rw [← hc', (coset_intersects_unit_interval c).choose_spec.2]
-
 /-- Key lemma: [0,1] is covered by translates of E by rationals in [-1,1] -/
 lemma unit_interval_covered_by_translates :
     Set.Icc (0:ℝ) 1 ⊆ ⋃ (q : ℚ) (_ : q ∈ Set.Icc (-1:ℚ) 1), (VitaliSet + {(q:ℝ)}) := by
@@ -126,67 +116,6 @@ lemma unit_interval_covered_by_translates :
   constructor
   · rfl
   · linarith [hy_eq]
-
-/-- The translates of E by distinct rationals are disjoint -/
-lemma translates_pairwise_disjoint (q₁ q₂ : ℚ) (hne : q₁ ≠ q₂) :
-    Disjoint (VitaliSet + {(q₁:ℝ)}) (VitaliSet + {(q₂:ℝ)}) := by
-  rw [Set.disjoint_iff]
-  intro z ⟨hz₁, hz₂⟩
-  rw [Set.mem_add] at hz₁ hz₂
-  obtain ⟨x₁, hx₁, r₁, hr₁, hz₁_eq⟩ := hz₁
-  obtain ⟨x₂, hx₂, r₂, hr₂, hz₂_eq⟩ := hz₂
-  rw [Set.mem_singleton_iff] at hr₁ hr₂
-  subst hr₁ hr₂
-  -- x₁, x₂ ∈ VitaliSet, and x₁ + q₁ = z = x₂ + q₂
-  -- So x₁ - x₂ = q₂ - q₁ ∈ ℚ
-  have h_diff : x₁ - x₂ = (q₂ : ℝ) - q₁ := by linarith [hz₁_eq, hz₂_eq]
-  -- This means x₁ and x₂ are in the same coset of ℝ/ℚ
-  have h_same_coset : QuotientAddGroup.mk (s := Rat.addSubgroup) x₁ =
-      QuotientAddGroup.mk (s := Rat.addSubgroup) x₂ := by
-    rw [QuotientAddGroup.eq]
-    use q₁ - q₂
-    simp only [Rat.cast_sub]
-    linarith
-  -- But VitaliSet has exactly one element from each coset
-  obtain ⟨c₁, hx₁_eq⟩ := hx₁
-  obtain ⟨c₂, hx₂_eq⟩ := hx₂
-  have hc₁ := (coset_intersects_unit_interval c₁).choose_spec.2
-  have hc₂ := (coset_intersects_unit_interval c₂).choose_spec.2
-  -- c₁ = c₂ since the elements represent the same coset
-  have hc_eq : c₁ = c₂ := by
-    rw [← hx₁_eq, ← hx₂_eq] at h_same_coset
-    rw [← hc₁, ← hc₂]
-    exact h_same_coset
-  -- So x₁ = x₂, which means q₁ = q₂, contradiction
-  subst hc_eq
-  have hx_eq : x₁ = x₂ := hx₁_eq.symm.trans hx₂_eq
-  have : (q₁ : ℝ) = q₂ := by linarith [hz₁_eq, hz₂_eq, hx_eq]
-  exact hne (Rat.cast_injective this)
-
-/-- The union of translates is contained in [-1,2] -/
-lemma translates_bounded :
-    ⋃ (q : ℚ) (_ : q ∈ Set.Icc (-1:ℚ) 1), (VitaliSet + {(q:ℝ)}) ⊆ Set.Icc (-1) 2 := by
-  intro z hz
-  rw [Set.mem_iUnion] at hz
-  obtain ⟨q, hq⟩ := hz
-  rw [Set.mem_iUnion] at hq
-  obtain ⟨hq_bound, hz_mem⟩ := hq
-  rw [Set.mem_add] at hz_mem
-  obtain ⟨x, hx, r, hr, hz_eq⟩ := hz_mem
-  rw [Set.mem_singleton_iff] at hr
-  subst hr
-  have hx_in := VitaliSet_subset_unit_interval hx
-  constructor
-  · have h1 : x + q ≥ 0 + (-1) := by
-      have hx1 : x ≥ 0 := hx_in.1
-      have hq1 : (q : ℝ) ≥ -1 := by exact_mod_cast hq_bound.1
-      linarith
-    linarith [hz_eq.symm, h1]
-  · have h2 : x + q ≤ 1 + 1 := by
-      have hx2 : x ≤ 1 := hx_in.2
-      have hq2 : (q : ℝ) ≤ 1 := by exact_mod_cast hq_bound.2
-      linarith
-    linarith [hz_eq.symm, h2]
 
 /-- The rationals in [-1,1] are countable -/
 lemma rat_Icc_countable : Set.Countable {q : ℚ | q ∈ Set.Icc (-1:ℚ) 1} := by
