@@ -296,27 +296,35 @@ theorem LebesgueMeasurable.nonmeasurable : ∃ E : Set (EuclideanSpace' 1), E �
     exact ⟨r, VitaliSet_subset_unit_interval hr, rfl⟩
   · -- ¬ LebesgueMeasurable E
     intro hE_meas
-    -- Enumerate rationals in [-1,1] as a sequence
+    -- The rationals in [-1,1] form a denumerable set
     have hQ_countable : Set.Countable {q : ℚ | q ∈ Set.Icc (-1:ℚ) 1} := rat_Icc_countable
-    have hQ_nonempty : Set.Nonempty {q : ℚ | q ∈ Set.Icc (-1:ℚ) 1} := ⟨0, by simp⟩
-    -- Get enumeration: f : ℕ → ℚ with range = {q | q ∈ [-1,1]}
-    obtain ⟨f, hf_range⟩ := hQ_countable.exists_eq_range hQ_nonempty
+    have hQ_inf : Set.Infinite {q : ℚ | q ∈ Set.Icc (-1:ℚ) 1} :=
+      Set.Icc_infinite (by norm_num : (-1:ℚ) < 1)
+    -- Get bijection from ℕ to the subtype using Denumerable structure
+    haveI : Infinite {q : ℚ | q ∈ Set.Icc (-1:ℚ) 1} := hQ_inf.to_subtype
+    haveI : Countable {q : ℚ | q ∈ Set.Icc (-1:ℚ) 1} := hQ_countable.to_subtype
+    haveI denumQ : Denumerable {q : ℚ | q ∈ Set.Icc (-1:ℚ) 1} := (nonempty_denumerable _).some
+    -- The equivalence ℕ ≃ {q : ℚ | q ∈ [-1,1]}
+    let eqvQ : {q : ℚ | q ∈ Set.Icc (-1:ℚ) 1} ≃ ℕ := Denumerable.eqv _
+    -- f : ℕ → ℚ is the injective enumeration of rationals in [-1,1]
+    let f : ℕ → ℚ := fun n => (eqvQ.symm n : ℚ)
+    -- f is injective
+    have hf_inj : Function.Injective f := Subtype.val_injective.comp eqvQ.symm.injective
     -- f n is in [-1,1] for all n
-    have hf_mem : ∀ n, f n ∈ Set.Icc (-1:ℚ) 1 := fun n => by
-      have : f n ∈ Set.range f := ⟨n, rfl⟩
-      rw [← hf_range] at this
-      exact this
-    -- f is injective (since the range equals the set, which is infinite)
-    have hf_inj : Function.Injective f := by
-      intro i j hij
-      -- We use that the set {q | q ∈ [-1,1]} is infinite
-      -- and if f were not injective, the range would be strictly smaller
-      by_contra h_ne
-      -- Actually, we prove this directly: f is a surjection onto an infinite set
-      -- from ℕ, and if f i = f j with i ≠ j, we get a contradiction from density
-      -- For this proof, we use that distinct i,j give f i ≠ f j by injectivity
-      -- We'll prove by showing that f maps ℕ bijectively to the set
-      sorry
+    have hf_mem : ∀ n, f n ∈ Set.Icc (-1:ℚ) 1 := fun n => (eqvQ.symm n).2
+    -- f has range = {q | q ∈ [-1,1]}
+    have hf_range : {q | q ∈ Set.Icc (-1:ℚ) 1} = Set.range f := by
+      ext q
+      simp only [Set.mem_setOf_eq, Set.mem_range, f]
+      constructor
+      · intro hq
+        let q' : {q : ℚ | q ∈ Set.Icc (-1:ℚ) 1} := ⟨q, hq⟩
+        refine ⟨eqvQ q', ?_⟩
+        simp only [Equiv.symm_apply_apply]
+        rfl
+      · intro ⟨n, hn⟩
+        rw [← hn]
+        exact (eqvQ.symm n).2
     -- Define the family of translates
     let qSeq : ℕ → ℚ := f
     let translateE : ℕ → Set (EuclideanSpace' 1) := fun n => E + {Real.equiv_EuclideanSpace' (qSeq n)}
