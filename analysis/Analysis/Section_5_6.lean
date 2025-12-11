@@ -156,7 +156,7 @@ theorem Real.root_of_one {k: ℕ} (hk: k ≥ 1): (1:Real).root k = 1 := by sorry
 /-- Lemma 5.6.6 (f) / Exercise 5.6.1 -/
 theorem Real.root_mul {x y:Real} (hx: x ≥ 0) (hy: y ≥ 0) {n:ℕ} (hn: n ≥ 1) : (x*y).root n = (x.root n) * (y.root n) := by sorry
 
-/-- Lemma 5.6.6 (f) / Exercise 5.6.1 -/
+/-- Lemma 5.6.6 (g) / Exercise 5.6.1 -/
 theorem Real.root_root {x:Real} (hx: x ≥ 0) {n m:ℕ} (hn: n ≥ 1) (hm: m ≥ 1): (x.root n).root m = x.root (n*m) := by sorry
 
 theorem Real.root_one {x:Real} (hx: x > 0): x.root 1 = x := by sorry
