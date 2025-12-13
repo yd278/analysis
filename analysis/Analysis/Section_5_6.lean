@@ -250,12 +250,12 @@ theorem Real.pow_even (x:Real) {n:ℕ} (hn: Even n) : x^n ≥ 0 := by sorry
 
 /-- Exercise 5.6.5 -/
 theorem Real.max_ratPow {x y:Real} (hx: x > 0) (hy: y > 0) {q:ℚ} (hq: q > 0) :
-  max (x^q) y^q = (max x y)^q := by
+  max (x^q) (y^q) = (max x y)^q := by
   sorry
 
 /-- Exercise 5.6.5 -/
 theorem Real.min_ratPow {x y:Real} (hx: x > 0) (hy: y > 0) {q:ℚ} (hq: q > 0) :
-  min (x^q) y^q = (min x y)^q := by
+  min (x^q) (y^q) = (min x y)^q := by
   sorry
 
 -- Final part of Exercise 5.6.5: state and prove versions of the above lemmas covering the case of negative q.
