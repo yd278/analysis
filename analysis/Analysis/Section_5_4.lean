@@ -615,34 +615,32 @@ theorem Real.le_mul {ε:Real} (hε: ε.IsPos) (x:Real) : ∃ M:ℕ, M > 0 ∧ M 
     rw [isPos_iff] at hε; field_simp
   use 1; simp_all [isPos_iff]; linarith
 
-lemma Real.bounded_by {a : ℕ → ℚ} {ε : ℚ} (hε :ε >0) (ha : (a:Sequence).IsCauchy) : ∃ N, LIM a ≤ a N + ε ∧ a N - ε ≤ LIM a := by
-  have hes := ha ε hε 
-  choose N hN haN using hes
-  simp at hN
-  lift N to ℕ using hN
-  use N
-  have haNc:= Sequence.IsCauchy.const (a N)
-  have hεc:= Sequence.IsCauchy.const ε 
-  have ha' := Sequence.IsCauchy.tail ha N
-  have heqaa' := tail_eq ha N
-  set a' := Sequence.tail a N
+theorem Sequence.LIM_within_steady {a : ℕ → ℚ} {ε : ℚ} 
+  (ha : (a:Sequence).IsCauchy)  {N:ℕ} (hsteady: ε.Steady ((a:Sequence).from N)) (hε : ε > 0):
+    LIM a ≤ a N + ε ∧ a N - ε ≤ LIM a := by
+  have haNc:= IsCauchy.const (a N)
+  have hεc:= IsCauchy.const ε 
+  have ha' := IsCauchy.tail ha N
+  have heqaa' := Real.tail_eq ha N
+  set a' := tail a N
   rw[heqaa']
-
-  simp_rw[ratCast_def]
-  rw[LIM_add haNc hεc]
-  rw[LIM_sub haNc hεc]
-  split_ands 
-  map_tacs[apply LIM_mono ha' (Sequence.IsCauchy.add haNc hεc); apply LIM_mono (Sequence.IsCauchy.sub haNc hεc) ha']
+  simp_rw[Real.ratCast_def]
+  simp_rw[Real.LIM_add haNc hεc]
+  simp_rw[Real.LIM_sub haNc hεc]
+  split_ands
+  map_tacs[apply Real.LIM_mono ha' (Sequence.IsCauchy.add haNc hεc); apply Real.LIM_mono (Sequence.IsCauchy.sub haNc hεc) ha']
   all_goals
     intro n
-    simp[a',Sequence.tail]
+    simp[a',tail]
     by_cases hn : n < N <;> simp[hn]
     grind
     simp at hn
-    specialize haN N (by simp) n (by simp;grind) 
-    simp[Rat.Close,hn] at haN
-    rw[abs_le] at haN
+    specialize hsteady N (by simp) n (by simp[hn])
+    simp[hn,Rat.Close] at hsteady
+    rw[abs_le] at hsteady
     grind
+
+
 
 /-- Proposition 5.4.14 / Exercise 5.4.5 -/
 theorem Real.rat_between {x y:Real} (hxy: x < y) : ∃ q:ℚ, x < (q:Real) ∧ (q:Real) < y := by
@@ -650,7 +648,11 @@ theorem Real.rat_between {x y:Real} (hxy: x < y) : ∃ q:ℚ, x < (q:Real) ∧ (
   have hdp : diff.IsPos := by simp[diff];exact (antisymm x y).mp hxy
   obtain ⟨ε,hε, hle⟩ := (exists_rat_le_and_nat_ge hdp).1
   obtain ⟨ax,hax,rfl⟩ := eq_lim x 
-  obtain ⟨N,hupper, hlower⟩ := bounded_by (show (ε /2) >0 by positivity) (hax) 
+  have hes :=  hax (ε /2) (by positivity)
+  choose N hN hsteady using hes
+  simp at hN
+  lift N to ℕ using hN
+  obtain ⟨hupper, hlower⟩ := Sequence.LIM_within_steady hax hsteady (by positivity)
   rw[show ( (ε /2):ℚ  ) = ((ε:Real) / 2) by simp] at hupper hlower
   by_cases haxN: ax N > LIM ax
   . 
@@ -698,7 +700,11 @@ theorem Real.floor_exist (x:Real) : ∃! n:ℤ, (n:Real) ≤ x ∧ x < (n:Real)+
 
   -- Existence 
   obtain ⟨a,ha,rfl⟩ := eq_lim x 
-  obtain ⟨N,hupper,hlower⟩ := bounded_by (show 1/2 > 0 by simp) ha
+  have hes :=  ha (1 /2) (by positivity)
+  choose N hN hsteady using hes
+  simp at hN
+  lift N to ℕ using hN
+  obtain ⟨hupper, hlower⟩ := Sequence.LIM_within_steady ha hsteady (by positivity)
 
   have : (((1/2):ℚ ):Real) = (1:Real)/ 2 := by simp
   rw[this] at hupper hlower
