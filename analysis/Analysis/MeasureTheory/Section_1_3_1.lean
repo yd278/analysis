@@ -43,10 +43,50 @@ instance RealSimpleFunction.coe_complex {d:ℕ} (f: EuclideanSpace' d → ℝ) :
 
 
 lemma UnsignedSimpleFunction.add {d:ℕ} {f g: EuclideanSpace' d → EReal} (hf: UnsignedSimpleFunction f) (hg: UnsignedSimpleFunction g) : UnsignedSimpleFunction (f + g) := by
-  sorry
+  obtain ⟨k₁, c₁, E₁, ⟨hmes₁, heq₁⟩⟩ := hf
+  obtain ⟨k₂, c₂, E₂, ⟨hmes₂, heq₂⟩⟩ := hg
+  use k₁ + k₂, fun i => if h : i < k₁ then c₁ ⟨i, h⟩ else c₂ ⟨i - k₁, by omega⟩,
+       fun i => if h : i < k₁ then E₁ ⟨i, h⟩ else E₂ ⟨i - k₁, by omega⟩
+  constructor
+  · intro i
+    split_ifs with h
+    · exact hmes₁ ⟨i, h⟩
+    · exact hmes₂ ⟨i - k₁, by omega⟩
+  · ext x
+    rw [heq₁, heq₂]
+    simp [Fin.sum_univ_add]
+
+-- Auxiliary lemma: multiplication distributes over finite sums for EReal (requires non-negativity)
+private lemma ereal_mul_sum_nonneg (n : ℕ) (c : EReal) (f : Fin n → EReal) (hf : ∀ i, 0 ≤ f i) :
+    c * (∑ i, f i) = ∑ i, c * f i := by
+  induction n with
+  | zero => simp
+  | succ n ih =>
+    rw [Fin.sum_univ_castSucc, Fin.sum_univ_castSucc]
+    have hsum_nonneg : 0 ≤ ∑ i : Fin n, f i.castSucc := Finset.sum_nonneg (fun i _ => hf _)
+    have hlast_nonneg : 0 ≤ f (Fin.last n) := hf _
+    rw [EReal.left_distrib_of_nonneg hsum_nonneg hlast_nonneg]
+    congr 1
+    exact ih (fun i => f i.castSucc) (fun i => hf _)
+
+private lemma EReal.indicator_nonneg' {X:Type*} (A: Set X) (x : X) : 0 ≤ EReal.indicator A x := by
+  simp only [EReal.indicator, Real.EReal_fun]
+  exact EReal.coe_nonneg.mpr (Set.indicator_nonneg (fun _ _ => zero_le_one) x)
 
 lemma UnsignedSimpleFunction.smul {d:ℕ} {f: EuclideanSpace' d → EReal} (hf: UnsignedSimpleFunction f) {a: EReal} (ha: a ≥ 0) : UnsignedSimpleFunction (a • f) := by
-  sorry
+  obtain ⟨k, c, E, ⟨hmes, heq⟩⟩ := hf
+  use k, fun i => a * (c i), E
+  constructor
+  · intro i
+    exact ⟨hmes i |>.1, mul_nonneg ha (hmes i |>.2)⟩
+  · rw [heq]
+    ext x
+    simp only [Pi.smul_apply, Finset.sum_apply, smul_eq_mul]
+    rw [ereal_mul_sum_nonneg k a (fun i => (c i) * EReal.indicator (E i) x)
+        (fun i => mul_nonneg (hmes i |>.2) (EReal.indicator_nonneg' (E i) x))]
+    congr 1
+    ext i
+    rw [mul_assoc]
 
 lemma RealSimpleFunction.add {d:ℕ} {f g: EuclideanSpace' d → ℝ} (hf: RealSimpleFunction f) (hg: RealSimpleFunction g) : RealSimpleFunction (f + g) := by
   sorry
