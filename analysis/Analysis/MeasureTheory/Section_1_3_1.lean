@@ -56,19 +56,6 @@ lemma UnsignedSimpleFunction.add {d:ℕ} {f g: EuclideanSpace' d → EReal} (hf:
     rw [heq₁, heq₂]
     simp [Fin.sum_univ_add]
 
--- Auxiliary lemma: multiplication distributes over finite sums for EReal (requires non-negativity)
-private lemma ereal_mul_sum_nonneg (n : ℕ) (c : EReal) (f : Fin n → EReal) (hf : ∀ i, 0 ≤ f i) :
-    c * (∑ i, f i) = ∑ i, c * f i := by
-  induction n with
-  | zero => simp
-  | succ n ih =>
-    rw [Fin.sum_univ_castSucc, Fin.sum_univ_castSucc]
-    have hsum_nonneg : 0 ≤ ∑ i : Fin n, f i.castSucc := Finset.sum_nonneg (fun i _ => hf _)
-    have hlast_nonneg : 0 ≤ f (Fin.last n) := hf _
-    rw [EReal.left_distrib_of_nonneg hsum_nonneg hlast_nonneg]
-    congr 1
-    exact ih (fun i => f i.castSucc) (fun i => hf _)
-
 private lemma EReal.indicator_nonneg' {X:Type*} (A: Set X) (x : X) : 0 ≤ EReal.indicator A x := by
   simp only [EReal.indicator, Real.EReal_fun]
   exact EReal.coe_nonneg.mpr (Set.indicator_nonneg (fun _ _ => zero_le_one) x)
@@ -82,7 +69,7 @@ lemma UnsignedSimpleFunction.smul {d:ℕ} {f: EuclideanSpace' d → EReal} (hf: 
   · rw [heq]
     ext x
     simp only [Pi.smul_apply, Finset.sum_apply, smul_eq_mul]
-    rw [ereal_mul_sum_nonneg k a (fun i => (c i) * EReal.indicator (E i) x)
+    rw [EReal.mul_finset_sum_of_nonneg k a (fun i => (c i) * EReal.indicator (E i) x)
         (fun i => mul_nonneg (hmes i |>.2) (EReal.indicator_nonneg' (E i) x))]
     congr 1
     ext i
