@@ -28,7 +28,7 @@ def UnsignedSimpleFunction {d:ℕ} (f: EuclideanSpace' d → EReal) : Prop := �
 def RealSimpleFunction {d:ℕ} (f: EuclideanSpace' d → ℝ) : Prop := ∃ (k:ℕ) (c: Fin k → ℝ) (E: Fin k → Set (EuclideanSpace' d)),
   (∀ i, LebesgueMeasurable (E i)) ∧ f = ∑ i, (c i) • (E i).indicator'
 
-def ComplexSimpleFunction {d:ℕ} (f: EuclideanSpace' d → ℂ) : Prop := ∃ (k:ℕ) (c: Fin k → ℝ) (E: Fin k → Set (EuclideanSpace' d)),
+def ComplexSimpleFunction {d:ℕ} (f: EuclideanSpace' d → ℂ) : Prop := ∃ (k:ℕ) (c: Fin k → ℂ) (E: Fin k → Set (EuclideanSpace' d)),
   (∀ i, LebesgueMeasurable (E i)) ∧ f = ∑ i, (c i) • (Complex.indicator (E i))
 
 -- TODO: coercions between these concepts, and vector space structure on real and complex simple functions (and cone structure on unsigned simple functions).
@@ -76,19 +76,79 @@ lemma UnsignedSimpleFunction.smul {d:ℕ} {f: EuclideanSpace' d → EReal} (hf: 
     rw [mul_assoc]
 
 lemma RealSimpleFunction.add {d:ℕ} {f g: EuclideanSpace' d → ℝ} (hf: RealSimpleFunction f) (hg: RealSimpleFunction g) : RealSimpleFunction (f + g) := by
-  sorry
+  obtain ⟨k₁, c₁, E₁, ⟨hmes₁, heq₁⟩⟩ := hf
+  obtain ⟨k₂, c₂, E₂, ⟨hmes₂, heq₂⟩⟩ := hg
+  use k₁ + k₂, fun i => if h : i < k₁ then c₁ ⟨i, h⟩ else c₂ ⟨i - k₁, by omega⟩,
+       fun i => if h : i < k₁ then E₁ ⟨i, h⟩ else E₂ ⟨i - k₁, by omega⟩
+  constructor
+  · intro i
+    split_ifs with h
+    · exact hmes₁ ⟨i, h⟩
+    · exact hmes₂ ⟨i - k₁, by omega⟩
+  · ext x
+    rw [heq₁, heq₂]
+    simp [Fin.sum_univ_add]
 
 lemma ComplexSimpleFunction.add {d:ℕ} {f g: EuclideanSpace' d → ℂ} (hf: ComplexSimpleFunction f) (hg: ComplexSimpleFunction g) : ComplexSimpleFunction (f + g) := by
-  sorry
+  obtain ⟨k₁, c₁, E₁, ⟨hmes₁, heq₁⟩⟩ := hf
+  obtain ⟨k₂, c₂, E₂, ⟨hmes₂, heq₂⟩⟩ := hg
+  use k₁ + k₂, fun i => if h : i < k₁ then c₁ ⟨i, h⟩ else c₂ ⟨i - k₁, by omega⟩,
+       fun i => if h : i < k₁ then E₁ ⟨i, h⟩ else E₂ ⟨i - k₁, by omega⟩
+  constructor
+  · intro i
+    split_ifs with h
+    · exact hmes₁ ⟨i, h⟩
+    · exact hmes₂ ⟨i - k₁, by omega⟩
+  · ext x
+    rw [heq₁, heq₂]
+    simp [Fin.sum_univ_add]
 
 lemma RealSimpleFunction.smul {d:ℕ} {f: EuclideanSpace' d → ℝ} (hf: RealSimpleFunction f) (a: ℝ)  : RealSimpleFunction (a • f) := by
-  sorry
+  obtain ⟨k, c, E, ⟨hmes, heq⟩⟩ := hf
+  use k, fun i => a * (c i), E
+  constructor
+  · intro i
+    exact hmes i
+  · rw [heq]
+    ext x
+    simp only [Pi.smul_apply, Finset.sum_apply, smul_eq_mul]
+    rw [Finset.mul_sum]
+    congr 1
+    ext i
+    rw [mul_assoc]
 
 lemma ComplexSimpleFunction.smul {d:ℕ} {f: EuclideanSpace' d → ℂ} (hf: ComplexSimpleFunction f) (a: ℂ)  : ComplexSimpleFunction (a • f) := by
-  sorry
+  obtain ⟨k, c, E, ⟨hmes, heq⟩⟩ := hf
+  use k, fun i => a * (c i), E
+  constructor
+  · intro i
+    exact hmes i
+  · rw [heq]
+    ext x
+    simp only [Pi.smul_apply, Finset.sum_apply, smul_eq_mul]
+    rw [Finset.mul_sum]
+    congr 1
+    ext i
+    rw [mul_assoc]
+
+private lemma Complex.indicator_conj {X:Type*} (A: Set X) (x : X) :
+    starRingEnd ℂ (Complex.indicator A x) = Complex.indicator A x := by
+  simp only [Complex.indicator, Real.complex_fun]
+  exact Complex.conj_ofReal _
 
 lemma ComplexSimpleFunction.conj {d:ℕ} {f: EuclideanSpace' d → ℂ} (hf: ComplexSimpleFunction f) : ComplexSimpleFunction (Complex.conj_fun f) := by
-  sorry
+  obtain ⟨k, c, E, ⟨hmes, heq⟩⟩ := hf
+  use k, fun i => starRingEnd ℂ (c i), E
+  constructor
+  · intro i
+    exact hmes i
+  · rw [heq]
+    ext x
+    simp only [Complex.conj_fun, Finset.sum_apply, Pi.smul_apply, smul_eq_mul]
+    rw [map_sum]
+    congr 1
+    ext i
+    rw [map_mul, Complex.indicator_conj]
 
 noncomputable def UnsignedSimpleFunction.integ {d:ℕ} {f: EuclideanSpace' d → EReal} (hf: UnsignedSimpleFunction f) : EReal := ∑ i, (hf.choose_spec.choose i) * Lebesgue_measure (hf.choose_spec.choose_spec.choose i)
 
