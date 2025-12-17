@@ -152,10 +152,167 @@ lemma ComplexSimpleFunction.conj {d:ℕ} {f: EuclideanSpace' d → ℂ} (hf: Com
 
 noncomputable def UnsignedSimpleFunction.integ {d:ℕ} {f: EuclideanSpace' d → EReal} (hf: UnsignedSimpleFunction f) : EReal := ∑ i, (hf.choose_spec.choose i) * Lebesgue_measure (hf.choose_spec.choose_spec.choose i)
 
+/-! ### Helper lemmas for Lemma 1.3.4
+
+The proof uses a Venn diagram argument: given two representations of the same simple function,
+we partition R^d into atoms (intersections of all sets and their complements), express each
+original set as a disjoint union of atoms, and use finite additivity of Lebesgue measure.
+-/
+
+namespace UnsignedSimpleFunction.IntegralWellDef
+
+/-- Given families of sets indexed by Fin k and Fin k', an atom is determined by
+    a choice of "in" or "out" for each set. We encode this as a Fin (2^(k+k')) index. -/
+def atomMembership (_k _k' : ℕ) (n : ℕ) (i : ℕ) : Bool := (n / 2^i) % 2 = 1
+
+lemma atomMembership_eq_testBit (k k' n i : ℕ) : atomMembership k k' n i = n.testBit i := by
+  simp only [atomMembership, Nat.testBit_eq_decide_div_mod_eq]
+
+/-- The atom indexed by n is the intersection over all i of (E_i if bit i is 1, else E_i^c) -/
+def atom {X : Type*} {k k' : ℕ} (E : Fin k → Set X) (E' : Fin k' → Set X) (n : Fin (2^(k+k'))) : Set X :=
+  {x | (∀ i : Fin k, atomMembership k k' n i ↔ x ∈ E i) ∧
+       (∀ i : Fin k', atomMembership k k' n (k + i) ↔ x ∈ E' i)}
+
+/-- Atoms are pairwise disjoint -/
+lemma atom_pairwiseDisjoint {X : Type*} {k k' : ℕ} (E : Fin k → Set X) (E' : Fin k' → Set X) :
+    Set.univ.PairwiseDisjoint (atom E E') := by
+  intro i _ j _ hij
+  simp only [Function.onFun]
+  rw [Set.disjoint_left]
+  intro x hxi hxj
+  simp only [atom, Set.mem_setOf_eq, atomMembership_eq_testBit] at hxi hxj
+  -- If i ≠ j, they differ in some bit
+  have hne : i.val ≠ j.val := Fin.val_ne_of_ne hij
+  obtain ⟨bit, hbit⟩ := Nat.exists_testBit_ne_of_ne hne
+  -- The bit must be < k + k' since both i, j < 2^(k+k')
+  have hi_lt : i.val < 2^(k + k') := i.isLt
+  have hj_lt : j.val < 2^(k + k') := j.isLt
+  have hbit_bound : bit < k + k' := by
+    by_contra h
+    push_neg at h
+    have hi_false : i.val.testBit bit = false := Nat.testBit_lt_two_pow (Nat.lt_of_lt_of_le hi_lt (Nat.pow_le_pow_right (by norm_num : 1 ≤ 2) h))
+    have hj_false : j.val.testBit bit = false := Nat.testBit_lt_two_pow (Nat.lt_of_lt_of_le hj_lt (Nat.pow_le_pow_right (by norm_num : 1 ≤ 2) h))
+    exact hbit (hi_false.trans hj_false.symm)
+  -- Now we know bit < k + k', so it indexes into E or E'
+  by_cases hbit_k : bit < k
+  · -- bit indexes into E
+    have hi_iff := hxi.1 ⟨bit, hbit_k⟩
+    have hj_iff := hxj.1 ⟨bit, hbit_k⟩
+    -- hxi and hxj both give x ∈ E ⟨bit, _⟩ ↔ testBit = true
+    -- But i and j have different bits, so one says x ∈ E and the other says x ∉ E
+    cases h_i : i.val.testBit bit <;> cases h_j : j.val.testBit bit
+    · exact hbit (h_i.trans h_j.symm)
+    · have hx_in : x ∈ E ⟨bit, hbit_k⟩ := hj_iff.mp h_j
+      have hx_out : x ∉ E ⟨bit, hbit_k⟩ := fun h => by simp [hi_iff.mpr h] at h_i
+      exact hx_out hx_in
+    · have hx_in : x ∈ E ⟨bit, hbit_k⟩ := hi_iff.mp h_i
+      have hx_out : x ∉ E ⟨bit, hbit_k⟩ := fun h => by simp [hj_iff.mpr h] at h_j
+      exact hx_out hx_in
+    · exact hbit (h_i.trans h_j.symm)
+  · -- bit indexes into E' (bit ∈ [k, k+k'))
+    have hbit_k' : bit - k < k' := by omega
+    have h_add : k + (bit - k) = bit := by omega
+    have hi_iff := hxi.2 ⟨bit - k, hbit_k'⟩
+    have hj_iff := hxj.2 ⟨bit - k, hbit_k'⟩
+    simp only [h_add] at hi_iff hj_iff
+    cases h_i : i.val.testBit bit <;> cases h_j : j.val.testBit bit
+    · exact hbit (h_i.trans h_j.symm)
+    · have hx_in : x ∈ E' ⟨bit - k, hbit_k'⟩ := hj_iff.mp h_j
+      have hx_out : x ∉ E' ⟨bit - k, hbit_k'⟩ := fun h => by simp [hi_iff.mpr h] at h_i
+      exact hx_out hx_in
+    · have hx_in : x ∈ E' ⟨bit - k, hbit_k'⟩ := hi_iff.mp h_i
+      have hx_out : x ∉ E' ⟨bit - k, hbit_k'⟩ := fun h => by simp [hj_iff.mpr h] at h_j
+      exact hx_out hx_in
+    · exact hbit (h_i.trans h_j.symm)
+
+/-- Each point belongs to exactly one atom -/
+lemma mem_atom_unique {X : Type*} {k k' : ℕ} (E : Fin k → Set X) (E' : Fin k' → Set X) (x : X) :
+    ∃! n : Fin (2^(k+k')), x ∈ atom E E' n := by
+  -- The atom is determined uniquely by the membership pattern of x
+  -- Existence: construct the atom index from membership in E_i and E'_j
+  -- Uniqueness: follows from atom_pairwiseDisjoint
+  sorry
+
+/-- The atom containing a given point -/
+noncomputable def atomOf {X : Type*} {k k' : ℕ} (E : Fin k → Set X) (E' : Fin k' → Set X) (x : X) : Fin (2^(k+k')) :=
+  (mem_atom_unique E E' x).choose
+
+/-- Original set E_i is the union of atoms where bit i is 1 -/
+lemma set_eq_biUnion_atoms {X : Type*} {k k' : ℕ} (E : Fin k → Set X) (E' : Fin k' → Set X) (i : Fin k) :
+    E i = ⋃ n ∈ {n : Fin (2^(k+k')) | atomMembership k k' n i}, atom E E' n := by
+  sorry
+
+/-- Atoms are measurable if the original sets are -/
+lemma atom_measurable {d k k' : ℕ} {E : Fin k → Set (EuclideanSpace' d)} {E' : Fin k' → Set (EuclideanSpace' d)}
+    (hE : ∀ i, LebesgueMeasurable (E i)) (hE' : ∀ i, LebesgueMeasurable (E' i)) (n : Fin (2^(k+k'))) :
+    LebesgueMeasurable (atom E E' n) := by
+  sorry
+
+/-- Key: at any point, the sum of c_i over sets containing that point equals the function value -/
+lemma sum_at_point {d k : ℕ} {c : Fin k → EReal} {E : Fin k → Set (EuclideanSpace' d)}
+    (_hnonneg : ∀ i, c i ≥ 0) (x : EuclideanSpace' d) :
+    (∑ i, (c i) • (EReal.indicator (E i))) x = ∑ i, (c i) * (EReal.indicator (E i) x) := by
+  simp only [Finset.sum_apply, Pi.smul_apply, smul_eq_mul]
+
+/-- Indicator function evaluates to c if x ∈ E -/
+lemma indicator_mul_mem {d : ℕ} (E : Set (EuclideanSpace' d)) (c : EReal) (x : EuclideanSpace' d)
+    (h : x ∈ E) : c * (EReal.indicator E x) = c := by
+  simp only [EReal.indicator, Real.EReal_fun, Set.indicator'_of_mem h, EReal.coe_one, mul_one]
+
+/-- Indicator function evaluates to 0 if x ∉ E -/
+lemma indicator_mul_not_mem {d : ℕ} (E : Set (EuclideanSpace' d)) (c : EReal) (x : EuclideanSpace' d)
+    (h : x ∉ E) : c * (EReal.indicator E x) = 0 := by
+  simp only [EReal.indicator, Real.EReal_fun, Set.indicator'_of_notMem h, EReal.coe_zero, mul_zero]
+
+/-- The weighted measure sum for a representation -/
+noncomputable def weightedMeasureSum {d k : ℕ} (c : Fin k → EReal) (E : Fin k → Set (EuclideanSpace' d)) : EReal :=
+  ∑ i, (c i) * Lebesgue_measure (E i)
+
+/-- Core lemma: Two representations of the same function give the same weighted measure sum.
+    This is the heart of Lemma 1.3.4 (Venn diagram argument). -/
+lemma weightedMeasureSum_eq_of_eq {d k k' : ℕ}
+    {c : Fin k → EReal} {E : Fin k → Set (EuclideanSpace' d)}
+    {c' : Fin k' → EReal} {E' : Fin k' → Set (EuclideanSpace' d)}
+    (hmes : ∀ i, LebesgueMeasurable (E i)) (hmes' : ∀ i, LebesgueMeasurable (E' i))
+    (hnonneg : ∀ i, c i ≥ 0) (hnonneg' : ∀ i, c' i ≥ 0)
+    (heq : ∑ i, (c i) • (EReal.indicator (E i)) = ∑ i, (c' i) • (EReal.indicator (E' i))) :
+    weightedMeasureSum c E = weightedMeasureSum c' E' := by
+  -- The proof uses the Venn diagram/atom argument from the textbook
+  -- 1. Construct atoms from E and E'
+  -- 2. Express each E_i and E'_j as disjoint union of atoms
+  -- 3. Use finite additivity: m(E_i) = ∑_{atoms ⊆ E_i} m(atom)
+  -- 4. For any x in a non-empty atom, evaluate heq at x to get scalar identity
+  -- 5. Multiply by atom measure and sum
+  sorry
+
+end UnsignedSimpleFunction.IntegralWellDef
+
 /-- Lemma 1.3.4 (Well-definedness of simple integral) -/
-lemma UnsignedSimpleFunction.integral_eq {d:ℕ} {f: EuclideanSpace' d → EReal} {f: EuclideanSpace' d → EReal} (hf: UnsignedSimpleFunction f) {k:ℕ} {c: Fin k → EReal}
-{E: Fin k → Set (EuclideanSpace' d)} (hmes: ∀ i, LebesgueMeasurable (E i)) (hnonneg: ∀ i, c i ≥ 0) (heq: f = ∑ i, (c i) • (EReal.indicator (E i))) :
- hf.integ =  ∑ i, (hf.choose_spec.choose i) * Lebesgue_measure (hf.choose_spec.choose_spec.choose i) := by sorry
+lemma UnsignedSimpleFunction.integral_eq {d:ℕ} {f: EuclideanSpace' d → EReal} (hf: UnsignedSimpleFunction f) {k:ℕ} {c: Fin k → EReal}
+    {E: Fin k → Set (EuclideanSpace' d)} (hmes: ∀ i, LebesgueMeasurable (E i)) (hnonneg: ∀ i, c i ≥ 0)
+    (heq: f = ∑ i, (c i) • (EReal.indicator (E i))) :
+    hf.integ = ∑ i, (c i) * Lebesgue_measure (E i) := by
+  -- Extract the canonical representation from hf
+  -- hf gives: ∃ k', ∃ (c': Fin k' → EReal) (E': Fin k' → Set _), (∀ i, LebesgueMeasurable (E' i) ∧ c' i ≥ 0) ∧ f = ∑...
+  -- hf.choose_spec.choose is c', hf.choose_spec.choose_spec.choose is E'
+  let k' := hf.choose
+  let c' := hf.choose_spec.choose
+  let E' := hf.choose_spec.choose_spec.choose
+  have hmes'_nonneg : ∀ i, LebesgueMeasurable (E' i) ∧ c' i ≥ 0 := hf.choose_spec.choose_spec.choose_spec.1
+  have heq' : f = ∑ i, (c' i) • (EReal.indicator (E' i)) := hf.choose_spec.choose_spec.choose_spec.2
+
+  -- The canonical representation also equals f
+  have hfunc_eq : ∑ i, (c i) • (EReal.indicator (E i)) = ∑ i, (c' i) • (EReal.indicator (E' i)) := by
+    rw [← heq, ← heq']
+
+  -- Apply the core lemma: two representations of the same function give the same weighted measure
+  have h := IntegralWellDef.weightedMeasureSum_eq_of_eq
+    hmes (fun i => (hmes'_nonneg i).1) hnonneg (fun i => (hmes'_nonneg i).2) hfunc_eq
+
+  -- h says: weightedMeasureSum c E = weightedMeasureSum c' E'
+  -- Goal: ∑ i, (c' i) * Lebesgue_measure (E' i) = ∑ i, (c i) * Lebesgue_measure (E i)
+  simp only [UnsignedSimpleFunction.IntegralWellDef.weightedMeasureSum] at h
+  exact h.symm
 
 /-- Definition 1.3.5 -/
 def AlmostAlways {d:ℕ} (P: EuclideanSpace' d → Prop) : Prop :=
