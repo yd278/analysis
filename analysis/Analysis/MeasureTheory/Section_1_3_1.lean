@@ -1,6 +1,5 @@
 import Analysis.MeasureTheory.Section_1_2_3
-import Mathlib.Data.Nat.BitIndices
-import Mathlib.Combinatorics.Colex
+import Analysis.Misc.NatBitwise
 
 /-!
 # Introduction to Measure Theory, Section 1.3.1: Integration of simple functions
@@ -292,74 +291,6 @@ lemma atomIndexOf_lt {X : Type*} [DecidableEq X] {k k' : ℕ} (E : Fin k → Set
     _ = 2^(k+k') - 1 := by omega
     _ < 2^(k+k') := Nat.sub_lt (Nat.two_pow_pos _) (by norm_num)
 
-/-- testBit i equals membership in bitIndices -/
-private lemma testBit_iff_mem_bitIndices (n i : ℕ) :
-    n.testBit i = true ↔ i ∈ n.bitIndices := by
-  constructor
-  · intro h
-    induction n using Nat.binaryRec generalizing i with
-    | z => simp at h
-    | f b n ih =>
-      cases b
-      · simp only [Nat.bit_false, Nat.bitIndices_two_mul, List.mem_map]
-        rcases Nat.eq_or_lt_of_le (Nat.zero_le i) with rfl | hpos
-        · simp at h
-        · have hi_succ : i = (i - 1) + 1 := (Nat.sub_add_cancel hpos).symm
-          rw [hi_succ, Nat.testBit_bit_succ] at h
-          exact ⟨i - 1, ih _ h, hi_succ.symm⟩
-      · simp only [Nat.bit_true, Nat.bitIndices_two_mul_add_one, List.mem_cons, List.mem_map]
-        rcases Nat.eq_or_lt_of_le (Nat.zero_le i) with rfl | hpos
-        · left; rfl
-        · right
-          have hi_succ : i = (i - 1) + 1 := (Nat.sub_add_cancel hpos).symm
-          rw [hi_succ, Nat.testBit_bit_succ] at h
-          exact ⟨i - 1, ih _ h, hi_succ.symm⟩
-  · intro h
-    induction n using Nat.binaryRec generalizing i with
-    | z => simp at h
-    | f b n ih =>
-      cases b
-      · simp only [Nat.bit_false, Nat.bitIndices_two_mul, List.mem_map] at h
-        obtain ⟨j, hj, rfl⟩ := h
-        rw [Nat.testBit_bit_succ]
-        exact ih _ hj
-      · simp only [Nat.bit_true, Nat.bitIndices_two_mul_add_one, List.mem_cons, List.mem_map] at h
-        rcases h with rfl | ⟨j, hj, rfl⟩
-        · simp
-        · rw [Nat.testBit_bit_succ]
-          exact ih _ hj
-
-/-- testBit of finset sum of powers of 2 equals membership -/
-private lemma testBit_finset_sum_pow_two {s : Finset ℕ} {i : ℕ} :
-    (s.sum (2^·)).testBit i = true ↔ i ∈ s := by
-  rw [testBit_iff_mem_bitIndices]
-  constructor
-  · intro h
-    have : i ∈ (s.sum (2^·)).bitIndices.toFinset := List.mem_toFinset.mpr h
-    rw [Finset.toFinset_bitIndices_twoPowSum] at this
-    exact this
-  · intro h
-    have : i ∈ (s.sum (2^·)).bitIndices.toFinset := by
-      rw [Finset.toFinset_bitIndices_twoPowSum]
-      exact h
-    exact List.mem_toFinset.mp this
-
-/-- testBit of sum of 2^j over Fin k equals membership -/
-private lemma testBit_sum_pow_two_fin {k : ℕ} {s : Finset (Fin k)} (j : Fin k) :
-    (s.sum fun i => (2:ℕ)^i.val).testBit j.val ↔ j ∈ s := by
-  have h : s.sum (fun i => (2:ℕ)^i.val) = (s.image (·.val)).sum (2^·) := by
-    rw [Finset.sum_image]
-    intro x _ y _ hxy
-    exact Fin.val_injective hxy
-  rw [h, testBit_finset_sum_pow_two]
-  simp only [Finset.mem_image]
-  constructor
-  · intro ⟨x, hx, hxj⟩
-    rw [← Fin.val_injective hxj]
-    exact hx
-  · intro hj
-    exact ⟨j, hj, rfl⟩
-
 /-- The atom index has bit j set iff x ∈ E j -/
 lemma atomIndexOf_testBit_E {X : Type*} [DecidableEq X] {k k' : ℕ} (E : Fin k → Set X) (E' : Fin k' → Set X) (x : X) (j : Fin k) :
     (atomIndexOf E E' x).testBit j.val ↔ x ∈ E j := by
@@ -374,7 +305,7 @@ lemma atomIndexOf_testBit_E {X : Type*} [DecidableEq X] {k k' : ℕ} (E : Fin k 
     sum_pow_two_fin_lt
   rw [add_comm, Nat.testBit_two_pow_mul_add _ hpart1_lt, if_pos j.isLt]
   -- Now show: Part1.testBit j.val ↔ x ∈ E j
-  rw [testBit_sum_pow_two_fin]
+  rw [Nat.testBit_sum_pow_two_fin]
   simp only [Finset.mem_filter, Finset.mem_univ, true_and]
 
 /-- The atom index has bit (k+j) set iff x ∈ E' j -/
@@ -393,7 +324,7 @@ lemma atomIndexOf_testBit_E' {X : Type*} [DecidableEq X] {k k' : ℕ} (E : Fin k
   rw [if_neg hge]
   -- Now show: Part2_inner.testBit ((k + j.val) - k) ↔ x ∈ E' j
   have hsub : (k + j.val) - k = j.val := Nat.add_sub_cancel_left k j.val
-  rw [hsub, testBit_sum_pow_two_fin]
+  rw [hsub, Nat.testBit_sum_pow_two_fin]
   simp only [Finset.mem_filter, Finset.mem_univ, true_and]
 
 /-- Original set E_i is the union of atoms where bit i is 1 -/
@@ -461,13 +392,13 @@ lemma atom_measurable {d k k' : ℕ} {E : Fin k → Set (EuclideanSpace' d)} {E'
         by_cases hbit : atomMembership k k' n i
         · simp only [hbit, ↓reduceIte]
           exact (h1 i).mp hbit
-        · simp only [hbit, ↓reduceIte, Set.mem_compl_iff]
+        · simp only [hbit]
           exact fun hx => hbit ((h1 i).mpr hx)
       · intro i
         by_cases hbit : atomMembership k k' n (k + i)
         · simp only [hbit, ↓reduceIte]
           exact (h2 i).mp hbit
-        · simp only [hbit, ↓reduceIte, Set.mem_compl_iff]
+        · simp only [hbit]
           exact fun hx => hbit ((h2 i).mpr hx)
     · intro ⟨h1, h2⟩
       constructor
@@ -476,14 +407,14 @@ lemma atom_measurable {d k k' : ℕ} {E : Fin k → Set (EuclideanSpace' d)} {E'
         by_cases hbit : atomMembership k k' n i
         · simp only [hbit, ↓reduceIte] at h1
           exact ⟨fun _ => h1, fun _ => hbit⟩
-        · simp only [hbit, ↓reduceIte, Set.mem_compl_iff] at h1
+        · simp only [hbit] at h1
           exact ⟨fun hf => (hbit hf).elim, fun hx => (h1 hx).elim⟩
       · intro i
         specialize h2 i
         by_cases hbit : atomMembership k k' n (k + i)
         · simp only [hbit, ↓reduceIte] at h2
           exact ⟨fun _ => h2, fun _ => hbit⟩
-        · simp only [hbit, ↓reduceIte, Set.mem_compl_iff] at h2
+        · simp only [hbit] at h2
           exact ⟨fun hf => (hbit hf).elim, fun hx => (h2 hx).elim⟩
   rw [hatom_eq]
   -- Now show the intersection is measurable
@@ -526,8 +457,7 @@ lemma weightedMeasureSum_eq_of_eq {d k k' : ℕ}
     (hnonneg : ∀ i, c i ≥ 0) (hnonneg' : ∀ i, c' i ≥ 0)
     (heq : ∑ i, (c i) • (EReal.indicator (E i)) = ∑ i, (c' i) • (EReal.indicator (E' i))) :
     weightedMeasureSum c E = weightedMeasureSum c' E' := by
-  -- The proof uses the Venn diagram/atom argument from the textbook
-  -- Key steps:
+  -- The proof uses the Venn diagram/atom argument
   -- 1. For any x in a non-empty atom A_n, evaluate heq at x:
   --    sum_{i : x ∈ E_i} c_i = sum_{j : x ∈ E'_j} c'_j
   -- 2. The membership in E_i for x ∈ A_n is determined by bit i of n
@@ -630,11 +560,11 @@ lemma weightedMeasureSum_eq_of_eq {d k k' : ℕ}
       by_cases h1 : atomMembership k k' i₁ i <;> by_cases h2 : atomMembership k k' i₂ i
       · simp only [h1, h2, ite_true]
         exact atom_pairwiseDisjoint E E' (by trivial : i₁ ∈ Set.univ) (by trivial) hi
-      · simp only [h1, h2, ite_true, ite_false]
+      · simp only [h1, h2, ite_true]
         rw [Set.disjoint_left]; intro _ _; simp
-      · simp only [h1, h2, ite_false, ite_true]
+      · simp only [h1, h2, ite_true]
         rw [Set.disjoint_left]; simp
-      · simp only [h1, h2, ite_false]
+      · simp only [h1, h2]
         rw [Set.disjoint_left]; simp
     -- atom' is measurable
     have hmes'_atom : ∀ n, LebesgueMeasurable (atom' n) := by
@@ -642,7 +572,7 @@ lemma weightedMeasureSum_eq_of_eq {d k k' : ℕ}
       simp only [atom']
       by_cases h : atomMembership k k' n i
       · simp only [h, ite_true]; exact hatom_mes n
-      · simp only [h, ite_false]; exact LebesgueMeasurable.empty
+      · simp only [h]; exact LebesgueMeasurable.empty
     -- Apply finite additivity
     calc Lebesgue_measure (E i) = Lebesgue_measure (⋃ n, atom' n) := by rw [hE_eq]
       _ = ∑' n, Lebesgue_measure (atom' n) := Lebesgue_measure.finite_union hmes'_atom hdisj'
