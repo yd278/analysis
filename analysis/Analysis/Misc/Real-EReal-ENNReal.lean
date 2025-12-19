@@ -108,6 +108,20 @@ lemma EReal.le_of_forall_pos_le_add' {a b : EReal}
         have h_ineq : b' + (a' - b') / 2 < a' := by linarith
         exact not_le.mpr (EReal.coe_lt_coe_iff.mpr h_ineq) h
 
+/-- Multiplication distributes over finite sums for EReal when all summands are non-negative.
+    This is needed because EReal lacks a general `LeftDistribClass` instance. -/
+lemma EReal.mul_finset_sum_of_nonneg (n : ℕ) (c : EReal) (f : Fin n → EReal) (hf : ∀ i, 0 ≤ f i) :
+    c * (∑ i, f i) = ∑ i, c * f i := by
+  induction n with
+  | zero => simp
+  | succ n ih =>
+    rw [Fin.sum_univ_castSucc, Fin.sum_univ_castSucc]
+    have hsum_nonneg : 0 ≤ ∑ i : Fin n, f i.castSucc := Finset.sum_nonneg (fun i _ => hf _)
+    have hlast_nonneg : 0 ≤ f (Fin.last n) := hf _
+    rw [EReal.left_distrib_of_nonneg hsum_nonneg hlast_nonneg]
+    congr 1
+    exact ih (fun i => f i.castSucc) (fun i => hf _)
+
 /-- For non-negative reals, toEReal commutes with finite sums.
     Uses induction on the finset with EReal.coe_add. -/
 lemma EReal.coe_finset_sum {α : Type*} {s : Finset α} {f : α → ℝ}

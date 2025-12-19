@@ -1,4 +1,5 @@
 import Analysis.MeasureTheory.Section_1_2_3
+import Analysis.Misc.NatBitwise
 
 /-!
 # Introduction to Measure Theory, Section 1.3.1: Integration of simple functions
@@ -28,7 +29,7 @@ def UnsignedSimpleFunction {d:ℕ} (f: EuclideanSpace' d → EReal) : Prop := �
 def RealSimpleFunction {d:ℕ} (f: EuclideanSpace' d → ℝ) : Prop := ∃ (k:ℕ) (c: Fin k → ℝ) (E: Fin k → Set (EuclideanSpace' d)),
   (∀ i, LebesgueMeasurable (E i)) ∧ f = ∑ i, (c i) • (E i).indicator'
 
-def ComplexSimpleFunction {d:ℕ} (f: EuclideanSpace' d → ℂ) : Prop := ∃ (k:ℕ) (c: Fin k → ℝ) (E: Fin k → Set (EuclideanSpace' d)),
+def ComplexSimpleFunction {d:ℕ} (f: EuclideanSpace' d → ℂ) : Prop := ∃ (k:ℕ) (c: Fin k → ℂ) (E: Fin k → Set (EuclideanSpace' d)),
   (∀ i, LebesgueMeasurable (E i)) ∧ f = ∑ i, (c i) • (Complex.indicator (E i))
 
 -- TODO: coercions between these concepts, and vector space structure on real and complex simple functions (and cone structure on unsigned simple functions).
@@ -43,32 +44,690 @@ instance RealSimpleFunction.coe_complex {d:ℕ} (f: EuclideanSpace' d → ℝ) :
 
 
 lemma UnsignedSimpleFunction.add {d:ℕ} {f g: EuclideanSpace' d → EReal} (hf: UnsignedSimpleFunction f) (hg: UnsignedSimpleFunction g) : UnsignedSimpleFunction (f + g) := by
-  sorry
+  obtain ⟨k₁, c₁, E₁, ⟨hmes₁, heq₁⟩⟩ := hf
+  obtain ⟨k₂, c₂, E₂, ⟨hmes₂, heq₂⟩⟩ := hg
+  use k₁ + k₂, fun i => if h : i < k₁ then c₁ ⟨i, h⟩ else c₂ ⟨i - k₁, by omega⟩,
+       fun i => if h : i < k₁ then E₁ ⟨i, h⟩ else E₂ ⟨i - k₁, by omega⟩
+  constructor
+  · intro i
+    split_ifs with h
+    · exact hmes₁ ⟨i, h⟩
+    · exact hmes₂ ⟨i - k₁, by omega⟩
+  · ext x
+    rw [heq₁, heq₂]
+    simp [Fin.sum_univ_add]
+
+private lemma EReal.indicator_nonneg' {X:Type*} (A: Set X) (x : X) : 0 ≤ EReal.indicator A x := by
+  simp only [EReal.indicator, Real.EReal_fun]
+  exact EReal.coe_nonneg.mpr (Set.indicator_nonneg (fun _ _ => zero_le_one) x)
 
 lemma UnsignedSimpleFunction.smul {d:ℕ} {f: EuclideanSpace' d → EReal} (hf: UnsignedSimpleFunction f) {a: EReal} (ha: a ≥ 0) : UnsignedSimpleFunction (a • f) := by
-  sorry
+  obtain ⟨k, c, E, ⟨hmes, heq⟩⟩ := hf
+  use k, fun i => a * (c i), E
+  constructor
+  · intro i
+    exact ⟨hmes i |>.1, mul_nonneg ha (hmes i |>.2)⟩
+  · rw [heq]
+    ext x
+    simp only [Pi.smul_apply, Finset.sum_apply, smul_eq_mul]
+    rw [EReal.mul_finset_sum_of_nonneg k a (fun i => (c i) * EReal.indicator (E i) x)
+        (fun i => mul_nonneg (hmes i |>.2) (EReal.indicator_nonneg' (E i) x))]
+    congr 1
+    ext i
+    rw [mul_assoc]
 
 lemma RealSimpleFunction.add {d:ℕ} {f g: EuclideanSpace' d → ℝ} (hf: RealSimpleFunction f) (hg: RealSimpleFunction g) : RealSimpleFunction (f + g) := by
-  sorry
+  obtain ⟨k₁, c₁, E₁, ⟨hmes₁, heq₁⟩⟩ := hf
+  obtain ⟨k₂, c₂, E₂, ⟨hmes₂, heq₂⟩⟩ := hg
+  use k₁ + k₂, fun i => if h : i < k₁ then c₁ ⟨i, h⟩ else c₂ ⟨i - k₁, by omega⟩,
+       fun i => if h : i < k₁ then E₁ ⟨i, h⟩ else E₂ ⟨i - k₁, by omega⟩
+  constructor
+  · intro i
+    split_ifs with h
+    · exact hmes₁ ⟨i, h⟩
+    · exact hmes₂ ⟨i - k₁, by omega⟩
+  · ext x
+    rw [heq₁, heq₂]
+    simp [Fin.sum_univ_add]
 
 lemma ComplexSimpleFunction.add {d:ℕ} {f g: EuclideanSpace' d → ℂ} (hf: ComplexSimpleFunction f) (hg: ComplexSimpleFunction g) : ComplexSimpleFunction (f + g) := by
-  sorry
+  obtain ⟨k₁, c₁, E₁, ⟨hmes₁, heq₁⟩⟩ := hf
+  obtain ⟨k₂, c₂, E₂, ⟨hmes₂, heq₂⟩⟩ := hg
+  use k₁ + k₂, fun i => if h : i < k₁ then c₁ ⟨i, h⟩ else c₂ ⟨i - k₁, by omega⟩,
+       fun i => if h : i < k₁ then E₁ ⟨i, h⟩ else E₂ ⟨i - k₁, by omega⟩
+  constructor
+  · intro i
+    split_ifs with h
+    · exact hmes₁ ⟨i, h⟩
+    · exact hmes₂ ⟨i - k₁, by omega⟩
+  · ext x
+    rw [heq₁, heq₂]
+    simp [Fin.sum_univ_add]
 
 lemma RealSimpleFunction.smul {d:ℕ} {f: EuclideanSpace' d → ℝ} (hf: RealSimpleFunction f) (a: ℝ)  : RealSimpleFunction (a • f) := by
-  sorry
+  obtain ⟨k, c, E, ⟨hmes, heq⟩⟩ := hf
+  use k, fun i => a * (c i), E
+  constructor
+  · intro i
+    exact hmes i
+  · rw [heq]
+    ext x
+    simp only [Pi.smul_apply, Finset.sum_apply, smul_eq_mul]
+    rw [Finset.mul_sum]
+    congr 1
+    ext i
+    rw [mul_assoc]
 
 lemma ComplexSimpleFunction.smul {d:ℕ} {f: EuclideanSpace' d → ℂ} (hf: ComplexSimpleFunction f) (a: ℂ)  : ComplexSimpleFunction (a • f) := by
-  sorry
+  obtain ⟨k, c, E, ⟨hmes, heq⟩⟩ := hf
+  use k, fun i => a * (c i), E
+  constructor
+  · intro i
+    exact hmes i
+  · rw [heq]
+    ext x
+    simp only [Pi.smul_apply, Finset.sum_apply, smul_eq_mul]
+    rw [Finset.mul_sum]
+    congr 1
+    ext i
+    rw [mul_assoc]
+
+private lemma Complex.indicator_conj {X:Type*} (A: Set X) (x : X) :
+    starRingEnd ℂ (Complex.indicator A x) = Complex.indicator A x := by
+  simp only [Complex.indicator, Real.complex_fun]
+  exact Complex.conj_ofReal _
 
 lemma ComplexSimpleFunction.conj {d:ℕ} {f: EuclideanSpace' d → ℂ} (hf: ComplexSimpleFunction f) : ComplexSimpleFunction (Complex.conj_fun f) := by
-  sorry
+  obtain ⟨k, c, E, ⟨hmes, heq⟩⟩ := hf
+  use k, fun i => starRingEnd ℂ (c i), E
+  constructor
+  · intro i
+    exact hmes i
+  · rw [heq]
+    ext x
+    simp only [Complex.conj_fun, Finset.sum_apply, Pi.smul_apply, smul_eq_mul]
+    rw [map_sum]
+    congr 1
+    ext i
+    rw [map_mul, Complex.indicator_conj]
 
 noncomputable def UnsignedSimpleFunction.integ {d:ℕ} {f: EuclideanSpace' d → EReal} (hf: UnsignedSimpleFunction f) : EReal := ∑ i, (hf.choose_spec.choose i) * Lebesgue_measure (hf.choose_spec.choose_spec.choose i)
 
+/-! ### Helper lemmas for Lemma 1.3.4
+
+The proof uses a Venn diagram argument: given two representations of the same simple function,
+we partition R^d into atoms (intersections of all sets and their complements), express each
+original set as a disjoint union of atoms, and use finite additivity of Lebesgue measure.
+-/
+
+namespace UnsignedSimpleFunction.IntegralWellDef
+
+open scoped Classical
+
+/-- Given families of sets indexed by Fin k and Fin k', an atom is determined by
+    a choice of "in" or "out" for each set. We encode this as a Fin (2^(k+k')) index. -/
+def atomMembership (_k _k' : ℕ) (n : ℕ) (i : ℕ) : Bool := (n / 2^i) % 2 = 1
+
+lemma atomMembership_eq_testBit (k k' n i : ℕ) : atomMembership k k' n i = n.testBit i := by
+  simp only [atomMembership, Nat.testBit_eq_decide_div_mod_eq]
+
+/-- The atom indexed by n is the intersection over all i of (E_i if bit i is 1, else E_i^c) -/
+def atom {X : Type*} {k k' : ℕ} (E : Fin k → Set X) (E' : Fin k' → Set X) (n : Fin (2^(k+k'))) : Set X :=
+  {x | (∀ i : Fin k, atomMembership k k' n i ↔ x ∈ E i) ∧
+       (∀ i : Fin k', atomMembership k k' n (k + i) ↔ x ∈ E' i)}
+
+/-- Atoms are pairwise disjoint -/
+lemma atom_pairwiseDisjoint {X : Type*} {k k' : ℕ} (E : Fin k → Set X) (E' : Fin k' → Set X) :
+    Set.univ.PairwiseDisjoint (atom E E') := by
+  intro i _ j _ hij
+  simp only [Function.onFun]
+  rw [Set.disjoint_left]
+  intro x hxi hxj
+  simp only [atom, Set.mem_setOf_eq, atomMembership_eq_testBit] at hxi hxj
+  -- If i ≠ j, they differ in some bit
+  have hne : i.val ≠ j.val := Fin.val_ne_of_ne hij
+  obtain ⟨bit, hbit⟩ := Nat.exists_testBit_ne_of_ne hne
+  -- The bit must be < k + k' since both i, j < 2^(k+k')
+  have hi_lt : i.val < 2^(k + k') := i.isLt
+  have hj_lt : j.val < 2^(k + k') := j.isLt
+  have hbit_bound : bit < k + k' := by
+    by_contra h
+    push_neg at h
+    have hi_false : i.val.testBit bit = false := Nat.testBit_lt_two_pow (Nat.lt_of_lt_of_le hi_lt (Nat.pow_le_pow_right (by norm_num : 1 ≤ 2) h))
+    have hj_false : j.val.testBit bit = false := Nat.testBit_lt_two_pow (Nat.lt_of_lt_of_le hj_lt (Nat.pow_le_pow_right (by norm_num : 1 ≤ 2) h))
+    exact hbit (hi_false.trans hj_false.symm)
+  -- Now we know bit < k + k', so it indexes into E or E'
+  by_cases hbit_k : bit < k
+  · -- bit indexes into E
+    have hi_iff := hxi.1 ⟨bit, hbit_k⟩
+    have hj_iff := hxj.1 ⟨bit, hbit_k⟩
+    -- hxi and hxj both give x ∈ E ⟨bit, _⟩ ↔ testBit = true
+    -- But i and j have different bits, so one says x ∈ E and the other says x ∉ E
+    cases h_i : i.val.testBit bit <;> cases h_j : j.val.testBit bit
+    · exact hbit (h_i.trans h_j.symm)
+    · have hx_in : x ∈ E ⟨bit, hbit_k⟩ := hj_iff.mp h_j
+      have hx_out : x ∉ E ⟨bit, hbit_k⟩ := fun h => by simp [hi_iff.mpr h] at h_i
+      exact hx_out hx_in
+    · have hx_in : x ∈ E ⟨bit, hbit_k⟩ := hi_iff.mp h_i
+      have hx_out : x ∉ E ⟨bit, hbit_k⟩ := fun h => by simp [hj_iff.mpr h] at h_j
+      exact hx_out hx_in
+    · exact hbit (h_i.trans h_j.symm)
+  · -- bit indexes into E' (bit ∈ [k, k+k'))
+    have hbit_k' : bit - k < k' := by omega
+    have h_add : k + (bit - k) = bit := by omega
+    have hi_iff := hxi.2 ⟨bit - k, hbit_k'⟩
+    have hj_iff := hxj.2 ⟨bit - k, hbit_k'⟩
+    simp only [h_add] at hi_iff hj_iff
+    cases h_i : i.val.testBit bit <;> cases h_j : j.val.testBit bit
+    · exact hbit (h_i.trans h_j.symm)
+    · have hx_in : x ∈ E' ⟨bit - k, hbit_k'⟩ := hj_iff.mp h_j
+      have hx_out : x ∉ E' ⟨bit - k, hbit_k'⟩ := fun h => by simp [hi_iff.mpr h] at h_i
+      exact hx_out hx_in
+    · have hx_in : x ∈ E' ⟨bit - k, hbit_k'⟩ := hi_iff.mp h_i
+      have hx_out : x ∉ E' ⟨bit - k, hbit_k'⟩ := fun h => by simp [hj_iff.mpr h] at h_j
+      exact hx_out hx_in
+    · exact hbit (h_i.trans h_j.symm)
+
+/-- Sum of powers of 2 up to n equals 2^n - 1 -/
+private lemma sum_pow_two_range (n : ℕ) : ∑ i ∈ Finset.range n, (2:ℕ)^i = 2^n - 1 := by
+  induction n with
+  | zero => simp
+  | succ n ih =>
+    rw [Finset.sum_range_succ, ih, pow_succ]
+    have h : 1 ≤ 2^n := Nat.one_le_two_pow
+    omega
+
+/-- For any subset of Fin k, sum of 2^j.val is less than 2^k -/
+private lemma sum_pow_two_fin_lt {k : ℕ} {s : Finset (Fin k)} :
+    s.sum (fun j => (2:ℕ)^j.val) < 2^k := by
+  have h1 : s.sum (fun j => (2:ℕ)^j.val) ≤ Finset.univ.sum (fun j : Fin k => (2:ℕ)^j.val) := by
+    apply Finset.sum_le_sum_of_subset
+    exact Finset.subset_univ s
+  have h2 : Finset.univ.sum (fun j : Fin k => (2:ℕ)^j.val) = ∑ i ∈ Finset.range k, 2^i := by
+    rw [Fin.sum_univ_eq_sum_range]
+  have h3 : ∑ i ∈ Finset.range k, (2:ℕ)^i = 2^k - 1 := sum_pow_two_range k
+  have h4 : 2^k - 1 < 2^k := Nat.sub_lt Nat.one_le_two_pow Nat.one_pos
+  omega
+
+/-- Helper: construct atom index from membership pattern.
+    The atom index encodes x's membership in each set as bits. -/
+noncomputable def atomIndexOf {X : Type*} [DecidableEq X] {k k' : ℕ} (E : Fin k → Set X) (E' : Fin k' → Set X) (x : X) : ℕ :=
+  (Finset.univ.filter fun j : Fin k => x ∈ E j).sum (fun j => 2^j.val) +
+  (Finset.univ.filter fun j' : Fin k' => x ∈ E' j').sum (fun j' => 2^(k + j'.val))
+
+/-- The atom index is bounded by 2^(k+k') -/
+lemma atomIndexOf_lt {X : Type*} [DecidableEq X] {k k' : ℕ} (E : Fin k → Set X) (E' : Fin k' → Set X) (x : X) :
+    atomIndexOf E E' x < 2^(k+k') := by
+  unfold atomIndexOf
+  have hpart1 : (Finset.univ.filter fun j : Fin k => x ∈ E j).sum (fun j => (2:ℕ)^j.val) < 2^k :=
+    sum_pow_two_fin_lt
+  have hpart2_inner : (Finset.univ.filter fun j' : Fin k' => x ∈ E' j').sum (fun j' => (2:ℕ)^j'.val) < 2^k' :=
+    sum_pow_two_fin_lt
+  have hrw : (Finset.univ.filter fun j' : Fin k' => x ∈ E' j').sum (fun j' => (2:ℕ)^(k + j'.val)) =
+             2^k * (Finset.univ.filter fun j' : Fin k' => x ∈ E' j').sum (fun j' => (2:ℕ)^j'.val) := by
+    rw [Finset.mul_sum]
+    congr 1; ext j'; rw [pow_add]
+  rw [hrw]
+  have h2k_pos : 0 < 2^k := Nat.two_pow_pos k
+  have hpart2 : 2^k * (Finset.univ.filter fun j' : Fin k' => x ∈ E' j').sum (fun j' => (2:ℕ)^j'.val) < 2^(k+k') := by
+    calc 2^k * (Finset.univ.filter fun j' : Fin k' => x ∈ E' j').sum (fun j' => (2:ℕ)^j'.val)
+        < 2^k * 2^k' := (Nat.mul_lt_mul_left h2k_pos).mpr hpart2_inner
+      _ = 2^(k+k') := by rw [← pow_add]
+  -- Use tight bounds: sum1 ≤ 2^k - 1, sum2 ≤ 2^k * (2^k' - 1) = 2^(k+k') - 2^k
+  -- So sum1 + sum2 ≤ (2^k - 1) + (2^(k+k') - 2^k) = 2^(k+k') - 1 < 2^(k+k')
+  have hpart1_le : (Finset.univ.filter fun j : Fin k => x ∈ E j).sum (fun j => (2:ℕ)^j.val) ≤ 2^k - 1 :=
+    Nat.le_sub_one_of_lt hpart1
+  have hpart2_le : 2^k * (Finset.univ.filter fun j' : Fin k' => x ∈ E' j').sum (fun j' => (2:ℕ)^j'.val) ≤ 2^(k+k') - 2^k := by
+    have inner_le : (Finset.univ.filter fun j' : Fin k' => x ∈ E' j').sum (fun j' => (2:ℕ)^j'.val) ≤ 2^k' - 1 :=
+      Nat.le_sub_one_of_lt hpart2_inner
+    calc 2^k * (Finset.univ.filter fun j' : Fin k' => x ∈ E' j').sum (fun j' => (2:ℕ)^j'.val)
+        ≤ 2^k * (2^k' - 1) := Nat.mul_le_mul_left _ inner_le
+      _ = 2^k * 2^k' - 2^k := by rw [Nat.mul_sub_one]
+      _ = 2^(k+k') - 2^k := by rw [pow_add]
+  have h2k_le : 2^k ≤ 2^(k+k') := Nat.pow_le_pow_right (by norm_num) (Nat.le_add_right k k')
+  calc (Finset.univ.filter fun j : Fin k => x ∈ E j).sum (fun j => (2:ℕ)^j.val) +
+       2^k * (Finset.univ.filter fun j' : Fin k' => x ∈ E' j').sum (fun j' => (2:ℕ)^j'.val)
+      ≤ (2^k - 1) + (2^(k+k') - 2^k) := Nat.add_le_add hpart1_le hpart2_le
+    _ = 2^(k+k') - 1 := by omega
+    _ < 2^(k+k') := Nat.sub_lt (Nat.two_pow_pos _) (by norm_num)
+
+/-- The atom index has bit j set iff x ∈ E j -/
+lemma atomIndexOf_testBit_E {X : Type*} [DecidableEq X] {k k' : ℕ} (E : Fin k → Set X) (E' : Fin k' → Set X) (x : X) (j : Fin k) :
+    (atomIndexOf E E' x).testBit j.val ↔ x ∈ E j := by
+  unfold atomIndexOf
+  -- atomIndexOf = Part1 + Part2 where Part2 = 2^k * (inner sum)
+  have hrw : (Finset.univ.filter fun j' : Fin k' => x ∈ E' j').sum (fun j' => (2:ℕ)^(k + j'.val)) =
+             2^k * (Finset.univ.filter fun j' : Fin k' => x ∈ E' j').sum (fun j' => (2:ℕ)^j'.val) := by
+    rw [Finset.mul_sum]; congr 1; ext j'; rw [pow_add]
+  rw [hrw]
+  -- Use testBit_two_pow_mul_add: for j.val < k and Part1 < 2^k, testBit j only looks at Part1
+  have hpart1_lt : (Finset.univ.filter fun i : Fin k => x ∈ E i).sum (fun i => (2:ℕ)^i.val) < 2^k :=
+    sum_pow_two_fin_lt
+  rw [add_comm, Nat.testBit_two_pow_mul_add _ hpart1_lt, if_pos j.isLt]
+  -- Now show: Part1.testBit j.val ↔ x ∈ E j
+  rw [Nat.testBit_sum_pow_two_fin]
+  simp only [Finset.mem_filter, Finset.mem_univ, true_and]
+
+/-- The atom index has bit (k+j) set iff x ∈ E' j -/
+lemma atomIndexOf_testBit_E' {X : Type*} [DecidableEq X] {k k' : ℕ} (E : Fin k → Set X) (E' : Fin k' → Set X) (x : X) (j : Fin k') :
+    (atomIndexOf E E' x).testBit (k + j.val) ↔ x ∈ E' j := by
+  unfold atomIndexOf
+  have hrw : (Finset.univ.filter fun j' : Fin k' => x ∈ E' j').sum (fun j' => (2:ℕ)^(k + j'.val)) =
+             2^k * (Finset.univ.filter fun j' : Fin k' => x ∈ E' j').sum (fun j' => (2:ℕ)^j'.val) := by
+    rw [Finset.mul_sum]; congr 1; ext j'; rw [pow_add]
+  rw [hrw]
+  -- Use testBit_two_pow_mul_add: for k + j.val ≥ k and Part1 < 2^k
+  have hpart1_lt : (Finset.univ.filter fun i : Fin k => x ∈ E i).sum (fun i => (2:ℕ)^i.val) < 2^k :=
+    sum_pow_two_fin_lt
+  rw [add_comm, Nat.testBit_two_pow_mul_add _ hpart1_lt]
+  have hge : ¬ (k + j.val < k) := by omega
+  rw [if_neg hge]
+  -- Now show: Part2_inner.testBit ((k + j.val) - k) ↔ x ∈ E' j
+  have hsub : (k + j.val) - k = j.val := Nat.add_sub_cancel_left k j.val
+  rw [hsub, Nat.testBit_sum_pow_two_fin]
+  simp only [Finset.mem_filter, Finset.mem_univ, true_and]
+
+/-- Original set E_i is the union of atoms where bit i is 1 -/
+lemma set_eq_biUnion_atoms {X : Type*} {k k' : ℕ} (E : Fin k → Set X) (E' : Fin k' → Set X) (i : Fin k) :
+    E i = ⋃ n ∈ {n : Fin (2^(k+k')) | atomMembership k k' n i}, atom E E' n := by
+  classical
+  ext x
+  constructor
+  · intro hx
+    simp only [Set.mem_iUnion, Set.mem_setOf_eq]
+    -- Construct the atom index from x's membership pattern
+    let n : Fin (2^(k+k')) := ⟨atomIndexOf E E' x, atomIndexOf_lt E E' x⟩
+    refine ⟨n, ?_, ?_⟩
+    · -- Show atomMembership k k' n i = true
+      rw [atomMembership_eq_testBit]
+      simp only [n, atomIndexOf_testBit_E E E' x i]
+      exact hx
+    · -- Show x ∈ atom E E' n
+      simp only [atom, Set.mem_setOf_eq, n]
+      refine ⟨fun j => ?_, fun j => ?_⟩
+      · rw [atomMembership_eq_testBit, atomIndexOf_testBit_E E E' x j]
+      · rw [atomMembership_eq_testBit, atomIndexOf_testBit_E' E E' x j]
+  · intro hx
+    simp only [Set.mem_iUnion, Set.mem_setOf_eq] at hx
+    obtain ⟨n, hn_bit, hx_atom⟩ := hx
+    exact (hx_atom.1 i).mp hn_bit
+
+/-- Original set E'_i is the union of atoms where bit (k+i) is 1 -/
+lemma set_eq_biUnion_atoms' {X : Type*} {k k' : ℕ} (E : Fin k → Set X) (E' : Fin k' → Set X) (i : Fin k') :
+    E' i = ⋃ n ∈ {n : Fin (2^(k+k')) | atomMembership k k' n (k + i)}, atom E E' n := by
+  classical
+  ext x
+  constructor
+  · intro hx
+    simp only [Set.mem_iUnion, Set.mem_setOf_eq]
+    let n : Fin (2^(k+k')) := ⟨atomIndexOf E E' x, atomIndexOf_lt E E' x⟩
+    refine ⟨n, ?_, ?_⟩
+    · rw [atomMembership_eq_testBit]
+      simp only [n, atomIndexOf_testBit_E' E E' x i]
+      exact hx
+    · simp only [atom, Set.mem_setOf_eq, n]
+      refine ⟨fun j => ?_, fun j => ?_⟩
+      · rw [atomMembership_eq_testBit, atomIndexOf_testBit_E E E' x j]
+      · rw [atomMembership_eq_testBit, atomIndexOf_testBit_E' E E' x j]
+  · intro hx
+    simp only [Set.mem_iUnion, Set.mem_setOf_eq] at hx
+    obtain ⟨n, hn_bit, hx_atom⟩ := hx
+    exact (hx_atom.2 i).mp hn_bit
+
+/-- Atoms are measurable if the original sets are -/
+lemma atom_measurable {d k k' : ℕ} {E : Fin k → Set (EuclideanSpace' d)} {E' : Fin k' → Set (EuclideanSpace' d)}
+    (hE : ∀ i, LebesgueMeasurable (E i)) (hE' : ∀ i, LebesgueMeasurable (E' i)) (n : Fin (2^(k+k'))) :
+    LebesgueMeasurable (atom E E' n) := by
+  -- The atom is an intersection of sets of the form E_i or (E_i)ᶜ
+  -- Rewrite atom as intersection
+  have hatom_eq : atom E E' n =
+      (⋂ i : Fin k, if atomMembership k k' n i then E i else (E i)ᶜ) ∩
+      (⋂ i : Fin k', if atomMembership k k' n (k + i) then E' i else (E' i)ᶜ) := by
+    ext x
+    simp only [atom, Set.mem_setOf_eq, Set.mem_inter_iff, Set.mem_iInter]
+    constructor
+    · intro ⟨h1, h2⟩
+      constructor
+      · intro i
+        by_cases hbit : atomMembership k k' n i
+        · simp only [hbit, ↓reduceIte]
+          exact (h1 i).mp hbit
+        · simp only [hbit]
+          exact fun hx => hbit ((h1 i).mpr hx)
+      · intro i
+        by_cases hbit : atomMembership k k' n (k + i)
+        · simp only [hbit, ↓reduceIte]
+          exact (h2 i).mp hbit
+        · simp only [hbit]
+          exact fun hx => hbit ((h2 i).mpr hx)
+    · intro ⟨h1, h2⟩
+      constructor
+      · intro i
+        specialize h1 i
+        by_cases hbit : atomMembership k k' n i
+        · simp only [hbit, ↓reduceIte] at h1
+          exact ⟨fun _ => h1, fun _ => hbit⟩
+        · simp only [hbit] at h1
+          exact ⟨fun hf => (hbit hf).elim, fun hx => (h1 hx).elim⟩
+      · intro i
+        specialize h2 i
+        by_cases hbit : atomMembership k k' n (k + i)
+        · simp only [hbit, ↓reduceIte] at h2
+          exact ⟨fun _ => h2, fun _ => hbit⟩
+        · simp only [hbit] at h2
+          exact ⟨fun hf => (hbit hf).elim, fun hx => (h2 hx).elim⟩
+  rw [hatom_eq]
+  -- Now show the intersection is measurable
+  -- Each component is E i or (E i)ᶜ, both measurable
+  -- Finite intersection of measurable sets is measurable
+  apply LebesgueMeasurable.inter
+  · -- First part: ⋂ i : Fin k, ... (finite intersection of measurable sets)
+    apply LebesgueMeasurable.finite_inter
+    intro i
+    by_cases h : atomMembership k k' n i
+    · simp only [h]; exact hE i
+    · simp only [h]; exact (hE i).complement
+  · -- Second part: ⋂ i : Fin k', ... (finite intersection of measurable sets)
+    apply LebesgueMeasurable.finite_inter
+    intro i
+    by_cases h : atomMembership k k' n (k + i)
+    · simp only [h]; exact hE' i
+    · simp only [h]; exact (hE' i).complement
+
+/-- Indicator function evaluates to c if x ∈ E -/
+lemma indicator_mul_mem {d : ℕ} (E : Set (EuclideanSpace' d)) (c : EReal) (x : EuclideanSpace' d)
+    (h : x ∈ E) : c * (EReal.indicator E x) = c := by
+  simp only [EReal.indicator, Real.EReal_fun, Set.indicator'_of_mem h, EReal.coe_one, mul_one]
+
+/-- Indicator function evaluates to 0 if x ∉ E -/
+lemma indicator_mul_not_mem {d : ℕ} (E : Set (EuclideanSpace' d)) (c : EReal) (x : EuclideanSpace' d)
+    (h : x ∉ E) : c * (EReal.indicator E x) = 0 := by
+  simp only [EReal.indicator, Real.EReal_fun, Set.indicator'_of_notMem h, EReal.coe_zero, mul_zero]
+
+/-- The weighted measure sum for a representation -/
+noncomputable def weightedMeasureSum {d k : ℕ} (c : Fin k → EReal) (E : Fin k → Set (EuclideanSpace' d)) : EReal :=
+  ∑ i, (c i) * Lebesgue_measure (E i)
+
+/-- Core lemma: Two representations of the same function give the same weighted measure sum.
+    This is the heart of Lemma 1.3.4 (Venn diagram argument). -/
+lemma weightedMeasureSum_eq_of_eq {d k k' : ℕ}
+    {c : Fin k → EReal} {E : Fin k → Set (EuclideanSpace' d)}
+    {c' : Fin k' → EReal} {E' : Fin k' → Set (EuclideanSpace' d)}
+    (hmes : ∀ i, LebesgueMeasurable (E i)) (hmes' : ∀ i, LebesgueMeasurable (E' i))
+    (hnonneg : ∀ i, c i ≥ 0) (hnonneg' : ∀ i, c' i ≥ 0)
+    (heq : ∑ i, (c i) • (EReal.indicator (E i)) = ∑ i, (c' i) • (EReal.indicator (E' i))) :
+    weightedMeasureSum c E = weightedMeasureSum c' E' := by
+  -- The proof uses the Venn diagram/atom argument
+  -- 1. For any x in a non-empty atom A_n, evaluate heq at x:
+  --    sum_{i : x ∈ E_i} c_i = sum_{j : x ∈ E'_j} c'_j
+  -- 2. The membership in E_i for x ∈ A_n is determined by bit i of n
+  -- 3. Multiply by m(A_n) and sum over all atoms
+  -- 4. Swap order of summation to get the result
+
+  -- Define atom measures
+  let atomMeas : Fin (2^(k+k')) → EReal := fun n => Lebesgue_measure (atom E E' n)
+
+  -- Atoms are measurable
+  have hatom_mes : ∀ n, LebesgueMeasurable (atom E E' n) := atom_measurable hmes hmes'
+
+  -- Step 1: For any point in an atom, the pointwise sums are equal
+  have hpoint : ∀ n : Fin (2^(k+k')), ∀ x ∈ atom E E' n,
+      ∑ i : Fin k, (c i) * (EReal.indicator (E i) x) = ∑ i : Fin k', (c' i) * (EReal.indicator (E' i) x) := by
+    intro n x hx
+    have := congr_fun heq x
+    simp only [Finset.sum_apply, Pi.smul_apply, smul_eq_mul] at this
+    exact this
+
+  -- Step 2: In atom n, membership in E_i is determined by bit i
+  have hmem_E : ∀ n : Fin (2^(k+k')), ∀ x ∈ atom E E' n, ∀ i : Fin k,
+      (x ∈ E i) ↔ atomMembership k k' n i := by
+    intro n x hx i
+    exact (hx.1 i).symm
+
+  have hmem_E' : ∀ n : Fin (2^(k+k')), ∀ x ∈ atom E E' n, ∀ i : Fin k',
+      (x ∈ E' i) ↔ atomMembership k k' n (k + i) := by
+    intro n x hx i
+    exact (hx.2 i).symm
+
+  -- Step 3: The pointwise sum simplifies based on bit pattern
+  have hsum_simp : ∀ n : Fin (2^(k+k')), ∀ x ∈ atom E E' n,
+      ∑ i : Fin k, (c i) * (EReal.indicator (E i) x) = ∑ i : Fin k, if atomMembership k k' n i then c i else 0 := by
+    intro n x hx
+    apply Finset.sum_congr rfl
+    intro i _
+    by_cases h : atomMembership k k' n i
+    · simp only [h]
+      have hx_in : x ∈ E i := (hmem_E n x hx i).mpr h
+      exact indicator_mul_mem (E i) (c i) x hx_in
+    · simp only [h]
+      have hx_out : x ∉ E i := fun hc => h ((hmem_E n x hx i).mp hc)
+      exact indicator_mul_not_mem (E i) (c i) x hx_out
+
+  have hsum_simp' : ∀ n : Fin (2^(k+k')), ∀ x ∈ atom E E' n,
+      ∑ i : Fin k', (c' i) * (EReal.indicator (E' i) x) = ∑ i : Fin k', if atomMembership k k' n (k + i) then c' i else 0 := by
+    intro n x hx
+    apply Finset.sum_congr rfl
+    intro i _
+    by_cases h : atomMembership k k' n (k + i)
+    · simp only [h]
+      have hx_in : x ∈ E' i := (hmem_E' n x hx i).mpr h
+      exact indicator_mul_mem (E' i) (c' i) x hx_in
+    · simp only [h]
+      have hx_out : x ∉ E' i := fun hc => h ((hmem_E' n x hx i).mp hc)
+      exact indicator_mul_not_mem (E' i) (c' i) x hx_out
+
+  -- Step 4: For non-empty atoms, the bit-pattern sums are equal
+  have hbit_eq : ∀ n : Fin (2^(k+k')), (atom E E' n).Nonempty →
+      (∑ i : Fin k, if atomMembership k k' n i = true then c i else 0 : EReal) =
+      (∑ i : Fin k', if atomMembership k k' n (k + i) = true then c' i else 0 : EReal) := by
+    intro n ⟨x, hx⟩
+    rw [← hsum_simp n x hx, ← hsum_simp' n x hx]
+    exact hpoint n x hx
+
+  -- Step 5: E_i = union of atoms where bit i = 1
+  have hE_decomp : ∀ i : Fin k, E i = ⋃ n ∈ {n : Fin (2^(k+k')) | atomMembership k k' n i}, atom E E' n :=
+    fun i => set_eq_biUnion_atoms E E' i
+
+  -- Step 6: Use finite additivity (this requires showing atoms are disjoint and measurable)
+  -- m(E_i) = sum over atoms where bit i = 1 of m(atom)
+  have hmes_decomp : ∀ i : Fin k, Lebesgue_measure (E i) =
+      ∑ n : Fin (2^(k+k')), if atomMembership k k' n i then atomMeas n else 0 := by
+    intro i
+    -- Define a modified atom family: atom' n = atom n if bit i is 1, else ∅
+    let atom' : Fin (2^(k+k')) → Set (EuclideanSpace' d) := fun n =>
+      if atomMembership k k' n i then atom E E' n else ∅
+    -- E i = ⋃ n, atom' n (because atoms with bit 0 contribute nothing)
+    have hE_eq : E i = ⋃ n, atom' n := by
+      rw [hE_decomp i]
+      ext x
+      simp only [Set.mem_iUnion, Set.mem_setOf_eq]
+      constructor
+      · intro ⟨n, hn, hx⟩
+        use n
+        simp only [atom', hn, ite_true]
+        exact hx
+      · intro ⟨n, hx⟩
+        simp only [atom'] at hx
+        by_cases hn : atomMembership k k' n i
+        · simp only [hn, ite_true] at hx
+          exact ⟨n, hn, hx⟩
+        · simp only [hn] at hx
+          exact False.elim hx
+    -- atom' is pairwise disjoint
+    have hdisj' : Set.univ.PairwiseDisjoint atom' := by
+      intro i₁ _ i₂ _ hi
+      simp only [Function.onFun, atom']
+      by_cases h1 : atomMembership k k' i₁ i <;> by_cases h2 : atomMembership k k' i₂ i
+      · simp only [h1, h2, ite_true]
+        exact atom_pairwiseDisjoint E E' (by trivial : i₁ ∈ Set.univ) (by trivial) hi
+      · simp only [h1, h2, ite_true]
+        rw [Set.disjoint_left]; intro _ _; simp
+      · simp only [h1, h2, ite_true]
+        rw [Set.disjoint_left]; simp
+      · simp only [h1, h2]
+        rw [Set.disjoint_left]; simp
+    -- atom' is measurable
+    have hmes'_atom : ∀ n, LebesgueMeasurable (atom' n) := by
+      intro n
+      simp only [atom']
+      by_cases h : atomMembership k k' n i
+      · simp only [h, ite_true]; exact hatom_mes n
+      · simp only [h]; exact LebesgueMeasurable.empty
+    -- Apply finite additivity
+    calc Lebesgue_measure (E i) = Lebesgue_measure (⋃ n, atom' n) := by rw [hE_eq]
+      _ = ∑' n, Lebesgue_measure (atom' n) := Lebesgue_measure.finite_union hmes'_atom hdisj'
+      _ = ∑ n : Fin (2^(k+k')), Lebesgue_measure (atom' n) := tsum_fintype _
+      _ = ∑ n : Fin (2^(k+k')), if atomMembership k k' n i then atomMeas n else 0 := by
+          congr 1; funext n; simp only [atom']
+          by_cases h : atomMembership k k' n i
+          · simp only [h, ite_true]; rfl
+          · simp only [h]; exact Lebesgue_measure.empty
+
+  have hE'_decomp : ∀ i : Fin k', E' i = ⋃ n ∈ {n : Fin (2^(k+k')) | atomMembership k k' n (k + i)}, atom E E' n :=
+    fun i => set_eq_biUnion_atoms' E E' i
+
+  have hmes_decomp' : ∀ i : Fin k', Lebesgue_measure (E' i) =
+      ∑ n : Fin (2^(k+k')), if atomMembership k k' n (k + i) then atomMeas n else 0 := by
+    intro i
+    let atom'' : Fin (2^(k+k')) → Set (EuclideanSpace' d) := fun n =>
+      if atomMembership k k' n (k + i) then atom E E' n else ∅
+    have hE'_eq : E' i = ⋃ n, atom'' n := by
+      rw [hE'_decomp i]
+      ext x
+      simp only [Set.mem_iUnion, Set.mem_setOf_eq]
+      constructor
+      · intro ⟨n, hn, hx⟩
+        use n
+        simp only [atom'', hn, ite_true]
+        exact hx
+      · intro ⟨n, hx⟩
+        simp only [atom''] at hx
+        by_cases hn : atomMembership k k' n (k + i)
+        · simp only [hn, ite_true] at hx
+          exact ⟨n, hn, hx⟩
+        · simp only [hn] at hx
+          exact False.elim hx
+    have hdisj'' : Set.univ.PairwiseDisjoint atom'' := by
+      intro i₁ _ i₂ _ hi
+      simp only [Function.onFun, atom'']
+      by_cases h1 : atomMembership k k' i₁ (k + i) <;> by_cases h2 : atomMembership k k' i₂ (k + i)
+      · simp only [h1, h2, ite_true]
+        exact atom_pairwiseDisjoint E E' (by trivial : i₁ ∈ Set.univ) (by trivial) hi
+      · simp only [h1, h2, ite_true]
+        rw [Set.disjoint_left]; intro _ _; simp
+      · simp only [h1, h2, ite_true]
+        rw [Set.disjoint_left]; simp
+      · simp only [h1, h2]
+        rw [Set.disjoint_left]; simp
+    have hmes''_atom : ∀ n, LebesgueMeasurable (atom'' n) := by
+      intro n
+      simp only [atom'']
+      by_cases h : atomMembership k k' n (k + i)
+      · simp only [h, ite_true]; exact hatom_mes n
+      · simp only [h]; exact LebesgueMeasurable.empty
+    calc Lebesgue_measure (E' i) = Lebesgue_measure (⋃ n, atom'' n) := by rw [hE'_eq]
+      _ = ∑' n, Lebesgue_measure (atom'' n) := Lebesgue_measure.finite_union hmes''_atom hdisj''
+      _ = ∑ n : Fin (2^(k+k')), Lebesgue_measure (atom'' n) := tsum_fintype _
+      _ = ∑ n : Fin (2^(k+k')), if atomMembership k k' n (k + i) then atomMeas n else 0 := by
+          congr 1; funext n; simp only [atom'']
+          by_cases h : atomMembership k k' n (k + i)
+          · simp only [h, ite_true]; rfl
+          · simp only [h]; exact Lebesgue_measure.empty
+
+  -- Step 7: Compute weightedMeasureSum using decomposition
+  calc weightedMeasureSum c E
+      = ∑ i : Fin k, (c i) * Lebesgue_measure (E i) := rfl
+    _ = ∑ i : Fin k, (c i) * (∑ n : Fin (2^(k+k')), if atomMembership k k' n i then atomMeas n else 0) := by
+        congr 1; ext i; congr 1; exact hmes_decomp i
+    _ = ∑ i : Fin k, ∑ n : Fin (2^(k+k')), (c i) * (if atomMembership k k' n i then atomMeas n else 0) := by
+        congr 1; ext i
+        -- c i * sum = sum of c i * each term
+        have hf_nonneg : ∀ n : Fin (2^(k+k')), 0 ≤ (if atomMembership k k' n i then atomMeas n else 0) := by
+          intro n
+          split_ifs
+          · exact Lebesgue_outer_measure.nonneg _
+          · rfl
+        exact EReal.mul_finset_sum_of_nonneg (2^(k+k')) (c i) (fun n => if atomMembership k k' n i then atomMeas n else 0) hf_nonneg
+    _ = ∑ i : Fin k, ∑ n : Fin (2^(k+k')), if atomMembership k k' n i then (c i) * atomMeas n else 0 := by
+        congr 1; ext i; congr 1; ext n
+        split_ifs <;> simp
+    _ = ∑ n : Fin (2^(k+k')), ∑ i : Fin k, if atomMembership k k' n i then (c i) * atomMeas n else 0 := by
+        rw [Finset.sum_comm]
+    _ = ∑ n : Fin (2^(k+k')), atomMeas n * (∑ i : Fin k, if atomMembership k k' n i then c i else 0) := by
+        congr 1; ext n
+        -- Factoring: ∑ i, if p then c i * m else 0 = m * ∑ i, if p then c i else 0
+        have hc_nonneg : ∀ i : Fin k, 0 ≤ (if atomMembership k k' n i then c i else 0) := fun i => by
+          split_ifs; exact hnonneg i; rfl
+        rw [EReal.mul_finset_sum_of_nonneg k (atomMeas n) _ hc_nonneg]
+        congr 1; ext i
+        split_ifs with h
+        · -- c i * atomMeas n = atomMeas n * c i
+          exact (EReal.mul_comm (atomMeas n) (c i)).symm
+        · simp
+    _ = ∑ n : Fin (2^(k+k')), atomMeas n * (∑ i : Fin k', if atomMembership k k' n (k + i) then c' i else 0) := by
+        congr 1; ext n
+        by_cases h : (atom E E' n).Nonempty
+        · congr 1; exact hbit_eq n h
+        · -- Empty atom has measure 0, so this term is 0
+          rw [Set.not_nonempty_iff_eq_empty] at h
+          have hzero : atomMeas n = 0 := by
+            simp only [atomMeas, h, Lebesgue_measure.empty]
+          simp only [hzero, zero_mul]
+    _ = ∑ n : Fin (2^(k+k')), ∑ i : Fin k', if atomMembership k k' n (k + i) then (c' i) * atomMeas n else 0 := by
+        congr 1; ext n
+        -- Expanding: m * ∑ i, if p then c i else 0 = ∑ i, if p then c i * m else 0
+        have hc'_nonneg : ∀ i : Fin k', 0 ≤ (if atomMembership k k' n (k + i) then c' i else 0) := fun i => by
+          split_ifs; exact hnonneg' i; rfl
+        rw [EReal.mul_finset_sum_of_nonneg k' (atomMeas n) _ hc'_nonneg]
+        congr 1; ext i
+        split_ifs with h
+        · exact EReal.mul_comm (atomMeas n) (c' i)
+        · simp
+    _ = ∑ i : Fin k', ∑ n : Fin (2^(k+k')), if atomMembership k k' n (k + i) then (c' i) * atomMeas n else 0 := by
+        rw [Finset.sum_comm]
+    _ = ∑ i : Fin k', (c' i) * (∑ n : Fin (2^(k+k')), if atomMembership k k' n (k + i) then atomMeas n else 0) := by
+        congr 1; ext i
+        -- c' i * sum = sum of c' i * each term, then distribute through conditionals
+        have hf_nonneg : ∀ n : Fin (2^(k+k')), 0 ≤ (if atomMembership k k' n (k + i) then atomMeas n else 0) := by
+          intro n
+          split_ifs
+          · exact Lebesgue_outer_measure.nonneg _
+          · rfl
+        rw [EReal.mul_finset_sum_of_nonneg (2^(k+k')) (c' i) _ hf_nonneg]
+        congr 1; ext n
+        split_ifs <;> simp
+    _ = ∑ i : Fin k', (c' i) * Lebesgue_measure (E' i) := by
+        congr 1; ext i; congr 1; exact (hmes_decomp' i).symm
+    _ = weightedMeasureSum c' E' := rfl
+
+end UnsignedSimpleFunction.IntegralWellDef
+
 /-- Lemma 1.3.4 (Well-definedness of simple integral) -/
-lemma UnsignedSimpleFunction.integral_eq {d:ℕ} {f: EuclideanSpace' d → EReal} {f: EuclideanSpace' d → EReal} (hf: UnsignedSimpleFunction f) {k:ℕ} {c: Fin k → EReal}
-{E: Fin k → Set (EuclideanSpace' d)} (hmes: ∀ i, LebesgueMeasurable (E i)) (hnonneg: ∀ i, c i ≥ 0) (heq: f = ∑ i, (c i) • (EReal.indicator (E i))) :
- hf.integ =  ∑ i, (hf.choose_spec.choose i) * Lebesgue_measure (hf.choose_spec.choose_spec.choose i) := by sorry
+lemma UnsignedSimpleFunction.integral_eq {d:ℕ} {f: EuclideanSpace' d → EReal} (hf: UnsignedSimpleFunction f) {k:ℕ} {c: Fin k → EReal}
+    {E: Fin k → Set (EuclideanSpace' d)} (hmes: ∀ i, LebesgueMeasurable (E i)) (hnonneg: ∀ i, c i ≥ 0)
+    (heq: f = ∑ i, (c i) • (EReal.indicator (E i))) :
+    hf.integ = ∑ i, (c i) * Lebesgue_measure (E i) := by
+  -- Extract the canonical representation from hf
+  -- hf gives: ∃ k', ∃ (c': Fin k' → EReal) (E': Fin k' → Set _), (∀ i, LebesgueMeasurable (E' i) ∧ c' i ≥ 0) ∧ f = ∑...
+  -- hf.choose_spec.choose is c', hf.choose_spec.choose_spec.choose is E'
+  let k' := hf.choose
+  let c' := hf.choose_spec.choose
+  let E' := hf.choose_spec.choose_spec.choose
+  have hmes'_nonneg : ∀ i, LebesgueMeasurable (E' i) ∧ c' i ≥ 0 := hf.choose_spec.choose_spec.choose_spec.1
+  have heq' : f = ∑ i, (c' i) • (EReal.indicator (E' i)) := hf.choose_spec.choose_spec.choose_spec.2
+
+  -- The canonical representation also equals f
+  have hfunc_eq : ∑ i, (c i) • (EReal.indicator (E i)) = ∑ i, (c' i) • (EReal.indicator (E' i)) := by
+    rw [← heq, ← heq']
+
+  -- Apply the core lemma: two representations of the same function give the same weighted measure
+  have h := IntegralWellDef.weightedMeasureSum_eq_of_eq
+    hmes (fun i => (hmes'_nonneg i).1) hnonneg (fun i => (hmes'_nonneg i).2) hfunc_eq
+
+  -- h says: weightedMeasureSum c E = weightedMeasureSum c' E'
+  -- Goal: ∑ i, (c' i) * Lebesgue_measure (E' i) = ∑ i, (c i) * Lebesgue_measure (E i)
+  simp only [UnsignedSimpleFunction.IntegralWellDef.weightedMeasureSum] at h
+  exact h.symm
 
 /-- Definition 1.3.5 -/
 def AlmostAlways {d:ℕ} (P: EuclideanSpace' d → Prop) : Prop :=
