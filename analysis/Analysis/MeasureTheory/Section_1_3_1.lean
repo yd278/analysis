@@ -935,9 +935,35 @@ def RealSimpleFunction.neg {d:ℕ} {f: EuclideanSpace' d → ℝ} (hf: RealSimpl
 
 noncomputable def RealSimpleFunction.integ {d:ℕ} {f: EuclideanSpace' d → ℝ} (hf: RealSimpleFunction f) : ℝ := (hf.pos).integ.toReal - (hf.neg).integ.toReal
 
-def ComplexSimpleFunction.re {d:ℕ} {f: EuclideanSpace' d → ℂ} (hf: ComplexSimpleFunction f) : RealSimpleFunction (Complex.re_fun f) := by sorry
+def ComplexSimpleFunction.re {d:ℕ} {f: EuclideanSpace' d → ℂ} (hf: ComplexSimpleFunction f) : RealSimpleFunction (Complex.re_fun f) := by
+  -- If f = ∑ i, c_i • Complex.indicator(E_i), then Re(f) = ∑ i, Re(c_i) • indicator'(E_i)
+  obtain ⟨k, c, E, hmes, heq⟩ := hf
+  use k, fun i => (c i).re, E
+  constructor
+  · exact hmes
+  · ext x
+    simp only [Complex.re_fun, heq, Finset.sum_apply, Pi.smul_apply, smul_eq_mul]
+    -- Goal: (∑ i, c i * Complex.indicator (E i) x).re = ∑ i, (c i).re * (E i).indicator' x
+    rw [Complex.re_sum]
+    congr 1; ext i
+    -- Goal: (c i * Complex.indicator (E i) x).re = (c i).re * (E i).indicator' x
+    simp only [Complex.indicator, Real.complex_fun]
+    rw [Complex.re_mul_ofReal]
 
-def ComplexSimpleFunction.im {d:ℕ} {f: EuclideanSpace' d → ℂ} (hf: ComplexSimpleFunction f) : RealSimpleFunction (Complex.im_fun f) := by sorry
+def ComplexSimpleFunction.im {d:ℕ} {f: EuclideanSpace' d → ℂ} (hf: ComplexSimpleFunction f) : RealSimpleFunction (Complex.im_fun f) := by
+  -- If f = ∑ i, c_i • Complex.indicator(E_i), then Im(f) = ∑ i, Im(c_i) • indicator'(E_i)
+  obtain ⟨k, c, E, hmes, heq⟩ := hf
+  use k, fun i => (c i).im, E
+  constructor
+  · exact hmes
+  · ext x
+    simp only [Complex.im_fun, heq, Finset.sum_apply, Pi.smul_apply, smul_eq_mul]
+    -- Goal: (∑ i, c i * Complex.indicator (E i) x).im = ∑ i, (c i).im * (E i).indicator' x
+    rw [Complex.im_sum]
+    congr 1; ext i
+    -- Goal: (c i * Complex.indicator (E i) x).im = (c i).im * (E i).indicator' x
+    simp only [Complex.indicator, Real.complex_fun]
+    rw [Complex.im_mul_ofReal]
 
 noncomputable def ComplexSimpleFunction.integ {d:ℕ} {f: EuclideanSpace' d → ℂ} (hf: ComplexSimpleFunction f) : ℂ :=
   hf.re.integ + Complex.I * hf.im.integ
