@@ -954,7 +954,23 @@ lemma AlmostAlways.countable {d:ℕ} {I: Type*} [Countable I] {P: I → Euclidea
         _ = 0 := h_sum_zero
     exact le_antisymm h_bound (Lebesgue_outer_measure.nonneg _)
 
--- TODO: AlmostEverywhereEqual is an Equiv
+/-- Almost everywhere equality is reflexive -/
+lemma AlmostEverywhereEqual.refl {d:ℕ} {X: Type*} (f: EuclideanSpace' d → X) :
+    AlmostEverywhereEqual f f := by sorry
+
+/-- Almost everywhere equality is symmetric -/
+lemma AlmostEverywhereEqual.symm {d:ℕ} {X: Type*} {f g: EuclideanSpace' d → X}
+    (h: AlmostEverywhereEqual f g) : AlmostEverywhereEqual g f := by sorry
+
+/-- Almost everywhere equality is transitive -/
+lemma AlmostEverywhereEqual.trans {d:ℕ} {X: Type*} {f g h: EuclideanSpace' d → X}
+    (hfg: AlmostEverywhereEqual f g) (hgh: AlmostEverywhereEqual g h) :
+    AlmostEverywhereEqual f h := by sorry
+
+/-- Almost everywhere equality is an equivalence relation -/
+theorem AlmostEverywhereEqual.equivalence {d:ℕ} {X: Type*} :
+    Equivalence (@AlmostEverywhereEqual d X) :=
+  ⟨refl, symm, trans⟩
 
 /-- Exercise 1.3.1 (i) (Unsigned linearity) -/
 lemma UnsignedSimpleFunction.integral_add {d:ℕ} {f g: EuclideanSpace' d → EReal} (hf: UnsignedSimpleFunction f) (hg: UnsignedSimpleFunction g) :
