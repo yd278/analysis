@@ -929,9 +929,217 @@ def RealSimpleFunction.AbsolutelyIntegrable {d:ℕ} {f: EuclideanSpace' d → �
 def ComplexSimpleFunction.AbsolutelyIntegrable {d:ℕ} {f: EuclideanSpace' d → ℂ} (hf: ComplexSimpleFunction f) : Prop :=
   (hf.abs).integ < ⊤
 
-def RealSimpleFunction.pos {d:ℕ} {f: EuclideanSpace' d → ℝ} (hf: RealSimpleFunction f) : UnsignedSimpleFunction (EReal.pos_fun f) := by sorry
+/-! ### Disjoint representation for RealSimpleFunction
 
-def RealSimpleFunction.neg {d:ℕ} {f: EuclideanSpace' d → ℝ} (hf: RealSimpleFunction f) : UnsignedSimpleFunction (EReal.neg_fun f) := by sorry
+A simple function f = ∑ i, c_i • E_i.indicator' with possibly overlapping sets can be
+rewritten using atoms (disjoint sets) as f = ∑ n, v_n • A_n.indicator' where A_n are
+pairwise disjoint, v_n is the sum of coefficients for sets containing that atom. -/
+
+namespace RealSimpleFunction.DisjointRepr
+
+open UnsignedSimpleFunction.IntegralWellDef
+
+/-- The atom for a single family of sets, using k' = 0 in the general atom definition -/
+def singleAtom {X : Type*} {k : ℕ} (E : Fin k → Set X) (n : Fin (2^k)) : Set X :=
+  atom E (fun _ : Fin 0 => ∅) ⟨n.val, by simp only [add_zero]; exact n.isLt⟩
+
+/-- Single atoms are pairwise disjoint -/
+lemma singleAtom_pairwiseDisjoint {X : Type*} {k : ℕ} (E : Fin k → Set X) :
+    Set.univ.PairwiseDisjoint (singleAtom E) := by
+  intro i _ j _ hij
+  simp only [Function.onFun, singleAtom]
+  have hlt_i : i.val < 2^(k+0) := by simp only [add_zero]; exact i.isLt
+  have hlt_j : j.val < 2^(k+0) := by simp only [add_zero]; exact j.isLt
+  have hij' : (⟨i.val, hlt_i⟩ : Fin (2^(k+0))) ≠ ⟨j.val, hlt_j⟩ := by
+    intro h; apply hij; ext; exact Fin.mk.inj h
+  exact atom_pairwiseDisjoint E (fun _ : Fin 0 => ∅) (by simp : i ∈ Set.univ) (by simp : j ∈ Set.univ) hij'
+
+/-- Single atoms are measurable -/
+lemma singleAtom_measurable {d k : ℕ} {E : Fin k → Set (EuclideanSpace' d)}
+    (hE : ∀ i, LebesgueMeasurable (E i)) (n : Fin (2^k)) :
+    LebesgueMeasurable (singleAtom E n) := by
+  simp only [singleAtom]
+  exact atom_measurable hE (fun i => Fin.elim0 i) ⟨n.val, by simp only [add_zero]; exact n.isLt⟩
+
+/-- Membership in singleAtom is determined by bit pattern -/
+lemma mem_singleAtom_iff {X : Type*} {k : ℕ} (E : Fin k → Set X) (n : Fin (2^k)) (x : X) :
+    x ∈ singleAtom E n ↔ ∀ i : Fin k, n.val.testBit i.val ↔ x ∈ E i := by
+  simp only [singleAtom, atom, Set.mem_setOf_eq]
+  constructor
+  · intro ⟨h1, _⟩ i
+    specialize h1 i
+    rw [atomMembership_eq_testBit] at h1
+    convert h1 using 1
+  · intro h
+    constructor
+    · intro i
+      rw [atomMembership_eq_testBit]
+      exact h i
+    · intro i; exact Fin.elim0 i
+
+/-- The value on atom n is the sum of coefficients for sets containing that atom -/
+noncomputable def atomValue {k : ℕ} (c : Fin k → ℝ) (n : Fin (2^k)) : ℝ :=
+  ∑ i : Fin k, if n.val.testBit i.val then c i else 0
+
+/-- On a point in singleAtom n, the original sum equals atomValue n -/
+lemma sum_indicator_eq_atomValue {d k : ℕ} (c : Fin k → ℝ) (E : Fin k → Set (EuclideanSpace' d))
+    (n : Fin (2^k)) (x : EuclideanSpace' d) (hx : x ∈ singleAtom E n) :
+    (∑ i : Fin k, (c i) * (E i).indicator' x) = atomValue c n := by
+  simp only [atomValue]
+  apply Finset.sum_congr rfl
+  intro i _
+  rw [mem_singleAtom_iff] at hx
+  by_cases hbit : (n.val.testBit i.val) = true
+  · simp only [hbit, ↓reduceIte]
+    have hx_in : x ∈ E i := (hx i).mp hbit
+    simp only [Set.indicator'_of_mem hx_in, mul_one]
+  · have hbit_false : (n.val.testBit i.val) = false := Bool.eq_false_iff.mpr hbit
+    have hx_out : x ∉ E i := fun h => hbit ((hx i).mpr h)
+    simp only [Set.indicator'_of_notMem hx_out, mul_zero, hbit_false, Bool.false_eq_true,
+      ↓reduceIte]
+
+/-- Every point is in exactly one singleAtom -/
+lemma exists_unique_singleAtom {X : Type*} [DecidableEq X] {k : ℕ} (E : Fin k → Set X) (x : X) :
+    ∃! n : Fin (2^k), x ∈ singleAtom E n := by
+  -- The unique atom is determined by x's membership pattern
+  let n : ℕ := atomIndexOf E (fun _ : Fin 0 => ∅) x
+  have hn_lt : n < 2^k := by
+    have := atomIndexOf_lt E (fun _ : Fin 0 => ∅) x
+    simp only [add_zero] at this
+    exact this
+  use ⟨n, hn_lt⟩
+  constructor
+  · -- x ∈ singleAtom ⟨n, _⟩
+    simp only
+    rw [mem_singleAtom_iff]
+    intro i
+    exact atomIndexOf_testBit_E E (fun _ : Fin 0 => ∅) x i
+  · -- uniqueness
+    intro m hm
+    ext
+    rw [mem_singleAtom_iff] at hm
+    simp only [Fin.val_mk]
+    apply Nat.eq_of_testBit_eq
+    intro j
+    by_cases hj : j < k
+    · -- Use hm and atomIndexOf_testBit_E with matching indices
+      have h1 := hm ⟨j, hj⟩
+      have h2 := atomIndexOf_testBit_E E (fun _ : Fin 0 => ∅) x ⟨j, hj⟩
+      -- h1 : m.val.testBit j = true ↔ x ∈ E ⟨j, hj⟩
+      -- h2 : (atomIndexOf ...).testBit j = true ↔ x ∈ E ⟨j, hj⟩
+      -- Both testBits are true iff x ∈ E ⟨j, hj⟩, so they are equal
+      simp only [Fin.val_mk] at h1 h2
+      by_cases hx : x ∈ E ⟨j, hj⟩
+      · rw [h1.mpr hx, h2.mpr hx]
+      · have hm_false : (m.val.testBit j) = false := Bool.eq_false_iff.mpr (fun ht => hx (h1.mp ht))
+        have hn_false : (n.testBit j) = false := Bool.eq_false_iff.mpr (fun ht => hx (h2.mp ht))
+        rw [hm_false, hn_false]
+    · -- For j ≥ k, both sides are false (below 2^k)
+      have hm_lt : m.val < 2^k := m.isLt
+      have hn_lt' : (atomIndexOf E (fun _ : Fin 0 => ∅) x) < 2^k := hn_lt
+      rw [Nat.testBit_lt_two_pow (Nat.lt_of_lt_of_le hm_lt (Nat.pow_le_pow_right (by norm_num : 1 ≤ 2) (le_of_not_gt hj)))]
+      rw [Nat.testBit_lt_two_pow (Nat.lt_of_lt_of_le hn_lt' (Nat.pow_le_pow_right (by norm_num : 1 ≤ 2) (le_of_not_gt hj)))]
+
+/-- The original function equals the sum over atoms with atomValue coefficients -/
+lemma eq_sum_atomValue_indicator {d k : ℕ} (c : Fin k → ℝ) (E : Fin k → Set (EuclideanSpace' d)) :
+    (∑ i : Fin k, (c i) • (E i).indicator') = ∑ n : Fin (2^k), (atomValue c n) • (singleAtom E n).indicator' := by
+  classical
+  ext x
+  simp only [Finset.sum_apply, Pi.smul_apply, smul_eq_mul]
+  -- Find which atom x belongs to
+  have ⟨n, hn_mem, hn_unique⟩ := exists_unique_singleAtom E x
+  -- On RHS, only the n-th term is nonzero
+  have hrhs : (∑ m : Fin (2^k), atomValue c m * (singleAtom E m).indicator' x) = atomValue c n := by
+    rw [Finset.sum_eq_single n]
+    · simp only [Set.indicator'_of_mem hn_mem, mul_one]
+    · intro m _ hm_ne
+      have hx_notin : x ∉ singleAtom E m := fun h => hm_ne (hn_unique m h)
+      simp only [Set.indicator'_of_notMem hx_notin, mul_zero]
+    · intro h; exact absurd (Finset.mem_univ n) h
+  rw [hrhs]
+  exact sum_indicator_eq_atomValue c E n x hn_mem
+
+end RealSimpleFunction.DisjointRepr
+
+/-- Disjoint representation: any RealSimpleFunction has an equivalent representation
+    with pairwise disjoint, measurable sets. -/
+lemma RealSimpleFunction.disjoint_representation {d:ℕ} {f: EuclideanSpace' d → ℝ} (hf: RealSimpleFunction f) :
+    ∃ (n:ℕ) (v: Fin n → ℝ) (A: Fin n → Set (EuclideanSpace' d)),
+      (∀ i, LebesgueMeasurable (A i)) ∧
+      Set.univ.PairwiseDisjoint A ∧
+      f = ∑ i, (v i) • (A i).indicator' := by
+  obtain ⟨k, c, E, hmes, heq⟩ := hf
+  use 2^k, DisjointRepr.atomValue c, DisjointRepr.singleAtom E
+  refine ⟨?_, ?_, ?_⟩
+  · exact fun i => DisjointRepr.singleAtom_measurable hmes i
+  · exact DisjointRepr.singleAtom_pairwiseDisjoint E
+  · rw [heq]
+    exact DisjointRepr.eq_sum_atomValue_indicator c E
+
+def RealSimpleFunction.pos {d:ℕ} {f: EuclideanSpace' d → ℝ} (hf: RealSimpleFunction f) : UnsignedSimpleFunction (EReal.pos_fun f) := by
+  -- Use disjoint representation: f = ∑ i, v_i • A_i.indicator' with disjoint A_i
+  obtain ⟨n, v, A, hA_meas, hA_disj, heq⟩ := hf.disjoint_representation
+  -- The positive part is ∑ i, (max(v_i, 0)).toEReal • EReal.indicator(A_i)
+  use n, fun i => (max (v i) 0).toEReal, A
+  constructor
+  · intro i
+    constructor
+    · exact hA_meas i
+    · exact EReal.coe_nonneg.mpr (le_max_right (v i) 0)
+  · ext x
+    simp only [EReal.pos_fun, Finset.sum_apply, Pi.smul_apply, smul_eq_mul]
+    -- Since atoms are disjoint, x is in at most one atom
+    by_cases hx_in : ∃ j, x ∈ A j
+    · -- x is in exactly one atom due to disjointness (we use exists version)
+      obtain ⟨j, hj⟩ := hx_in
+      -- The sum on both sides only has one nonzero term
+      have hlhs : f x = v j := by
+        rw [heq]
+        simp only [Finset.sum_apply, Pi.smul_apply, smul_eq_mul]
+        rw [Finset.sum_eq_single j]
+        · simp only [Set.indicator'_of_mem hj, mul_one]
+        · intro i _ hi_ne
+          have hx_notin : x ∉ A i := by
+            intro hx_in_i
+            have := hA_disj (Set.mem_univ i) (Set.mem_univ j) hi_ne
+            simp only [Function.onFun, Set.disjoint_left] at this
+            exact this hx_in_i hj
+          simp only [Set.indicator'_of_notMem hx_notin, mul_zero]
+        · intro h; exact absurd (Finset.mem_univ j) h
+      have hrhs : (∑ i : Fin n, (max (v i) 0).toEReal * EReal.indicator (A i) x) =
+                  (max (v j) 0).toEReal := by
+        rw [Finset.sum_eq_single j]
+        · simp only [EReal.indicator, Real.EReal_fun, Set.indicator'_of_mem hj, EReal.coe_one, mul_one]
+        · intro i _ hi_ne
+          have hx_notin : x ∉ A i := by
+            intro hx_in_i
+            have := hA_disj (Set.mem_univ i) (Set.mem_univ j) hi_ne
+            simp only [Function.onFun, Set.disjoint_left] at this
+            exact this hx_in_i hj
+          simp only [EReal.indicator, Real.EReal_fun, Set.indicator'_of_notMem hx_notin, EReal.coe_zero, mul_zero]
+        · intro h; exact absurd (Finset.mem_univ j) h
+      rw [hlhs, hrhs]
+    · -- x is not in any atom, so f(x) = 0
+      push_neg at hx_in
+      have hlhs : f x = 0 := by
+        rw [heq]
+        simp only [Finset.sum_apply, Pi.smul_apply, smul_eq_mul]
+        apply Finset.sum_eq_zero
+        intro i _
+        simp only [Set.indicator'_of_notMem (hx_in i), mul_zero]
+      have hrhs : (∑ i : Fin n, (max (v i) 0).toEReal * EReal.indicator (A i) x) = 0 := by
+        apply Finset.sum_eq_zero
+        intro i _
+        simp only [EReal.indicator, Real.EReal_fun, Set.indicator'_of_notMem (hx_in i), EReal.coe_zero, mul_zero]
+      rw [hlhs, hrhs]
+      simp only [max_self, EReal.coe_zero]
+
+def RealSimpleFunction.neg {d:ℕ} {f: EuclideanSpace' d → ℝ} (hf: RealSimpleFunction f) : UnsignedSimpleFunction (EReal.neg_fun f) := by
+  -- neg_fun f = pos_fun (-f), and -f = (-1) • f is a simple function
+  have h : EReal.neg_fun f = EReal.pos_fun ((-1 : ℝ) • f) := by
+    ext x; simp only [EReal.neg_fun, EReal.pos_fun, Pi.smul_apply, smul_eq_mul, neg_one_mul]
+  rw [h]
+  exact (hf.smul (-1)).pos
 
 noncomputable def RealSimpleFunction.integ {d:ℕ} {f: EuclideanSpace' d → ℝ} (hf: RealSimpleFunction f) : ℝ := (hf.pos).integ.toReal - (hf.neg).integ.toReal
 
