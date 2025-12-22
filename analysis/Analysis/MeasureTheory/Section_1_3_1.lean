@@ -954,7 +954,71 @@ lemma AlmostAlways.countable {d:ℕ} {I: Type*} [Countable I] {P: I → Euclidea
         _ = 0 := h_sum_zero
     exact le_antisymm h_bound (Lebesgue_outer_measure.nonneg _)
 
--- TODO: AlmostEverywhereEqual is an Equiv
+/-- Almost everywhere equality is reflexive -/
+lemma AlmostEverywhereEqual.refl {d:ℕ} {X: Type*} (f: EuclideanSpace' d → X) :
+    AlmostEverywhereEqual f f :=
+  -- {x | f x ≠ f x} = ∅, which is null
+  AlmostAlways.ofAlways (fun _ => rfl)
+
+/-- Almost everywhere equality is symmetric -/
+lemma AlmostEverywhereEqual.symm {d:ℕ} {X: Type*} {f g: EuclideanSpace' d → X}
+    (h: AlmostEverywhereEqual f g) : AlmostEverywhereEqual g f := by
+  -- {x | g x ≠ f x} = {x | f x ≠ g x}, same set
+  unfold AlmostEverywhereEqual AlmostAlways IsNull at *
+  convert h using 2
+  ext x
+  exact ne_comm
+
+/-- Almost everywhere equality is transitive -/
+lemma AlmostEverywhereEqual.trans {d:ℕ} {X: Type*} {f g h: EuclideanSpace' d → X}
+    (hfg: AlmostEverywhereEqual f g) (hgh: AlmostEverywhereEqual g h) :
+    AlmostEverywhereEqual f h := by
+  -- {x | f x ≠ h x} ⊆ {x | f x ≠ g x} ∪ {x | g x ≠ h x}
+  -- Union of two null sets is null
+  unfold AlmostEverywhereEqual AlmostAlways IsNull at *
+  have h_subset : {x | f x ≠ h x} ⊆ {x | f x ≠ g x} ∪ {x | g x ≠ h x} := by
+    intro x hx
+    simp only [Set.mem_setOf_eq, Set.mem_union] at *
+    by_contra hc
+    push_neg at hc
+    exact hx (hc.1.trans hc.2)
+  -- Express union as ℕ-indexed union for countable subadditivity
+  let E : ℕ → Set (EuclideanSpace' d) := fun n =>
+    match n with
+    | 0 => {x | f x ≠ g x}
+    | 1 => {x | g x ≠ h x}
+    | _ => ∅
+  have h_union_eq : {x | f x ≠ g x} ∪ {x | g x ≠ h x} = ⋃ n, E n := by
+    ext x
+    simp only [Set.mem_union, Set.mem_iUnion, E]
+    constructor
+    · intro hx
+      cases hx with
+      | inl hl => exact ⟨0, hl⟩
+      | inr hr => exact ⟨1, hr⟩
+    · intro ⟨n, hn⟩
+      match n with
+      | 0 => exact Or.inl hn
+      | 1 => exact Or.inr hn
+      | n + 2 => exact absurd hn (Set.notMem_empty x)
+  have h_E_null : ∀ n, Lebesgue_outer_measure (E n) = 0 := fun n => by
+    match n with
+    | 0 => exact hfg
+    | 1 => exact hgh
+    | n + 2 => exact Lebesgue_outer_measure.of_empty d
+  have h_sum_zero : ∑' n, Lebesgue_outer_measure (E n) = 0 := by simp only [h_E_null, tsum_zero]
+  have h_union_le := Lebesgue_outer_measure.union_le E
+  have h_bound : Lebesgue_outer_measure {x | f x ≠ h x} ≤ 0 :=
+    calc Lebesgue_outer_measure {x | f x ≠ h x}
+        ≤ Lebesgue_outer_measure (⋃ n, E n) := by rw [← h_union_eq]; exact Lebesgue_outer_measure.mono h_subset
+      _ ≤ ∑' n, Lebesgue_outer_measure (E n) := h_union_le
+      _ = 0 := h_sum_zero
+  exact le_antisymm h_bound (Lebesgue_outer_measure.nonneg _)
+
+/-- Almost everywhere equality is an equivalence relation -/
+theorem AlmostEverywhereEqual.equivalence {d:ℕ} {X: Type*} :
+    Equivalence (@AlmostEverywhereEqual d X) :=
+  ⟨refl, symm, trans⟩
 
 /-- Exercise 1.3.1 (i) (Unsigned linearity) -/
 lemma UnsignedSimpleFunction.integral_add {d:ℕ} {f g: EuclideanSpace' d → EReal} (hf: UnsignedSimpleFunction f) (hg: UnsignedSimpleFunction g) :
