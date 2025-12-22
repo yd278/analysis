@@ -700,6 +700,78 @@ lemma weightedMeasureSum_eq_of_eq {d k k' : ℕ}
         congr 1; ext i; congr 1; exact (hmes_decomp' i).symm
     _ = weightedMeasureSum c' E' := rfl
 
+/-! ### Single-family atoms (k' = 0 specialization)
+
+When working with a single family of sets (no second family to compare against),
+we specialize the atom machinery with k' = 0. -/
+
+/-- The atom for a single family of sets, using k' = 0 in the general atom definition -/
+def singleAtom {X : Type*} {k : ℕ} (E : Fin k → Set X) (n : Fin (2^k)) : Set X :=
+  atom E (fun _ : Fin 0 => ∅) ⟨n.val, by simp only [add_zero]; exact n.isLt⟩
+
+/-- Single atoms are pairwise disjoint -/
+lemma singleAtom_pairwiseDisjoint {X : Type*} {k : ℕ} (E : Fin k → Set X) :
+    Set.univ.PairwiseDisjoint (singleAtom E) := by
+  intro i _ j _ hij
+  simp only [Function.onFun, singleAtom]
+  have hlt_i : i.val < 2^(k+0) := by simp only [add_zero]; exact i.isLt
+  have hlt_j : j.val < 2^(k+0) := by simp only [add_zero]; exact j.isLt
+  have hij' : (⟨i.val, hlt_i⟩ : Fin (2^(k+0))) ≠ ⟨j.val, hlt_j⟩ := by
+    intro h; apply hij; ext; exact Fin.mk.inj h
+  exact atom_pairwiseDisjoint E (fun _ : Fin 0 => ∅) (by simp : i ∈ Set.univ) (by simp : j ∈ Set.univ) hij'
+
+/-- Membership in singleAtom is determined by bit pattern -/
+lemma mem_singleAtom_iff {X : Type*} {k : ℕ} (E : Fin k → Set X) (n : Fin (2^k)) (x : X) :
+    x ∈ singleAtom E n ↔ ∀ i : Fin k, n.val.testBit i.val ↔ x ∈ E i := by
+  simp only [singleAtom, atom, Set.mem_setOf_eq]
+  constructor
+  · intro ⟨h1, _⟩ i
+    specialize h1 i
+    rw [atomMembership_eq_testBit] at h1
+    convert h1 using 1
+  · intro h
+    constructor
+    · intro i
+      rw [atomMembership_eq_testBit]
+      exact h i
+    · intro i; exact Fin.elim0 i
+
+/-- Every point is in exactly one singleAtom -/
+lemma exists_unique_singleAtom {X : Type*} [DecidableEq X] {k : ℕ} (E : Fin k → Set X) (x : X) :
+    ∃! n : Fin (2^k), x ∈ singleAtom E n := by
+  let n : ℕ := atomIndexOf E (fun _ : Fin 0 => ∅) x
+  have hn_lt : n < 2^k := by
+    have := atomIndexOf_lt E (fun _ : Fin 0 => ∅) x
+    simp only [add_zero] at this
+    exact this
+  use ⟨n, hn_lt⟩
+  constructor
+  · simp only
+    rw [mem_singleAtom_iff]
+    intro i
+    exact atomIndexOf_testBit_E E (fun _ : Fin 0 => ∅) x i
+  · intro m hm
+    ext
+    rw [mem_singleAtom_iff] at hm
+    apply Nat.eq_of_testBit_eq
+    intro j
+    by_cases hj : j < k
+    · have h1 := hm ⟨j, hj⟩
+      have h2 := atomIndexOf_testBit_E E (fun _ : Fin 0 => ∅) x ⟨j, hj⟩
+      by_cases hx : x ∈ E ⟨j, hj⟩
+      · rw [h1.mpr hx, h2.mpr hx]
+      · have hm_false : (m.val.testBit j) = false := Bool.eq_false_iff.mpr (fun ht => hx (h1.mp ht))
+        have hn_false : (n.testBit j) = false := Bool.eq_false_iff.mpr (fun ht => hx (h2.mp ht))
+        rw [hm_false, hn_false]
+    · have hm_lt : m.val < 2^k := m.isLt
+      have hn_lt' : (atomIndexOf E (fun _ : Fin 0 => ∅) x) < 2^k := hn_lt
+      rw [Nat.testBit_lt_two_pow (Nat.lt_of_lt_of_le hm_lt (Nat.pow_le_pow_right (by norm_num : 1 ≤ 2) (le_of_not_gt hj)))]
+      rw [Nat.testBit_lt_two_pow (Nat.lt_of_lt_of_le hn_lt' (Nat.pow_le_pow_right (by norm_num : 1 ≤ 2) (le_of_not_gt hj)))]
+
+/-- The value on atom n is the sum of coefficients for sets containing that atom -/
+noncomputable def atomValue {k : ℕ} (c : Fin k → ℝ) (n : Fin (2^k)) : ℝ :=
+  ∑ i : Fin k, if n.val.testBit i.val then c i else 0
+
 end UnsignedSimpleFunction.IntegralWellDef
 
 /-- Lemma 1.3.4 (Well-definedness of simple integral) -/
@@ -931,28 +1003,11 @@ def ComplexSimpleFunction.AbsolutelyIntegrable {d:ℕ} {f: EuclideanSpace' d →
 
 /-! ### Disjoint representation for RealSimpleFunction
 
-A simple function f = ∑ i, c_i • E_i.indicator' with possibly overlapping sets can be
-rewritten using atoms (disjoint sets) as f = ∑ n, v_n • A_n.indicator' where A_n are
-pairwise disjoint, v_n is the sum of coefficients for sets containing that atom. -/
+Measure-theory specific lemmas for the disjoint representation of simple functions. -/
 
 namespace RealSimpleFunction.DisjointRepr
 
 open UnsignedSimpleFunction.IntegralWellDef
-
-/-- The atom for a single family of sets, using k' = 0 in the general atom definition -/
-def singleAtom {X : Type*} {k : ℕ} (E : Fin k → Set X) (n : Fin (2^k)) : Set X :=
-  atom E (fun _ : Fin 0 => ∅) ⟨n.val, by simp only [add_zero]; exact n.isLt⟩
-
-/-- Single atoms are pairwise disjoint -/
-lemma singleAtom_pairwiseDisjoint {X : Type*} {k : ℕ} (E : Fin k → Set X) :
-    Set.univ.PairwiseDisjoint (singleAtom E) := by
-  intro i _ j _ hij
-  simp only [Function.onFun, singleAtom]
-  have hlt_i : i.val < 2^(k+0) := by simp only [add_zero]; exact i.isLt
-  have hlt_j : j.val < 2^(k+0) := by simp only [add_zero]; exact j.isLt
-  have hij' : (⟨i.val, hlt_i⟩ : Fin (2^(k+0))) ≠ ⟨j.val, hlt_j⟩ := by
-    intro h; apply hij; ext; exact Fin.mk.inj h
-  exact atom_pairwiseDisjoint E (fun _ : Fin 0 => ∅) (by simp : i ∈ Set.univ) (by simp : j ∈ Set.univ) hij'
 
 /-- Single atoms are measurable -/
 lemma singleAtom_measurable {d k : ℕ} {E : Fin k → Set (EuclideanSpace' d)}
@@ -960,26 +1015,6 @@ lemma singleAtom_measurable {d k : ℕ} {E : Fin k → Set (EuclideanSpace' d)}
     LebesgueMeasurable (singleAtom E n) := by
   simp only [singleAtom]
   exact atom_measurable hE (fun i => Fin.elim0 i) ⟨n.val, by simp only [add_zero]; exact n.isLt⟩
-
-/-- Membership in singleAtom is determined by bit pattern -/
-lemma mem_singleAtom_iff {X : Type*} {k : ℕ} (E : Fin k → Set X) (n : Fin (2^k)) (x : X) :
-    x ∈ singleAtom E n ↔ ∀ i : Fin k, n.val.testBit i.val ↔ x ∈ E i := by
-  simp only [singleAtom, atom, Set.mem_setOf_eq]
-  constructor
-  · intro ⟨h1, _⟩ i
-    specialize h1 i
-    rw [atomMembership_eq_testBit] at h1
-    convert h1 using 1
-  · intro h
-    constructor
-    · intro i
-      rw [atomMembership_eq_testBit]
-      exact h i
-    · intro i; exact Fin.elim0 i
-
-/-- The value on atom n is the sum of coefficients for sets containing that atom -/
-noncomputable def atomValue {k : ℕ} (c : Fin k → ℝ) (n : Fin (2^k)) : ℝ :=
-  ∑ i : Fin k, if n.val.testBit i.val then c i else 0
 
 /-- On a point in singleAtom n, the original sum equals atomValue n -/
 lemma sum_indicator_eq_atomValue {d k : ℕ} (c : Fin k → ℝ) (E : Fin k → Set (EuclideanSpace' d))
@@ -998,57 +1033,13 @@ lemma sum_indicator_eq_atomValue {d k : ℕ} (c : Fin k → ℝ) (E : Fin k → 
     simp only [Set.indicator'_of_notMem hx_out, mul_zero, hbit_false, Bool.false_eq_true,
       ↓reduceIte]
 
-/-- Every point is in exactly one singleAtom -/
-lemma exists_unique_singleAtom {X : Type*} [DecidableEq X] {k : ℕ} (E : Fin k → Set X) (x : X) :
-    ∃! n : Fin (2^k), x ∈ singleAtom E n := by
-  -- The unique atom is determined by x's membership pattern
-  let n : ℕ := atomIndexOf E (fun _ : Fin 0 => ∅) x
-  have hn_lt : n < 2^k := by
-    have := atomIndexOf_lt E (fun _ : Fin 0 => ∅) x
-    simp only [add_zero] at this
-    exact this
-  use ⟨n, hn_lt⟩
-  constructor
-  · -- x ∈ singleAtom ⟨n, _⟩
-    simp only
-    rw [mem_singleAtom_iff]
-    intro i
-    exact atomIndexOf_testBit_E E (fun _ : Fin 0 => ∅) x i
-  · -- uniqueness
-    intro m hm
-    ext
-    rw [mem_singleAtom_iff] at hm
-    simp only [Fin.val_mk]
-    apply Nat.eq_of_testBit_eq
-    intro j
-    by_cases hj : j < k
-    · -- Use hm and atomIndexOf_testBit_E with matching indices
-      have h1 := hm ⟨j, hj⟩
-      have h2 := atomIndexOf_testBit_E E (fun _ : Fin 0 => ∅) x ⟨j, hj⟩
-      -- h1 : m.val.testBit j = true ↔ x ∈ E ⟨j, hj⟩
-      -- h2 : (atomIndexOf ...).testBit j = true ↔ x ∈ E ⟨j, hj⟩
-      -- Both testBits are true iff x ∈ E ⟨j, hj⟩, so they are equal
-      simp only [Fin.val_mk] at h1 h2
-      by_cases hx : x ∈ E ⟨j, hj⟩
-      · rw [h1.mpr hx, h2.mpr hx]
-      · have hm_false : (m.val.testBit j) = false := Bool.eq_false_iff.mpr (fun ht => hx (h1.mp ht))
-        have hn_false : (n.testBit j) = false := Bool.eq_false_iff.mpr (fun ht => hx (h2.mp ht))
-        rw [hm_false, hn_false]
-    · -- For j ≥ k, both sides are false (below 2^k)
-      have hm_lt : m.val < 2^k := m.isLt
-      have hn_lt' : (atomIndexOf E (fun _ : Fin 0 => ∅) x) < 2^k := hn_lt
-      rw [Nat.testBit_lt_two_pow (Nat.lt_of_lt_of_le hm_lt (Nat.pow_le_pow_right (by norm_num : 1 ≤ 2) (le_of_not_gt hj)))]
-      rw [Nat.testBit_lt_two_pow (Nat.lt_of_lt_of_le hn_lt' (Nat.pow_le_pow_right (by norm_num : 1 ≤ 2) (le_of_not_gt hj)))]
-
 /-- The original function equals the sum over atoms with atomValue coefficients -/
 lemma eq_sum_atomValue_indicator {d k : ℕ} (c : Fin k → ℝ) (E : Fin k → Set (EuclideanSpace' d)) :
     (∑ i : Fin k, (c i) • (E i).indicator') = ∑ n : Fin (2^k), (atomValue c n) • (singleAtom E n).indicator' := by
   classical
   ext x
   simp only [Finset.sum_apply, Pi.smul_apply, smul_eq_mul]
-  -- Find which atom x belongs to
   have ⟨n, hn_mem, hn_unique⟩ := exists_unique_singleAtom E x
-  -- On RHS, only the n-th term is nonzero
   have hrhs : (∑ m : Fin (2^k), atomValue c m * (singleAtom E m).indicator' x) = atomValue c n := by
     rw [Finset.sum_eq_single n]
     · simp only [Set.indicator'_of_mem hn_mem, mul_one]
@@ -1068,11 +1059,13 @@ lemma RealSimpleFunction.disjoint_representation {d:ℕ} {f: EuclideanSpace' d �
       (∀ i, LebesgueMeasurable (A i)) ∧
       Set.univ.PairwiseDisjoint A ∧
       f = ∑ i, (v i) • (A i).indicator' := by
+  open UnsignedSimpleFunction.IntegralWellDef in
   obtain ⟨k, c, E, hmes, heq⟩ := hf
-  use 2^k, DisjointRepr.atomValue c, DisjointRepr.singleAtom E
+  use 2^k, UnsignedSimpleFunction.IntegralWellDef.atomValue c,
+      UnsignedSimpleFunction.IntegralWellDef.singleAtom E
   refine ⟨?_, ?_, ?_⟩
   · exact fun i => DisjointRepr.singleAtom_measurable hmes i
-  · exact DisjointRepr.singleAtom_pairwiseDisjoint E
+  · exact UnsignedSimpleFunction.IntegralWellDef.singleAtom_pairwiseDisjoint E
   · rw [heq]
     exact DisjointRepr.eq_sum_atomValue_indicator c E
 
