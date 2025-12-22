@@ -395,19 +395,13 @@ theorem pow_ge_pow (x y:ℚ) (n:ℕ) (hxy: x ≥ y) (hy: y ≥ 0) : x^n ≥ y^n 
 
 /-- Proposition 4.3.10(c) (Properties of exponentiation, I) / Exercise 4.3.3 -/
 theorem pow_gt_pow (x y:ℚ) (n:ℕ) (hxy: x > y) (hy: y ≥ 0) (hn: n > 0) : x^n > y^n := by
-  induction' n with k hind
-  . contradiction
-  ring_nf
-  by_cases hk : k=0
-  . simpa[hk]
-  have : k>0 := by grind
-  specialize hind this
-  simp at ⊢ hind
-  apply mul_lt_mul_of_nonneg_of_pos hxy (by simp[le_iff_lt_or_eq,hind]) hy
-  have hyk := pow_nonneg k hy 
-  calc 
-    _ <= y ^ k := hyk
-    _ < _ :=  hind
+  induction' n,hn using Nat.le_induction with k hk hind
+  simp[hxy]
+  simp_rw[pow_succ]
+  have hx : x > 0 := by grind
+  have hpy : y ^ k ≥ 0 := by exact pow_nonneg k hy
+  have hpx : x ^ k > 0 := by order
+  exact Right.mul_lt_mul_of_nonneg hind hxy hpy hy
 
 /-- Proposition 4.3.10(d) (Properties of exponentiation, I) / Exercise 4.3.3 -/
 theorem pow_abs (x:ℚ) (n:ℕ) : |x|^n = |x^n| := by
@@ -430,38 +424,18 @@ theorem pow_eq_zpow (x:ℚ) (n:ℕ): x^(n:ℤ) = x^n := zpow_natCast x n
     
 
 /-- Proposition 4.3.12(a) (Properties of exponentiation, II) / Exercise 4.3.4 -/
-lemma zpow_sub_nats (x:ℚ) (n m:ℕ) (hx: x≠ 0): x ^ ((n:ℤ) + - (m:ℤ)) = x ^ n / x ^ m := by
-    obtain ⟨d, (hp|hn)⟩ := Int.eq_nat_or_neg  (n  + -(m:ℤ ))
-    . simp[hp]; 
-      have : n = d + m := by grind
-      simp[this,← pow_add]
-      have := pow_ne_zero m hx
-      rw[mul_div_cancel_right₀ (x ^ d) this]
-    simp[hn]
-    have : m = d + n := by grind
-    simp[this,← pow_add]
-    have hxd := pow_ne_zero d hx
-    have hxn := pow_ne_zero n hx
-    exact Eq.symm (div_mul_cancel_right₀ hxn (x ^ d))
 
 theorem zpow_add (x:ℚ) (n m:ℤ) (hx: x ≠ 0): x^n * x^m = x^(n+m) := by
-  obtain ⟨n, (rfl|rfl)⟩ := Int.eq_nat_or_neg n <;>
-  obtain ⟨m, (rfl|rfl)⟩ := Int.eq_nat_or_neg m 
-  all_goals
-    try simp_rw[pow_eq_zpow]
-    try simp_rw[zpow_neg]
-  . convert pow_add x m n
-    convert pow_eq_zpow x (n + m)
-  . rw[zpow_sub_nats]
-    exact mul_one_div (x ^ n) (x ^ m)
-    exact hx
-  . rw[add_comm,zpow_sub_nats]
-    exact one_div_mul_eq_div (x ^ n) (x ^ m)
-    exact hx
-  have : (- (n:ℤ) + - (m :ℤ) ) = - ((n + m):ℕ) := by
-    grind
-  rw[this,zpow_neg]
-  ring
+  induction' m with k hind k hind
+  . simp
+  . calc
+      _ = x ^ n * x ^ (k:ℤ) * x := by rw[zpow_add_one₀ hx]; ring
+      _ = x^(n+k) * x := by rw[hind]
+      _ = _ := by rw[← zpow_add_one₀ hx];abel_nf
+  calc 
+    _ = x ^ n * x ^ (-k:ℤ) * x⁻¹ := by rw[zpow_sub_one₀ hx];ring
+    _ = x ^ (n + (-k:ℤ)) * x⁻¹ := by rw[hind]
+    _ = _ := by rw[← zpow_sub_one₀ hx];abel_nf
 
 /-- Proposition 4.3.12(a) (Properties of exponentiation, II) / Exercise 4.3.4 -/
 theorem zpow_mul (x:ℚ) (n m:ℤ) : (x^n)^m = x^(n*m) := by
