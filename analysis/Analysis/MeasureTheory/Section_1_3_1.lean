@@ -36,7 +36,18 @@ def ComplexSimpleFunction {d:ℕ} (f: EuclideanSpace' d → ℂ) : Prop := ∃ (
 
 
 @[coe]
-abbrev RealSimpleFunction.toComplex {d:ℕ} (f: EuclideanSpace' d → ℝ) (df: RealSimpleFunction f) : ComplexSimpleFunction (Real.complex_fun f) := by sorry
+abbrev RealSimpleFunction.toComplex {d:ℕ} (f: EuclideanSpace' d → ℝ) (df: RealSimpleFunction f) : ComplexSimpleFunction (Real.complex_fun f) := by
+  obtain ⟨k, c, E, hmes, heq⟩ := df
+  use k, fun i => Complex.ofReal (c i), E
+  constructor
+  · exact hmes
+  · ext x
+    simp only [Real.complex_fun, Complex.indicator, heq]
+    simp only [Finset.sum_apply, Pi.smul_apply, smul_eq_mul]
+    rw [Complex.ofReal_sum]
+    congr 1
+    ext i
+    exact Complex.ofReal_mul (c i) ((E i).indicator' x)
 
 instance RealSimpleFunction.coe_complex {d:ℕ} (f: EuclideanSpace' d → ℝ) : Coe (RealSimpleFunction f) (ComplexSimpleFunction (Real.complex_fun f)) := {
   coe := RealSimpleFunction.toComplex f
