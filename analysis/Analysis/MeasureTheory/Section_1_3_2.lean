@@ -37,12 +37,12 @@ let `tfae_finish` compute the transitive closure.
 - (v)-(viii) ⟹ (ix): intervals are intersections of half-intervals
 - (ix) ⟹ (x): open sets are countable unions of intervals
 - (x) ⟺ (xi): complementation
-- (x) ⟹ (viii): preimage of closed set Iic
+- (x) ⟹ (vii): {f < λ} = f⁻¹'(Iio λ) and Iio λ is open
 - (v)-(xi) ⟹ (iv): construction of approximating sequence
 
 **Derived transitively (by tfae_finish):**
-- (ix) ⟹ (v) or (vi): via (ix) → (x) → (viii) → (v) → (vi)
-- (x) ⟹ (v)-(ix): via (x) → (viii) → (v) → (vi)/(vii)/(ix)
+- (ix) ⟹ (v) or (vi): via (ix) → (x) → (vii) → (vi) → (v)
+- (x) ⟹ (v)-(ix): via (x) → (vii) → (vi) → (v) → (viii)/(ix)
 -/
 
 namespace UnsignedMeasurable.TFAE_helpers
@@ -98,7 +98,7 @@ private lemma iv_imp_ii : stmt_iv f → stmt_ii f := by
   intro x
   rw [hg_sup x]
   -- For monotone sequences in EReal, g n x → iSup (g · x)
-  sorry -- TODO: EReal.tendsto_atTop_iSup for monotone sequences
+  exact tendsto_atTop_iSup (hg_mono x)
 
 /-! ### (iii) ⟹ (v): Via limsup representation -/
 
@@ -112,25 +112,128 @@ private lemma iii_imp_v : stmt_iii f → stmt_v f := by
 
 /-! ### (v) ⟹ (vi): {f ≥ λ} = ⋂_{n≥1} {f > λ - 1/n} -/
 
+-- Helper: if x > n for all n ∈ ℕ, then x = ⊤
+private lemma EReal.eq_top_of_forall_nat_lt {x : EReal} (h : ∀ n : ℕ, x > n) : x = ⊤ := by
+  induction x using EReal.rec with
+  | bot =>
+    exfalso
+    have h0 : (⊥ : EReal) > (0 : ℕ) := h 0
+    simp only [Nat.cast_zero, gt_iff_lt, not_lt_bot] at h0
+  | top => rfl
+  | coe r =>
+    exfalso
+    have h1 : (r : EReal) > (⌈r⌉₊ : ℕ) := h ⌈r⌉₊
+    have h1' : r > (⌈r⌉₊ : ℕ) := by
+      simp only [gt_iff_lt] at h1 ⊢
+      rwa [show ((⌈r⌉₊ : ℕ) : EReal) = ((⌈r⌉₊ : ℕ) : ℝ) by norm_cast,
+           EReal.coe_lt_coe_iff] at h1
+    have h2 : r ≤ ⌈r⌉₊ := Nat.le_ceil r
+    linarith
+
 private lemma v_imp_vi : stmt_v f → stmt_vi f := by
   intro hv t
-  -- {f ≥ t} = ⋂_{n≥1} {f > t - 1/(n+1)}
-  have h_eq : {x | f x ≥ t} = ⋂ (n : ℕ), {x | f x > t - (1 / (n + 1 : ℕ))} := by
-    ext x
-    simp only [Set.mem_setOf_eq, Set.mem_iInter]
-    constructor
-    · intro hfx n
-      sorry -- f x ≥ t implies f x > t - 1/(n+1)
-    · intro hfx
-      sorry -- limit argument
-  rw [h_eq]
-  exact MeasurableSet.iInter (fun n => hv _)
+  -- Handle cases based on t
+  rcases eq_bot_or_bot_lt t with rfl | ht_bot
+  · -- t = ⊥: {f ≥ ⊥} = Set.univ
+    convert MeasurableSet.univ
+    ext x; simp
+  rcases eq_top_or_lt_top t with rfl | ht_top
+  · -- t = ⊤: {f ≥ ⊤} = {f = ⊤} = ⋂_{n ∈ ℕ} {f > n}
+    have h_eq : {x | f x ≥ ⊤} = ⋂ (n : ℕ), {x | f x > n} := by
+      ext x
+      simp only [Set.mem_setOf_eq, Set.mem_iInter, ge_iff_le, top_le_iff]
+      constructor
+      · intro hfx n
+        simp only [gt_iff_lt]
+        rw [hfx]; exact EReal.coe_lt_top n
+      · intro hfx
+        exact EReal.eq_top_of_forall_nat_lt hfx
+    rw [h_eq]
+    exact MeasurableSet.iInter (fun n => hv _)
+  · -- t is finite: use {f ≥ t} = ⋂_{n≥1} {f > t - 1/(n+1)}
+    -- Since t < ⊤ and ⊥ < t, we know t is a real number
+    induction t using EReal.rec with
+    | bot => exact (not_lt.mpr le_rfl ht_bot).elim
+    | top => exact (not_lt.mpr le_rfl ht_top).elim
+    | coe t' =>
+      -- Use {f ≥ t'} = ⋂_n {f > (t' - 1/(n+1) : ℝ)}
+      have h_eq : {x | f x ≥ (t' : EReal)} = ⋂ (n : ℕ), {x | f x > ((t' - 1 / (n + 1)) : ℝ)} := by
+        ext x
+        simp only [Set.mem_setOf_eq, Set.mem_iInter, ge_iff_le, gt_iff_lt]
+        constructor
+        · intro hfx n
+          have h1 : (0 : ℝ) < 1 / (n + 1) := by positivity
+          have h2 : (t' - 1 / (n + 1) : ℝ) < t' := by linarith
+          have h3 : ((t' - 1 / (n + 1)) : EReal) < (t' : EReal) := EReal.coe_lt_coe_iff.mpr h2
+          exact lt_of_lt_of_le h3 hfx
+        · intro hfx
+          by_contra h
+          push_neg at h
+          -- f x < t'
+          have hfx_lt_t' : f x < (t' : EReal) := h
+          -- Get a witness for f x being a real
+          have hfx_ne_bot : f x ≠ ⊥ := by
+            intro hfx_eq_bot
+            have hbot : ((t' - 1 / ((0 : ℕ) + 1)) : ℝ) < (⊥ : EReal) := by
+              simp only [Nat.cast_zero, zero_add, div_one]
+              rw [← hfx_eq_bot]
+              convert hfx 0 using 2
+              simp
+            exact not_lt_bot hbot
+          have hfx_ne_top : f x ≠ ⊤ := ne_top_of_lt hfx_lt_t'
+          -- So f x is a real
+          have hr : f x = (f x).toReal := (EReal.coe_toReal hfx_ne_top hfx_ne_bot).symm
+          set r := (f x).toReal with hr_def
+          rw [hr] at hfx_lt_t' hfx
+          have hr_lt_t' : r < t' := EReal.coe_lt_coe_iff.mp hfx_lt_t'
+          have hdiff_pos : 0 < t' - r := by linarith
+          obtain ⟨n, hn⟩ := exists_nat_gt (1 / (t' - r))
+          have h_n_pos : (0 : ℝ) < n := by
+            by_cases hn0 : n = 0
+            · subst hn0; simp at hn; linarith
+            · exact Nat.cast_pos.mpr (Nat.pos_of_ne_zero hn0)
+          have hn' : 1 / ((n : ℝ) + 1) < t' - r := by
+            calc 1 / ((n : ℝ) + 1) < 1 / (n : ℝ) := by
+                  apply one_div_lt_one_div_of_lt h_n_pos; linarith
+              _ < 1 / (1 / (t' - r)) := by
+                  apply one_div_lt_one_div_of_lt (one_div_pos.mpr hdiff_pos) hn
+              _ = t' - r := one_div_one_div (t' - r)
+          -- So (t' - 1/(n+1) : ℝ) > r
+          have hcontra := hfx n
+          have hcontra' := EReal.coe_lt_coe_iff.mp hcontra
+          linarith
+      rw [h_eq]
+      exact MeasurableSet.iInter (fun n => hv _)
 
 /-! ### (vi) ⟹ (v): {f > λ} = ⋃_{q ∈ ℚ, q > λ} {f ≥ q} -/
 
 private lemma vi_imp_v : stmt_vi f → stmt_v f := by
   intro hvi t
-  sorry -- countable union over rationals
+  -- {f > t} = ⋃_{q : ℚ, q > t} {f ≥ q}
+  -- Since rationals are dense, for any x with f x > t, there exists q ∈ ℚ with t < q ≤ f x
+  have h_eq : {x | f x > t} = ⋃ (q : ℚ), if (t < ((q : ℝ) : EReal)) then {x | f x ≥ ((q : ℝ) : EReal)} else ∅ := by
+    ext x
+    simp only [Set.mem_setOf_eq, Set.mem_iUnion]
+    constructor
+    · intro hfx
+      -- f x > t, so there exists q ∈ ℚ with t < q < f x
+      obtain ⟨q, hq1, hq2⟩ := EReal.exists_rat_btwn_of_lt hfx
+      use q
+      simp only [hq1, if_true]
+      exact le_of_lt hq2
+    · intro ⟨q, hq⟩
+      by_cases h : t < ((q : ℝ) : EReal)
+      · simp only [h, if_true, Set.mem_setOf_eq] at hq
+        calc t < ((q : ℝ) : EReal) := h
+          _ ≤ f x := hq
+      · simp only [h, if_false, Set.mem_empty_iff_false] at hq
+  rw [h_eq]
+  -- This is a countable union of measurable sets
+  apply MeasurableSet.iUnion
+  intro q
+  split_ifs with h
+  · exact hvi ((q : ℝ) : EReal)
+  · exact MeasurableSet.empty
 
 /-! ### (v) ⟹ (viii): {f ≤ t} = {f > t}ᶜ -/
 
@@ -172,22 +275,34 @@ private lemma v_to_viii_imp_ix (hv : stmt_v f) (hvi : stmt_vi f) (hvii : stmt_vi
   cases I with
   | Ioo a b =>
     simp only [BoundedInterval.toSet]
-    have h_eq : f⁻¹' (Real.toEReal '' Set.Ioo a b) = {x | f x > a} ∩ {x | f x < b} := by sorry
+    have h_eq : f⁻¹' (Real.toEReal '' Set.Ioo a b) = {x | f x > a} ∩ {x | f x < b} := by
+      rw [EReal.image_coe_Ioo]
+      ext x
+      simp only [Set.mem_preimage, Set.mem_Ioo, Set.mem_inter_iff, Set.mem_setOf_eq, gt_iff_lt]
     rw [h_eq]
     exact MeasurableSet.inter (hv _) (hvii _)
   | Icc a b =>
     simp only [BoundedInterval.toSet]
-    have h_eq : f⁻¹' (Real.toEReal '' Set.Icc a b) = {x | f x ≥ a} ∩ {x | f x ≤ b} := by sorry
+    have h_eq : f⁻¹' (Real.toEReal '' Set.Icc a b) = {x | f x ≥ a} ∩ {x | f x ≤ b} := by
+      rw [EReal.image_coe_Icc]
+      ext x
+      simp only [Set.mem_preimage, Set.mem_Icc, Set.mem_inter_iff, Set.mem_setOf_eq, ge_iff_le]
     rw [h_eq]
     exact MeasurableSet.inter (hvi _) (hviii _)
   | Ioc a b =>
     simp only [BoundedInterval.toSet]
-    have h_eq : f⁻¹' (Real.toEReal '' Set.Ioc a b) = {x | f x > a} ∩ {x | f x ≤ b} := by sorry
+    have h_eq : f⁻¹' (Real.toEReal '' Set.Ioc a b) = {x | f x > a} ∩ {x | f x ≤ b} := by
+      rw [EReal.image_coe_Ioc]
+      ext x
+      simp only [Set.mem_preimage, Set.mem_Ioc, Set.mem_inter_iff, Set.mem_setOf_eq, gt_iff_lt]
     rw [h_eq]
     exact MeasurableSet.inter (hv _) (hviii _)
   | Ico a b =>
     simp only [BoundedInterval.toSet]
-    have h_eq : f⁻¹' (Real.toEReal '' Set.Ico a b) = {x | f x ≥ a} ∩ {x | f x < b} := by sorry
+    have h_eq : f⁻¹' (Real.toEReal '' Set.Ico a b) = {x | f x ≥ a} ∩ {x | f x < b} := by
+      rw [EReal.image_coe_Ico]
+      ext x
+      simp only [Set.mem_preimage, Set.mem_Ico, Set.mem_inter_iff, Set.mem_setOf_eq, ge_iff_le]
     rw [h_eq]
     exact MeasurableSet.inter (hvi _) (hvii _)
 
@@ -210,15 +325,14 @@ private lemma x_iff_xi : stmt_x f ↔ stmt_xi f := by
     rw [h_eq]
     exact MeasurableSet.compl (hxi _ hU.isClosed_compl)
 
-/-! ### (x) ⟹ (viii): Preimage of closed set Iic t -/
+/-! ### (x) ⟹ (vii): {f < λ} = f⁻¹'(Iio λ) and Iio λ is open -/
 
-private lemma x_imp_viii : stmt_x f → stmt_viii f := by
+private lemma x_imp_vii : stmt_x f → stmt_vii f := by
   intro hx t
-  have hxi := x_iff_xi.mp hx
-  have h_closed : IsClosed (Set.Iic t) := isClosed_Iic
-  have h_eq : {x | f x ≤ t} = f⁻¹' (Set.Iic t) := rfl
+  have h_open : IsOpen (Set.Iio t) := isOpen_Iio
+  have h_eq : {x | f x < t} = f⁻¹' (Set.Iio t) := rfl
   rw [h_eq]
-  exact hxi _ h_closed
+  exact hx _ h_open
 
 /-! ### (v)-(xi) ⟹ (iv): Construction of approximating sequence -/
 
@@ -261,7 +375,7 @@ theorem UnsignedMeasurable.TFAE {d:ℕ} {f: EuclideanSpace' d → EReal} (hf: Un
   tfae_have 5 → 9 := fun h => v_to_viii_imp_ix h (v_imp_vi h) (vi_imp_vii (v_imp_vi h)) (v_imp_viii h)
   tfae_have 9 → 10 := ix_imp_x
   tfae_have 10 ↔ 11 := x_iff_xi
-  tfae_have 10 → 8 := x_imp_viii
+  tfae_have 10 → 7 := x_imp_vii
   tfae_have 5 → 4 := fun hv => v_to_xi_imp_iv hf hv (v_imp_vi hv) (vi_imp_vii (v_imp_vi hv))
     (v_imp_viii hv) (v_to_viii_imp_ix hv (v_imp_vi hv) (vi_imp_vii (v_imp_vi hv)) (v_imp_viii hv))
     (ix_imp_x (v_to_viii_imp_ix hv (v_imp_vi hv) (vi_imp_vii (v_imp_vi hv)) (v_imp_viii hv)))
