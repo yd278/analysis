@@ -102,13 +102,402 @@ private lemma iv_imp_ii : stmt_iv f → stmt_ii f := by
 
 /-! ### (iii) ⟹ (v): Via limsup representation -/
 
+-- Helper: finite intersection indexed by Finset
+private lemma LebesgueMeasurable.finset_inter {α : Type*} [DecidableEq α]
+    {E : α → Set (EuclideanSpace' d)} {S : Finset α}
+    (hE : ∀ i ∈ S, LebesgueMeasurable (E i)) :
+    LebesgueMeasurable (⋂ i ∈ S, E i) := by
+  induction S using Finset.induction_on with
+  | empty =>
+    simp only [Finset.notMem_empty, Set.iInter_of_empty, Set.iInter_univ]
+    rw [← Set.compl_empty]
+    exact LebesgueMeasurable.empty.complement
+  | insert a S' ha ih =>
+    simp only [Finset.mem_insert, forall_eq_or_imp] at hE
+    have hE_a := hE.1
+    have hE_rest := fun i hi => hE.2 i hi
+    rw [show (⋂ i ∈ insert a S', E i) = E a ∩ (⋂ i ∈ S', E i) by
+      ext x
+      simp only [Set.mem_iInter, Set.mem_inter_iff]
+      constructor
+      · intro h; exact ⟨h a (Finset.mem_insert_self a S'), fun i hi => h i (Finset.mem_insert_of_mem hi)⟩
+      · intro ⟨ha', h⟩ i hi
+        rcases Finset.mem_insert.mp hi with rfl | hi'
+        · exact ha'
+        · exact h i hi']
+    exact LebesgueMeasurable.inter hE_a (ih hE_rest)
+
+-- Helper: finite union indexed by Finset
+private lemma LebesgueMeasurable.finset_union {α : Type*} [DecidableEq α]
+    {E : α → Set (EuclideanSpace' d)} {S : Finset α}
+    (hE : ∀ i ∈ S, LebesgueMeasurable (E i)) :
+    LebesgueMeasurable (⋃ i ∈ S, E i) := by
+  induction S using Finset.induction_on with
+  | empty =>
+    simp only [Finset.notMem_empty, Set.iUnion_of_empty, Set.iUnion_empty]
+    exact LebesgueMeasurable.empty
+  | insert a S' ha ih =>
+    simp only [Finset.mem_insert, forall_eq_or_imp] at hE
+    have hE_a := hE.1
+    have hE_rest := fun i hi => hE.2 i hi
+    rw [show (⋃ i ∈ insert a S', E i) = E a ∪ (⋃ i ∈ S', E i) by
+      ext x
+      simp only [Set.mem_iUnion, Set.mem_union]
+      constructor
+      · intro ⟨i, hi, hx⟩
+        rcases Finset.mem_insert.mp hi with rfl | hi'
+        · left; exact hx
+        · right; exact ⟨i, hi', hx⟩
+      · intro h
+        cases h with
+        | inl h => exact ⟨a, Finset.mem_insert_self a S', h⟩
+        | inr h => obtain ⟨i, hi, hx⟩ := h; exact ⟨i, Finset.mem_insert_of_mem hi, hx⟩]
+    exact LebesgueMeasurable.union hE_a (ih hE_rest)
+
+-- Helper: Set.indicator' equals 1 when x ∈ E
+private lemma Set.indicator'_eq_one' {X : Type*} {E : Set X} {x : X} (hx : x ∈ E) :
+    ((E.indicator' x : ℝ) : EReal) = 1 := by
+  classical
+  rw [Set.indicator'_apply, if_pos hx]
+  rfl
+
+-- Helper: Set.indicator' equals 0 when x ∉ E
+private lemma Set.indicator'_eq_zero' {X : Type*} {E : Set X} {x : X} (hx : x ∉ E) :
+    ((E.indicator' x : ℝ) : EReal) = 0 := by
+  classical
+  rw [Set.indicator'_apply, if_neg hx]
+  rfl
+
+-- Level sets of simple functions are Lebesgue measurable
+private lemma UnsignedSimpleFunction.levelset_gt_LebesgueMeasurable
+    {g : EuclideanSpace' d → EReal} (hg : UnsignedSimpleFunction g) (t : EReal) :
+    LebesgueMeasurable {x | g x > t} := by
+  obtain ⟨k, c, E, hE_props, heq⟩ := hg
+  -- For each subset S of Fin k, define the "atom" R_S where x ∈ E_i iff i ∈ S
+  let R : Finset (Fin k) → Set (EuclideanSpace' d) :=
+    fun S => (⋂ i ∈ S, E i) ∩ (⋂ i ∈ Sᶜ, (E i)ᶜ)
+  -- Each R_S is measurable
+  have hR_meas : ∀ S, LebesgueMeasurable (R S) := by
+    intro S
+    apply LebesgueMeasurable.inter
+    · apply LebesgueMeasurable.finset_inter; intro i _; exact (hE_props i).1
+    · apply LebesgueMeasurable.finset_inter; intro i _; exact (hE_props i).1.complement
+  -- On R_S, g is constant with value ∑_{i ∈ S} c_i
+  have hg_const : ∀ S x, x ∈ R S → g x = ∑ i ∈ S, c i := by
+    intro S x hx
+    rw [heq]
+    simp only [Finset.sum_apply, Pi.smul_apply]
+    have h_split : ∑ i : Fin k, c i • EReal.indicator (E i) x =
+                   ∑ i ∈ S, c i • EReal.indicator (E i) x +
+                   ∑ i ∈ Sᶜ, c i • EReal.indicator (E i) x := by
+      rw [← Finset.sum_add_sum_compl S]
+    rw [h_split]
+    simp only [R, Set.mem_inter_iff, Set.mem_iInter] at hx
+    obtain ⟨hx_in, hx_out⟩ := hx
+    have h_in : ∀ i ∈ S, EReal.indicator (E i) x = 1 := by
+      intro i hi; have hxi : x ∈ E i := hx_in i hi
+      simp only [EReal.indicator, Real.EReal_fun]; exact Set.indicator'_eq_one' hxi
+    have h_out : ∀ i ∈ Sᶜ, EReal.indicator (E i) x = 0 := by
+      intro i hi; have hxi : x ∉ E i := hx_out i hi
+      simp only [EReal.indicator, Real.EReal_fun]; exact Set.indicator'_eq_zero' hxi
+    calc ∑ i ∈ S, c i • EReal.indicator (E i) x + ∑ i ∈ Sᶜ, c i • EReal.indicator (E i) x
+        = ∑ i ∈ S, c i • (1 : EReal) + ∑ i ∈ Sᶜ, c i • (0 : EReal) := by
+          congr 1
+          · exact Finset.sum_congr rfl (fun i hi => by rw [h_in i hi])
+          · exact Finset.sum_congr rfl (fun i hi => by rw [h_out i hi])
+      _ = ∑ i ∈ S, c i + 0 := by simp [smul_eq_mul]
+      _ = ∑ i ∈ S, c i := add_zero _
+  -- Every x belongs to exactly one R_S
+  have h_partition : ∀ x, ∃! S, x ∈ R S := by
+    intro x
+    have hDec : DecidablePred (fun i => x ∈ E i) := Classical.decPred _
+    let S := (Finset.univ : Finset (Fin k)).filter (fun i => x ∈ E i)
+    use S
+    constructor
+    · simp only [R, Set.mem_inter_iff, Set.mem_iInter, S]
+      constructor
+      · intro i hi; simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hi; exact hi
+      · intro i hi; simp only [Finset.mem_compl, Finset.mem_filter, Finset.mem_univ, true_and] at hi; exact hi
+    · intro T hT
+      ext i
+      simp only [S, Finset.mem_filter, Finset.mem_univ, true_and]
+      simp only [R, Set.mem_inter_iff, Set.mem_iInter] at hT
+      obtain ⟨hT_in, hT_out⟩ := hT
+      constructor
+      · intro hi; exact hT_in i hi
+      · intro hxi; by_contra hni
+        have hni' : i ∈ Tᶜ := Finset.mem_compl.mpr hni
+        exact hT_out i hni' hxi
+  -- {g > t} = ⋃_{S : ∑_{i ∈ S} c_i > t} R_S
+  have h_eq : {x | g x > t} = ⋃ S ∈ (Finset.univ : Finset (Finset (Fin k))).filter (fun S => ∑ i ∈ S, c i > t), R S := by
+    ext x
+    simp only [Set.mem_setOf_eq, Set.mem_iUnion, Finset.mem_filter, Finset.mem_univ, true_and]
+    constructor
+    · intro hgx
+      obtain ⟨S, hxS, _⟩ := h_partition x
+      refine ⟨S, ?_, hxS⟩; rw [hg_const S x hxS] at hgx; exact hgx
+    · intro ⟨S, hS_gt, hxS⟩; rw [hg_const S x hxS]; exact hS_gt
+  rw [h_eq]
+  apply LebesgueMeasurable.finset_union; intro S _; exact hR_meas S
+
+-- The limsup set for (iii) ⟹ (v)
+private def limsupSet (g : ℕ → EuclideanSpace' d → EReal) (t : EReal) : Set (EuclideanSpace' d) :=
+  ⋃ (M : ℕ), ⋂ (N : ℕ), ⋃ n ∈ {n | n ≥ N}, {x | g n x > t + 1 / (M + 1)}
+
+-- The limsup set is Lebesgue measurable when each g_n is a simple function
+private lemma limsupSet_LebesgueMeasurable {g : ℕ → EuclideanSpace' d → EReal}
+    (hg : ∀ n, UnsignedSimpleFunction (g n)) (t : EReal) :
+    LebesgueMeasurable (limsupSet g t) := by
+  apply LebesgueMeasurable.countable_union
+  intro M
+  apply LebesgueMeasurable.countable_inter
+  intro N
+  apply LebesgueMeasurable.countable_union
+  intro n
+  by_cases hn : n ≥ N
+  · convert UnsignedSimpleFunction.levelset_gt_LebesgueMeasurable (hg n) (t + 1 / (M + 1))
+    ext x; simp only [Set.mem_iUnion, Set.mem_setOf_eq, exists_prop, and_iff_right_iff_imp]; intro _; exact hn
+  · convert LebesgueMeasurable.empty
+    ext x; simp only [Set.mem_iUnion, Set.mem_setOf_eq, Set.mem_empty_iff_false, iff_false, not_exists, not_and]
+    intro h; exact absurd h hn
+
+-- Helper: a subset of a null set is null
+private lemma IsNull.subset {E F : Set (EuclideanSpace' d)} (hE : IsNull E) (hFE : F ⊆ E) : IsNull F := by
+  have := Lebesgue_outer_measure.mono hFE
+  rw [hE] at this
+  exact le_antisymm this (Lebesgue_outer_measure.nonneg F)
+
+-- Key helper: If A = B outside a null set N (i.e., A ∩ Nᶜ = B ∩ Nᶜ), then A is measurable if B is
+private lemma LebesgueMeasurable.of_ae_eq {A B N : Set (EuclideanSpace' d)}
+    (hB : LebesgueMeasurable B) (hN : IsNull N) (h_eq : A ∩ Nᶜ = B ∩ Nᶜ) :
+    LebesgueMeasurable A := by
+  -- A = (B ∩ Nᶜ) ∪ (A ∩ N)
+  have h_decomp : A = (B ∩ Nᶜ) ∪ (A ∩ N) := by
+    ext x
+    constructor
+    · intro hx
+      by_cases hxN : x ∈ N
+      · right; exact ⟨hx, hxN⟩
+      · left; rw [← h_eq]; exact ⟨hx, hxN⟩
+    · intro hx
+      cases hx with
+      | inl h => rw [← h_eq] at h; exact h.1
+      | inr h => exact h.1
+  rw [h_decomp]
+  apply LebesgueMeasurable.union
+  · exact LebesgueMeasurable.inter hB (IsNull.measurable hN).complement
+  · exact IsNull.measurable (IsNull.subset hN Set.inter_subset_right)
+
 -- This is the main technical work of the proof
 private lemma iii_imp_v : stmt_iii f → stmt_v f := by
   intro ⟨g, hg_simple, hg_ae_conv⟩
   intro t
-  -- The key insight: f(x) = lim f_n(x) = lim sup f_n(x) a.e.
-  -- So {f > λ} = ⋃_{M≥1} ⋂_{N≥1} ⋃_{n≥N} {f_n > λ + 1/M} outside a null set
-  sorry
+  -- The null set where convergence fails
+  let N := {x | ¬Filter.atTop.Tendsto (fun n ↦ g n x) (nhds (f x))}
+  have hN_null : IsNull N := hg_ae_conv
+  -- The limsup set E
+  let E := limsupSet g t
+  have hE_meas : LebesgueMeasurable E := limsupSet_LebesgueMeasurable hg_simple t
+  -- Show {f > t} ∩ Nᶜ = E ∩ Nᶜ (they agree where convergence holds)
+  -- The key insight: f(x) = lim g_n(x) = lim sup g_n(x) a.e.
+  -- So {f > λ} = ⋃_{M≥1} ⋂_{N≥1} ⋃_{n≥N} {g_n > λ + 1/M} outside a null set
+  have h_ae_eq : {x | f x > t} ∩ Nᶜ = E ∩ Nᶜ := by
+    ext x
+    simp only [Set.mem_inter_iff, Set.mem_compl_iff, Set.mem_setOf_eq, N]
+    push_neg
+    constructor
+    · -- f x > t ∧ converges → x ∈ E ∧ converges
+      intro ⟨hfx, hconv⟩
+      refine ⟨?_, hconv⟩
+      -- Since f(x) > t and g_n(x) → f(x), we can find M such that f(x) > t + 1/M
+      -- Then eventually g_n(x) > t + 1/M, which means x ∈ limsupSet
+      simp only [E, limsupSet, Set.mem_iUnion, Set.mem_iInter, Set.mem_setOf_eq]
+      -- The detailed analysis argument uses Filter.Tendsto properties
+      -- For a limit f(x), if f(x) > t, then ∃ε>0 with f(x) > t+ε
+      -- Choose M with 1/M < ε, then eventually g_n(x) > t + 1/M
+
+      -- Case 1: t = ⊥
+      rcases eq_bot_or_bot_lt t with rfl | ht_ne_bot
+      · -- t = ⊥: threshold = ⊥ + eps = ⊥ for any M, and g n x > ⊥ since g n x ≥ 0
+        use 0
+        intro N
+        use N, le_refl N
+        simp only [EReal.bot_add, gt_iff_lt]
+        -- g N x ≥ 0 > ⊥
+        have hg_nonneg : g N x ≥ 0 := by
+          obtain ⟨k, c, E, hE_props, heq⟩ := hg_simple N
+          rw [heq]
+          simp only [Finset.sum_apply, Pi.smul_apply, smul_eq_mul]
+          apply Finset.sum_nonneg
+          intro i _
+          apply mul_nonneg (hE_props i).2
+          simp only [EReal.indicator, Real.EReal_fun]
+          exact EReal.coe_nonneg.mpr (Set.indicator_nonneg (fun _ _ => zero_le_one) x)
+        calc (⊥ : EReal) < 0 := EReal.bot_lt_zero
+             _ ≤ g N x := hg_nonneg
+      -- Case 2: f x = ⊤
+      rcases eq_top_or_lt_top (f x) with hfx_top | hfx_lt_top
+      · -- f x = ⊤: g_n → ⊤, so eventually g_n x > any threshold
+        use 0
+        intro N
+        -- Since f x = ⊤ and f x > t, we have t < ⊤
+        have ht_lt_top' : t < ⊤ := by rw [← hfx_top]; exact hfx
+        -- Therefore t + 1 < ⊤ (since 1 is finite)
+        have h_t1_lt_top : t + 1 < ⊤ := EReal.add_lt_top (ne_top_of_lt ht_lt_top') (EReal.coe_ne_top 1)
+        -- Show g n x > t + 1 for some n ≥ N using that g n → ⊤
+        rw [hfx_top] at hconv
+        -- Set.Ioi (t + 1) is a neighborhood of ⊤
+        have h_mem : Set.Ioi (t + 1) ∈ nhds (⊤ : EReal) := Ioi_mem_nhds h_t1_lt_top
+        have h_event : ∀ᶠ n in Filter.atTop, g n x ∈ Set.Ioi (t + 1) := hconv h_mem
+        rw [Filter.eventually_atTop] at h_event
+        obtain ⟨N₀, hN₀⟩ := h_event
+        use max N₀ N, le_max_right _ _
+        have h_n_mem := hN₀ (max N₀ N) (le_max_left _ _)
+        simp only [Set.mem_Ioi, Nat.cast_zero, zero_add, gt_iff_lt] at h_n_mem ⊢
+        calc t + 1 / 1 = t + 1 := by rw [div_one]
+             _ < g (max N₀ N) x := h_n_mem
+      -- Case 3: t < ⊤ and f x < ⊤, both are finite or f x > t means t < f x < ⊤
+      rcases eq_top_or_lt_top t with rfl | ht_lt_top
+      · -- t = ⊤: but hfx says f x > ⊤, impossible
+        exfalso; exact (not_lt.mpr le_top) hfx
+      -- Now ⊥ < t < ⊤ and f x > t, with f x < ⊤
+      -- f x is finite since f x < ⊤ and f x > t > ⊥
+      have hfx_ne_top : f x ≠ ⊤ := ne_top_of_lt hfx_lt_top
+      have hfx_ne_bot : f x ≠ ⊥ := by
+        intro h_eq_bot
+        rw [h_eq_bot] at hfx
+        exact not_lt_bot hfx
+      have ht_ne_top : t ≠ ⊤ := ne_top_of_lt ht_lt_top
+      have ht_ne_bot' : t ≠ ⊥ := ne_of_gt ht_ne_bot
+      -- Extract real numbers
+      obtain ⟨f', hf'⟩ : ∃ f' : ℝ, (f' : EReal) = f x := ⟨(f x).toReal, EReal.coe_toReal hfx_ne_top hfx_ne_bot⟩
+      obtain ⟨t', ht'⟩ : ∃ t' : ℝ, (t' : EReal) = t := ⟨t.toReal, EReal.coe_toReal ht_ne_top ht_ne_bot'⟩
+      -- Both f' and t' are real numbers with f' > t'
+      have hf't' : f' > t' := by
+        rw [← hf', ← ht'] at hfx
+        exact EReal.coe_lt_coe_iff.mp hfx
+      have hgap_pos : f' - t' > 0 := sub_pos.mpr hf't'
+      -- Find M such that 1/(M+1) < f' - t'
+      obtain ⟨M, hM⟩ := exists_nat_gt (1 / (f' - t'))
+      use M
+      intro N
+      -- Show t' + 1/(M+1) < f'
+      have h_lt : (t' : EReal) + 1 / ((M : EReal) + 1) < f' := by
+        have hM1_pos : (M : ℝ) + 1 > 0 := by positivity
+        have h1 : (1 : ℝ) / (M + 1) < f' - t' := by
+          calc (1 : ℝ) / (M + 1) < 1 / (1 / (f' - t')) := by
+                 apply div_lt_div_of_pos_left
+                 · norm_num
+                 · rw [one_div_pos]; exact hgap_pos
+                 · calc 1 / (f' - t') < M := hM
+                        _ < M + 1 := by exact_mod_cast Nat.lt_succ_self M
+               _ = f' - t' := one_div_one_div (f' - t')
+        have h2 : t' + 1 / (M + 1) < f' := by linarith
+        -- Coerce to EReal
+        have h_coe : ((t' : EReal) + 1 / ((M : EReal) + 1)) = ((t' + 1 / (M + 1) : ℝ) : EReal) := by
+          rw [EReal.coe_add, EReal.coe_div]
+          simp only [EReal.coe_one, EReal.coe_add, EReal.coe_natCast]
+        rw [h_coe]
+        exact EReal.coe_lt_coe_iff.mpr h2
+
+      -- By convergence, eventually g_n(x) > t' + 1/(M+1)
+      have h_event : ∀ᶠ n in Filter.atTop, g n x > (t' : EReal) + 1 / ((M : EReal) + 1) := by
+        have h_mem : Set.Ioi ((t' : EReal) + 1 / ((M : EReal) + 1)) ∈ nhds (f x) := by
+          rw [← hf']
+          exact Ioi_mem_nhds h_lt
+        exact hconv h_mem
+      rw [Filter.eventually_atTop] at h_event
+      obtain ⟨N₀, hN₀⟩ := h_event
+      refine ⟨max N₀ N, le_max_right _ _, ?_⟩
+      rw [← ht']
+      exact hN₀ _ (le_max_left _ _)
+    · -- x ∈ E ∧ converges → f x > t ∧ converges
+      intro ⟨hE_mem, hconv⟩
+      refine ⟨?_, hconv⟩
+      -- If x ∈ limsupSet g t, then for some M, infinitely often g_n(x) > t + 1/M
+      -- Since g_n(x) → f(x), limsup g_n(x) = f(x), so f(x) ≥ t + 1/M > t
+      simp only [E, limsupSet, Set.mem_iUnion, Set.mem_iInter, Set.mem_setOf_eq] at hE_mem
+      -- hE_mem : ∃ M, ∀ N, ∃ n ≥ N, g n x > t + 1/(M+1)
+      obtain ⟨M, hM⟩ := hE_mem
+      -- Set threshold := t + 1/(M+1)
+      set threshold := t + 1 / ((M : EReal) + 1) with h_threshold
+      -- Handle edge cases first
+      rcases eq_top_or_lt_top t with rfl | ht_ne_top
+      · -- t = ⊤: threshold = ⊤ + eps = ⊤, and hM says g n x > ⊤, impossible
+        exfalso
+        obtain ⟨n, _, hn_gt⟩ := hM 0
+        have h_threshold_eq_top : threshold = ⊤ := by
+          rw [h_threshold]
+          apply EReal.top_add_of_ne_bot
+          intro h_eq
+          have h_denom_ne_top : (M : EReal) + 1 ≠ ⊤ := EReal.add_ne_top (EReal.natCast_ne_top M) (EReal.coe_ne_top 1)
+          have h_pos : (0 : EReal) < 1 / ((M : EReal) + 1) := by
+            apply EReal.div_pos (EReal.coe_pos.mpr one_pos)
+            calc (0 : EReal) < 1 := EReal.coe_pos.mpr one_pos
+                 _ ≤ (M : EReal) + 1 := le_add_of_nonneg_left (EReal.coe_nonneg.mpr (Nat.cast_nonneg M))
+            exact h_denom_ne_top
+          rw [h_eq] at h_pos
+          exact not_lt_bot h_pos
+        rw [h_threshold_eq_top] at hn_gt
+        exact (not_lt.mpr le_top) hn_gt
+      rcases eq_bot_or_bot_lt t with rfl | ht_ne_bot
+      · -- t = ⊥: threshold = ⊥ + eps = ⊥, need to show f x > ⊥
+        -- Since g_n(x) ≥ 0 and g_n(x) → f(x), we have f(x) ≥ 0 > ⊥
+        have hg_nonneg : ∀ n, g n x ≥ 0 := fun n => by
+          obtain ⟨k, c, E, hE_props, heq⟩ := hg_simple n
+          rw [heq]
+          simp only [Finset.sum_apply, Pi.smul_apply, smul_eq_mul]
+          apply Finset.sum_nonneg
+          intro i _
+          apply mul_nonneg (hE_props i).2
+          simp only [EReal.indicator, Real.EReal_fun]
+          exact EReal.coe_nonneg.mpr (Set.indicator_nonneg (fun _ _ => zero_le_one) x)
+        -- g n x ≥ 0 for all n, and g n x → f x, so f x ≥ 0
+        have h_limit_nonneg : f x ≥ 0 := by
+          by_contra h_neg
+          push_neg at h_neg
+          have h_mem : Set.Iio 0 ∈ nhds (f x) := Iio_mem_nhds h_neg
+          have h_event : ∀ᶠ n in Filter.atTop, g n x < 0 := hconv h_mem
+          rw [Filter.eventually_atTop] at h_event
+          obtain ⟨N₀, hN₀⟩ := h_event
+          have := hN₀ N₀ (le_refl _)
+          exact (not_lt.mpr (hg_nonneg N₀)) this
+        calc (⊥ : EReal) < 0 := EReal.bot_lt_zero
+             _ ≤ f x := h_limit_nonneg
+      -- Now ⊥ < t < ⊤ (t is a finite real)
+      by_contra h_not_gt
+      push_neg at h_not_gt
+      -- h_not_gt : f x ≤ t
+      -- Derive contradiction: if f x ≤ t, eventually g_n x < threshold, but frequently > threshold
+      have h_denom_ne_top : (M : EReal) + 1 ≠ ⊤ := EReal.add_ne_top (EReal.natCast_ne_top M) (EReal.coe_ne_top 1)
+      have h_eps_pos : (1 : EReal) / ((M : EReal) + 1) > 0 := by
+        apply EReal.div_pos (EReal.coe_pos.mpr one_pos)
+        calc (0 : EReal) < 1 := EReal.coe_pos.mpr one_pos
+             _ ≤ (M : EReal) + 1 := le_add_of_nonneg_left (EReal.coe_nonneg.mpr (Nat.cast_nonneg M))
+        exact h_denom_ne_top
+      -- eps is finite: just use that eps > 0 is positive and less than or equal to 1
+      -- (h_eps_ne_top is not needed for the proof below, we can skip this)
+      -- t < threshold using add_lt_add for finite values
+      have h_t_lt : t < threshold := by
+        rw [h_threshold]
+        -- t is finite, so we can work with coercions
+        obtain ⟨t', rfl⟩ : ∃ t' : ℝ, (t' : EReal) = t := by
+          induction t using EReal.rec with
+          | bot => exact absurd rfl (ne_of_gt ht_ne_bot)
+          | top => exact absurd rfl (ne_of_lt ht_ne_top)
+          | coe r => exact ⟨r, rfl⟩
+        conv_lhs => rw [← add_zero (t' : EReal)]
+        exact EReal.add_lt_add_left_coe h_eps_pos t'
+      -- f x < threshold
+      have h_fx_lt : f x < threshold := lt_of_le_of_lt h_not_gt h_t_lt
+      -- By convergence, eventually g_n x < threshold
+      have h_event : ∀ᶠ n in Filter.atTop, g n x < threshold := hconv (Iio_mem_nhds h_fx_lt)
+      rw [Filter.eventually_atTop] at h_event
+      obtain ⟨N₀, hN₀⟩ := h_event
+      -- But by hM, there exists n ≥ N₀ with g n x > threshold
+      obtain ⟨n, hn_ge, hn_gt⟩ := hM N₀
+      exact (lt_irrefl _) (lt_trans (hN₀ n hn_ge) hn_gt)
+  exact LebesgueMeasurable.of_ae_eq hE_meas hN_null h_ae_eq
 
 /-! ### (v) ⟹ (vi): {f ≥ λ} = ⋂_{n≥1} {f > λ - 1/n} -/
 
