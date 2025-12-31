@@ -1086,7 +1086,7 @@ private lemma approx_fn_levelset_LebesgueMeasurable (hf : Unsigned f) (hvi : stm
               have h1 : ((2^n : ℕ) : EReal) = ((2^n : ℕ) : ℝ) := EReal.coe_natCast.symm
               have h2 : ((⌊(min (f x) ↑n).toReal * 2 ^ n⌋₊ : ℕ) : EReal) =
                   ((⌊(min (f x) ↑n).toReal * 2 ^ n⌋₊ : ℕ) : ℝ) := EReal.coe_natCast.symm
-              simp only [h1, h2, ← EReal.coe_div] at hval; exact hval
+              simp only [← EReal.coe_div] at hval; exact hval
             have h_coe := EReal.coe_eq_coe_iff.mp hval'
             have h_floor : ⌊(min (f x) ↑n).toReal * 2 ^ n⌋₊ = n * 2^n := by
               field_simp at h_coe
@@ -1101,7 +1101,7 @@ private lemma approx_fn_levelset_LebesgueMeasurable (hf : Unsigned f) (hvi : stm
             have h_min_le : (min (f x) ↑n).toReal ≤ n := by
               have h_le := min_le_right (f x) ↑n
               have := EReal.toReal_le_toReal h_le hbot (EReal.coe_ne_top n)
-              simp only [EReal.toReal_coe] at this; exact this
+              simp only at this; exact this
             have h_min_eq_n : (min (f x) ↑n).toReal = n := le_antisymm h_min_le h_toReal_ge
             by_contra hcontra; push_neg at hcontra
             have h_min_eq : min (f x) ↑n = f x := min_eq_left (le_of_lt hcontra)
@@ -1166,7 +1166,7 @@ private lemma approx_fn_levelset_LebesgueMeasurable (hf : Unsigned f) (hvi : stm
               have h2 : ((⌊(min (f x) ↑n).toReal * 2 ^ n⌋₊ : ℕ) : EReal) =
                   ((⌊(min (f x) ↑n).toReal * 2 ^ n⌋₊ : ℕ) : ℝ) := EReal.coe_natCast.symm
               have h3 : ((k : ℕ) : EReal) = ((k : ℕ) : ℝ) := EReal.coe_natCast.symm
-              simp only [h1, h2, h3, ← EReal.coe_div] at hval; exact hval
+              simp only [← EReal.coe_div] at hval; exact hval
             have h_coe := EReal.coe_eq_coe_iff.mp hval'
             have h_floor : ⌊(min (f x) ↑n).toReal * 2 ^ n⌋₊ = k := by
               field_simp at h_coe; exact Nat.cast_injective h_coe
@@ -1226,12 +1226,12 @@ private lemma approx_fn_levelset_LebesgueMeasurable (hf : Unsigned f) (hvi : stm
               rw [← EReal.coe_toReal h_fx_ne_top h_fx_ne_bot]
               have hk_coe : ((k : ℕ) : EReal) = ((k : ℕ) : ℝ) := EReal.coe_natCast.symm
               have h2n_coe : ((2^n : ℕ) : EReal) = ((2^n : ℕ) : ℝ) := EReal.coe_natCast.symm
-              simp only [hk_coe, h2n_coe, ← EReal.coe_div, ge_iff_le, EReal.coe_le_coe_iff]; exact h_ge
+              simp only [← EReal.coe_div, ge_iff_le, EReal.coe_le_coe_iff]; exact h_ge
             · -- Show f x < (k + 1) / 2^n
               rw [← EReal.coe_toReal h_fx_ne_top h_fx_ne_bot]
               have h_k1_eq : (↑k + 1 : ℝ) = ((k + 1) : ℕ) := by simp only [Nat.cast_add, Nat.cast_one]
               have h_toReal_lt' : (f x).toReal < ((k + 1) : ℕ) / 2^n := by rw [← h_k1_eq]; exact h_toReal_lt
-              simp only [← EReal.coe_natCast, ← EReal.coe_div, EReal.coe_lt_coe_iff]; exact h_toReal_lt'
+              simp only [← EReal.coe_div, EReal.coe_lt_coe_iff]; exact h_toReal_lt'
         · intro ⟨hnorm, hfx_ge, hfx_lt⟩
           refine ⟨hnorm, ?_⟩
           rw [hv_eq]; simp only [approx_fn, hnorm, ite_true]
@@ -1288,7 +1288,7 @@ private lemma approx_fn_levelset_LebesgueMeasurable (hf : Unsigned f) (hvi : stm
               constructor <;> linarith
             have h1 : ((2^n : ℕ) : EReal) = ((2^n : ℕ) : ℝ) := EReal.coe_natCast.symm
             have h2 : ((k : ℕ) : EReal) = ((k : ℕ) : ℝ) := EReal.coe_natCast.symm
-            simp only [h_floor, h1, h2, ← EReal.coe_div]
+            simp only [h_floor, ← EReal.coe_div]
       rw [h_eq]
       exact ball_leb.inter (h_le.inter h_lt)
 
@@ -1306,15 +1306,15 @@ private lemma approx_fn_levelset_LebesgueMeasurable (hf : Unsigned f) (hvi : stm
         split_ifs at h with hv0
         · have hn : ‖x‖ > (n:ℝ) := h
           have hn' : ¬ ‖x‖ ≤ (n:ℝ) := not_le.mpr hn
-          exact ⟨hn, by simp only [approx_fn, hn', ite_false, hv0]⟩
+          exact ⟨hn, by simp only [hn', ite_false, hv0]⟩
         · exact absurd h id
     rw [h_eq]
     split_ifs <;> [exact outside_leb; exact LebesgueMeasurable.empty]
 
 -- The main construction lemma
 private lemma v_to_xi_imp_iv (hf : Unsigned f) (_hv : stmt_v f) (hvi : stmt_vi f)
-    (hvii : stmt_vii f) (hviii : stmt_viii f) (hix : stmt_ix f)
-    (hx : stmt_x f) (hxi : stmt_xi f) :
+    (hvii : stmt_vii f) (_hviii : stmt_viii f) (_hix : stmt_ix f)
+    (_hx : stmt_x f) (_hxi : stmt_xi f) :
     stmt_iv f := by
   -- Construct f_n(x) = largest k·2^{-n} ≤ min(f(x), n) when |x| ≤ n, else 0
   use approx_fn f
@@ -1361,7 +1361,7 @@ private lemma v_to_xi_imp_iv (hf : Unsigned f) (_hv : stmt_v f) (hvi : stmt_vi f
             · intro j hj
               -- hj : approx_fn f n x = if ↑j = n * 2^n then ↑n else ↑↑↑j / ↑(2^n)
               -- The simp didn't make progress because E is not in scope for hj after previous simp
-              ext; simp only [Fin.mk.injEq]
+              ext; simp only
               by_cases hj_max : j.val = n * 2^n
               · exact hj_max
               · -- j.val ≠ n*2^n, but we'll show they must be equal from hj and hk_eq
