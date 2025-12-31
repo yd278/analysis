@@ -1312,9 +1312,7 @@ private lemma approx_fn_levelset_LebesgueMeasurable (hf : Unsigned f) (hvi : stm
     split_ifs <;> [exact outside_leb; exact LebesgueMeasurable.empty]
 
 -- The main construction lemma
-private lemma v_to_xi_imp_iv (hf : Unsigned f) (_hv : stmt_v f) (hvi : stmt_vi f)
-    (hvii : stmt_vii f) (_hviii : stmt_viii f) (_hix : stmt_ix f)
-    (_hx : stmt_x f) (_hxi : stmt_xi f) :
+private lemma v_to_xi_imp_iv (hf : Unsigned f) (hvi : stmt_vi f) (hvii : stmt_vii f) :
     stmt_iv f := by
   -- Construct f_n(x) = largest k·2^{-n} ≤ min(f(x), n) when |x| ≤ n, else 0
   use approx_fn f
@@ -1713,10 +1711,7 @@ theorem UnsignedMeasurable.TFAE {d:ℕ} {f: EuclideanSpace' d → EReal} (hf: Un
   tfae_have 9 → 10 := ix_imp_x hf
   tfae_have 10 ↔ 11 := x_iff_xi
   tfae_have 10 → 7 := x_imp_vii
-  tfae_have 5 → 4 := fun hv => v_to_xi_imp_iv hf hv (v_imp_vi hv) (vi_imp_vii (v_imp_vi hv))
-    (v_imp_viii hv) (v_to_viii_imp_ix hv (v_imp_vi hv) (vi_imp_vii (v_imp_vi hv)) (v_imp_viii hv))
-    (ix_imp_x hf (v_to_viii_imp_ix hv (v_imp_vi hv) (vi_imp_vii (v_imp_vi hv)) (v_imp_viii hv)))
-    (x_iff_xi.mp (ix_imp_x hf (v_to_viii_imp_ix hv (v_imp_vi hv) (vi_imp_vii (v_imp_vi hv)) (v_imp_viii hv))))
+  tfae_have 5 → 4 := fun hv => v_to_xi_imp_iv hf (v_imp_vi hv) (vi_imp_vii (v_imp_vi hv))
   tfae_finish
 
 /-- Exercise 1.3.3(i) -/
