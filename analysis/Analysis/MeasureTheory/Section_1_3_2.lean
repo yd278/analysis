@@ -258,7 +258,7 @@ private lemma limsupSet_LebesgueMeasurable {g : ℕ → EuclideanSpace' d → ER
   · convert UnsignedSimpleFunction.levelset_gt_LebesgueMeasurable (hg n) (t + 1 / (M + 1))
     ext x; simp only [Set.mem_iUnion, Set.mem_setOf_eq, exists_prop, and_iff_right_iff_imp]; intro _; exact hn
   · convert LebesgueMeasurable.empty
-    ext x; simp only [Set.mem_iUnion, Set.mem_setOf_eq, Set.mem_empty_iff_false, iff_false, not_exists, not_and]
+    ext x; simp only [Set.mem_iUnion, Set.mem_setOf_eq, Set.mem_empty_iff_false, iff_false, not_exists]
     intro h; exact absurd h hn
 
 -- Helper: a subset of a null set is null
@@ -639,7 +639,7 @@ private lemma vi_imp_v : stmt_vi f → stmt_v f := by
   cases hd : @Encodable.decode ℚ _ n with
   | none => exact LebesgueMeasurable.empty
   | some q =>
-    simp only [hd]
+    simp only
     split_ifs with h
     · exact hvi ((q : ℝ) : EReal)
     · exact LebesgueMeasurable.empty
@@ -892,7 +892,7 @@ private lemma ix_imp_x (hf : Unsigned f) : stmt_ix f → stmt_x f := by
     cases hd : @Encodable.decode S e n with
     | none => exact LebesgueMeasurable.empty
     | some p =>
-      simp only [hd]
+      simp only
       obtain ⟨a, b, hab⟩ := hS_intervals p.val p.property
       rw [hab]
       exact hix (BoundedInterval.Ioo a b)
@@ -1396,7 +1396,7 @@ private lemma approx_fn_levelset_LebesgueMeasurable (hf : Unsigned f) (hvi : stm
     split_ifs <;> [exact outside_leb; exact LebesgueMeasurable.empty]
 
 -- The main construction lemma
-private lemma v_to_xi_imp_iv (hf : Unsigned f) (hv : stmt_v f) (hvi : stmt_vi f)
+private lemma v_to_xi_imp_iv (hf : Unsigned f) (_hv : stmt_v f) (hvi : stmt_vi f)
     (hvii : stmt_vii f) (hviii : stmt_viii f) (hix : stmt_ix f)
     (hx : stmt_x f) (hxi : stmt_xi f) :
     stmt_iv f := by
