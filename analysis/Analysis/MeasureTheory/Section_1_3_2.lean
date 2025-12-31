@@ -999,6 +999,77 @@ private lemma approx_fn_values (f : EuclideanSpace' d → EReal) (hf : Unsigned 
   · -- |x| > n case
     use 0; simp
 
+-- Helper: approx_fn is always nonnegative for unsigned functions
+private lemma approx_fn_nonneg (f : EuclideanSpace' d → EReal) (_hf : Unsigned f)
+    (n : ℕ) (x : EuclideanSpace' d) : approx_fn f n x ≥ 0 := by
+  simp only [approx_fn]
+  split_ifs with hnorm hbot htop hneg
+  · exact le_refl 0  -- t = ⊥ case
+  · exact EReal.coe_nonneg.mpr (Nat.cast_nonneg n)  -- t = ⊤ case
+  · exact le_refl 0  -- r < 0 case
+  · exact EReal.coe_nonneg.mpr (div_nonneg (Nat.cast_nonneg _) (pow_nonneg (by norm_num) n))
+  · exact le_refl 0  -- |x| > n case
+
+-- Helper: floor approximation converges to the value as iSup
+-- For r ≥ 0: r = ⨆ n, ⌊r * 2^n⌋₊ / 2^n (in EReal)
+private lemma floor_approx_iSup_eq (r : ℝ) (hr : r ≥ 0) :
+    (r : EReal) = ⨆ n : ℕ, (((⌊r * 2^n⌋₊ : ℕ) : ℝ) / (2^n : ℝ) : EReal) := by
+  -- Define the approximating function for cleaner notation
+  let f : ℕ → ℝ := fun n => ((⌊r * 2^n⌋₊ : ℕ) : ℝ) / (2^n : ℝ)
+  change (r : EReal) = ⨆ n : ℕ, (f n : EReal)
+  apply le_antisymm
+  · -- Upper bound: r ≤ iSup
+    apply EReal.le_of_forall_pos_le_add'
+    intro ε hε
+    -- Find N such that 1/2^N < ε using (1/2)^n → 0
+    have h_tendsto : Filter.Tendsto (fun n : ℕ => ((1:ℝ)/2)^n) Filter.atTop (nhds 0) :=
+      tendsto_pow_atTop_nhds_zero_of_lt_one (by norm_num) (by norm_num)
+    rw [Metric.tendsto_atTop] at h_tendsto
+    obtain ⟨N, hN⟩ := h_tendsto ε hε
+    specialize hN N (le_refl N)
+    simp only [Real.dist_eq, sub_zero, abs_of_pos (pow_pos (by norm_num : (0:ℝ) < 1/2) N)] at hN
+    have h2N_pos : (2 : ℝ)^N > 0 := pow_pos (by norm_num) N
+    have h_eps : (1 : ℝ) / 2^N < ε := by
+      convert hN using 1
+      rw [one_div, ← inv_pow, inv_eq_one_div]
+    -- floor approx bound: r - 1/2^N < f N
+    have h_floor_bound : r - 1/2^N < f N := by
+      simp only [f]
+      have h1 : r * 2^N - 1 < (⌊r * 2^N⌋₊ : ℝ) := Nat.sub_one_lt_floor (r * 2^N)
+      calc r - 1/2^N = (r * 2^N - 1) / 2^N := by field_simp
+           _ < (⌊r * 2^N⌋₊ : ℝ) / 2^N := by apply div_lt_div_of_pos_right h1 h2N_pos
+    have h_le_iSup : (f N : EReal) ≤ ⨆ n : ℕ, (f n : EReal) := le_iSup_of_le N (le_refl _)
+    -- r ≤ f N + ε
+    have h3 : r ≤ f N + ε := by linarith
+    calc (r : EReal) ≤ (f N + ε : ℝ) := EReal.coe_le_coe_iff.mpr h3
+         _ = (f N : EReal) + (ε : EReal) := by rw [← EReal.coe_add]
+         _ ≤ (⨆ n : ℕ, (f n : EReal)) + ε := add_le_add_right h_le_iSup ε
+  · -- Lower bound: iSup ≤ r
+    apply iSup_le
+    intro n
+    have h2n_pos : (2 : ℝ)^n > 0 := pow_pos (by norm_num) n
+    have h_floor_le : f n ≤ r := by
+      simp only [f]
+      calc (⌊r * 2^n⌋₊ : ℝ) / 2^n ≤ (r * 2^n) / 2^n := by
+             apply div_le_div_of_nonneg_right (Nat.floor_le (mul_nonneg hr (le_of_lt h2n_pos))) (le_of_lt h2n_pos)
+           _ = r := by field_simp
+    exact EReal.coe_le_coe_iff.mpr h_floor_le
+
+-- Helper: approx_fn simplifies to floor formula when f x is finite and r ≤ n
+private lemma approx_fn_eq_floor_when_finite (f : EuclideanSpace' d → EReal) (_hf : Unsigned f)
+    (n : ℕ) (x : EuclideanSpace' d) (hn : ‖x‖ ≤ n) (r : ℝ) (hr : f x = r) (hr_nonneg : r ≥ 0)
+    (hrn : r ≤ n) :
+    approx_fn f n x = (((⌊r * 2^n⌋₊ : ℕ) : ℝ) / (2^n : ℝ) : EReal) := by
+  simp only [approx_fn, hn, ite_true, hr]
+  have h_min : min (r : EReal) n = r := min_eq_left (EReal.coe_le_coe_iff.mpr hrn)
+  have h_min_ne_bot : min (r : EReal) n ≠ ⊥ := by simp [h_min, EReal.coe_ne_bot]
+  have h_min_ne_top : min (r : EReal) n ≠ ⊤ := by simp [h_min, EReal.coe_ne_top]
+  have h_toReal : (min (r : EReal) n).toReal = r := by
+    simp [h_min, EReal.toReal_coe]
+  have h_nonneg : ¬(min (r : EReal) n).toReal < 0 := by simp [h_toReal, hr_nonneg]
+  simp only [h_min_ne_bot, ite_false, h_min_ne_top, h_toReal]
+  simp only [not_lt.mpr hr_nonneg, ite_false]
+
 -- Helper: (n * 2^n) / 2^n = n in EReal
 private lemma mul_pow2_div_pow2_eq (n : ℕ) :
     ((n * 2^n : ℕ) : EReal) / ((2^n : ℕ) : EReal) = ((n : ℕ) : EReal) := by
@@ -1481,23 +1552,217 @@ private lemma v_to_xi_imp_iv (hf : Unsigned f) (hv : stmt_v f) (hvi : stmt_vi f)
       -- Both are non-trivial, need to compare the floor values
       -- approx_fn f m x approximates min(f x, m) and approx_fn f n x approximates min(f x, n)
       -- Since min(f x, m) ≤ min(f x, n) and approximation gets better, we have monotonicity
-      sorry
+      -- First eliminate the impossible cases using unsigned property
+      have hm_ne_bot : min (f x) ↑m ≠ ⊥ := by
+        intro h
+        have h1 : 0 ≤ min (f x) ↑m := le_min (hf x) (EReal.coe_nonneg.mpr (Nat.cast_nonneg m))
+        rw [h] at h1; exact not_le.mpr EReal.bot_lt_zero h1
+      have hn_ne_bot : min (f x) ↑n ≠ ⊥ := by
+        intro h
+        have h1 : 0 ≤ min (f x) ↑n := le_min (hf x) (EReal.coe_nonneg.mpr (Nat.cast_nonneg n))
+        rw [h] at h1; exact not_le.mpr EReal.bot_lt_zero h1
+      have hm_ne_top : min (f x) ↑m ≠ ⊤ := ne_top_of_le_ne_top (EReal.coe_ne_top m) (min_le_right _ _)
+      have hn_ne_top : min (f x) ↑n ≠ ⊤ := ne_top_of_le_ne_top (EReal.coe_ne_top n) (min_le_right _ _)
+      have hm_nonneg : 0 ≤ (min (f x) ↑m).toReal := by
+        have h1 : 0 ≤ min (f x) ↑m := le_min (hf x) (EReal.coe_nonneg.mpr (Nat.cast_nonneg m))
+        exact EReal.toReal_nonneg h1
+      have hn_nonneg : 0 ≤ (min (f x) ↑n).toReal := by
+        have h1 : 0 ≤ min (f x) ↑n := le_min (hf x) (EReal.coe_nonneg.mpr (Nat.cast_nonneg n))
+        exact EReal.toReal_nonneg h1
+      simp only [hm_ne_bot, hm_ne_top, hn_ne_bot, hn_ne_top, ite_false]
+      simp only [not_lt.mpr hm_nonneg, not_lt.mpr hn_nonneg, ite_false]
+      -- Now we need: floor(t_m * 2^m) / 2^m ≤ floor(t_n * 2^n) / 2^n
+      -- Key: t_m ≤ t_n and floor approximation from below
+      set t_m := (min (f x) ↑m).toReal with ht_m
+      set t_n := (min (f x) ↑n).toReal with ht_n
+      have h_tm_le_tn : t_m ≤ t_n := by
+        have h1 : min (f x) ↑m ≤ min (f x) ↑n := by
+          apply min_le_min_left
+          exact EReal.coe_le_coe_iff.mpr (Nat.cast_le.mpr hmn)
+        exact EReal.toReal_le_toReal h1 hm_ne_bot hn_ne_top
+      have h2m_pos : (0 : ℝ) < 2^m := pow_pos (by norm_num) m
+      have h2n_pos : (0 : ℝ) < 2^n := pow_pos (by norm_num) n
+      -- floor(t_m * 2^m) / 2^m ≤ t_m ≤ t_n
+      have h_floor_le_tm : (⌊t_m * 2^m⌋₊ : ℝ) / 2^m ≤ t_m := by
+        have h1 : (⌊t_m * 2^m⌋₊ : ℝ) ≤ t_m * 2^m := Nat.floor_le (mul_nonneg hm_nonneg (le_of_lt h2m_pos))
+        rw [div_le_iff₀ h2m_pos]
+        linarith
+      -- floor(t_n * 2^n) / 2^n is the largest multiple of 2^{-n} ≤ t_n
+      -- Since floor(t_m * 2^m) / 2^m is a multiple of 2^{-m}, hence of 2^{-n},
+      -- and it's ≤ t_m ≤ t_n, we have the result
+      have h_lhs_mul : ∃ k : ℕ, (⌊t_m * 2^m⌋₊ : ℝ) / 2^m = (k : ℝ) / 2^n := by
+        use ⌊t_m * 2^m⌋₊ * 2^(n - m)
+        have h_pow : (2 : ℝ)^m * 2^(n - m) = 2^n := by
+          rw [← pow_add]; congr 1; omega
+        field_simp
+        ring_nf
+        rw [← h_pow]
+        ring
+      obtain ⟨k, hk⟩ := h_lhs_mul
+      -- k / 2^n ≤ t_m ≤ t_n, so k / 2^n ≤ floor(t_n * 2^n) / 2^n
+      have h_k_le_tn : (k : ℝ) / 2^n ≤ t_n := by
+        rw [← hk]; exact le_trans h_floor_le_tm h_tm_le_tn
+      have h_k_le_floor : k ≤ ⌊t_n * 2^n⌋₊ := by
+        have h1 : (k : ℝ) ≤ t_n * 2^n := by
+          rw [div_le_iff₀ h2n_pos] at h_k_le_tn; linarith
+        exact Nat.le_floor h1
+      -- Final result in ℝ: floor(t_m * 2^m) / 2^m ≤ floor(t_n * 2^n) / 2^n
+      have h_real : (⌊t_m * 2^m⌋₊ : ℝ) / 2^m ≤ (⌊t_n * 2^n⌋₊ : ℝ) / 2^n := by
+        calc (⌊t_m * 2^m⌋₊ : ℝ) / 2^m = (k : ℝ) / 2^n := hk
+             _ ≤ (⌊t_n * 2^n⌋₊ : ℝ) / 2^n := by
+               apply div_le_div_of_nonneg_right _ (le_of_lt h2n_pos)
+               exact_mod_cast h_k_le_floor
+      -- Coerce to EReal
+      exact EReal.coe_le_coe_iff.mpr h_real
     · -- |x| > m, so approx_fn f m x = 0
       simp only [hm, ite_false]
       -- approx_fn f n x ≥ 0 by construction (it's unsigned)
       by_cases hn : ‖x‖ ≤ n
       · simp only [hn, ite_true]
-        sorry
+        -- Need: 0 ≤ (if bot then 0, if top then n, if neg then 0, else floor/2^n)
+        split_ifs with h_bot h_top h_neg
+        · exact le_refl 0  -- 0 ≤ 0
+        · exact EReal.coe_nonneg.mpr (Nat.cast_nonneg n)  -- 0 ≤ n
+        · exact le_refl 0  -- 0 ≤ 0
+        · -- 0 ≤ floor(...) / 2^n
+          apply EReal.coe_nonneg.mpr
+          apply div_nonneg (Nat.cast_nonneg _)
+          exact le_of_lt (pow_pos (by norm_num : (0 : ℝ) < 2) n)
       · simp only [hn, ite_false]
         rfl
   · -- Convergence: f x = iSup (fun n => approx_fn f n x)
     intro x
-    -- For each x, eventually |x| ≤ n
-    -- Then approx_fn f n x = floor(min(f x, n) * 2^n) / 2^n
-    -- As n → ∞: min(f x, n) → f x, and floor approximation error → 0
-    -- By monotonicity, iSup exists
-    -- Need to show iSup (approx_fn f · x) = f x
-    sorry
+    -- Case analysis: f x = ⊤ or f x < ⊤
+    rcases eq_top_or_lt_top (f x) with hfx_top | hfx_lt_top
+    · -- Case 1: f x = ⊤
+      rw [hfx_top, eq_comm, iSup_eq_top]
+      intro b hb
+      -- For b < ⊤, find n with approx_fn f n x > b
+      rcases eq_bot_or_bot_lt b with rfl | hb_bot
+      · -- b = ⊥: any n works since approx_fn f n x ≥ 0 > ⊥
+        use max 1 (Nat.ceil ‖x‖)
+        exact lt_of_lt_of_le EReal.bot_lt_zero (approx_fn_nonneg f hf _ x)
+      · -- b > ⊥ and b < ⊤, so b is a finite real
+        induction b using EReal.rec with
+        | bot => exact (not_lt_bot hb_bot).elim
+        | top => exact (lt_irrefl _ hb).elim
+        | coe b' =>
+          -- Choose n > b' and n ≥ ‖x‖
+          let N := max (Nat.ceil b' + 1) (Nat.ceil ‖x‖)
+          use N
+          have h_norm : ‖x‖ ≤ N := by
+            calc ‖x‖ ≤ Nat.ceil ‖x‖ := Nat.le_ceil _
+                 _ ≤ N := by exact_mod_cast Nat.le_max_right _ _
+          -- approx_fn f N x = floor(N * 2^N) / 2^N = N when f x = ⊤
+          have hN_ne_bot : ((N : ℕ) : EReal) ≠ ⊥ := EReal.coe_ne_bot N
+          have hN_ne_top : ((N : ℕ) : EReal) ≠ ⊤ := EReal.coe_ne_top N
+          have hN_nonneg : (0 : ℝ) ≤ N := Nat.cast_nonneg N
+          have hN_toReal : ((N : ℕ) : EReal).toReal = N := EReal.toReal_coe N
+          simp only [approx_fn, h_norm, ite_true, hfx_top, min_eq_right le_top,
+                     hN_ne_bot, hN_ne_top, ite_false, hN_toReal, not_lt.mpr hN_nonneg]
+          -- floor(N * 2^N) / 2^N = N
+          have h_floor_eq : (⌊(N : ℝ) * 2^N⌋₊ : ℝ) / 2^N = N := by
+            have h_nat_mul : (N : ℝ) * (2 : ℝ)^N = ↑(N * 2^N) := by simp
+            rw [h_nat_mul, Nat.floor_natCast]
+            field_simp
+          simp only [← EReal.coe_div, EReal.coe_lt_coe_iff, h_floor_eq]
+          calc b' ≤ Nat.ceil b' := Nat.le_ceil _
+               _ < (Nat.ceil b' : ℝ) + 1 := lt_add_one _
+               _ ≤ N := by exact_mod_cast Nat.le_max_left _ _
+    · -- Case 2: f x < ⊤ (finite)
+      have hfx_not_bot : f x ≠ ⊥ := ne_of_gt (lt_of_lt_of_le EReal.bot_lt_zero (hf x))
+      -- f x is finite: not ⊥ (by unsigned) and not ⊤ (by hypothesis)
+      set r := (f x).toReal with hr_def
+      have hr_eq : f x = r := (EReal.coe_toReal hfx_lt_top.ne hfx_not_bot).symm
+      rw [hr_eq]
+      -- f x = r (finite nonnegative real)
+      have hr_nonneg : r ≥ 0 := by
+        have h := hf x
+        rw [hr_eq] at h
+        exact EReal.coe_nonneg.mp h
+      -- Use floor_approx_iSup_eq: for large n, approx_fn f n x = floor(r * 2^n) / 2^n
+      apply le_antisymm
+      · -- r ≤ iSup (approx_fn)
+        -- Strategy: use floor_approx_iSup_eq and show that for large n, floor_approx ≤ approx_fn
+        rw [floor_approx_iSup_eq r hr_nonneg]
+        apply iSup_le
+        intro n
+        -- Find N ≥ n with ‖x‖ ≤ N and r ≤ N
+        let N := max n (max (Nat.ceil ‖x‖) (Nat.ceil r))
+        have hnN : n ≤ N := Nat.le_max_left _ _
+        have h_norm_N : ‖x‖ ≤ N := by
+          calc ‖x‖ ≤ Nat.ceil ‖x‖ := Nat.le_ceil _
+               _ ≤ max (Nat.ceil ‖x‖) (Nat.ceil r) := by exact_mod_cast le_max_left _ _
+               _ ≤ N := by exact_mod_cast le_max_right _ _
+        have hrN : r ≤ N := by
+          calc r ≤ Nat.ceil r := Nat.le_ceil _
+               _ ≤ max (Nat.ceil ‖x‖) (Nat.ceil r) := by exact_mod_cast le_max_right _ _
+               _ ≤ N := by exact_mod_cast le_max_right _ _
+        -- approx_fn f N x = floor(r * 2^N) / 2^N
+        have h_approx_N : approx_fn f N x = (((⌊r * 2^N⌋₊ : ℕ) : ℝ) / (2^N : ℝ) : EReal) :=
+          approx_fn_eq_floor_when_finite f hf N x h_norm_N r hr_eq hr_nonneg hrN
+        -- floor(r * 2^n) / 2^n ≤ floor(r * 2^N) / 2^N (monotonicity)
+        have h2n_pos : (2 : ℝ)^n > 0 := pow_pos (by norm_num) n
+        have h2N_pos : (2 : ℝ)^N > 0 := pow_pos (by norm_num) N
+        have h_floor_n_le_r : (⌊r * 2^n⌋₊ : ℝ) / 2^n ≤ r := by
+          rw [div_le_iff₀ h2n_pos]
+          exact Nat.floor_le (mul_nonneg hr_nonneg (le_of_lt h2n_pos))
+        have h_mono : (⌊r * 2^n⌋₊ : ℝ) / 2^n ≤ (⌊r * 2^N⌋₊ : ℝ) / 2^N := by
+          -- floor(r * 2^n) / 2^n is a multiple of 2^{-n}, hence of 2^{-N}
+          have h_lhs_mul : ∃ k : ℕ, (⌊r * 2^n⌋₊ : ℝ) / 2^n = (k : ℝ) / 2^N := by
+            use ⌊r * 2^n⌋₊ * 2^(N - n)
+            have h_pow : (2 : ℝ)^n * 2^(N - n) = 2^N := by
+              rw [← pow_add]; congr 1; omega
+            field_simp
+            ring_nf
+            rw [← h_pow]
+            ring
+          obtain ⟨k, hk⟩ := h_lhs_mul
+          rw [hk]
+          apply div_le_div_of_nonneg_right _ (le_of_lt h2N_pos)
+          have h_k_le_r : (k : ℝ) / 2^N ≤ r := by rw [← hk]; exact h_floor_n_le_r
+          have h_k_le_floor : k ≤ ⌊r * 2^N⌋₊ := by
+            have h1 : (k : ℝ) ≤ r * 2^N := by
+              rw [div_le_iff₀ h2N_pos] at h_k_le_r; linarith
+            exact Nat.le_floor h1
+          exact_mod_cast h_k_le_floor
+        -- Use the monotonicity and connect to iSup
+        have h_le_approx : (((⌊r * 2^n⌋₊ : ℕ) : ℝ) / (2^n : ℝ) : EReal) ≤ approx_fn f N x := by
+          rw [h_approx_N]
+          exact EReal.coe_le_coe_iff.mpr h_mono
+        calc (((⌊r * 2^n⌋₊ : ℕ) : ℝ) / (2^n : ℝ) : EReal)
+            ≤ approx_fn f N x := h_le_approx
+          _ ≤ ⨆ m, approx_fn f m x := le_iSup (fun m => approx_fn f m x) N
+      · -- iSup (approx_fn) ≤ r
+        apply iSup_le
+        intro n
+        by_cases h_norm : ‖x‖ ≤ n
+        · simp only [approx_fn, h_norm, ite_true, hr_eq]
+          -- min r n ≤ r, and floor approx ≤ min r n
+          have h_min_ne_bot : min (r : EReal) n ≠ ⊥ := by
+            intro h
+            rcases min_eq_bot.mp h with hr | hn
+            · exact EReal.coe_ne_bot r hr
+            · exact EReal.coe_ne_bot n hn
+          have h_min_ne_top : min (r : EReal) n ≠ ⊤ :=
+            ne_top_of_le_ne_top (EReal.coe_ne_top n) (min_le_right _ _)
+          have h_min_nonneg : (min (r : EReal) n).toReal ≥ 0 := by
+            apply EReal.toReal_nonneg
+            exact le_min (EReal.coe_nonneg.mpr hr_nonneg) (EReal.coe_nonneg.mpr (Nat.cast_nonneg n))
+          simp only [h_min_ne_bot, ite_false, h_min_ne_top, not_lt.mpr h_min_nonneg]
+          apply EReal.coe_le_coe_iff.mpr
+          have h2n_pos : (2 : ℝ)^n > 0 := pow_pos (by norm_num) n
+          have h_floor_le : (⌊(min (r : EReal) n).toReal * 2^n⌋₊ : ℝ) / 2^n ≤ (min (r : EReal) n).toReal := by
+            rw [div_le_iff₀ h2n_pos]
+            exact Nat.floor_le (mul_nonneg h_min_nonneg (le_of_lt h2n_pos))
+          have h_min_le_r : (min (r : EReal) n).toReal ≤ r := by
+            have h1 : min (r : EReal) n ≤ r := min_le_left _ _
+            have h2 := EReal.toReal_le_toReal h1 h_min_ne_bot (EReal.coe_ne_top r)
+            simp only [EReal.toReal_coe] at h2
+            exact h2
+          exact le_trans h_floor_le h_min_le_r
+        · simp only [approx_fn, h_norm, ite_false]
+          exact EReal.coe_nonneg.mpr hr_nonneg
 
 end UnsignedMeasurable.TFAE_helpers
 
