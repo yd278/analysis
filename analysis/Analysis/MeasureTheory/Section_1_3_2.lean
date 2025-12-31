@@ -102,58 +102,6 @@ private lemma iv_imp_ii : stmt_iv f → stmt_ii f := by
 
 /-! ### (iii) ⟹ (v): Via limsup representation -/
 
--- Helper: finite intersection indexed by Finset
-private lemma LebesgueMeasurable.finset_inter {α : Type*} [DecidableEq α]
-    {E : α → Set (EuclideanSpace' d)} {S : Finset α}
-    (hE : ∀ i ∈ S, LebesgueMeasurable (E i)) :
-    LebesgueMeasurable (⋂ i ∈ S, E i) := by
-  induction S using Finset.induction_on with
-  | empty =>
-    simp only [Finset.notMem_empty, Set.iInter_of_empty, Set.iInter_univ]
-    rw [← Set.compl_empty]
-    exact LebesgueMeasurable.empty.complement
-  | insert a S' ha ih =>
-    simp only [Finset.mem_insert, forall_eq_or_imp] at hE
-    have hE_a := hE.1
-    have hE_rest := fun i hi => hE.2 i hi
-    rw [show (⋂ i ∈ insert a S', E i) = E a ∩ (⋂ i ∈ S', E i) by
-      ext x
-      simp only [Set.mem_iInter, Set.mem_inter_iff]
-      constructor
-      · intro h; exact ⟨h a (Finset.mem_insert_self a S'), fun i hi => h i (Finset.mem_insert_of_mem hi)⟩
-      · intro ⟨ha', h⟩ i hi
-        rcases Finset.mem_insert.mp hi with rfl | hi'
-        · exact ha'
-        · exact h i hi']
-    exact LebesgueMeasurable.inter hE_a (ih hE_rest)
-
--- Helper: finite union indexed by Finset
-private lemma LebesgueMeasurable.finset_union {α : Type*} [DecidableEq α]
-    {E : α → Set (EuclideanSpace' d)} {S : Finset α}
-    (hE : ∀ i ∈ S, LebesgueMeasurable (E i)) :
-    LebesgueMeasurable (⋃ i ∈ S, E i) := by
-  induction S using Finset.induction_on with
-  | empty =>
-    simp only [Finset.notMem_empty, Set.iUnion_of_empty, Set.iUnion_empty]
-    exact LebesgueMeasurable.empty
-  | insert a S' ha ih =>
-    simp only [Finset.mem_insert, forall_eq_or_imp] at hE
-    have hE_a := hE.1
-    have hE_rest := fun i hi => hE.2 i hi
-    rw [show (⋃ i ∈ insert a S', E i) = E a ∪ (⋃ i ∈ S', E i) by
-      ext x
-      simp only [Set.mem_iUnion, Set.mem_union]
-      constructor
-      · intro ⟨i, hi, hx⟩
-        rcases Finset.mem_insert.mp hi with rfl | hi'
-        · left; exact hx
-        · right; exact ⟨i, hi', hx⟩
-      · intro h
-        cases h with
-        | inl h => exact ⟨a, Finset.mem_insert_self a S', h⟩
-        | inr h => obtain ⟨i, hi, hx⟩ := h; exact ⟨i, Finset.mem_insert_of_mem hi, hx⟩]
-    exact LebesgueMeasurable.union hE_a (ih hE_rest)
-
 -- Helper: Set.indicator' equals 1 when x ∈ E
 private lemma Set.indicator'_eq_one' {X : Type*} {E : Set X} {x : X} (hx : x ∈ E) :
     ((E.indicator' x : ℝ) : EReal) = 1 := by
@@ -260,33 +208,6 @@ private lemma limsupSet_LebesgueMeasurable {g : ℕ → EuclideanSpace' d → ER
   · convert LebesgueMeasurable.empty
     ext x; simp only [Set.mem_iUnion, Set.mem_setOf_eq, Set.mem_empty_iff_false, iff_false, not_exists]
     intro h; exact absurd h hn
-
--- Helper: a subset of a null set is null
-private lemma IsNull.subset {E F : Set (EuclideanSpace' d)} (hE : IsNull E) (hFE : F ⊆ E) : IsNull F := by
-  have := Lebesgue_outer_measure.mono hFE
-  rw [hE] at this
-  exact le_antisymm this (Lebesgue_outer_measure.nonneg F)
-
--- Key helper: If A = B outside a null set N (i.e., A ∩ Nᶜ = B ∩ Nᶜ), then A is measurable if B is
-private lemma LebesgueMeasurable.of_ae_eq {A B N : Set (EuclideanSpace' d)}
-    (hB : LebesgueMeasurable B) (hN : IsNull N) (h_eq : A ∩ Nᶜ = B ∩ Nᶜ) :
-    LebesgueMeasurable A := by
-  -- A = (B ∩ Nᶜ) ∪ (A ∩ N)
-  have h_decomp : A = (B ∩ Nᶜ) ∪ (A ∩ N) := by
-    ext x
-    constructor
-    · intro hx
-      by_cases hxN : x ∈ N
-      · right; exact ⟨hx, hxN⟩
-      · left; rw [← h_eq]; exact ⟨hx, hxN⟩
-    · intro hx
-      cases hx with
-      | inl h => rw [← h_eq] at h; exact h.1
-      | inr h => exact h.1
-  rw [h_decomp]
-  apply LebesgueMeasurable.union
-  · exact LebesgueMeasurable.inter hB (IsNull.measurable hN).complement
-  · exact IsNull.measurable (IsNull.subset hN Set.inter_subset_right)
 
 -- This is the main technical work of the proof
 private lemma iii_imp_v : stmt_iii f → stmt_v f := by
@@ -932,18 +853,13 @@ private lemma x_imp_vii : stmt_x f → stmt_vii f := by
 
 /-! ### (v)-(xi) ⟹ (iv): Construction of approximating sequence -/
 
--- Helper: the closed ball is Lebesgue measurable
-private lemma closedBall_LebesgueMeasurable (c : EuclideanSpace' d) (r : ℝ) :
-    LebesgueMeasurable (Metric.closedBall c r) :=
-  Metric.isClosed_closedBall.measurable
-
 -- Helper: the norm ball centered at origin is Lebesgue measurable
 private lemma normBall_LebesgueMeasurable (r : ℝ) :
     LebesgueMeasurable {x : EuclideanSpace' d | ‖x‖ ≤ r} := by
   have h : {x : EuclideanSpace' d | ‖x‖ ≤ r} = Metric.closedBall 0 r := by
     ext x; simp [Metric.closedBall, dist_zero_right]
   rw [h]
-  exact closedBall_LebesgueMeasurable 0 r
+  exact LebesgueMeasurable.closedBall 0 r
 
 -- The approximating function: f_n(x) = floor(min(f(x), n) * 2^n) / 2^n when |x| ≤ n, else 0
 -- This is the largest k·2^{-n} ≤ min(f(x), n)
