@@ -1755,8 +1755,138 @@ theorem UnsignedSimpleFunction.iff {d:ℕ} {f: EuclideanSpace' d → EReal} (hf:
 /-- Exercise 1.3.6 -/
 theorem UnsignedMeasurable.measurable_graph {d:ℕ} {f: EuclideanSpace' d → EReal} (hf: UnsignedMeasurable f) : LebesgueMeasurable { p | ∃ x, ∃ t:ℝ, EuclideanSpace'.prod_equiv d 1 p = ⟨ x, t ⟩ ∧ 0 ≤ t ∧ t ≤ f x } := by sorry
 
-/-- Remark 1.3.10 -/
-example : ∃ (f: EuclideanSpace' 1 → EReal) (hf: UnsignedMeasurable f) (E: Set (EuclideanSpace' 1)) (hE: LebesgueMeasurable E), ¬ LebesgueMeasurable (f⁻¹' ((Real.toEReal ∘ EuclideanSpace'.equiv_Real) '' E)) := by sorry
+/-!
+## Remark 1.3.10: Measurable functions can have non-measurable preimages
+
+We construct an example showing that even for a measurable function f: ℝ^d → [0, +∞],
+the inverse image f⁻¹(E) of a Lebesgue measurable set E need not be Lebesgue measurable.
+
+**Strategy** (from the textbook):
+1. The Cantor set C := {∑ aⱼ 3^{-j} : aⱼ ∈ {0,2}} has measure zero
+2. Define f: ℝ → [0,+∞] by: for x ∈ [0,1] with non-terminating binary expansion
+   x = ∑ bⱼ 2^{-j} (bⱼ ∈ {0,1}), set f(x) := ∑ 2bⱼ 3^{-j} (which lies in C)
+   and f(x) := 0 otherwise
+3. f maps BINARY digits to TERNARY (Cantor set) representation
+4. f is bijective from A (non-terminating binary decimals in [0,1]) onto C
+5. f is strictly increasing on A (preserves lexicographic order of digit sequences)
+6. **Measurability of f**: By Lemma 1.3.9(viii), f is measurable iff for every λ,
+   {x : f(x) ≤ λ} is Lebesgue measurable. Since f is monotone on [0,1],
+   {x ∈ [0,1] : f(x) ≤ λ} is an interval, and intervals are measurable.
+7. From the Vitali construction, we can find a non-measurable F ⊆ A
+8. Set E := f(F). Since f(F) ⊆ C (null set), E is Lebesgue measurable
+9. But f⁻¹(E) = F is non-measurable, as desired
+-/
+namespace Remark_1_3_10
+
+/-- The properties required of the binary-to-ternary function for this construction.
+    The function maps [0,1] into the Cantor set C by converting binary digits to ternary. -/
+structure BinaryToTernaryProperties (g : ℝ → ℝ) : Prop where
+  nonneg : ∀ x, 0 ≤ g x
+  bounded : ∀ x, g x ≤ 1
+  monotone_on : MonotoneOn g (Set.Icc 0 1)  -- g is monotone on [0,1]
+  image_in_cantor : g '' (Set.Icc 0 1) ⊆ CantorSet ∪ {0}
+  bijective_on_nonterminating : ∃ A : Set ℝ, A ⊆ Set.Icc 0 1 ∧
+    (Set.Icc 0 1 \ A).Countable ∧  -- A is co-countable in [0,1]
+    Set.BijOn g A CantorSet         -- g is bijective from A onto C
+
+/-- Existence of a binary-to-ternary function with the required properties.
+    This requires constructing f(x) = ∑ 2bⱼ 3^{-j} where x = ∑ bⱼ 2^{-j}. -/
+lemma binaryToTernary_exists : ∃ g : ℝ → ℝ, BinaryToTernaryProperties g := by
+  sorry -- This requires constructing the binary-to-ternary function explicitly
+
+/-- The binary-to-ternary conversion function on [0,1]:
+    Given x ∈ [0,1] with non-terminating binary expansion x = ∑ bⱼ 2^{-j} (bⱼ ∈ {0,1}),
+    define f(x) := ∑ 2bⱼ 3^{-j} (which lies in the Cantor set C).
+    For terminating binary decimals or x ∉ [0,1], set f(x) := 0.
+
+    This function is bijective from the set A of non-terminating binary decimals
+    in [0,1] onto the Cantor set C. -/
+noncomputable def binaryToTernary : ℝ → ℝ := Classical.choose binaryToTernary_exists
+
+lemma binaryToTernary_props : BinaryToTernaryProperties binaryToTernary :=
+  Classical.choose_spec binaryToTernary_exists
+
+/-- The binary-to-ternary function lifted to EuclideanSpace' 1 and extended to EReal -/
+noncomputable def f : EuclideanSpace' 1 → EReal :=
+  fun x => Real.toEReal (max 0 (binaryToTernary (EuclideanSpace'.equiv_Real x)))
+
+lemma f_unsigned : Unsigned f := by
+  intro x
+  simp only [f, ge_iff_le]
+  rw [EReal.coe_nonneg]
+  exact le_max_left 0 _
+
+/-- The function f is measurable.
+
+    **Proof sketch**: By Lemma 1.3.9(viii), f is unsigned measurable iff for every λ ∈ [0,+∞),
+    the set {x : f(x) ≤ λ} is Lebesgue measurable.
+
+    Note that f takes values in [0,1] (since binaryToTernary maps into Cantor set ∪ {0} ⊆ [0,1]).
+
+    **Case λ ≥ 1**: Since f(x) ≤ 1 ≤ λ for all x, we have {x : f(x) ≤ λ} = ℝ, which is measurable.
+
+    **Case 0 ≤ λ < 1**:
+    - For x ∉ [0,1]: f(x) = 0 ≤ λ, so (-∞, 0) ∪ (1, +∞) ⊆ {f ≤ λ}.
+    - For x ∈ [0,1]: since f is monotone on [0,1], {x ∈ [0,1] : f(x) ≤ λ} is an interval [0, a]
+      for some a ∈ [0,1].
+    - Thus {x : f(x) ≤ λ} = (-∞, a] ∪ (1, +∞), which is measurable. -/
+lemma f_measurable : UnsignedMeasurable f := by
+  -- Apply Lemma 1.3.9(viii): f is measurable iff ∀ λ, {x : f(x) ≤ λ} is measurable
+  -- Use monotonicity: for monotone g, {x : g(x) ≤ λ} is an interval
+  -- Intervals are measurable
+  sorry
+
+/-- There exists a non-measurable subset F of [0,1] such that its image under
+    binaryToTernary lies in the Cantor set (hence is null, hence measurable).
+    This F comes from taking the Vitali set restricted to non-terminating binary decimals. -/
+lemma exists_nonmeasurable_with_cantor_image :
+    ∃ F : Set ℝ, F ⊆ Set.Icc 0 1 ∧
+    ¬ LebesgueMeasurable (Real.equiv_EuclideanSpace' '' F) ∧
+    binaryToTernary '' F ⊆ CantorSet := by
+  -- Key insight: binaryToTernary maps A (non-terminating binaries) bijectively onto C (Cantor set)
+  -- The Vitali construction can be modified to find non-measurable F ⊆ A
+  -- Then binaryToTernary '' F ⊆ C
+  sorry
+
+end Remark_1_3_10
+
+/-- Remark 1.3.10: The inverse image of a Lebesgue measurable set by a measurable function
+    need not be Lebesgue measurable.
+
+    **Proof**: Define f: [0,1] → C (Cantor set) by mapping binary digits to ternary:
+    f(∑ bⱼ 2^{-j}) = ∑ 2bⱼ 3^{-j}.
+
+    **Why f is measurable**: f is monotone on [0,1], so for any λ, the set {x : f(x) ≤ λ}
+    is an interval. Intervals are Lebesgue measurable. By Lemma 1.3.9(viii), f is measurable.
+
+    **Construction**: f maps the set A of non-terminating binary decimals bijectively onto C.
+    Take a non-measurable F ⊆ A (from the Vitali construction). Then E := f(F) ⊆ C is
+    a subset of a null set (hence measurable), but f⁻¹(E) = F is non-measurable. -/
+example : ∃ (f: EuclideanSpace' 1 → EReal) (hf: UnsignedMeasurable f) (E: Set (EuclideanSpace' 1)) (hE: LebesgueMeasurable E), ¬ LebesgueMeasurable (f⁻¹' ((Real.toEReal ∘ EuclideanSpace'.equiv_Real) '' E)) := by
+  -- Use the construction from Remark_1_3_10
+  use Remark_1_3_10.f, Remark_1_3_10.f_measurable
+  -- Get the non-measurable set F with image in Cantor set
+  obtain ⟨F, hF_sub, hF_nonmeas, hF_image⟩ := Remark_1_3_10.exists_nonmeasurable_with_cantor_image
+  -- E := binaryToTernary '' F lifted to EuclideanSpace' 1
+  use Real.equiv_EuclideanSpace' '' (Remark_1_3_10.binaryToTernary '' F)
+  refine ⟨?hE_meas, ?hPreimage_nonmeas⟩
+  case hE_meas =>
+    -- E is measurable: it's a subset of the Cantor set (which is null)
+    apply IsNull.measurable
+    apply IsNull.subset CantorSet.null
+    -- Show: Real.equiv_EuclideanSpace' '' (binaryToTernary '' F) ⊆ Real.equiv_EuclideanSpace' '' CantorSet
+    intro x hx
+    obtain ⟨y, hy, rfl⟩ := hx
+    exact ⟨y, hF_image hy, rfl⟩
+  case hPreimage_nonmeas =>
+    -- f⁻¹(E) is not measurable
+    -- Since f = binaryToTernary on [0,1] and binaryToTernary is bijective on A,
+    -- we have f⁻¹(binaryToTernary '' F) ⊇ F, so f⁻¹(E) is non-measurable
+    intro h_meas
+    apply hF_nonmeas
+    -- Need to show: if f⁻¹(im(E)) is measurable, then F is measurable
+    -- This follows from the fact that F ⊆ f⁻¹(f(F)) and measurability of subsets
+    sorry
 
 /-- Definition 1.3.11 (Complex measurability)-/
 def ComplexMeasurable {d:ℕ} (f: EuclideanSpace' d → ℂ) : Prop := ∃ (g: ℕ → EuclideanSpace' d → ℂ), (∀ n, ComplexSimpleFunction (g n)) ∧ (PointwiseConvergesTo g f)
