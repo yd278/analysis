@@ -1783,6 +1783,7 @@ namespace Remark_1_3_10
 structure BinaryToTernaryProperties (g : ℝ → ℝ) : Prop where
   nonneg : ∀ x, 0 ≤ g x
   bounded : ∀ x, g x ≤ 1
+  zero_outside : ∀ x, x ∉ Set.Icc 0 1 → g x = 0  -- g(x) = 0 outside [0,1]
   monotone_on : MonotoneOn g (Set.Icc 0 1)  -- g is monotone on [0,1]
   image_in_cantor : g '' (Set.Icc 0 1) ⊆ CantorSet ∪ {0}
   bijective_on_nonterminating : ∃ A : Set ℝ, A ⊆ Set.Icc 0 1 ∧
@@ -1790,9 +1791,32 @@ structure BinaryToTernaryProperties (g : ℝ → ℝ) : Prop where
     Set.BijOn g A CantorSet         -- g is bijective from A onto C
 
 /-- Existence of a binary-to-ternary function with the required properties.
-    This requires constructing f(x) = ∑ 2bⱼ 3^{-j} where x = ∑ bⱼ 2^{-j}. -/
+    This requires constructing f(x) = ∑ 2bⱼ 3^{-j} where x = ∑ bⱼ 2^{-j}.
+
+    **Construction**:
+    For x ∈ [0,1], write x in binary as x = ∑_{j≥1} bⱼ 2^{-j} where bⱼ ∈ {0,1}.
+    Define g(x) := ∑_{j≥1} (2bⱼ) 3^{-j}.
+
+    Since 2bⱼ ∈ {0, 2}, we have g(x) ∈ CantorSet.
+    For x ∉ [0,1], define g(x) := 0.
+
+    **Properties**:
+    - nonneg: g(x) ≥ 0 since all terms are nonneg
+    - bounded: g(x) ≤ ∑_{j≥1} 2·3^{-j} = 1
+    - zero_outside: by definition
+    - monotone_on: if x < y in [0,1], their binary expansions differ at some position,
+      and lexicographic ordering of binary digits implies g(x) < g(y)
+    - image_in_cantor: g([0,1]) ⊆ C ∪ {0} by construction
+    - bijective_on_nonterminating: A = {x ∈ [0,1] : x has non-terminating binary expansion},
+      then g: A → C is bijective (this uses that non-terminating binary and ternary expansions
+      correspond uniquely) -/
 lemma binaryToTernary_exists : ∃ g : ℝ → ℝ, BinaryToTernaryProperties g := by
-  sorry -- This requires constructing the binary-to-ternary function explicitly
+  -- The construction uses binary digits of real numbers.
+  -- For a full formalization, one would need:
+  -- 1. Define binary digit extraction: binaryDigit x j := ⌊2^j x⌋ mod 2
+  -- 2. Define g(x) := ∑_{j≥1} 2·(binaryDigit x j)·3^{-j} for x ∈ [0,1], else 0
+  -- 3. Prove all required properties
+  sorry
 
 /-- The binary-to-ternary conversion function on [0,1]:
     Given x ∈ [0,1] with non-terminating binary expansion x = ∑ bⱼ 2^{-j} (bⱼ ∈ {0,1}),
@@ -1830,6 +1854,40 @@ lemma f_unsigned : Unsigned f := by
     - For x ∈ [0,1]: since f is monotone on [0,1], {x ∈ [0,1] : f(x) ≤ λ} is an interval [0, a]
       for some a ∈ [0,1].
     - Thus {x : f(x) ≤ λ} = (-∞, a] ∪ (1, +∞), which is measurable. -/
+-- Helper: f is bounded above by 1
+lemma f_le_one (x : EuclideanSpace' 1) : f x ≤ 1 := by
+  simp only [f]
+  have hg := binaryToTernary_props.bounded (EuclideanSpace'.equiv_Real x)
+  have h_max_le : max 0 (binaryToTernary (EuclideanSpace'.equiv_Real x)) ≤ 1 :=
+    max_le (by norm_num) hg
+  exact EReal.coe_le_coe_iff.mpr h_max_le
+
+-- Helper: f(x) = 0 for x outside [0,1]
+lemma f_zero_outside (x : EuclideanSpace' 1) (hx : EuclideanSpace'.equiv_Real x ∉ Set.Icc 0 1) :
+    f x = 0 := by
+  simp only [f]
+  have hg := binaryToTernary_props.zero_outside (EuclideanSpace'.equiv_Real x) hx
+  rw [hg]
+  simp
+
+-- Helper: Sublevel sets of monotone functions on [0,1] extended by 0 outside are measurable
+-- This is the key lemma for f_measurable
+lemma sublevel_set_measurable (t : EReal) (ht_pos : 0 < t) (ht_lt_one : t < 1) :
+    LebesgueMeasurable {x : EuclideanSpace' 1 | f x ≤ t} := by
+  -- The sublevel set {x | f x ≤ t} consists of:
+  -- 1. All x with equiv_Real(x) ∉ [0,1] (since f(x) = 0 < t there)
+  -- 2. All x with equiv_Real(x) ∈ [0,1] and f(x) ≤ t (an interval by monotonicity)
+  -- Together this forms a measurable set (union of open rays and a closed interval)
+  --
+  -- Since f(x) = 0 outside [0,1] and 0 < t, the set includes:
+  -- - (-∞, 0) lifted to EuclideanSpace' 1 (open, hence measurable)
+  -- - (1, +∞) lifted to EuclideanSpace' 1 (open, hence measurable)
+  -- - {x ∈ [0,1] | f(x) ≤ t} which is [0, a] for some a ∈ (0, 1] by monotonicity
+  --
+  -- The union is (-∞, 0) ∪ [0, a] ∪ (1, +∞) = (-∞, a] ∪ (1, +∞) = ℝ \ (a, 1]
+  -- which is measurable (complement of an interval is measurable).
+  sorry
+
 lemma f_measurable : UnsignedMeasurable f := by
   -- Apply Lemma 1.3.9(viii): f is measurable iff ∀ t, {x : f(x) ≤ t} is measurable
   have h_tfae := UnsignedMeasurable.TFAE f_unsigned
@@ -1839,20 +1897,66 @@ lemma f_measurable : UnsignedMeasurable f := by
   apply h_iff.mpr
   -- Now prove: ∀ t, LebesgueMeasurable {x | f x ≤ t}
   intro t
-  -- Use monotonicity: for monotone g on [0,1], {x : g(x) ≤ t} is a measurable set
-  -- because it's a union of intervals (rays outside [0,1], interval inside [0,1])
-  sorry
+  -- Case split on t
+  rcases lt_trichotomy t 0 with ht_neg | ht_zero | ht_pos
+  · -- Case t < 0: {x | f x ≤ t} = ∅ (since f x ≥ 0 for all x)
+    have h_empty : {x | f x ≤ t} = ∅ := by
+      ext x
+      simp only [Set.mem_setOf_eq, Set.mem_empty_iff_false, iff_false, not_le]
+      exact lt_of_lt_of_le ht_neg (f_unsigned x)
+    rw [h_empty]
+    exact LebesgueMeasurable.empty
+  · -- Case t = 0: {x | f x ≤ 0} = {x | f x = 0} (since f x ≥ 0)
+    subst ht_zero
+    -- {f = 0} includes:
+    -- 1. All x with equiv_Real(x) ∉ [0,1] (by f_zero_outside)
+    -- 2. All x with equiv_Real(x) ∈ [0,1] and binaryToTernary(equiv_Real(x)) = 0
+    --    (which happens for terminating binary decimals mapping to 0, e.g., x = 0)
+    -- This set is the complement of {x ∈ [0,1] : f(x) > 0}, which is open in [0,1]
+    -- by continuity-like properties of monotone functions, hence measurable.
+    -- For the full proof: the set {f > 0} ∩ [0,1] is an interval (0, 1] by monotonicity,
+    -- so {f = 0} = (-∞, 0) ∪ {0} ∪ (1, ∞) which is a union of a closed set and open rays.
+    sorry
+  · -- Case t > 0
+    rcases le_or_lt 1 t with ht_ge_one | ht_lt_one
+    · -- Case t ≥ 1: {x | f x ≤ t} = univ (since f x ≤ 1 for all x)
+      have h_univ : {x | f x ≤ t} = Set.univ := by
+        ext x
+        simp only [Set.mem_setOf_eq, Set.mem_univ, iff_true]
+        exact le_trans (f_le_one x) ht_ge_one
+      rw [h_univ]
+      exact IsOpen.measurable isOpen_univ
+    · -- Case 0 < t < 1: Use the helper lemma
+      exact sublevel_set_measurable t ht_pos ht_lt_one
 
 /-- There exists a non-measurable subset F of [0,1] such that its image under
     binaryToTernary lies in the Cantor set (hence is null, hence measurable).
-    This F comes from taking the Vitali set restricted to non-terminating binary decimals. -/
+    This F comes from taking the Vitali set restricted to non-terminating binary decimals.
+
+    **Construction**:
+    Let A = {x ∈ [0,1] : x has non-terminating binary expansion}.
+    Note that [0,1] \ A is countable (terminating binary = dyadic rationals).
+
+    The Vitali set construction from Proposition 1.2.18 can be performed within A:
+    - Define equivalence relation on A: x ~ y iff x - y ∈ ℚ
+    - Use AC to select one representative from each equivalence class
+    - This gives a non-measurable F ⊆ A ⊆ [0,1]
+
+    Since binaryToTernary maps A bijectively onto C (Cantor set), we have:
+    - binaryToTernary '' F ⊆ binaryToTernary '' A = C
+    - F is non-measurable
+
+    The key insight is that the Vitali construction works within A because A has the same
+    "density" as [0,1] (co-countable), so the translation argument still works. -/
 lemma exists_nonmeasurable_with_cantor_image :
     ∃ F : Set ℝ, F ⊆ Set.Icc 0 1 ∧
     ¬ LebesgueMeasurable (Real.equiv_EuclideanSpace' '' F) ∧
     binaryToTernary '' F ⊆ CantorSet := by
-  -- Key insight: binaryToTernary maps A (non-terminating binaries) bijectively onto C (Cantor set)
-  -- The Vitali construction can be modified to find non-measurable F ⊆ A
-  -- Then binaryToTernary '' F ⊆ C
+  -- This uses a modified Vitali construction within the set A of non-terminating binaries
+  -- The proof would:
+  -- 1. Show A has full measure in [0,1] (complement is countable)
+  -- 2. Apply Vitali's construction to find non-measurable F ⊆ A
+  -- 3. Note binaryToTernary '' F ⊆ C by bijectivity
   sorry
 
 end Remark_1_3_10
@@ -1887,12 +1991,21 @@ example : ∃ (f: EuclideanSpace' 1 → EReal) (hf: UnsignedMeasurable f) (E: Se
     exact ⟨y, hF_image hy, rfl⟩
   case hPreimage_nonmeas =>
     -- f⁻¹(E) is not measurable
-    -- Since f = binaryToTernary on [0,1] and binaryToTernary is bijective on A,
-    -- we have f⁻¹(binaryToTernary '' F) ⊇ F, so f⁻¹(E) is non-measurable
+    -- Since binaryToTernary is injective on A (non-terminating binaries) and F ⊆ A,
+    -- we have F = binaryToTernary⁻¹(binaryToTernary(F)) ∩ A
+    --
+    -- The preimage f⁻¹(E) where E = Real.equiv_EuclideanSpace' '' (binaryToTernary '' F):
+    -- - f(x) = Real.toEReal(max 0 (binaryToTernary(equiv_Real x)))
+    -- - For x ∈ [0,1], f(x) ∈ E iff binaryToTernary(equiv_Real x) ∈ binaryToTernary '' F
+    -- - Since binaryToTernary is injective on A ⊇ F, this means equiv_Real x ∈ F
+    -- - Hence f⁻¹(E) ∩ Real.equiv_EuclideanSpace' '' [0,1] = Real.equiv_EuclideanSpace' '' F
+    --
+    -- If f⁻¹(E) were measurable, then Real.equiv_EuclideanSpace' '' F would be measurable
+    -- (as the intersection with a measurable set [0,1]), contradicting hF_nonmeas.
     intro h_meas
     apply hF_nonmeas
-    -- Need to show: if f⁻¹(im(E)) is measurable, then F is measurable
-    -- This follows from the fact that F ⊆ f⁻¹(f(F)) and measurability of subsets
+    -- The argument requires showing F = f⁻¹(E) ∩ something_measurable
+    -- This uses injectivity of binaryToTernary on the domain containing F
     sorry
 
 /-- Definition 1.3.11 (Complex measurability)-/
