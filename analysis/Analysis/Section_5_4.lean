@@ -640,6 +640,31 @@ theorem Sequence.LIM_within_steady {a : ℕ → ℚ} {ε : ℚ}
     rw[abs_le] at hsteady
     grind
 
+theorem Sequence.LIM_all_close {a:ℕ → ℚ} {ε :ℚ}
+  (ha : (a:Sequence).IsCauchy) (hε : ε > 0):
+    ∃ N :ℕ , ∀ n ≥ N, LIM a ≤ a n + ε ∧ a n - ε ≤ LIM a := by
+      have hsteady := ha (ε/2) (by positivity)
+      choose N hN hsteady using hsteady
+      simp at hN 
+      lift N to ℕ using hN
+      choose hupper hlower using LIM_within_steady ha hsteady (by positivity)
+      simp at hlower hupper
+      specialize hsteady N (by simp)
+      use N
+      intro n hn
+      specialize hsteady n (by simp[hn])
+      simp [Rat.Close,hn,abs_le] at hsteady
+      choose hgu hgl using hsteady
+      split_ands
+      . 
+        calc
+          _ ≤ (a N :Real) + ε / 2:= hupper
+          _ ≤ (ε /2) + (a n) + (ε/2) := by norm_cast;simpa
+          _ = _ := by ring
+      calc
+        _ ≤ (a N : Real)+ε / 2 - ε  := by  gcongr; norm_cast
+        _ = (a N :Real) - ε /2 := by ring
+        _ ≤ _ := by linarith
 
 
 /-- Proposition 5.4.14 / Exercise 5.4.5 -/

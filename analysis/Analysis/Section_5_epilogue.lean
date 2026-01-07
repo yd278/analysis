@@ -705,6 +705,21 @@ theorem Real.map_mul (x y : Real) : equivR (x * y) = equivR (x) * equivR (y) := 
   simp;linarith
   simp;linarith
     
+theorem Real.map_le_map_iff  (x y : Real) : equivR x ≤ equivR y ↔ x ≤ y := by
+  rw[← not_iff_not];push_neg
+  suffices h: equivR x - equivR y > 0↔ x - y > 0 from by
+    rw[lt_iff, neg_iff_pos_of_neg, neg_sub,isPos_iff]
+    rw[← h]
+    exact Iff.symm sub_pos
+  have hsubeq : equivR x - equivR y = equivR (x - y) := by
+    simp_rw[_root_.sub_eq_add_neg]
+    rw[equivR_neg, map_add]
+  rw[hsubeq]
+  exact Iff.symm equivR_pos_iff
+theorem Real.map_lt_map_iff (x y:Real): equivR x < equivR y ↔ x < y := by
+  refine le_iff_le_iff_lt_iff_lt.mp ( map_le_map_iff y x)
+
+
 noncomputable abbrev Real.equivR_ordered_ring : Real ≃+*o ℝ where
   toEquiv := equivR
   map_add' x y := by
@@ -713,16 +728,7 @@ noncomputable abbrev Real.equivR_ordered_ring : Real ≃+*o ℝ where
     exact map_mul x y
   map_le_map_iff' := by 
     intro x y
-    rw[← not_iff_not];push_neg
-    suffices h: equivR x - equivR y > 0↔ x - y > 0 from by
-      rw[lt_iff, neg_iff_pos_of_neg, neg_sub,isPos_iff]
-      rw[← h]
-      exact Iff.symm sub_pos
-    have hsubeq : equivR x - equivR y = equivR (x - y) := by
-      simp_rw[_root_.sub_eq_add_neg]
-      rw[equivR_neg, map_add]
-    rw[hsubeq]
-    exact Iff.symm equivR_pos_iff
+    exact map_le_map_iff x y
 
 theorem Real.pow_of_equivR (x:Real) (n:ℕ) : equivR (x^n) = (equivR x)^n := by
   induction' n with k hk
