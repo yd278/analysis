@@ -1831,9 +1831,16 @@ lemma f_unsigned : Unsigned f := by
       for some a ∈ [0,1].
     - Thus {x : f(x) ≤ λ} = (-∞, a] ∪ (1, +∞), which is measurable. -/
 lemma f_measurable : UnsignedMeasurable f := by
-  -- Apply Lemma 1.3.9(viii): f is measurable iff ∀ λ, {x : f(x) ≤ λ} is measurable
-  -- Use monotonicity: for monotone g, {x : g(x) ≤ λ} is an interval
-  -- Intervals are measurable
+  -- Apply Lemma 1.3.9(viii): f is measurable iff ∀ t, {x : f(x) ≤ t} is measurable
+  have h_tfae := UnsignedMeasurable.TFAE f_unsigned
+  -- Index 0 is UnsignedMeasurable f, index 7 is ∀ t, LebesgueMeasurable {x | f x ≤ t}
+  have h_iff : UnsignedMeasurable f ↔ (∀ t, LebesgueMeasurable {x | f x ≤ t}) :=
+    List.TFAE.out h_tfae 0 7
+  apply h_iff.mpr
+  -- Now prove: ∀ t, LebesgueMeasurable {x | f x ≤ t}
+  intro t
+  -- Use monotonicity: for monotone g on [0,1], {x : g(x) ≤ t} is a measurable set
+  -- because it's a union of intervals (rays outside [0,1], interval inside [0,1])
   sorry
 
 /-- There exists a non-measurable subset F of [0,1] such that its image under
