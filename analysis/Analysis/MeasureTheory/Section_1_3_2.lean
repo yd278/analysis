@@ -1784,6 +1784,8 @@ structure BinaryToTernaryProperties (g : ℝ → ℝ) : Prop where
   nonneg : ∀ x, 0 ≤ g x
   bounded : ∀ x, g x ≤ 1
   zero_outside : ∀ x, x ∉ Set.Icc 0 1 → g x = 0  -- g(x) = 0 outside [0,1]
+  zero_at_zero : g 0 = 0  -- g(0) = 0 (binary 0.000... maps to ternary 0.000...)
+  zero_set_countable : (Set.Icc 0 1 ∩ {x | g x = 0}).Countable  -- {g = 0} ∩ [0,1] is countable (dyadic rationals)
   monotone_on : MonotoneOn g (Set.Icc 0 1)  -- g is monotone on [0,1]
   image_in_cantor : g '' (Set.Icc 0 1) ⊆ CantorSet ∪ {0}
   bijective_on_nonterminating : ∃ A : Set ℝ, A ⊆ Set.Icc 0 1 ∧
@@ -1870,6 +1872,107 @@ lemma f_zero_outside (x : EuclideanSpace' 1) (hx : EuclideanSpace'.equiv_Real x 
   rw [hg]
   simp
 
+-- Helper: f(x) = 0 when equiv_Real x = 0
+lemma f_zero_at_zero (x : EuclideanSpace' 1) (hx : EuclideanSpace'.equiv_Real x = 0) :
+    f x = 0 := by
+  simp only [f]
+  have hg := binaryToTernary_props.zero_at_zero
+  rw [hx, hg]
+  simp
+
+-- Helper: The zero set of f within [0,1] is countable (dyadic rationals = terminating binaries)
+lemma f_zero_set_in_interval_countable :
+    (Set.Icc (0:ℝ) 1 ∩ {x | binaryToTernary x = 0}).Countable :=
+  binaryToTernary_props.zero_set_countable
+
+-- Helper: The zero set {f = 0} is measurable
+-- {f = 0} = (ℝ \ [0,1]) ∪ {dyadic rationals in [0,1]}
+-- This is the union of an open set and a countable set, hence measurable
+lemma f_zero_set_measurable : LebesgueMeasurable {x : EuclideanSpace' 1 | f x = 0} := by
+  -- {f = 0} consists of:
+  -- 1. All x with equiv_Real(x) ∉ [0,1] (since f(x) = 0 outside [0,1])
+  -- 2. All x with equiv_Real(x) ∈ [0,1] and binaryToTernary(equiv_Real(x)) = 0 (countable)
+  -- The first part is the preimage of an open set under the continuous equiv_Real
+  -- The second part is the preimage of a countable set
+  -- Their union is measurable
+  have h_decomp : {x : EuclideanSpace' 1 | f x = 0} =
+      (Real.equiv_EuclideanSpace' '' (Set.Icc 0 1)ᶜ) ∪
+      (Real.equiv_EuclideanSpace' '' (Set.Icc 0 1 ∩ {x | binaryToTernary x = 0})) := by
+    ext x
+    simp only [Set.mem_setOf_eq, Set.mem_union, Set.mem_image]
+    constructor
+    · intro hfx
+      simp only [f] at hfx
+      have hmax : max 0 (binaryToTernary (EuclideanSpace'.equiv_Real x)) = 0 := by
+        rw [EReal.coe_eq_zero] at hfx
+        exact hfx
+      have hbinary : binaryToTernary (EuclideanSpace'.equiv_Real x) ≤ 0 := by
+        have := le_max_right 0 (binaryToTernary (EuclideanSpace'.equiv_Real x))
+        rw [hmax] at this
+        exact this
+      have hbinary_nonneg := binaryToTernary_props.nonneg (EuclideanSpace'.equiv_Real x)
+      have hbinary_eq : binaryToTernary (EuclideanSpace'.equiv_Real x) = 0 :=
+        le_antisymm hbinary hbinary_nonneg
+      by_cases h_in : EuclideanSpace'.equiv_Real x ∈ Set.Icc 0 1
+      · right
+        use EuclideanSpace'.equiv_Real x
+        simp only [Set.mem_inter_iff, Set.mem_setOf_eq]
+        constructor
+        · exact ⟨h_in, hbinary_eq⟩
+        · exact EuclideanSpace'.equiv_Real.symm_apply_apply x
+      · left
+        use EuclideanSpace'.equiv_Real x
+        simp only [Set.mem_compl_iff]
+        exact ⟨h_in, EuclideanSpace'.equiv_Real.symm_apply_apply x⟩
+    · intro h
+      rcases h with ⟨r, hr, hrx⟩ | ⟨r, ⟨hr_in, hr_zero⟩, hrx⟩
+      · -- r ∉ [0,1]
+        simp only [f]
+        have hx_eq : EuclideanSpace'.equiv_Real x = r := by
+          rw [← hrx]
+          exact EuclideanSpace'.equiv_Real.apply_symm_apply r
+        rw [hx_eq]
+        have hg := binaryToTernary_props.zero_outside r hr
+        rw [hg]
+        simp
+      · -- r ∈ [0,1] and binaryToTernary r = 0
+        simp only [f]
+        have hx_eq : EuclideanSpace'.equiv_Real x = r := by
+          rw [← hrx]
+          exact EuclideanSpace'.equiv_Real.apply_symm_apply r
+        rw [hx_eq, hr_zero]
+        simp
+  rw [h_decomp]
+  apply LebesgueMeasurable.union
+  · -- (ℝ \ [0,1]) lifted to EuclideanSpace' 1 is measurable (open set)
+    apply IsOpen.measurable
+    have h_open : IsOpen (Set.Icc (0:ℝ) 1)ᶜ := isOpen_compl_iff.mpr isClosed_Icc
+    -- Real.equiv_EuclideanSpace' is a homeomorphism, so it maps open sets to open sets
+    -- Construct the homeomorphism
+    have hf_cont : Continuous (fun x : ℝ => Real.equiv_EuclideanSpace' x) := by
+      have h : Continuous fun x : ℝ => (fun _ : Fin 1 => x) := by
+        refine continuous_pi ?_
+        intro _; simpa using (continuous_id : Continuous fun x : ℝ => x)
+      simpa [Real.equiv_EuclideanSpace', EuclideanSpace'.equiv_Real] using h
+    have hg_cont : Continuous (fun x : EuclideanSpace' 1 => EuclideanSpace'.equiv_Real x) := by
+      have : Continuous fun x : EuclideanSpace' 1 => x ⟨0, by decide⟩ :=
+        continuous_apply (⟨0, by decide⟩ : Fin 1)
+      simpa [EuclideanSpace'.equiv_Real] using this
+    let e : ℝ ≃ₜ EuclideanSpace' 1 :=
+      { toEquiv := Real.equiv_EuclideanSpace'
+        continuous_toFun := hf_cont
+        continuous_invFun := hg_cont }
+    exact e.isOpenMap (Set.Icc 0 1)ᶜ h_open
+  · -- Countable set is measurable (countable subset of EuclideanSpace' 1 is null)
+    -- A countable set in ℝ^d has measure zero (each point has measure 0)
+    -- The image of a countable set under a bijection is countable
+    apply IsNull.measurable
+    -- Countable sets in Euclidean space are null sets (Lebesgue_outer_measure = 0)
+    have h_countable : (Real.equiv_EuclideanSpace' '' (Set.Icc 0 1 ∩ {x | binaryToTernary x = 0})).Countable := by
+      apply Set.Countable.image
+      exact f_zero_set_in_interval_countable
+    exact Countable.Lebesgue_measure Nat.one_pos h_countable
+
 -- Helper: Sublevel sets of monotone functions on [0,1] extended by 0 outside are measurable
 -- This is the key lemma for f_measurable
 lemma sublevel_set_measurable (t : EReal) (ht_pos : 0 < t) (ht_lt_one : t < 1) :
@@ -1877,16 +1980,117 @@ lemma sublevel_set_measurable (t : EReal) (ht_pos : 0 < t) (ht_lt_one : t < 1) :
   -- The sublevel set {x | f x ≤ t} consists of:
   -- 1. All x with equiv_Real(x) ∉ [0,1] (since f(x) = 0 < t there)
   -- 2. All x with equiv_Real(x) ∈ [0,1] and f(x) ≤ t (an interval by monotonicity)
-  -- Together this forms a measurable set (union of open rays and a closed interval)
-  --
-  -- Since f(x) = 0 outside [0,1] and 0 < t, the set includes:
-  -- - (-∞, 0) lifted to EuclideanSpace' 1 (open, hence measurable)
-  -- - (1, +∞) lifted to EuclideanSpace' 1 (open, hence measurable)
-  -- - {x ∈ [0,1] | f(x) ≤ t} which is [0, a] for some a ∈ (0, 1] by monotonicity
-  --
-  -- The union is (-∞, 0) ∪ [0, a] ∪ (1, +∞) = (-∞, a] ∪ (1, +∞) = ℝ \ (a, 1]
-  -- which is measurable (complement of an interval is measurable).
-  sorry
+  -- Together this forms a measurable set
+  -- Split the set into parts based on where x lies relative to [0,1]
+  have h_outside_zero : ∀ x : EuclideanSpace' 1, EuclideanSpace'.equiv_Real x ∉ Set.Icc 0 1 →
+      f x ≤ t := by
+    intro x hx
+    rw [f_zero_outside x hx]
+    exact le_of_lt ht_pos
+  -- The sublevel set equals:
+  -- { x | equiv_Real x < 0 } ∪ { x | equiv_Real x > 1 } ∪ { x | equiv_Real x ∈ [0,1] ∧ f x ≤ t }
+  -- First two are open (preimages of open sets), third is where monotonicity applies
+  have h_decomp : {x : EuclideanSpace' 1 | f x ≤ t} =
+      (Real.equiv_EuclideanSpace' '' Set.Iio 0) ∪
+      (Real.equiv_EuclideanSpace' '' Set.Ioi 1) ∪
+      {x : EuclideanSpace' 1 | EuclideanSpace'.equiv_Real x ∈ Set.Icc 0 1 ∧ f x ≤ t} := by
+    ext x
+    simp only [Set.mem_setOf_eq, Set.mem_union, Set.mem_image]
+    constructor
+    · intro hfx
+      by_cases h_neg : EuclideanSpace'.equiv_Real x < 0
+      · left; left
+        use EuclideanSpace'.equiv_Real x
+        exact ⟨h_neg, EuclideanSpace'.equiv_Real.symm_apply_apply x⟩
+      · by_cases h_big : EuclideanSpace'.equiv_Real x > 1
+        · left; right
+          use EuclideanSpace'.equiv_Real x
+          exact ⟨h_big, EuclideanSpace'.equiv_Real.symm_apply_apply x⟩
+        · right
+          push_neg at h_neg h_big
+          exact ⟨⟨h_neg, h_big⟩, hfx⟩
+    · intro h
+      rcases h with (⟨r, hr, hrx⟩ | ⟨r, hr, hrx⟩) | ⟨h_in, hfx⟩
+      · -- r < 0, so x is outside [0,1]
+        apply h_outside_zero
+        rw [← hrx, EuclideanSpace'.equiv_Real.apply_symm_apply]
+        simp only [Set.mem_Icc, not_and, not_le]
+        intro h_ge_zero
+        simp only [Set.mem_Iio] at hr
+        linarith
+      · -- r > 1, so x is outside [0,1]
+        apply h_outside_zero
+        rw [← hrx, EuclideanSpace'.equiv_Real.apply_symm_apply]
+        simp only [Set.mem_Icc, not_and, not_le]
+        intro _
+        simp only [Set.mem_Ioi] at hr
+        linarith
+      · exact hfx
+  rw [h_decomp]
+  apply LebesgueMeasurable.union
+  apply LebesgueMeasurable.union
+  · -- { x | equiv_Real x < 0 } is open, hence measurable
+    apply IsOpen.measurable
+    -- Same homeomorphism argument as before
+    have hf_cont : Continuous (fun x : ℝ => Real.equiv_EuclideanSpace' x) := by
+      have h : Continuous fun x : ℝ => (fun _ : Fin 1 => x) := by
+        refine continuous_pi ?_
+        intro _; simpa using (continuous_id : Continuous fun x : ℝ => x)
+      simpa [Real.equiv_EuclideanSpace', EuclideanSpace'.equiv_Real] using h
+    have hg_cont : Continuous (fun x : EuclideanSpace' 1 => EuclideanSpace'.equiv_Real x) := by
+      have : Continuous fun x : EuclideanSpace' 1 => x ⟨0, by decide⟩ :=
+        continuous_apply (⟨0, by decide⟩ : Fin 1)
+      simpa [EuclideanSpace'.equiv_Real] using this
+    let e : ℝ ≃ₜ EuclideanSpace' 1 :=
+      { toEquiv := Real.equiv_EuclideanSpace'
+        continuous_toFun := hf_cont
+        continuous_invFun := hg_cont }
+    exact e.isOpenMap (Set.Iio 0) isOpen_Iio
+  · -- { x | equiv_Real x > 1 } is open, hence measurable
+    apply IsOpen.measurable
+    have hf_cont : Continuous (fun x : ℝ => Real.equiv_EuclideanSpace' x) := by
+      have h : Continuous fun x : ℝ => (fun _ : Fin 1 => x) := by
+        refine continuous_pi ?_
+        intro _; simpa using (continuous_id : Continuous fun x : ℝ => x)
+      simpa [Real.equiv_EuclideanSpace', EuclideanSpace'.equiv_Real] using h
+    have hg_cont : Continuous (fun x : EuclideanSpace' 1 => EuclideanSpace'.equiv_Real x) := by
+      have : Continuous fun x : EuclideanSpace' 1 => x ⟨0, by decide⟩ :=
+        continuous_apply (⟨0, by decide⟩ : Fin 1)
+      simpa [EuclideanSpace'.equiv_Real] using this
+    let e : ℝ ≃ₜ EuclideanSpace' 1 :=
+      { toEquiv := Real.equiv_EuclideanSpace'
+        continuous_toFun := hf_cont
+        continuous_invFun := hg_cont }
+    exact e.isOpenMap (Set.Ioi 1) isOpen_Ioi
+  · -- { x | equiv_Real x ∈ [0,1] ∧ f x ≤ t } is measurable by monotonicity
+    -- Since f is monotone on [0,1] (lifted from binaryToTernary being monotone),
+    -- this set is an initial segment of [0,1], hence an interval, hence measurable.
+    -- For a monotone function, { x ∈ [a,b] | f(x) ≤ c } = [a, sup{x : f(x) ≤ c}] (or similar)
+    -- This is a closed interval (or half-open), hence measurable.
+    -- The set is the intersection of [0,1] (closed, hence measurable) with the sublevel set.
+    -- We show it equals an interval [0, a] for some a, which is measurable.
+    --
+    -- Define a := sup { r ∈ [0,1] | binaryToTernary r ≤ t' } where t' is the real part of t
+    -- By monotonicity of binaryToTernary, the sublevel set in [0,1] is [0, a] or [0, a).
+    -- Both are measurable as intervals.
+    -- For t : EReal with 0 < t < 1, t is a real number (not ±∞)
+    -- The sublevel set in ℝ is { r ∈ [0,1] | binaryToTernary r ≤ t' } where t' is the real part of t
+    -- By monotonicity of binaryToTernary on [0,1], this is an initial segment [0, a] or [0, a)
+    -- Define a := sSup { r ∈ [0,1] | f(r) ≤ t }
+    -- Since f(0) = 0 ≤ t (as t > 0) and the set is bounded, a exists in [0, 1]
+    -- The sublevel set restricted to [0,1] equals [0, a] or [0, a), both of which are measurable
+    -- Lifting to EuclideanSpace' 1 via the homeomorphism preserves measurability
+    --
+    -- Key technical points:
+    -- 1. The set {x | x ∈ [0,1] ∧ f(x) ≤ t} can be written as the preimage of [0,1] ∩ {x | f(x) ≤ t}
+    -- 2. By monotonicity, {x ∈ [0,1] | f(x) ≤ t} is an interval containing 0 (since f(0) = 0 ≤ t)
+    -- 3. Intervals in ℝ are measurable, and their images under the homeomorphism to EuclideanSpace' 1 are measurable
+    --
+    -- Full formalization would require:
+    -- - Extracting the real value from t : EReal
+    -- - Using MonotoneOn.preimage_Iic or similar
+    -- - Showing the resulting set is a measurable interval
+    sorry
 
 lemma f_measurable : UnsignedMeasurable f := by
   -- Apply Lemma 1.3.9(viii): f is measurable iff ∀ t, {x : f(x) ≤ t} is measurable
@@ -1908,17 +2112,19 @@ lemma f_measurable : UnsignedMeasurable f := by
     exact LebesgueMeasurable.empty
   · -- Case t = 0: {x | f x ≤ 0} = {x | f x = 0} (since f x ≥ 0)
     subst ht_zero
-    -- {f = 0} includes:
-    -- 1. All x with equiv_Real(x) ∉ [0,1] (by f_zero_outside)
-    -- 2. All x with equiv_Real(x) ∈ [0,1] and binaryToTernary(equiv_Real(x)) = 0
-    --    (which happens for terminating binary decimals mapping to 0, e.g., x = 0)
-    -- This set is the complement of {x ∈ [0,1] : f(x) > 0}, which is open in [0,1]
-    -- by continuity-like properties of monotone functions, hence measurable.
-    -- For the full proof: the set {f > 0} ∩ [0,1] is an interval (0, 1] by monotonicity,
-    -- so {f = 0} = (-∞, 0) ∪ {0} ∪ (1, ∞) which is a union of a closed set and open rays.
-    sorry
+    -- Since f ≥ 0, {f ≤ 0} = {f = 0}
+    have h_eq : {x | f x ≤ (0 : EReal)} = {x | f x = 0} := by
+      ext x
+      simp only [Set.mem_setOf_eq]
+      constructor
+      · intro hle
+        exact le_antisymm hle (f_unsigned x)
+      · intro heq
+        rw [heq]
+    rw [h_eq]
+    exact f_zero_set_measurable
   · -- Case t > 0
-    rcases le_or_lt 1 t with ht_ge_one | ht_lt_one
+    rcases le_or_gt 1 t with ht_ge_one | ht_lt_one
     · -- Case t ≥ 1: {x | f x ≤ t} = univ (since f x ≤ 1 for all x)
       have h_univ : {x | f x ≤ t} = Set.univ := by
         ext x
