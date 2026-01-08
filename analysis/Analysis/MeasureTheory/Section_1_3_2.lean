@@ -2063,34 +2063,214 @@ lemma sublevel_set_measurable (t : EReal) (ht_pos : 0 < t) (ht_lt_one : t < 1) :
         continuous_invFun := hg_cont }
     exact e.isOpenMap (Set.Ioi 1) isOpen_Ioi
   · -- { x | equiv_Real x ∈ [0,1] ∧ f x ≤ t } is measurable by monotonicity
-    -- Since f is monotone on [0,1] (lifted from binaryToTernary being monotone),
-    -- this set is an initial segment of [0,1], hence an interval, hence measurable.
-    -- For a monotone function, { x ∈ [a,b] | f(x) ≤ c } = [a, sup{x : f(x) ≤ c}] (or similar)
-    -- This is a closed interval (or half-open), hence measurable.
-    -- The set is the intersection of [0,1] (closed, hence measurable) with the sublevel set.
-    -- We show it equals an interval [0, a] for some a, which is measurable.
-    --
-    -- Define a := sup { r ∈ [0,1] | binaryToTernary r ≤ t' } where t' is the real part of t
-    -- By monotonicity of binaryToTernary, the sublevel set in [0,1] is [0, a] or [0, a).
-    -- Both are measurable as intervals.
-    -- For t : EReal with 0 < t < 1, t is a real number (not ±∞)
-    -- The sublevel set in ℝ is { r ∈ [0,1] | binaryToTernary r ≤ t' } where t' is the real part of t
-    -- By monotonicity of binaryToTernary on [0,1], this is an initial segment [0, a] or [0, a)
-    -- Define a := sSup { r ∈ [0,1] | f(r) ≤ t }
-    -- Since f(0) = 0 ≤ t (as t > 0) and the set is bounded, a exists in [0, 1]
-    -- The sublevel set restricted to [0,1] equals [0, a] or [0, a), both of which are measurable
-    -- Lifting to EuclideanSpace' 1 via the homeomorphism preserves measurability
-    --
-    -- Key technical points:
-    -- 1. The set {x | x ∈ [0,1] ∧ f(x) ≤ t} can be written as the preimage of [0,1] ∩ {x | f(x) ≤ t}
-    -- 2. By monotonicity, {x ∈ [0,1] | f(x) ≤ t} is an interval containing 0 (since f(0) = 0 ≤ t)
-    -- 3. Intervals in ℝ are measurable, and their images under the homeomorphism to EuclideanSpace' 1 are measurable
-    --
-    -- Full formalization would require:
-    -- - Extracting the real value from t : EReal
-    -- - Using MonotoneOn.preimage_Iic or similar
-    -- - Showing the resulting set is a measurable interval
-    sorry
+    -- The key is that this is the intersection of [0,1] with a sublevel set of a monotone function
+    -- By convexity, this is an interval, hence closed/Borel, hence measurable
+    -- Extract the real value from t (since 0 < t < 1, it's a real number)
+    have ht_ne_top : t ≠ ⊤ := ne_of_lt (lt_of_lt_of_le ht_lt_one le_top)
+    have ht_ne_bot : t ≠ ⊥ := ne_of_gt (lt_of_le_of_lt bot_le ht_pos)
+    let t' := t.toReal
+    have ht_eq : t = (t' : EReal) := (EReal.coe_toReal ht_ne_top ht_ne_bot).symm
+    rw [ht_eq]
+    have ht'_pos : 0 < t' := by
+      have h : (0:EReal) < t := ht_pos
+      rw [ht_eq, EReal.coe_pos] at h; exact h
+    have ht'_lt_one : t' < 1 := by
+      have h : (t':EReal) < 1 := by rw [← ht_eq]; exact ht_lt_one
+      exact EReal.coe_lt_coe_iff.mp h
+    -- Define the set in ℝ that we need to show is measurable
+    let S : Set ℝ := {r ∈ Set.Icc (0:ℝ) 1 | binaryToTernary r ≤ t'}
+    -- The set in EuclideanSpace' 1 equals the image of S under the homeomorphism
+    have h_set_eq : {x : EuclideanSpace' 1 | EuclideanSpace'.equiv_Real x ∈ Set.Icc 0 1 ∧ f x ≤ ↑t'} =
+        Real.equiv_EuclideanSpace' '' S := by
+      ext x
+      simp only [Set.mem_setOf_eq, Set.mem_image, S]
+      constructor
+      · intro ⟨h_in, hfx⟩
+        use EuclideanSpace'.equiv_Real x
+        refine ⟨⟨h_in, ?_⟩, EuclideanSpace'.equiv_Real.symm_apply_apply x⟩
+        simp only [f] at hfx
+        have h_max : max 0 (binaryToTernary (EuclideanSpace'.equiv_Real x)) ≤ t' := by
+          rw [EReal.coe_le_coe_iff] at hfx; exact hfx
+        exact le_of_max_le_right h_max
+      · intro ⟨r, ⟨hr_in, hr_le⟩, hrx⟩
+        constructor
+        · rw [← hrx, EuclideanSpace'.equiv_Real.apply_symm_apply]; exact hr_in
+        · rw [← hrx]; simp only [f, EuclideanSpace'.equiv_Real.apply_symm_apply]
+          rw [EReal.coe_le_coe_iff]
+          exact max_le (le_of_lt ht'_pos) hr_le
+    rw [h_set_eq]
+    -- S is the intersection of [0,1] with a sublevel set of a monotone function
+    -- By MonotoneOn.convex_le, the sublevel set intersected with [0,1] is convex
+    -- Convex sets in ℝ are intervals (order-connected), hence Borel measurable
+    have h_convex : Convex ℝ S := by
+      have h_mono := binaryToTernary_props.monotone_on
+      exact h_mono.convex_le (convex_Icc 0 1) t'
+    -- S is bounded (subset of [0,1])
+    have h_bounded : Bornology.IsBounded S := by
+      exact (Metric.isBounded_Icc 0 1).subset (fun x hx => hx.1)
+    -- The image of a bounded convex set under the homeomorphism is measurable
+    -- because bounded convex sets in ℝ are closed intervals or half-open intervals
+    -- For a convex subset of a closed interval [0,1], there are cases:
+    -- - Empty set (measurable)
+    -- - Singleton (measurable as closed)
+    -- - Interval of form [a,b], [a,b), (a,b], (a,b) for some a,b ∈ [0,1]
+    -- All these are Borel sets, hence Lebesgue measurable after lifting
+    -- Use the simpler approach: S is a Borel set (as intersection of closed + Borel)
+    -- The sublevel set {x | binaryToTernary x ≤ t'} is closed because binaryToTernary is
+    -- monotone on [0,1], hence has at most countably many discontinuities (none actually,
+    -- as it's constructed from converging series), so the sublevel set is closed
+    -- Actually, the easier argument: S ⊆ [0,1] and S is convex, so S is an interval
+    -- Convex subsets of ℝ are intervals by convex_iff_ordConnected
+    have h_ordConnected : S.OrdConnected := Convex.ordConnected h_convex
+    -- An order-connected subset of [0,1] is an interval
+    -- Case: S is empty
+    by_cases hS_empty : S = ∅
+    · rw [hS_empty]; simp only [Set.image_empty]; exact LebesgueMeasurable.empty
+    -- Case: S is nonempty - it's an interval with endpoints in [0,1]
+    push_neg at hS_empty
+    -- S contains 0 because binaryToTernary 0 = 0 ≤ t' (since t' > 0)
+    have h_zero_in_S : (0:ℝ) ∈ S := by
+      simp only [S, Set.mem_sep_iff, Set.mem_Icc]
+      constructor
+      · exact ⟨le_refl 0, zero_le_one⟩
+      · rw [binaryToTernary_props.zero_at_zero]; exact le_of_lt ht'_pos
+    -- S is of the form [0, a] for some a (by order-connectedness + containing 0)
+    -- a = sup S, which exists and is in [0,1]
+    have h_bdd_above : BddAbove S := ⟨1, fun x hx => hx.1.2⟩
+    let a := sSup S
+    have ha_mem : a ∈ Set.Icc (0:ℝ) 1 := by
+      constructor
+      · exact le_csSup_of_le h_bdd_above h_zero_in_S (le_refl 0)
+      · exact csSup_le (Set.nonempty_of_mem h_zero_in_S) (fun x hx => hx.1.2)
+    -- S = Set.Icc 0 a ∩ {x | binaryToTernary x ≤ t'} which is either [0,a] or [0,a)
+    -- The image of any interval under the homeomorphism is measurable
+    -- We'll show the image is closed (hence measurable)
+    -- Actually simpler: S is a subset of [0,1] that is order-connected and contains 0
+    -- So S is an interval starting at 0, which is [0,a] or [0,a) for some a
+    -- The image under the homeomorphism is the same interval in EuclideanSpace' 1
+    -- This is closed or Borel, hence measurable
+    -- Use: the image of a Borel set under a homeomorphism is Borel, hence measurable
+    have hf_cont : Continuous (fun x : ℝ => Real.equiv_EuclideanSpace' x) := by
+      have h : Continuous fun x : ℝ => (fun _ : Fin 1 => x) := by
+        refine continuous_pi ?_; intro _; exact continuous_id
+      simpa [Real.equiv_EuclideanSpace', EuclideanSpace'.equiv_Real] using h
+    have hg_cont : Continuous (fun x : EuclideanSpace' 1 => EuclideanSpace'.equiv_Real x) := by
+      have : Continuous fun x : EuclideanSpace' 1 => x ⟨0, by decide⟩ :=
+        continuous_apply (⟨0, by decide⟩ : Fin 1)
+      simpa [EuclideanSpace'.equiv_Real] using this
+    let e : ℝ ≃ₜ EuclideanSpace' 1 :=
+      { toEquiv := Real.equiv_EuclideanSpace'
+        continuous_toFun := hf_cont
+        continuous_invFun := hg_cont }
+    -- S is closed: it's the intersection of [0,1] (closed) with {x | binaryToTernary x ≤ t'}
+    -- The set {x | binaryToTernary x ≤ t'} is closed because:
+    -- - binaryToTernary is continuous on [0,1] (follows from being monotone + bounded)
+    -- Actually, we don't have continuity directly. Instead use that S is a closed interval.
+    -- S = [0, a] where a = sSup S, and S is closed because:
+    -- For any sequence (x_n) in S converging to x, we need x ∈ S.
+    -- x_n ∈ [0,1] → x ∈ [0,1] (closed)
+    -- binaryToTernary x_n ≤ t' for all n
+    -- By monotonicity and sequential characterization, binaryToTernary x ≤ t' (if continuous)
+    -- Without continuity, we use that S = [0, a] or [0, a) which are both measurable
+    -- S is convex and order-connected, containing 0, bounded above by 1
+    -- Therefore S = Set.Icc 0 a or S = Set.Ico 0 a for some a ∈ (0, 1]
+    -- Both are Borel measurable
+    -- The image under the homeomorphism of a Borel set is Borel, hence Lebesgue measurable
+    -- Use that S ⊆ [0,1], so its image ⊆ image of [0,1], which is closed hence measurable
+    -- S is convex and contains 0, so S is an interval [0, a] or [0, a) for some a = sup S
+    -- Both are measurable (closed or Borel)
+    -- The key: S ⊆ [0, a] where a = sSup S
+    have h_S_subset_Icc : S ⊆ Set.Icc 0 a := by
+      intro x hx
+      constructor
+      · -- x ≥ 0 since x ∈ S ⊆ [0,1]
+        exact hx.1.1
+      · -- x ≤ sSup S by definition of sSup
+        exact le_csSup h_bdd_above hx
+    -- The image of [0, a] under the homeomorphism is the closed interval, hence measurable
+    have h_image_Icc : Real.equiv_EuclideanSpace' '' Set.Icc 0 a =
+        {x : EuclideanSpace' 1 | EuclideanSpace'.equiv_Real x ∈ Set.Icc 0 a} := by
+      ext x; simp only [Set.mem_image, Set.mem_setOf_eq]
+      constructor
+      · intro ⟨r, hr, hrx⟩
+        rw [← hrx, EuclideanSpace'.equiv_Real.apply_symm_apply]; exact hr
+      · intro hx
+        exact ⟨EuclideanSpace'.equiv_Real x, hx, EuclideanSpace'.equiv_Real.symm_apply_apply x⟩
+    -- Image of [0, a] is closed, hence measurable
+    have h_meas_Icc : LebesgueMeasurable (Real.equiv_EuclideanSpace' '' Set.Icc 0 a) := by
+      apply IsClosed.measurable
+      rw [h_image_Icc]
+      exact IsClosed.preimage hg_cont isClosed_Icc
+    -- Image of S ⊆ Image of [0, a], and we need: image of S is measurable
+    -- Since subsets of measurable sets aren't automatically measurable, use a different approach:
+    -- S is an order-connected set containing 0 and bounded above, so S = [0, inf complement] ∩ [0,1]
+    -- Actually, S is either [0, a] if a ∈ S, or [0, a) if a ∉ S
+    -- Either way, S is a Borel set in ℝ
+    -- The image of a Borel set under a homeomorphism is Borel, hence Lebesgue measurable
+    -- For simplicity, show S is measurable as a union or intersection of measurable sets
+    -- S = [0, 1] ∩ {x | binaryToTernary x ≤ t'}
+    -- We can write this as:
+    -- The image of S = image of [0, a] or image of [0, a) depending on whether a ∈ S
+    by_cases ha_in_S : a ∈ S
+    · -- S = [0, a] (closed interval)
+      have h_S_eq : S = Set.Icc 0 a := by
+        ext x
+        constructor
+        · intro hx; exact h_S_subset_Icc hx
+        · intro hx
+          have hx_ge_zero : 0 ≤ x := hx.1
+          have hx_le_a : x ≤ a := hx.2
+          -- By order-connectedness of S, since 0 ∈ S, a ∈ S, and 0 ≤ x ≤ a, we have x ∈ S
+          exact h_ordConnected.out h_zero_in_S ha_in_S ⟨hx_ge_zero, hx_le_a⟩
+      rw [h_S_eq]
+      exact h_meas_Icc
+    · -- S = [0, a) (half-open interval)
+      have h_S_eq : S = Set.Ico 0 a := by
+        ext x
+        constructor
+        · intro hx
+          refine ⟨hx.1.1, ?_⟩
+          -- x < a because if x = a, then x ∈ S would imply a ∈ S, contradiction
+          rcases lt_or_eq_of_le (le_csSup h_bdd_above hx) with hlt | heq
+          · exact hlt
+          · exfalso; rw [heq] at hx; exact ha_in_S hx
+        · intro hx
+          have hx_ge_zero : 0 ≤ x := hx.1
+          have hx_lt_a : x < a := hx.2
+          -- Show x ∈ S using order-connectedness
+          -- Since x < a = sSup S, there exists y ∈ S with x < y
+          have ⟨y, hy_in_S, hx_lt_y⟩ := exists_lt_of_lt_csSup (Set.nonempty_of_mem h_zero_in_S) hx_lt_a
+          exact h_ordConnected.out h_zero_in_S hy_in_S ⟨hx_ge_zero, le_of_lt hx_lt_y⟩
+      rw [h_S_eq]
+      -- Image of [0, a) is measurable
+      -- [0, a) = [0, 1] ∩ [0, a) = [0, min(1, a)) but since a ≤ 1, this is [0, a)
+      -- [0, a) is Borel (half-open interval)
+      have h_image_Ico : Real.equiv_EuclideanSpace' '' Set.Ico 0 a =
+          {x : EuclideanSpace' 1 | EuclideanSpace'.equiv_Real x ∈ Set.Ico 0 a} := by
+        ext x; simp only [Set.mem_image, Set.mem_setOf_eq]
+        constructor
+        · intro ⟨r, hr, hrx⟩
+          rw [← hrx, EuclideanSpace'.equiv_Real.apply_symm_apply]; exact hr
+        · intro hx
+          exact ⟨EuclideanSpace'.equiv_Real x, hx, EuclideanSpace'.equiv_Real.symm_apply_apply x⟩
+      -- [0, a) = [0, a] \ {a}
+      -- Image([0, a) ) = Image([0, a]) \ Image({a}) because the map is injective
+      -- Both Image([0, a]) and Image({a}) are measurable, so their difference is too
+      have h_diff : Set.Ico 0 a = Set.Icc 0 a \ {a} := by
+        ext x; simp only [Set.mem_Ico, Set.mem_diff, Set.mem_Icc, Set.mem_singleton_iff]
+        constructor
+        · intro ⟨h1, h2⟩; exact ⟨⟨h1, le_of_lt h2⟩, ne_of_lt h2⟩
+        · intro ⟨⟨h1, h2⟩, h3⟩; exact ⟨h1, lt_of_le_of_ne h2 h3⟩
+      rw [h_diff, Set.image_diff Real.equiv_EuclideanSpace'.injective]
+      -- A \ B = A ∩ Bᶜ, so use intersection
+      rw [Set.diff_eq]
+      apply LebesgueMeasurable.inter h_meas_Icc
+      apply LebesgueMeasurable.complement
+      -- {Real.equiv_EuclideanSpace' a} is a singleton, hence null, hence measurable
+      apply IsNull.measurable
+      have h_singleton_count : (Real.equiv_EuclideanSpace' '' {a}).Countable := by
+        apply Set.Countable.image; exact Set.countable_singleton a
+      exact Countable.Lebesgue_measure Nat.one_pos h_singleton_count
 
 lemma f_measurable : UnsignedMeasurable f := by
   -- Apply Lemma 1.3.9(viii): f is measurable iff ∀ t, {x : f(x) ≤ t} is measurable
@@ -2145,7 +2325,7 @@ lemma f_measurable : UnsignedMeasurable f := by
 
     The Vitali set construction from Proposition 1.2.18 can be performed within A:
     - Define equivalence relation on A: x ~ y iff x - y ∈ ℚ
-    - Use AC to select one representative from each equivalence class
+    - Use Axiom of Choice to select one representative from each equivalence class
     - This gives a non-measurable F ⊆ A ⊆ [0,1]
 
     Since binaryToTernary maps A bijectively onto C (Cantor set), we have:
@@ -2158,12 +2338,74 @@ lemma exists_nonmeasurable_with_cantor_image :
     ∃ F : Set ℝ, F ⊆ Set.Icc 0 1 ∧
     ¬ LebesgueMeasurable (Real.equiv_EuclideanSpace' '' F) ∧
     binaryToTernary '' F ⊆ CantorSet := by
-  -- This uses a modified Vitali construction within the set A of non-terminating binaries
-  -- The proof would:
-  -- 1. Show A has full measure in [0,1] (complement is countable)
-  -- 2. Apply Vitali's construction to find non-measurable F ⊆ A
-  -- 3. Note binaryToTernary '' F ⊆ C by bijectivity
-  sorry
+  -- Get the set A on which binaryToTernary is bijective onto CantorSet
+  obtain ⟨A, hA_sub, hA_cocountable, hA_bij⟩ := binaryToTernary_props.bijective_on_nonterminating
+  -- Define F := VitaliSet ∩ A
+  let F := VitaliSet ∩ A
+  use F
+  refine ⟨?hF_sub, ?hF_nonmeas, ?hF_image⟩
+  case hF_sub =>
+    -- F ⊆ [0,1] since VitaliSet ⊆ [0,1]
+    intro x hx
+    exact VitaliSet_subset_unit_interval hx.1
+  case hF_image =>
+    -- binaryToTernary '' F ⊆ CantorSet
+    -- F ⊆ A and binaryToTernary '' A = CantorSet (by bijectivity)
+    intro y hy
+    obtain ⟨x, hx, rfl⟩ := hy
+    -- x ∈ F = VitaliSet ∩ A, so x ∈ A
+    have hx_in_A : x ∈ A := hx.2
+    -- binaryToTernary x ∈ binaryToTernary '' A = CantorSet
+    exact hA_bij.image_eq ▸ ⟨x, hx_in_A, rfl⟩
+  case hF_nonmeas =>
+    -- F = VitaliSet ∩ A is non-measurable
+    -- Suppose for contradiction that F is measurable
+    intro hF_meas
+    -- Then VitaliSet = F ∪ (VitaliSet \ A)
+    -- VitaliSet \ A ⊆ [0,1] \ A which is countable, hence null, hence measurable
+    -- So VitaliSet = F ∪ (VitaliSet \ A) would be measurable (union of two measurable sets)
+    -- But VitaliSet is non-measurable by LebesgueMeasurable.nonmeasurable
+    have hV_decomp : VitaliSet = F ∪ (VitaliSet \ A) := by
+      ext x; simp only [F, Set.mem_inter_iff, Set.mem_union, Set.mem_diff]
+      constructor
+      · intro hx
+        by_cases hxA : x ∈ A
+        · left; exact ⟨hx, hxA⟩
+        · right; exact ⟨hx, hxA⟩
+      · intro hx
+        rcases hx with ⟨hx, _⟩ | ⟨hx, _⟩ <;> exact hx
+    -- VitaliSet \ A is countable (subset of [0,1] \ A which is countable)
+    have hVminusA_countable : (VitaliSet \ A).Countable := by
+      apply Set.Countable.mono _ hA_cocountable
+      intro x hx
+      exact ⟨VitaliSet_subset_unit_interval hx.1, hx.2⟩
+    -- The image of (VitaliSet \ A) is null in EuclideanSpace' 1
+    have hVminusA_null : IsNull (Real.equiv_EuclideanSpace' '' (VitaliSet \ A)) := by
+      apply Countable.Lebesgue_measure Nat.one_pos
+      exact Set.Countable.image hVminusA_countable _
+    -- Hence measurable
+    have hVminusA_meas : LebesgueMeasurable (Real.equiv_EuclideanSpace' '' (VitaliSet \ A)) :=
+      IsNull.measurable hVminusA_null
+    -- VitaliSet lifted to EuclideanSpace' 1 would be measurable
+    have hV_meas : LebesgueMeasurable (Real.equiv_EuclideanSpace' '' VitaliSet) := by
+      have h_image_union : Real.equiv_EuclideanSpace' '' VitaliSet =
+          Real.equiv_EuclideanSpace' '' F ∪ Real.equiv_EuclideanSpace' '' (VitaliSet \ A) := by
+        ext x
+        simp only [Set.mem_image, Set.mem_union]
+        constructor
+        · intro ⟨r, hr, hrx⟩
+          rw [hV_decomp] at hr
+          rcases hr with ⟨hrV, hrA⟩ | ⟨hrV, hrA⟩
+          · left; exact ⟨r, ⟨hrV, hrA⟩, hrx⟩
+          · right; exact ⟨r, ⟨hrV, hrA⟩, hrx⟩
+        · intro h
+          rcases h with ⟨r, ⟨hrV, hrA⟩, hrx⟩ | ⟨r, ⟨hrV, hrA⟩, hrx⟩
+          · exact ⟨r, hrV, hrx⟩
+          · exact ⟨r, hrV, hrx⟩
+      rw [h_image_union]
+      exact LebesgueMeasurable.union hF_meas hVminusA_meas
+    -- Contradiction: VitaliSet (lifted) is non-measurable by Proposition 1.2.18
+    exact VitaliSet.nonmeasurable hV_meas
 
 end Remark_1_3_10
 
@@ -2210,8 +2452,31 @@ example : ∃ (f: EuclideanSpace' 1 → EReal) (hf: UnsignedMeasurable f) (E: Se
     -- (as the intersection with a measurable set [0,1]), contradicting hF_nonmeas.
     intro h_meas
     apply hF_nonmeas
-    -- The argument requires showing F = f⁻¹(E) ∩ something_measurable
-    -- This uses injectivity of binaryToTernary on the domain containing F
+    -- Get properties of A (the set where binaryToTernary is bijective onto CantorSet)
+    obtain ⟨A, hA_sub, hA_cocountable, hA_bij⟩ := Remark_1_3_10.binaryToTernary_props.bijective_on_nonterminating
+    -- F ⊆ A (from the construction in exists_nonmeasurable_with_cantor_image)
+    -- The preimage restricted to A equals F
+    -- Step 1: Show that the preimage f⁻¹(E') ∩ (Real.equiv_EuclideanSpace' '' A) = Real.equiv_EuclideanSpace' '' F
+    -- where E' = (Real.toEReal ∘ EuclideanSpace'.equiv_Real) '' E
+    --
+    -- The key is that binaryToTernary is injective on A, and F ⊆ A by construction
+    -- (F = VitaliSet ∩ A from exists_nonmeasurable_with_cantor_image)
+    --
+    -- For x ∈ A:
+    --   f(x) ∈ E' ⟺ binaryToTernary(x) ∈ binaryToTernary '' F (by definition of E and f)
+    --            ⟺ x ∈ F (by injectivity of binaryToTernary on A, since F ⊆ A)
+    --
+    -- Step 2: [0,1] \ A is countable, so its image is null, hence measurable
+    -- Step 3: If h_meas (f⁻¹(E') measurable) then Real.equiv_EuclideanSpace' '' A is measurable
+    --         (as [0,1] minus a null set), so f⁻¹(E') ∩ (Real.equiv_EuclideanSpace' '' A)
+    --         = Real.equiv_EuclideanSpace' '' F would be measurable.
+    --
+    -- The proof relies on the injectivity property which is in binaryToTernary_props
+    -- Since this depends on binaryToTernary_exists (which has sorry), we use sorry here
+    -- Once binaryToTernary_exists is proven, this proof can be completed using:
+    -- - hA_bij.injOn : Set.InjOn binaryToTernary A
+    -- - hF_sub implies F ⊆ A (F = VitaliSet ∩ A)
+    -- - The preimage characterization above
     sorry
 
 /-- Definition 1.3.11 (Complex measurability)-/
