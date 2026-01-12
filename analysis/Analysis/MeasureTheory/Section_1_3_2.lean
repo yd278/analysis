@@ -1921,7 +1921,7 @@ lemma binaryDigit_partial_sum_le {x : ℝ} (hx : x ∈ Set.Ico (0:ℝ) 1) (n : �
   exact Nat.floor_le (mul_nonneg hx.1 (le_of_lt h2n_pos))
 
 /-- The partial sum bounds x from above: x < Sₙ(x) + 2^{-n} -/
-lemma binaryDigit_partial_sum_lt {x : ℝ} (hx : x ∈ Set.Ico (0:ℝ) 1) (n : ℕ) :
+lemma binaryDigit_partial_sum_lt (x : ℝ) (n : ℕ) :
     x < (⌊(2:ℝ)^n * x⌋₊ : ℝ) / (2:ℝ)^n + (1:ℝ) / (2:ℝ)^n := by
   have h2n_pos : (0:ℝ) < 2^n := by positivity
   have := Nat.lt_floor_add_one ((2:ℝ)^n * x)
@@ -2036,7 +2036,7 @@ lemma binaryDigit_zero_implies_upper_bound {y : ℝ} (hy : y ∈ Set.Ico (0:ℝ)
   have h_floor_rel : ⌊(2:ℝ)^(k+1) * y⌋₊ ≤ 2 * ⌊(2:ℝ)^k * y⌋₊ := by
     rw [heq]
     exact floor_two_mul_even_le hy_nonneg h_floor_even
-  have h_lt := binaryDigit_partial_sum_lt hy (k + 1)
+  have h_lt := binaryDigit_partial_sum_lt y (k + 1)
   calc y < (⌊(2:ℝ)^(k+1) * y⌋₊ : ℝ) / (2:ℝ)^(k + 1) + (1:ℝ) / (2:ℝ)^(k + 1) := h_lt
     _ = (⌊(2:ℝ)^(k+1) * y⌋₊ + 1 : ℝ) / (2:ℝ)^(k + 1) := by ring
     _ ≤ (2 * ⌊(2:ℝ)^k * y⌋₊ + 1 : ℝ) / (2:ℝ)^(k + 1) := by
@@ -2084,9 +2084,9 @@ lemma binaryDigit_first_diff {x y : ℝ} (hx : x ∈ Set.Ico (0:ℝ) 1) (hy : y 
     have h_close : ∀ n, |x - y| < (1:ℝ) / (2:ℝ)^n := by
       intro n
       have hx_bounds := binaryDigit_partial_sum_le hx n
-      have hx_bounds' := binaryDigit_partial_sum_lt hx n
+      have hx_bounds' := binaryDigit_partial_sum_lt x n
       have hy_bounds := binaryDigit_partial_sum_le hy n
-      have hy_bounds' := binaryDigit_partial_sum_lt hy n
+      have hy_bounds' := binaryDigit_partial_sum_lt y n
       rw [h_floor_eq n] at hx_bounds hx_bounds'
       rw [abs_lt]
       constructor <;> linarith
@@ -2181,14 +2181,14 @@ lemma binaryToTernary_lt_of_digit_lt {x y : ℝ}
   have hsum_x : Summable fx := binaryToTernary_summable x
   have hsum_y : Summable fy := binaryToTernary_summable y
   have h_split_x : ∑' j, fx j = ∑ j ∈ Finset.range k, fx j + fx k + ∑' j, fx (k + 1 + j) := by
-    rw [← sum_add_tsum_nat_add (k + 1) hsum_x, Finset.sum_range_succ]
+    rw [← Summable.sum_add_tsum_nat_add (k + 1) hsum_x, Finset.sum_range_succ]
     congr 1
     congr 1
     ext j
     congr 1
     omega
   have h_split_y : ∑' j, fy j = ∑ j ∈ Finset.range k, fy j + fy k + ∑' j, fy (k + 1 + j) := by
-    rw [← sum_add_tsum_nat_add (k + 1) hsum_y, Finset.sum_range_succ]
+    rw [← Summable.sum_add_tsum_nat_add (k + 1) hsum_y, Finset.sum_range_succ]
     congr 1
     congr 1
     ext j
@@ -2734,33 +2734,33 @@ lemma binaryToTernary_eq_zero_iff {x : ℝ} (hx : x ∈ Set.Icc (0:ℝ) 1) :
     rw [h]
     exact binaryToTernary_props.zero_at_zero
 
-/-- Binary-to-ternary lifted to EuclideanSpace' 1 → EReal. -/
-noncomputable def f : EuclideanSpace' 1 → EReal :=
+/-- binaryToTernary lifted to EuclideanSpace' 1 → EReal (called f in informal proof). -/
+noncomputable def f_lifted : EuclideanSpace' 1 → EReal :=
   fun x => Real.toEReal (max 0 (binaryToTernary (EuclideanSpace'.equiv_Real x)))
 
-lemma f_unsigned : Unsigned f := by
+lemma f_lifted_unsigned : Unsigned f_lifted := by
   intro x
-  simp only [f, ge_iff_le]
+  simp only [f_lifted, ge_iff_le]
   rw [EReal.coe_nonneg]
   exact le_max_left 0 _
 
-lemma f_le_one (x : EuclideanSpace' 1) : f x ≤ 1 := by
-  simp only [f]
+lemma f_lifted_le_one (x : EuclideanSpace' 1) : f_lifted x ≤ 1 := by
+  simp only [f_lifted]
   have hg := binaryToTernary_props.bounded (EuclideanSpace'.equiv_Real x)
   have h_max_le : max 0 (binaryToTernary (EuclideanSpace'.equiv_Real x)) ≤ 1 :=
     max_le (by norm_num) hg
   exact EReal.coe_le_coe_iff.mpr h_max_le
 
-lemma f_zero_outside (x : EuclideanSpace' 1) (hx : EuclideanSpace'.equiv_Real x ∉ Set.Icc 0 1) :
-    f x = 0 := by
-  simp only [f]
+lemma f_lifted_zero_outside (x : EuclideanSpace' 1) (hx : EuclideanSpace'.equiv_Real x ∉ Set.Icc 0 1) :
+    f_lifted x = 0 := by
+  simp only [f_lifted]
   have hg := binaryToTernary_props.zero_outside (EuclideanSpace'.equiv_Real x) hx
   rw [hg]
   simp
 
-lemma f_zero_at_zero (x : EuclideanSpace' 1) (hx : EuclideanSpace'.equiv_Real x = 0) :
-    f x = 0 := by
-  simp only [f]
+lemma f_lifted_zero_at_zero (x : EuclideanSpace' 1) (hx : EuclideanSpace'.equiv_Real x = 0) :
+    f_lifted x = 0 := by
+  simp only [f_lifted]
   have hg := binaryToTernary_props.zero_at_zero
   rw [hx, hg]
   simp
@@ -2769,15 +2769,15 @@ lemma f_zero_set_in_interval_countable :
     (Set.Icc (0:ℝ) 1 ∩ {x | binaryToTernary x = 0}).Countable :=
   binaryToTernary_props.zero_set_countable
 
-lemma f_zero_set_measurable : LebesgueMeasurable {x : EuclideanSpace' 1 | f x = 0} := by
-  have h_decomp : {x : EuclideanSpace' 1 | f x = 0} =
+lemma f_lifted_zero_set_measurable : LebesgueMeasurable {x : EuclideanSpace' 1 | f_lifted x = 0} := by
+  have h_decomp : {x : EuclideanSpace' 1 | f_lifted x = 0} =
       (Real.equiv_EuclideanSpace' '' (Set.Icc 0 1)ᶜ) ∪
       (Real.equiv_EuclideanSpace' '' (Set.Icc 0 1 ∩ {x | binaryToTernary x = 0})) := by
     ext x
     simp only [Set.mem_setOf_eq, Set.mem_union, Set.mem_image]
     constructor
     · intro hfx
-      simp only [f] at hfx
+      simp only [f_lifted] at hfx
       have hmax : max 0 (binaryToTernary (EuclideanSpace'.equiv_Real x)) = 0 := by
         rw [EReal.coe_eq_zero] at hfx
         exact hfx
@@ -2801,11 +2801,11 @@ lemma f_zero_set_measurable : LebesgueMeasurable {x : EuclideanSpace' 1 | f x = 
         exact ⟨h_in, EuclideanSpace'.equiv_Real.symm_apply_apply x⟩
     · intro h
       rcases h with ⟨r, hr, hrx⟩ | ⟨r, ⟨hr_in, hr_zero⟩, hrx⟩
-      · simp only [f]
+      · simp only [f_lifted]
         have hx_eq : EuclideanSpace'.equiv_Real x = r := by
           rw [← hrx]; exact EuclideanSpace'.equiv_Real.apply_symm_apply r
         rw [hx_eq, binaryToTernary_props.zero_outside r hr]; simp
-      · simp only [f]
+      · simp only [f_lifted]
         have hx_eq : EuclideanSpace'.equiv_Real x = r := by
           rw [← hrx]; exact EuclideanSpace'.equiv_Real.apply_symm_apply r
         rw [hx_eq, hr_zero]; simp
@@ -2832,15 +2832,15 @@ lemma f_zero_set_measurable : LebesgueMeasurable {x : EuclideanSpace' 1 | f x = 
       apply Set.Countable.image; exact f_zero_set_in_interval_countable
     exact Countable.Lebesgue_measure Nat.one_pos h_countable
 
-/-- Sublevel sets of f are measurable (key lemma for f_measurable). -/
+/-- Sublevel sets of f_lifted are measurable (key lemma for f_lifted_measurable). -/
 lemma sublevel_set_measurable (t : EReal) (ht_pos : 0 < t) (ht_lt_one : t < 1) :
-    LebesgueMeasurable {x : EuclideanSpace' 1 | f x ≤ t} := by
+    LebesgueMeasurable {x : EuclideanSpace' 1 | f_lifted x ≤ t} := by
   have h_outside_zero : ∀ x : EuclideanSpace' 1, EuclideanSpace'.equiv_Real x ∉ Set.Icc 0 1 →
-      f x ≤ t := fun x hx => by rw [f_zero_outside x hx]; exact le_of_lt ht_pos
-  have h_decomp : {x : EuclideanSpace' 1 | f x ≤ t} =
+      f_lifted x ≤ t := fun x hx => by rw [f_lifted_zero_outside x hx]; exact le_of_lt ht_pos
+  have h_decomp : {x : EuclideanSpace' 1 | f_lifted x ≤ t} =
       (Real.equiv_EuclideanSpace' '' Set.Iio 0) ∪
       (Real.equiv_EuclideanSpace' '' Set.Ioi 1) ∪
-      {x : EuclideanSpace' 1 | EuclideanSpace'.equiv_Real x ∈ Set.Icc 0 1 ∧ f x ≤ t} := by
+      {x : EuclideanSpace' 1 | EuclideanSpace'.equiv_Real x ∈ Set.Icc 0 1 ∧ f_lifted x ≤ t} := by
     ext x
     simp only [Set.mem_setOf_eq, Set.mem_union, Set.mem_image]
     constructor
@@ -2900,7 +2900,7 @@ lemma sublevel_set_measurable (t : EReal) (ht_pos : 0 < t) (ht_lt_one : t < 1) :
         continuous_toFun := hf_cont
         continuous_invFun := hg_cont }
     exact e.isOpenMap (Set.Ioi 1) isOpen_Ioi
-  · -- Monotonicity case: {x ∈ [0,1] | f x ≤ t} is a convex set, hence measurable
+  · -- Monotonicity case: {x ∈ [0,1] | f_lifted x ≤ t} is a convex set, hence measurable
     have ht_ne_top : t ≠ ⊤ := ne_of_lt (lt_of_lt_of_le ht_lt_one le_top)
     have ht_ne_bot : t ≠ ⊥ := ne_of_gt (lt_of_le_of_lt bot_le ht_pos)
     let t' := t.toReal
@@ -2913,7 +2913,7 @@ lemma sublevel_set_measurable (t : EReal) (ht_pos : 0 < t) (ht_lt_one : t < 1) :
       have h : (t':EReal) < 1 := by rw [← ht_eq]; exact ht_lt_one
       exact EReal.coe_lt_coe_iff.mp h
     let S : Set ℝ := {r ∈ Set.Icc (0:ℝ) 1 | binaryToTernary r ≤ t'}
-    have h_set_eq : {x : EuclideanSpace' 1 | EuclideanSpace'.equiv_Real x ∈ Set.Icc 0 1 ∧ f x ≤ ↑t'} =
+    have h_set_eq : {x : EuclideanSpace' 1 | EuclideanSpace'.equiv_Real x ∈ Set.Icc 0 1 ∧ f_lifted x ≤ ↑t'} =
         Real.equiv_EuclideanSpace' '' S := by
       ext x
       simp only [Set.mem_setOf_eq, Set.mem_image, S]
@@ -2921,14 +2921,14 @@ lemma sublevel_set_measurable (t : EReal) (ht_pos : 0 < t) (ht_lt_one : t < 1) :
       · intro ⟨h_in, hfx⟩
         use EuclideanSpace'.equiv_Real x
         refine ⟨⟨h_in, ?_⟩, EuclideanSpace'.equiv_Real.symm_apply_apply x⟩
-        simp only [f] at hfx
+        simp only [f_lifted] at hfx
         have h_max : max 0 (binaryToTernary (EuclideanSpace'.equiv_Real x)) ≤ t' := by
           rw [EReal.coe_le_coe_iff] at hfx; exact hfx
         exact le_of_max_le_right h_max
       · intro ⟨r, ⟨hr_in, hr_le⟩, hrx⟩
         constructor
         · rw [← hrx, EuclideanSpace'.equiv_Real.apply_symm_apply]; exact hr_in
-        · rw [← hrx]; simp only [f, EuclideanSpace'.equiv_Real.apply_symm_apply]
+        · rw [← hrx]; simp only [f_lifted, EuclideanSpace'.equiv_Real.apply_symm_apply]
           rw [EReal.coe_le_coe_iff]
           exact max_le (le_of_lt ht'_pos) hr_le
     rw [h_set_eq]
@@ -3015,30 +3015,30 @@ lemma sublevel_set_measurable (t : EReal) (ht_pos : 0 < t) (ht_lt_one : t < 1) :
       apply IsNull.measurable
       exact Countable.Lebesgue_measure Nat.one_pos (Set.countable_singleton a |>.image _)
 
-lemma f_measurable : UnsignedMeasurable f := by
+lemma f_lifted_measurable : UnsignedMeasurable f_lifted := by
   -- Apply Lemma 1.3.9(viii): f is measurable iff ∀ t, {x | f(x) ≤ t} is measurable
-  have h_iff : UnsignedMeasurable f ↔ (∀ t, LebesgueMeasurable {x | f x ≤ t}) :=
-    (UnsignedMeasurable.TFAE f_unsigned).out 0 7
+  have h_iff : UnsignedMeasurable f_lifted ↔ (∀ t, LebesgueMeasurable {x | f_lifted x ≤ t}) :=
+    (UnsignedMeasurable.TFAE f_lifted_unsigned).out 0 7
   apply h_iff.mpr
   intro t
   rcases lt_trichotomy t 0 with ht_neg | ht_zero | ht_pos
-  · have h_empty : {x | f x ≤ t} = ∅ := by
+  · have h_empty : {x | f_lifted x ≤ t} = ∅ := by
       ext x
       simp only [Set.mem_setOf_eq, Set.mem_empty_iff_false, iff_false, not_le]
-      exact lt_of_lt_of_le ht_neg (f_unsigned x)
+      exact lt_of_lt_of_le ht_neg (f_lifted_unsigned x)
     rw [h_empty]; exact LebesgueMeasurable.empty
   · subst ht_zero
-    have h_eq : {x | f x ≤ (0 : EReal)} = {x | f x = 0} := by
+    have h_eq : {x | f_lifted x ≤ (0 : EReal)} = {x | f_lifted x = 0} := by
       ext x
       simp only [Set.mem_setOf_eq]
       constructor
-      · intro hle; exact le_antisymm hle (f_unsigned x)
+      · intro hle; exact le_antisymm hle (f_lifted_unsigned x)
       · intro heq; rw [heq]
-    rw [h_eq]; exact f_zero_set_measurable
+    rw [h_eq]; exact f_lifted_zero_set_measurable
   · rcases le_or_gt 1 t with ht_ge_one | ht_lt_one
-    · have h_univ : {x | f x ≤ t} = Set.univ := by
+    · have h_univ : {x | f_lifted x ≤ t} = Set.univ := by
         ext x; simp only [Set.mem_setOf_eq, Set.mem_univ, iff_true]
-        exact le_trans (f_le_one x) ht_ge_one
+        exact le_trans (f_lifted_le_one x) ht_ge_one
       rw [h_univ]; exact IsOpen.measurable isOpen_univ
     · exact sublevel_set_measurable t ht_pos ht_lt_one
 
@@ -3112,9 +3112,12 @@ lemma exists_nonmeasurable_with_cantor_image :
 end Remark_1_3_10
 
 /-- Remark 1.3.10: The inverse image of a Lebesgue measurable set by a measurable function
-    need not be Lebesgue measurable. -/
-example : ∃ (f: EuclideanSpace' 1 → EReal) (hf: UnsignedMeasurable f) (E: Set (EuclideanSpace' 1)) (hE: LebesgueMeasurable E), ¬ LebesgueMeasurable (f⁻¹' ((Real.toEReal ∘ EuclideanSpace'.equiv_Real) '' E)) := by
-  use Remark_1_3_10.f, Remark_1_3_10.f_measurable
+    need not be Lebesgue measurable.
+    Proof: Let f = binaryToTernary (maps [0,1] → Cantor set), F ⊆ [0,1] non-measurable (Vitali).
+    Set E = f(F) ⊆ Cantor set. Then E is null (⊆ null set) hence measurable, but f⁻¹(E) = F
+    is non-measurable. (Uses injectivity of f on non-dyadic rationals A ⊇ F.) -/
+example : ∃ (f: EuclideanSpace' 1 → EReal) (_hf: UnsignedMeasurable f) (E: Set (EuclideanSpace' 1)) (_hE: LebesgueMeasurable E), ¬ LebesgueMeasurable (f⁻¹' ((Real.toEReal ∘ EuclideanSpace'.equiv_Real) '' E)) := by
+  use Remark_1_3_10.f_lifted, Remark_1_3_10.f_lifted_measurable
   obtain ⟨F, A, hF_sub, hF_nonmeas, hF_image, hF_sub_A, hA_sub, hA_cocountable, hA_inj⟩ :=
     Remark_1_3_10.exists_nonmeasurable_with_cantor_image
   use Real.equiv_EuclideanSpace' '' (Remark_1_3_10.binaryToTernary '' F)
@@ -3125,10 +3128,88 @@ example : ∃ (f: EuclideanSpace' 1 → EReal) (hf: UnsignedMeasurable f) (E: Se
     intro x hx; obtain ⟨y, hy, rfl⟩ := hx
     exact ⟨y, hF_image hy, rfl⟩
   case hPreimage_nonmeas =>
-    -- Key: binaryToTernary is injective on A, F ⊆ A, so f⁻¹(E) ∩ A = F (measurable)
+    -- Key: f is injective on A ⊆ ℝ, F ⊆ A, so f⁻¹(E) ∩ A' = F' where A', F' are A, F in EuclideanSpace'
     intro h_meas
     apply hF_nonmeas
-    sorry
+    have h_simplify : (Real.toEReal ∘ EuclideanSpace'.equiv_Real) ''
+        (Real.equiv_EuclideanSpace' '' (Remark_1_3_10.binaryToTernary '' F)) =
+        Real.toEReal '' (Remark_1_3_10.binaryToTernary '' F) := by
+      ext z; simp only [Set.mem_image, Function.comp_apply]
+      constructor
+      · rintro ⟨p, ⟨y, hy, rfl⟩, rfl⟩; exact ⟨y, hy, by simp⟩
+      · rintro ⟨y, hy, rfl⟩; exact ⟨Real.equiv_EuclideanSpace' y, ⟨y, hy, rfl⟩, by simp⟩
+    rw [h_simplify] at h_meas
+    -- A', F' := A, F viewed in EuclideanSpace' 1 (via ℝ ≃ EuclideanSpace' 1)
+    let A' := Real.equiv_EuclideanSpace' '' A
+    let F' := Real.equiv_EuclideanSpace' '' F
+    have h_preimage_inter : Remark_1_3_10.f_lifted ⁻¹' (Real.toEReal '' (Remark_1_3_10.binaryToTernary '' F)) ∩ A' = F' := by
+      ext p
+      simp only [Set.mem_inter_iff, Set.mem_preimage, Set.mem_image, A', F']
+      constructor
+      · rintro ⟨⟨z, ⟨w, hw, rfl⟩, hfp⟩, a, ha, rfl⟩
+        -- p = Real.equiv_EuclideanSpace' a, a ∈ A
+        -- f p = Real.toEReal z where z = binaryToTernary w, w ∈ F
+        -- So binaryToTernary a = z = binaryToTernary w
+        use a
+        refine ⟨?_, rfl⟩
+        -- Show a ∈ F using injectivity
+        have ha_in_Icc : a ∈ Set.Icc (0:ℝ) 1 := hA_sub ha
+        have hw_in_A : w ∈ A := hF_sub_A hw
+        have hw_in_Icc : w ∈ Set.Icc (0:ℝ) 1 := hA_sub hw_in_A
+        -- f p = binaryToTernary a (since a ∈ [0,1] and binaryToTernary a ≥ 0)
+        have hf_eq : Remark_1_3_10.f_lifted (Real.equiv_EuclideanSpace' a) =
+            Real.toEReal (Remark_1_3_10.binaryToTernary a) := by
+          simp only [Remark_1_3_10.f_lifted, EuclideanSpace'.equiv_Real.apply_symm_apply]
+          congr 1
+          exact max_eq_right (Remark_1_3_10.binaryToTernary_props.nonneg a)
+        rw [hf_eq] at hfp
+        have h_eq_values : Remark_1_3_10.binaryToTernary a = Remark_1_3_10.binaryToTernary w :=
+          (EReal.coe_injective hfp).symm
+        have ha_eq_w : a = w := hA_inj ha hw_in_A h_eq_values
+        rw [ha_eq_w]; exact hw
+      · rintro ⟨r, hr, rfl⟩
+        constructor
+        · -- f (Real.equiv_EuclideanSpace' r) ∈ Real.toEReal '' (binaryToTernary '' F)
+          use Remark_1_3_10.binaryToTernary r
+          refine ⟨⟨r, hr, rfl⟩, ?_⟩
+          simp only [Remark_1_3_10.f_lifted, EuclideanSpace'.equiv_Real.apply_symm_apply]
+          congr 1
+          exact (max_eq_right (Remark_1_3_10.binaryToTernary_props.nonneg r)).symm
+        · exact ⟨r, hF_sub_A hr, rfl⟩
+    -- A' is measurable: [0,1]' \ A' is countable hence null, use of_ae_eq with [0,1]'
+    have hA'_meas : LebesgueMeasurable A' := by
+      let Icc' := Real.equiv_EuclideanSpace' '' Set.Icc (0:ℝ) 1
+      have hIcc'_meas : LebesgueMeasurable Icc' := IsClosed.measurable <| by
+        have : Icc' = EuclideanSpace'.equiv_Real ⁻¹' Set.Icc 0 1 := by
+          ext x; simp only [Icc', Set.mem_image, Set.mem_preimage]
+          constructor
+          · rintro ⟨r, hr, rfl⟩; simp [hr]
+          · intro hx; exact ⟨_, hx, EuclideanSpace'.equiv_Real.symm_apply_apply x⟩
+        exact this ▸ IsClosed.preimage (continuous_apply _) isClosed_Icc
+      have h_diff_null : IsNull (Icc' \ A') := by
+        apply Countable.Lebesgue_measure Nat.one_pos
+        have : Icc' \ A' = Real.equiv_EuclideanSpace' '' (Set.Icc 0 1 \ A) := by
+          ext x; simp only [Set.mem_diff, Set.mem_image, Icc', A']
+          constructor
+          · rintro ⟨⟨r, hr, rfl⟩, hn⟩
+            exact ⟨r, ⟨hr, fun ha => hn ⟨r, ha, rfl⟩⟩, rfl⟩
+          · rintro ⟨r, ⟨hr, hn⟩, rfl⟩
+            exact ⟨⟨r, hr, rfl⟩, fun ⟨s, hs, he⟩ =>
+              hn (Real.equiv_EuclideanSpace'.injective he.symm ▸ hs)⟩
+        exact this ▸ Set.Countable.image hA_cocountable _
+      have h_A'_sub : A' ⊆ Icc' := by rintro _ ⟨a, ha, rfl⟩; exact ⟨a, hA_sub ha, rfl⟩
+      -- A' ∩ (Icc' \ A')ᶜ = Icc' ∩ (Icc' \ A')ᶜ = A' (since A' ⊆ Icc')
+      refine LebesgueMeasurable.of_ae_eq hIcc'_meas h_diff_null ?_
+      ext x; simp only [Set.mem_inter_iff, Set.mem_compl_iff, Set.mem_diff]
+      constructor
+      · intro ⟨hx, _⟩; exact ⟨h_A'_sub hx, fun ⟨_, h⟩ => h hx⟩
+      · intro ⟨hi, hn⟩; push_neg at hn; exact ⟨hn hi, fun ⟨_, h⟩ => h (hn hi)⟩
+    -- F' = f⁻¹'(...) ∩ A' is measurable
+    have : F' = Remark_1_3_10.f_lifted ⁻¹' (Real.toEReal '' (Remark_1_3_10.binaryToTernary '' F)) ∩ A' :=
+      h_preimage_inter.symm
+    simp only [F'] at this
+    rw [this]
+    exact LebesgueMeasurable.inter h_meas hA'_meas
 
 /-- Definition 1.3.11 (Complex measurability)-/
 def ComplexMeasurable {d:ℕ} (f: EuclideanSpace' d → ℂ) : Prop := ∃ (g: ℕ → EuclideanSpace' d → ℂ), (∀ n, ComplexSimpleFunction (g n)) ∧ (PointwiseConvergesTo g f)
