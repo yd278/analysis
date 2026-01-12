@@ -1781,9 +1781,8 @@ Both versions work for the theorem because:
 - Both map [0,1] into CantorSet ∪ {0}
 - Both give measurable f with f⁻¹(E) = F non-measurable
 -/
-namespace Remark_1_3_10
 
-/-- Dyadic rationals in [0,1]: numbers of the form k/2^n where k ≤ 2^n.
+/-- Dyadic rationals: numbers of the form k/2^n where k ≤ 2^n.
     These are exactly the real numbers with terminating binary expansions. -/
 def DyadicRationals : Set ℝ := {x : ℝ | ∃ (k n : ℕ), x = k / 2^n ∧ k ≤ 2^n}
 
@@ -1798,6 +1797,128 @@ lemma DyadicRationals.countable : DyadicRationals.Countable := by
   use n
   have hk_lt : k < 2^n + 1 := Nat.lt_succ_of_le hk_le
   exact ⟨⟨k, hk_lt⟩, hk.symm⟩
+
+/-- Binary digit extraction: bⱼ(x) = ⌊2^j · x⌋ mod 2.
+    For x ∈ [0,1), this extracts the j-th binary digit.
+    Special case: x = 1 has all digits = 1 (1 = 0.111...₂).
+    For x ∉ [0,1], all digits are 0. -/
+noncomputable def binaryDigit (x : ℝ) (j : ℕ) : ℕ :=
+  if x ∈ Set.Ico (0:ℝ) 1 then ⌊(2:ℝ)^j * x⌋₊ % 2
+  else if x = 1 then 1
+  else 0
+
+/-- Binary digits are in {0, 1}. -/
+lemma binaryDigit_le_one (x : ℝ) (j : ℕ) : binaryDigit x j ≤ 1 := by
+  simp only [binaryDigit]
+  split_ifs with h1 h2 <;> omega
+
+/-- Binary digits of 0 are all 0. -/
+lemma binaryDigit_zero (j : ℕ) : binaryDigit 0 j = 0 := by
+  simp only [binaryDigit]
+  have h0' : (0:ℝ) ∈ Set.Ico 0 1 := ⟨le_refl 0, by norm_num⟩
+  rw [if_pos h0']
+  simp [mul_zero]
+
+/-- Binary digits of 1 are all 1. -/
+lemma binaryDigit_one (j : ℕ) : binaryDigit 1 j = 1 := by
+  simp only [binaryDigit, Set.mem_Ico, lt_self_iff_false, and_false, ↓reduceIte]
+
+/-- The full sum ∑_{j≥0} 2·(1/3)^{j+1} = 1. -/
+lemma tsum_two_thirds_geometric : ∑' j : ℕ, (2:ℝ) * (1/3:ℝ)^(j + 1) = 1 := by
+  have h1 : ∑' j : ℕ, (1/3:ℝ)^j = (1 - 1/3)⁻¹ :=
+    tsum_geometric_of_lt_one (by norm_num) (by norm_num)
+  calc ∑' j : ℕ, (2:ℝ) * (1/3:ℝ)^(j + 1)
+      = ∑' j : ℕ, (2/3:ℝ) * (1/3:ℝ)^j := by congr 1; ext j; ring
+    _ = (2/3) * ∑' j : ℕ, (1/3:ℝ)^j := by rw [tsum_mul_left]
+    _ = (2/3) * (1 - 1/3)⁻¹ := by rw [h1]
+    _ = 1 := by norm_num
+
+/-- The tail sum bound: ∑_{j≥k} 2·(1/3)^{j+1} = (1/3)^k. -/
+lemma tsum_tail_bound (k : ℕ) :
+    ∑' j : ℕ, (2:ℝ) * (1/3:ℝ)^(k + j + 1) = (1/3:ℝ)^k := by
+  have h1 : ∑' j : ℕ, (1/3:ℝ)^j = (1 - 1/3)⁻¹ :=
+    tsum_geometric_of_lt_one (by norm_num) (by norm_num)
+  calc ∑' j : ℕ, (2:ℝ) * (1/3:ℝ)^(k + j + 1)
+      = ∑' j : ℕ, (2:ℝ) * ((1/3:ℝ)^(k+1) * (1/3:ℝ)^j) := by
+        congr 1; ext j; rw [← pow_add]; ring_nf
+    _ = (2:ℝ) * (1/3:ℝ)^(k+1) * ∑' j : ℕ, (1/3:ℝ)^j := by
+        rw [← tsum_mul_left]; congr 1; ext j; ring
+    _ = (2:ℝ) * (1/3:ℝ)^(k+1) * (1 - 1/3)⁻¹ := by rw [h1]
+    _ = (1/3:ℝ)^k := by field_simp; ring
+
+/-- Helper: if ⌊2z⌋₊ % 2 = 1 then ⌊2z⌋₊ ≥ 2⌊z⌋₊ + 1 -/
+lemma floor_two_mul_odd_ge {z : ℝ} (hz : 0 ≤ z) (hodd : ⌊2 * z⌋₊ % 2 = 1) :
+    ⌊2 * z⌋₊ ≥ 2 * ⌊z⌋₊ + 1 := by
+  have h_decomp : ⌊2 * z⌋₊ = 2 * (⌊2 * z⌋₊ / 2) + ⌊2 * z⌋₊ % 2 := (Nat.div_add_mod _ _).symm
+  rw [hodd] at h_decomp
+  have h_div : ⌊2 * z⌋₊ / 2 ≥ ⌊z⌋₊ := by
+    have h1 : (2 * ⌊z⌋₊ : ℕ) ≤ ⌊2 * z⌋₊ := by
+      have hfloor := Nat.floor_le hz
+      apply Nat.le_floor
+      simp only [Nat.cast_mul, Nat.cast_ofNat]
+      linarith
+    rw [mul_comm] at h1
+    exact (Nat.le_div_iff_mul_le (by norm_num : 0 < 2)).mpr h1
+  omega
+
+/-- Helper: if ⌊2z⌋₊ % 2 = 0 then ⌊2z⌋₊ ≤ 2⌊z⌋₊ -/
+lemma floor_two_mul_even_le {z : ℝ} (hz : 0 ≤ z) (heven : ⌊2 * z⌋₊ % 2 = 0) :
+    ⌊2 * z⌋₊ ≤ 2 * ⌊z⌋₊ := by
+  have h_decomp : ⌊2 * z⌋₊ = 2 * (⌊2 * z⌋₊ / 2) + ⌊2 * z⌋₊ % 2 := (Nat.div_add_mod _ _).symm
+  rw [heven, add_zero] at h_decomp
+  have h_div : ⌊2 * z⌋₊ / 2 ≤ ⌊z⌋₊ := by
+    have h1 : ⌊2 * z⌋₊ < 2 * (⌊z⌋₊ + 1) := by
+      have := Nat.lt_floor_add_one z
+      have h2 : 2 * z < 2 * (⌊z⌋₊ + 1) := by linarith
+      have h3 : (⌊2 * z⌋₊ : ℝ) ≤ 2 * z := Nat.floor_le (mul_nonneg (by norm_num) hz)
+      have h4 : (⌊2 * z⌋₊ : ℝ) < 2 * (↑⌊z⌋₊ + 1) := lt_of_le_of_lt h3 h2
+      have h5 : (⌊2 * z⌋₊ : ℝ) < 2 * ⌊z⌋₊ + 2 := by linarith
+      exact_mod_cast h5
+    omega
+  omega
+
+/-- Helper: equal mod 2 and equal ⌊z⌋ implies equal ⌊2z⌋ -/
+lemma floor_two_mul_eq_of_mod_eq {x y : ℝ} (hx : 0 ≤ x) (hy : 0 ≤ y)
+    (h_floor : ⌊x⌋₊ = ⌊y⌋₊) (h_mod : ⌊2 * x⌋₊ % 2 = ⌊2 * y⌋₊ % 2) :
+    ⌊2 * x⌋₊ = ⌊2 * y⌋₊ := by
+  by_cases hxodd : ⌊2 * x⌋₊ % 2 = 1
+  · have hyodd := h_mod ▸ hxodd
+    have hx_ge := floor_two_mul_odd_ge hx hxodd
+    have hy_ge := floor_two_mul_odd_ge hy hyodd
+    have hx_lt : ⌊2 * x⌋₊ < 2 * ⌊x⌋₊ + 2 := by
+      have := Nat.lt_floor_add_one x
+      have h2 : 2 * x < 2 * (⌊x⌋₊ + 1) := by linarith
+      have h3 : (⌊2 * x⌋₊ : ℝ) ≤ 2 * x := Nat.floor_le (mul_nonneg (by norm_num) hx)
+      have h4 : (⌊2 * x⌋₊ : ℝ) < 2 * ⌊x⌋₊ + 2 := by linarith
+      exact_mod_cast h4
+    have hy_lt : ⌊2 * y⌋₊ < 2 * ⌊y⌋₊ + 2 := by
+      have := Nat.lt_floor_add_one y
+      have h2 : 2 * y < 2 * (⌊y⌋₊ + 1) := by linarith
+      have h3 : (⌊2 * y⌋₊ : ℝ) ≤ 2 * y := Nat.floor_le (mul_nonneg (by norm_num) hy)
+      have h4 : (⌊2 * y⌋₊ : ℝ) < 2 * ⌊y⌋₊ + 2 := by linarith
+      exact_mod_cast h4
+    omega
+  · have hxeven : ⌊2 * x⌋₊ % 2 = 0 := Nat.mod_two_eq_zero_or_one (⌊2 * x⌋₊) |>.resolve_right hxodd
+    have hyeven := h_mod ▸ hxeven
+    have hx_le := floor_two_mul_even_le hx hxeven
+    have hy_le := floor_two_mul_even_le hy hyeven
+    have hx_ge : ⌊2 * x⌋₊ ≥ 2 * ⌊x⌋₊ := by
+      have h1 : (2 * ⌊x⌋₊ : ℕ) ≤ ⌊2 * x⌋₊ := by
+        have hfloor := Nat.floor_le hx
+        apply Nat.le_floor
+        simp only [Nat.cast_mul, Nat.cast_ofNat]
+        linarith
+      exact h1
+    have hy_ge : ⌊2 * y⌋₊ ≥ 2 * ⌊y⌋₊ := by
+      have h1 : (2 * ⌊y⌋₊ : ℕ) ≤ ⌊2 * y⌋₊ := by
+        have hfloor := Nat.floor_le hy
+        apply Nat.le_floor
+        simp only [Nat.cast_mul, Nat.cast_ofNat]
+        linarith
+      exact h1
+    omega
+
+namespace Remark_1_3_10
 
 /-- The properties required of the binary-to-ternary function for this construction.
     The function maps [0,1] into the Cantor set C by converting binary digits to ternary.
@@ -1817,38 +1938,11 @@ structure BinaryToTernaryProperties (g : ℝ → ℝ) : Prop where
     Set.InjOn g A ∧                 -- g is injective on A (hence bijective onto g(A) ⊆ C)
     A ∩ DyadicRationals = ∅         -- A excludes dyadic rationals
 
-/-! ### Binary digit extraction and helper lemmas -/
-
-/-- Binary digit extraction: bⱼ(x) = ⌊2^j · x⌋ mod 2.
-    For x ∈ [0,1), this extracts the j-th binary digit (1-indexed).
-    Special case: x = 1 has all digits = 1 (1 = 0.111...₂).
-    For x ∉ [0,1], all digits are 0. -/
-noncomputable def binaryDigit (x : ℝ) (j : ℕ) : ℕ :=
-  if x ∈ Set.Ico (0:ℝ) 1 then ⌊(2:ℝ)^j * x⌋₊ % 2
-  else if x = 1 then 1
-  else 0
-
 /-- The binary-to-ternary function: g(x) = ∑_{j≥1} 2·bⱼ(x)·3^{-j} for x ∈ [0,1], else 0. -/
 noncomputable def binaryToTernaryFn (x : ℝ) : ℝ :=
   if x ∈ Set.Icc (0:ℝ) 1 then
     ∑' j : ℕ, (2 * binaryDigit x (j + 1) : ℝ) * (1/3:ℝ)^(j + 1)
   else 0
-
-/-- Binary digits are in {0, 1}. -/
-lemma binaryDigit_le_one (x : ℝ) (j : ℕ) : binaryDigit x j ≤ 1 := by
-  simp only [binaryDigit]
-  split_ifs with h1 h2 <;> omega
-
-/-- Binary digits of 0 are all 0. -/
-lemma binaryDigit_zero (j : ℕ) : binaryDigit 0 j = 0 := by
-  simp only [binaryDigit]
-  have h0' : (0:ℝ) ∈ Set.Ico 0 1 := ⟨le_refl 0, by norm_num⟩
-  rw [if_pos h0']
-  simp [mul_zero]
-
-/-- Binary digits of 1 are all 1. -/
-lemma binaryDigit_one (j : ℕ) : binaryDigit 1 j = 1 := by
-  simp only [binaryDigit, Set.mem_Ico, lt_self_iff_false, and_false, ↓reduceIte]
 
 /-- The series ∑ 2·bⱼ(x)·3^{-j} is summable for any x. -/
 lemma binaryToTernary_summable (x : ℝ) :
@@ -1865,16 +1959,6 @@ lemma binaryToTernary_summable (x : ℝ) :
       _ = 2 * (1/3:ℝ)^(j + 1) := by ring
   · have h : Summable (fun j : ℕ => (1/3:ℝ)^j) := summable_geometric_of_lt_one (by norm_num) (by norm_num)
     exact (h.mul_left 2).comp_injective (fun _ _ h => Nat.succ_injective h)
-
-/-- The full sum ∑_{j≥0} 2·(1/3)^{j+1} = 1. -/
-lemma tsum_two_thirds_geometric : ∑' j : ℕ, (2:ℝ) * (1/3:ℝ)^(j + 1) = 1 := by
-  have h1 : ∑' j : ℕ, (1/3:ℝ)^j = (1 - 1/3)⁻¹ :=
-    tsum_geometric_of_lt_one (by norm_num) (by norm_num)
-  calc ∑' j : ℕ, (2:ℝ) * (1/3:ℝ)^(j + 1)
-      = ∑' j : ℕ, (2/3:ℝ) * (1/3:ℝ)^j := by congr 1; ext j; ring
-    _ = (2/3) * ∑' j : ℕ, (1/3:ℝ)^j := by rw [tsum_mul_left]
-    _ = (2/3) * (1 - 1/3)⁻¹ := by rw [h1]
-    _ = 1 := by norm_num
 
 /-! ### Helper lemmas for monotonicity proof -/
 
@@ -1930,78 +2014,6 @@ lemma binaryDigit_partial_sum_lt (x : ℝ) (n : ℕ) :
     _ < (⌊(2:ℝ)^n * x⌋₊ + 1 : ℝ) / (2:ℝ)^n := by
         apply div_lt_div_of_pos_right h1 h2n_pos
     _ = (⌊(2:ℝ)^n * x⌋₊ : ℝ) / (2:ℝ)^n + (1:ℝ) / (2:ℝ)^n := by ring
-
-/-- Helper: if ⌊2z⌋₊ % 2 = 1 then ⌊2z⌋₊ ≥ 2⌊z⌋₊ + 1 -/
-lemma floor_two_mul_odd_ge {z : ℝ} (hz : 0 ≤ z) (hodd : ⌊2 * z⌋₊ % 2 = 1) :
-    ⌊2 * z⌋₊ ≥ 2 * ⌊z⌋₊ + 1 := by
-  have h_decomp : ⌊2 * z⌋₊ = 2 * (⌊2 * z⌋₊ / 2) + ⌊2 * z⌋₊ % 2 := (Nat.div_add_mod _ _).symm
-  rw [hodd] at h_decomp
-  have h_div : ⌊2 * z⌋₊ / 2 ≥ ⌊z⌋₊ := by
-    have h1 : (2 * ⌊z⌋₊ : ℕ) ≤ ⌊2 * z⌋₊ := by
-      have hfloor := Nat.floor_le hz
-      apply Nat.le_floor
-      simp only [Nat.cast_mul, Nat.cast_ofNat]
-      linarith
-    rw [mul_comm] at h1
-    exact (Nat.le_div_iff_mul_le (by norm_num : 0 < 2)).mpr h1
-  omega
-
-/-- Helper: if ⌊2z⌋₊ % 2 = 0 then ⌊2z⌋₊ ≤ 2⌊z⌋₊ -/
-lemma floor_two_mul_even_le {z : ℝ} (hz : 0 ≤ z) (heven : ⌊2 * z⌋₊ % 2 = 0) :
-    ⌊2 * z⌋₊ ≤ 2 * ⌊z⌋₊ := by
-  have h_decomp : ⌊2 * z⌋₊ = 2 * (⌊2 * z⌋₊ / 2) + ⌊2 * z⌋₊ % 2 := (Nat.div_add_mod _ _).symm
-  rw [heven, add_zero] at h_decomp
-  have h_div : ⌊2 * z⌋₊ / 2 ≤ ⌊z⌋₊ := by
-    have h1 : ⌊2 * z⌋₊ < 2 * (⌊z⌋₊ + 1) := by
-      have := Nat.lt_floor_add_one z
-      have h2 : 2 * z < 2 * (⌊z⌋₊ + 1) := by linarith
-      have h3 : (⌊2 * z⌋₊ : ℝ) ≤ 2 * z := Nat.floor_le (mul_nonneg (by norm_num) hz)
-      have h4 : (⌊2 * z⌋₊ : ℝ) < 2 * (↑⌊z⌋₊ + 1) := lt_of_le_of_lt h3 h2
-      have h5 : (⌊2 * z⌋₊ : ℝ) < 2 * ⌊z⌋₊ + 2 := by linarith
-      exact_mod_cast h5
-    omega
-  omega
-
-/-- Helper: equal mod 2 and equal ⌊z⌋ implies equal ⌊2z⌋ -/
-lemma floor_two_mul_eq_of_mod_eq {x y : ℝ} (hx : 0 ≤ x) (hy : 0 ≤ y)
-    (h_floor : ⌊x⌋₊ = ⌊y⌋₊) (h_mod : ⌊2 * x⌋₊ % 2 = ⌊2 * y⌋₊ % 2) :
-    ⌊2 * x⌋₊ = ⌊2 * y⌋₊ := by
-  by_cases hxodd : ⌊2 * x⌋₊ % 2 = 1
-  ·
-    have hyodd := h_mod ▸ hxodd
-    have hx_ge := floor_two_mul_odd_ge hx hxodd
-    have hy_ge := floor_two_mul_odd_ge hy hyodd
-    have hx_lt : ⌊2 * x⌋₊ < 2 * ⌊x⌋₊ + 2 := by
-      have := Nat.lt_floor_add_one x
-      have h2 : 2 * x < 2 * (⌊x⌋₊ + 1) := by linarith
-      have h3 : (⌊2 * x⌋₊ : ℝ) ≤ 2 * x := Nat.floor_le (mul_nonneg (by norm_num) hx)
-      have h4 : (⌊2 * x⌋₊ : ℝ) < 2 * ⌊x⌋₊ + 2 := by linarith
-      exact_mod_cast h4
-    have hy_lt : ⌊2 * y⌋₊ < 2 * ⌊y⌋₊ + 2 := by
-      have := Nat.lt_floor_add_one y
-      have h2 : 2 * y < 2 * (⌊y⌋₊ + 1) := by linarith
-      have h3 : (⌊2 * y⌋₊ : ℝ) ≤ 2 * y := Nat.floor_le (mul_nonneg (by norm_num) hy)
-      have h4 : (⌊2 * y⌋₊ : ℝ) < 2 * ⌊y⌋₊ + 2 := by linarith
-      exact_mod_cast h4
-    rw [h_floor] at hx_ge hx_lt
-    omega
-  ·
-    have hxeven : ⌊2 * x⌋₊ % 2 = 0 := by omega
-    have hyeven := h_mod ▸ hxeven
-    have hx_le := floor_two_mul_even_le hx hxeven
-    have hy_le := floor_two_mul_even_le hy hyeven
-    have hx_ge : 2 * ⌊x⌋₊ ≤ ⌊2 * x⌋₊ := by
-      have hfl := Nat.floor_le hx
-      apply Nat.le_floor
-      simp only [Nat.cast_mul, Nat.cast_ofNat]
-      linarith
-    have hy_ge : 2 * ⌊y⌋₊ ≤ ⌊2 * y⌋₊ := by
-      have hfl := Nat.floor_le hy
-      apply Nat.le_floor
-      simp only [Nat.cast_mul, Nat.cast_ofNat]
-      linarith
-    rw [h_floor] at hx_le hx_ge
-    omega
 
 /-- Key lemma: if bₖ(x) = 1, then x ≥ ⌊2^k * x⌋₊ / 2^k + 2^{-(k+1)} -/
 lemma binaryDigit_one_implies_lower_bound {x : ℝ} (hx : x ∈ Set.Ico (0:ℝ) 1) (k : ℕ)
@@ -2116,19 +2128,6 @@ lemma binaryDigit_first_diff {x y : ℝ} (hx : x ∈ Set.Ico (0:ℝ) 1) (hy : y 
     have h_floor_eq : ⌊(2:ℝ)^k * x⌋₊ = ⌊(2:ℝ)^k * y⌋₊ := floor_eq_of_binaryDigit_eq hx hy hk_first
     rw [h_floor_eq] at hx_lb
     linarith
-
-/-- The tail sum bound: ∑_{j≥k} 2·(1/3)^{j+1} = (1/3)^k. -/
-lemma tsum_tail_bound (k : ℕ) :
-    ∑' j : ℕ, (2:ℝ) * (1/3:ℝ)^(k + j + 1) = (1/3:ℝ)^k := by
-  have h1 : ∑' j : ℕ, (1/3:ℝ)^j = (1 - 1/3)⁻¹ :=
-    tsum_geometric_of_lt_one (by norm_num) (by norm_num)
-  calc ∑' j : ℕ, (2:ℝ) * (1/3:ℝ)^(k + j + 1)
-      = ∑' j : ℕ, (2:ℝ) * ((1/3:ℝ)^(k+1) * (1/3:ℝ)^j) := by
-        congr 1; ext j; rw [← pow_add]; ring_nf
-    _ = (2:ℝ) * (1/3:ℝ)^(k+1) * ∑' j : ℕ, (1/3:ℝ)^j := by
-        rw [← tsum_mul_left]; congr 1; ext j; ring
-    _ = (2:ℝ) * (1/3:ℝ)^(k+1) * (1 - 1/3)⁻¹ := by rw [h1]
-    _ = (1/3:ℝ)^k := by field_simp; ring
 
 /-- Monotonicity: if digits agree up to k and bₖ(x) < bₖ(y), then g(x) < g(y). -/
 lemma binaryToTernary_lt_of_digit_lt {x y : ℝ}
