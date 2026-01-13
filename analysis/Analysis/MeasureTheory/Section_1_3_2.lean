@@ -3215,9 +3215,57 @@ def ComplexMeasurable {d:ℕ} (f: EuclideanSpace' d → ℂ) : Prop := ∃ (g: �
 
 def RealMeasurable {d:ℕ} (f: EuclideanSpace' d → ℝ) : Prop := ∃ (g: ℕ → EuclideanSpace' d → ℝ), (∀ n, RealSimpleFunction (g n)) ∧ (PointwiseConvergesTo g f)
 
-theorem RealMeasurable.iff {d:ℕ} {f: EuclideanSpace' d → ℝ} : RealMeasurable f ↔ ComplexMeasurable (Real.complex_fun f) := by sorry
+theorem RealMeasurable.iff {d:ℕ} {f: EuclideanSpace' d → ℝ} : RealMeasurable f ↔ ComplexMeasurable (Real.complex_fun f) := by
+  constructor
+  -- Forward: RealMeasurable f → ComplexMeasurable (Real.complex_fun f)
+  · intro ⟨g, hg_simple, hg_conv⟩
+    use fun n => Real.complex_fun (g n)
+    constructor
+    · intro n; exact (hg_simple n).toComplex
+    · intro x
+      simp only [Real.complex_fun]
+      exact Complex.continuous_ofReal.continuousAt.tendsto.comp (hg_conv x)
+  -- Backward: ComplexMeasurable (Real.complex_fun f) → RealMeasurable f
+  · intro ⟨g, hg_simple, hg_conv⟩
+    use fun n => Complex.re_fun (g n)
+    constructor
+    · intro n; exact (hg_simple n).re
+    · intro x
+      simp only [Complex.re_fun]
+      have h := hg_conv x
+      simp only [Real.complex_fun] at h
+      have h' := Complex.continuous_re.continuousAt.tendsto.comp h
+      simp only [Complex.ofReal_re] at h'
+      exact h'
 
-theorem ComplexMeasurable.iff {d:ℕ} {f: EuclideanSpace' d → ℂ} : ComplexMeasurable f ↔ RealMeasurable (Complex.re_fun f) ∧ RealMeasurable (Complex.im_fun f) := by sorry
+theorem ComplexMeasurable.iff {d:ℕ} {f: EuclideanSpace' d → ℂ} : ComplexMeasurable f ↔ RealMeasurable (Complex.re_fun f) ∧ RealMeasurable (Complex.im_fun f) := by
+  constructor
+  -- Forward: ComplexMeasurable f → RealMeasurable (re ∘ f) ∧ RealMeasurable (im ∘ f)
+  · intro ⟨g, hg_simple, hg_conv⟩
+    constructor
+    · use fun n => Complex.re_fun (g n)
+      exact ⟨fun n => (hg_simple n).re, fun x => Complex.continuous_re.continuousAt.tendsto.comp (hg_conv x)⟩
+    · use fun n => Complex.im_fun (g n)
+      exact ⟨fun n => (hg_simple n).im, fun x => Complex.continuous_im.continuousAt.tendsto.comp (hg_conv x)⟩
+  -- Backward: RealMeasurable (re ∘ f) ∧ RealMeasurable (im ∘ f) → ComplexMeasurable f
+  · intro ⟨⟨g_re, hg_re_simple, hg_re_conv⟩, ⟨g_im, hg_im_simple, hg_im_conv⟩⟩
+    use fun n => Real.complex_fun (g_re n) + Complex.I • Real.complex_fun (g_im n)
+    constructor
+    · intro n
+      exact ((hg_re_simple n).toComplex).add ((hg_im_simple n).toComplex.smul Complex.I)
+    · intro x
+      have h_re := hg_re_conv x; simp only [Complex.re_fun] at h_re
+      have h_im := hg_im_conv x; simp only [Complex.im_fun] at h_im
+      have h_re' := Complex.continuous_ofReal.continuousAt.tendsto.comp h_re
+      have h_im' := Complex.continuous_ofReal.continuousAt.tendsto.comp h_im
+      have h_sum : Filter.Tendsto (fun n => Complex.ofReal (g_re n x) + Complex.I * Complex.ofReal (g_im n x))
+          Filter.atTop (nhds (Complex.ofReal (f x).re + Complex.I * Complex.ofReal (f x).im)) :=
+        h_re'.add (h_im'.const_mul Complex.I)
+      have h_eq : Complex.ofReal (f x).re + Complex.I * Complex.ofReal (f x).im =
+                  Complex.ofReal (f x).re + Complex.ofReal (f x).im * Complex.I := by ring
+      rw [h_eq, Complex.re_add_im] at h_sum
+      simp only [Pi.add_apply, Pi.smul_apply, Real.complex_fun, smul_eq_mul]
+      exact h_sum
 
 /-- Exercise 1.3.7 -/
 theorem RealMeasurable.TFAE {d:ℕ} {f: EuclideanSpace' d → ℝ}:
