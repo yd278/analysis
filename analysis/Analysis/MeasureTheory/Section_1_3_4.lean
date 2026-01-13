@@ -17,9 +17,39 @@ def ComplexAbsolutelyIntegrable {d:ℕ} (f: EuclideanSpace' d → ℂ) : Prop :=
 
 def RealAbsolutelyIntegrable {d:ℕ} (f: EuclideanSpace' d → ℝ) : Prop := RealMeasurable f ∧ UnsignedLebesgueIntegral (EReal.abs_fun f) < ⊤
 
-lemma ComplexAbsolutelyIntegrable.abs {d:ℕ} (f: EuclideanSpace' d → ℂ) (hf: ComplexAbsolutelyIntegrable f) : UnsignedAbsolutelyIntegrable (EReal.abs_fun f) := by sorry
+lemma ComplexAbsolutelyIntegrable.abs {d:ℕ} (f: EuclideanSpace' d → ℂ) (hf: ComplexAbsolutelyIntegrable f) : UnsignedAbsolutelyIntegrable (EReal.abs_fun f) := by
+  constructor
+  · -- UnsignedMeasurable (EReal.abs_fun f)
+    constructor
+    · -- Unsigned: ∀ x, EReal.abs_fun f x ≥ 0
+      intro x
+      simp only [EReal.abs_fun]
+      exact EReal.coe_nonneg.mpr (norm_nonneg _)
+    · -- Exists approximating unsigned simple functions
+      obtain ⟨g, hg_simple, hg_conv⟩ := hf.1
+      use fun n => EReal.abs_fun (g n)
+      constructor
+      · intro n; exact (hg_simple n).abs
+      · intro x
+        simp only [EReal.abs_fun]
+        exact (continuous_coe_real_ereal.comp continuous_norm).continuousAt.tendsto.comp (hg_conv x)
+  · exact hf.2
 
-lemma RealAbsolutelyIntegrable.abs {d:ℕ} (f: EuclideanSpace' d → ℝ) (hf: RealAbsolutelyIntegrable f) : UnsignedAbsolutelyIntegrable (EReal.abs_fun f) := by sorry
+lemma RealAbsolutelyIntegrable.abs {d:ℕ} (f: EuclideanSpace' d → ℝ) (hf: RealAbsolutelyIntegrable f) : UnsignedAbsolutelyIntegrable (EReal.abs_fun f) := by
+  constructor
+  · -- UnsignedMeasurable (EReal.abs_fun f)
+    constructor
+    · intro x
+      simp only [EReal.abs_fun]
+      exact EReal.coe_nonneg.mpr (norm_nonneg _)
+    · obtain ⟨g, hg_simple, hg_conv⟩ := hf.1
+      use fun n => EReal.abs_fun (g n)
+      constructor
+      · intro n; exact (hg_simple n).abs
+      · intro x
+        simp only [EReal.abs_fun]
+        exact (continuous_coe_real_ereal.comp continuous_norm).continuousAt.tendsto.comp (hg_conv x)
+  · exact hf.2
 
 
 
