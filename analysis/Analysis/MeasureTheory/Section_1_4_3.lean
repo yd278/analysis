@@ -56,12 +56,14 @@ noncomputable def FinitelyAdditiveMeasure.dirac {X:Type*} (x₀:X) (B: ConcreteB
   }
 
 /-- Example 1.4.23 (Zero measure) -/
-def FinitelyAdditiveMeasure.zero {X:Type*} (B: ConcreteBooleanAlgebra X) : FinitelyAdditiveMeasure B :=
+instance FinitelyAdditiveMeasure.instZero {X:Type*} (B: ConcreteBooleanAlgebra X) : Zero (FinitelyAdditiveMeasure B) :=
   {
-    measure := fun A => 0
-    measure_pos := by sorry
-    measure_empty := by sorry
-    measure_finite_additive := by sorry
+    zero := {
+      measure := fun A => 0
+      measure_pos := by sorry
+      measure_empty := by sorry
+      measure_finite_additive := by sorry
+    }
   }
 
 /-- Example 1.4.24 (linear combinations of measures) -/
@@ -87,3 +89,28 @@ noncomputable instance FinitelyAdditiveMeasure.instSmul {X:Type*} {B: ConcreteBo
         }
 }
 
+instance FinitelyAdditiveMeasure.instAddCommMonoid {X:Type*} {B: ConcreteBooleanAlgebra X} : AddCommMonoid (FinitelyAdditiveMeasure B) :=
+{
+  add_assoc := by sorry,
+  zero_add := by sorry,
+  add_zero := by sorry,
+  add_comm := by sorry
+  nsmul := nsmulRec
+}
+
+noncomputable instance FinitelyAdditiveMeasure.instDistribMulAction {X:Type*} {B: ConcreteBooleanAlgebra X} : DistribMulAction ENNReal (FinitelyAdditiveMeasure B) :=
+{
+  smul_zero := by sorry,
+  smul_add := by sorry,
+  one_smul := by sorry,
+  mul_smul := by sorry
+}
+
+/-- Example 1.4.25 (Restriction of a measure) -/
+def FinitelyAdditiveMeasure.restrict {X:Type*} {B: ConcreteBooleanAlgebra X} (μ: FinitelyAdditiveMeasure B) (A:Set X) (hA:B.measurable A) : FinitelyAdditiveMeasure (B.restrict A) :=
+  {
+    measure := fun E => μ.measure E
+    measure_pos := by sorry
+    measure_empty := by sorry
+    measure_finite_additive := by sorry
+  }
