@@ -224,3 +224,5 @@ def MeasurableSpace.sigmaAlgebra {X: Type*} (M: MeasurableSpace X) : ConcreteSig
   union_mem := sorry
   countable_union_mem := M.measurableSet_iUnion
 }
+
+theorem BorelSigmaAlgebra.le_LebesgueSigmaAlgebra (d:ℕ) : BorelSigmaAlgebra (EuclideanSpace' d) ≤ LebesgueMeasurable.sigmaAlgebra d := by sorry

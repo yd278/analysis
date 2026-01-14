@@ -5,6 +5,8 @@ import Analysis.MeasureTheory.Section_1_4_2
 
 A companion to (the introduction to) Section 1.4.3 of the book "An introduction to Measure Theory".
 
+Note: initially this section will use custom-notions of concrete sigma algebras and countably additive measures, but will transition to the Mathlib notions of `Measurable` and `Measure`, which will be in use going forward.  In particular, exercises past this point will be easier
+to solve using the Mathlib library for measure theory than the custom results defined here.
 -/
 
 /-- Definition 1.4.19 (Finitely additive measure) -/
@@ -260,6 +262,9 @@ noncomputable def CountablyAdditiveMeasure.toMeasure {X:Type*} {B: ConcreteSigma
       trim_le := by sorry
   }
 
+noncomputable def FinitelyAdditiveMeasure.isCountablyAdditive.toMeasure {X:Type*} {B: ConcreteBooleanAlgebra X} {μ: FinitelyAdditiveMeasure B} (h: μ.isCountablyAdditive) :
+  @Measure X h.1.toSigmaAlgebra.measurableSpace := h.toCountablyAdditive.toMeasure
+
 def Measure.toCountablyAdditiveMeasure {X:Type*} [M : MeasurableSpace X] (μ: Measure X) : CountablyAdditiveMeasure M.sigmaAlgebra :=
   {
     toFinitelyAdditiveMeasure := {
@@ -286,14 +291,50 @@ theorem Measure.downwards_mono {X:Type*} [MeasurableSpace X] (μ: Measure X) {E 
 theorem Measure.downwards_mono_counter : ∃ (X:Type) (M: MeasurableSpace X) (μ: Measure X) (E : ℕ → Set X) (hE: ∀ n, Measurable (E n))
   (hmono : Antitone E), μ (⋂ n, E n) ≠ ⨅ n, μ.measureOf (E n) := by sorry
 
-/-- Exercise 1.4.24 (a) (Dominated convergence for sets) -/
+/-- Exercise 1.4.24 (i) (Dominated convergence for sets) -/
 theorem Measure.measurable_of_lim {X:Type*} [MeasurableSpace X] (μ: Measure X) {E : ℕ → Set X} (hE: ∀ n, Measurable (E n))
   {E' : Set X} (hlim : PointwiseConvergesTo E E') : Measurable E := by sorry
 
+/-- Exercise 1.4.24 (ii) (Dominated convergence for sets) -/
 theorem Measure.measure_of_lim {X:Type*} [MeasurableSpace X] (μ: Measure X) {E : ℕ → Set X} (hE: ∀ n, Measurable (E n))
   {E' F : Set X} (hlim : PointwiseConvergesTo E E') (hF : Measurable F) (hfin : μ F < ⊤) (hcon : ∀ n, E n ⊆ F) :
   Filter.atTop.Tendsto (fun n ↦ μ (E n)) (nhds (μ E')) := by sorry
 
+/-- Exercise 1.4.24 (iii) (Dominated convergence for sets) -/
 theorem Measure.measure_of_lim_counter : ∃ (X:Type) (M:MeasurableSpace X) (μ: Measure X) (E : ℕ → Set X) (hE: ∀ n, Measurable (E n))
   (E' F : Set X) (hlim : PointwiseConvergesTo E E') (hF : Measurable F) (hcon : ∀ n, E n ⊆ F),
   ¬ Filter.atTop.Tendsto (fun n ↦ μ (E n)) (nhds (μ E')) := by sorry
+
+/-- Exercise 1.4.25 -/
+theorem Measure.on_countable {X:Type*} [Countable X] [M: MeasurableSpace X] (hM: M = ⊤) (μ: Measure X) :
+  ∃! c : X → ENNReal, ∀ E : Set X, μ E = ∑' x : E, c x := by sorry
+
+-- Definition 1.4.31
+#check Measure.IsComplete
+
+#check NullMeasurableSpace
+
+#check Measure.completion
+
+/-- Exercise 1.4.26 (Completion) -/
+theorem Measure.completion_lt {X:Type*} [M : MeasurableSpace X] (μ: Measure X) (M' : MeasurableSpace X) (μ' : @Measure X M')
+  (hMM' : M ≤ M') (hμ : ∀ E, M.MeasurableSet' E → μ E = μ' E) : ∀ E : Set X, @NullMeasurableSet X M E μ → (M'.MeasurableSet' E ∧ μ' E = μ.completion E)
+   := by sorry
+
+noncomputable def EuclideanSpace'.lebesgueMeasure (d:ℕ) := (FinitelyAdditiveMeasure.lebesgue_isCountablyAdditive d).toMeasure
+
+noncomputable def EuclideanSpace'.borelMeasure (d:ℕ) := ((FinitelyAdditiveMeasure.lebesgue_isCountablyAdditive d).toCountablyAdditive.restrict_alg (BorelSigmaAlgebra.le_LebesgueSigmaAlgebra d)).toMeasure
+
+def Measure.equiv {X:Type*} {M M' : MeasurableSpace X} (μ: @Measure X M) (μ': @Measure X M') : Prop := M = M' ∧ ∀ E, M.MeasurableSet' E → μ E = μ' E
+
+/-- Exercise 1.4.27 -/
+theorem EuclideanSpace'.borel_completion_eq_lebesgue {d:ℕ} :
+  Measure.equiv (EuclideanSpace'.borelMeasure d).completion (EuclideanSpace'.lebesgueMeasure d) := by sorry
+
+/-- Exercise 1.4.28(i) (Approximation by an algebra) -/
+theorem BooleanAlgebra.approx_finite {X:Type*} {B: ConcreteBooleanAlgebra X} (μ: @Measure X (ConcreteSigmaAlgebra.generated_by B.measurableSets).measurableSpace) (hfin: μ Set.univ < ⊤) : ∀ (ε : ℝ) (hε: ε>0) (E : Set X) (hE: (ConcreteSigmaAlgebra.generated_by B.measurableSets).measurable E),
+  ∃ F : Set X, B.measurable F ∧ μ (symmDiff E F) < ENNReal.ofReal ε := by sorry
+
+/-- Exercise 1.4.28(ii) (Approximation by an algebra) -/
+theorem BooleanAlgebra.approx_sigma_finite {X:Type*} {B: ConcreteBooleanAlgebra X} (μ: @Measure X (ConcreteSigmaAlgebra.generated_by B.measurableSets).measurableSpace) (hσfin: ∃ A : ℕ → Set X, (∀ n, B.measurable (A n) ∧ μ (A n) < ⊤) ∧ ⋃ n, A n = ⊤) : ∀ (ε : ℝ) (hε: ε>0) (E : Set X) (hE: (ConcreteSigmaAlgebra.generated_by B.measurableSets).measurable E),
+  ∃ F : Set X, B.measurable F ∧ μ (symmDiff E F) < ENNReal.ofReal ε := by sorry
