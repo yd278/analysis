@@ -114,3 +114,34 @@ def FinitelyAdditiveMeasure.restrict {X:Type*} {B: ConcreteBooleanAlgebra X} (μ
     measure_empty := by sorry
     measure_finite_additive := by sorry
   }
+
+/-- Example 1.4.26 (Counting a measure) -/
+noncomputable def FinitelyAdditiveMeasure.counting (X:Type*) : FinitelyAdditiveMeasure (⊤  : ConcreteBooleanAlgebra X) :=
+  {
+    measure := fun E => ENat.card E
+    measure_pos := by sorry
+    measure_empty := by sorry
+    measure_finite_additive := by sorry
+  }
+
+/-- Exercise 1.4.20(i) -/
+theorem FinitelyAdditiveMeasure.mono {X:Type*} {B: ConcreteBooleanAlgebra X} (μ: FinitelyAdditiveMeasure B) {E F : Set X} (hE : B.measurable E) (hF : B.measurable F) (hsub : E ⊆ F) : μ.measure E ≤ μ.measure F :=
+by sorry
+
+/-- Exercise 1.4.20(ii) -/
+theorem FinitelyAdditiveMeasure.finite_additivity {X:Type*} {B: ConcreteBooleanAlgebra X} (μ: FinitelyAdditiveMeasure B) {J:Type*} {I: Finset J} {E: J → Set X} (hE: ∀ j:J, B.measurable (E j)) (hdisj: Set.univ.PairwiseDisjoint E) :
+  μ.measure (⋃ j ∈ I, E j) = ∑ j ∈ I, μ.measure (E j) := by sorry
+
+/-- Exercise 1.4.20(iii) -/
+theorem FinitelyAdditiveMeasure.finite_subadditivity {X:Type*} {B: ConcreteBooleanAlgebra X} (μ: FinitelyAdditiveMeasure B) {J:Type*} {I: Finset J} {E: J → Set X} (hE: ∀ j:J, B.measurable (E j)) :
+  μ.measure (⋃ j ∈ I, E j) ≤ ∑ j ∈ I, μ.measure (E j) := by sorry
+
+/-- Exercise 1.4.20(iv) -/
+theorem FinitelyAdditiveMeasure.mes_union_add_mes_inter {X:Type*} {B: ConcreteBooleanAlgebra X} (μ: FinitelyAdditiveMeasure B) (E F : Set X) :
+  μ.measure (E ∪ F) + μ.measure (E ∩ F) = μ.measure E + μ.measure F := by sorry
+
+open Classical in
+/-- Exercise 1.4.21 -/
+theorem FinitelyAdditiveMeasure.finite_atomic_eq {I X: Type*} [Fintype I] {atoms: I → Set X} (h_part: IsPartition atoms) (μ : FinitelyAdditiveMeasure h_part.to_ConcreteBooleanAlgebra) : ∃! c : I → ENNReal, ∀ E, h_part.to_ConcreteBooleanAlgebra.measurable E → μ.measure E = ∑ i ∈ Finset.univ.filter (fun i => atoms i ⊆ E), c i := by sorry
+
+
