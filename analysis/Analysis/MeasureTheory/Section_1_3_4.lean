@@ -613,16 +613,100 @@ def ComplexAbsolutelyIntegrable.to_PreL1 {d:ℕ} {f: EuclideanSpace' d → ℂ} 
 
 def PreL1.conj {d:ℕ} (F: PreL1 d) : PreL1 d := ⟨ Complex.conj_fun F.f, F.integrable.conj ⟩
 
+lemma ComplexAbsolutelyIntegrable.zero {d:ℕ} : ComplexAbsolutelyIntegrable (0 : EuclideanSpace' d → ℂ) := by
+  constructor
+  · -- ComplexMeasurable 0
+    use fun _ => 0
+    constructor
+    · intro n
+      use 0, fun _ => 0, fun _ => ∅
+      constructor
+      · intro i; exact Fin.elim0 i
+      · funext x; simp only [Pi.zero_apply, Finset.univ_eq_empty, Finset.sum_empty]
+    · intro x; exact tendsto_const_nhds
+  · -- UnsignedLebesgueIntegral (EReal.abs_fun 0) < ⊤
+    have h_zero : EReal.abs_fun (0 : EuclideanSpace' d → ℂ) = 0 := by
+      funext x; simp only [EReal.abs_fun, Pi.zero_apply, norm_zero]; rfl
+    rw [h_zero, UnsignedLebesgueIntegral]
+    -- Show that 0 is an unsigned simple function
+    have h_simple : UnsignedSimpleFunction (0 : EuclideanSpace' d → EReal) := by
+      use 0, fun i => Fin.elim0 i, fun i => Fin.elim0 i
+      constructor
+      · intro i; exact Fin.elim0 i
+      · funext x; simp only [Pi.zero_apply, Finset.univ_eq_empty, Finset.sum_empty]
+    rw [LowerUnsignedLebesgueIntegral.eq_simpleIntegral h_simple]
+    -- The integral of the zero simple function is < ⊤
+    -- Use the fact that we constructed h_simple with k = 0, so the sum is empty
+    -- However, integ is defined with choose, so we need a different approach
+    -- Key: h_simple.integ ≤ ∑ i, c_i * measure(E_i) where c_i are bounded
+    -- For the zero function, each term in any representation contributes 0
+    simp only [UnsignedSimpleFunction.integ]
+    -- The sum is over Fin (choose ...) which is some natural number
+    -- Show it's < ⊤ by showing sum ≤ some finite bound
+    apply lt_of_le_of_lt _ (EReal.coe_lt_top (0:ℝ))
+    rw [EReal.coe_zero]
+    -- The sum is over Fin (h_simple.choose)
+    -- For each i, term is c_i * measure(E_i) where c_i ≥ 0 and measure ≥ 0
+    -- For zero function: 0 = ∑ j, c_j • indicator(E_j)
+    -- At any x ∈ E_i with indicator = 1, we get c_i ≤ 0
+    -- Combined with c_i ≥ 0, we get c_i = 0 OR E_i = ∅
+    have hcond := h_simple.choose_spec.choose_spec.choose_spec.1
+    have hf_eq := h_simple.choose_spec.choose_spec.choose_spec.2
+    apply Finset.sum_nonpos
+    intro i _
+    by_cases hci : h_simple.choose_spec.choose i = 0
+    · rw [hci, zero_mul]
+    · -- c i > 0, need to show E i is empty
+      have hci_pos : h_simple.choose_spec.choose i > 0 := lt_of_le_of_ne (hcond i).2 (Ne.symm hci)
+      have hE_empty : h_simple.choose_spec.choose_spec.choose i = ∅ := by
+        by_contra hne
+        have hne' := Set.nonempty_iff_ne_empty.mpr hne
+        obtain ⟨x, hx⟩ := hne'
+        have h1 : (0 : EuclideanSpace' d → EReal) x = 0 := rfl
+        rw [hf_eq] at h1
+        simp only [Finset.sum_apply, Pi.smul_apply, smul_eq_mul] at h1
+        have h_nonneg : ∀ j, h_simple.choose_spec.choose j * EReal.indicator (h_simple.choose_spec.choose_spec.choose j) x ≥ 0 := fun j => by
+          apply mul_nonneg (hcond j).2
+          simp only [EReal.indicator, Real.EReal_fun]
+          by_cases hjx : x ∈ h_simple.choose_spec.choose_spec.choose j
+          · simp only [Set.indicator'_of_mem hjx, EReal.coe_one]; norm_num
+          · simp only [Set.indicator'_of_notMem hjx, EReal.coe_zero, le_refl]
+        have h_all_zero : ∀ j ∈ Finset.univ, h_simple.choose_spec.choose j * EReal.indicator (h_simple.choose_spec.choose_spec.choose j) x = 0 :=
+          Finset.sum_eq_zero_iff_of_nonneg (fun j _ => h_nonneg j) |>.mp h1
+        have h_term_i_zero := h_all_zero i (Finset.mem_univ i)
+        simp only [EReal.indicator, Real.EReal_fun, Set.indicator'_of_mem hx, EReal.coe_one, mul_one] at h_term_i_zero
+        exact (ne_of_gt hci_pos) h_term_i_zero
+      rw [hE_empty, Lebesgue_measure.empty, mul_zero]
+
 instance PreL1.inst_AddZeroClass {d:ℕ} : AddZeroClass (PreL1 d) := {
-  zero := ⟨ 0, by sorry ⟩
+  zero := ⟨ 0, ComplexAbsolutelyIntegrable.zero ⟩
   add F G := ⟨ F.f + G.f, F.integrable.add G.integrable ⟩
-  zero_add := by sorry
-  add_zero := by sorry
+  zero_add := fun F => by
+    apply PreL1.ext
+    funext x
+    -- Goal: (0 + F).f x = F.f x
+    -- (0 + F).f = (⟨0, _⟩ + F).f = (0 : EuclideanSpace' d → ℂ) + F.f
+    -- So goal is: (0 + F.f) x = F.f x, i.e., 0 x + F.f x = F.f x
+    show (0 : EuclideanSpace' d → ℂ) x + F.f x = F.f x
+    simp only [Pi.zero_apply, zero_add]
+  add_zero := fun F => by
+    apply PreL1.ext
+    funext x
+    show F.f x + (0 : EuclideanSpace' d → ℂ) x = F.f x
+    simp only [Pi.zero_apply, add_zero]
 }
 
 instance PreL1.inst_addCommMonoid {d:ℕ} : AddCommMonoid (PreL1 d) := {
-  add_assoc := by sorry
-  add_comm := by sorry
+  add_assoc := fun F G H => by
+    apply PreL1.ext
+    funext x
+    show (F.f + G.f) x + H.f x = F.f x + (G.f + H.f) x
+    simp only [Pi.add_apply, add_assoc]
+  add_comm := fun F G => by
+    apply PreL1.ext
+    funext x
+    show F.f x + G.f x = G.f x + F.f x
+    ring
   nsmul := nsmulRec
 }
 
