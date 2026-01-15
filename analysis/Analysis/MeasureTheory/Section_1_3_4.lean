@@ -189,13 +189,71 @@ noncomputable def ComplexAbsolutelyIntegrable.norm {d:ℕ} {f: EuclideanSpace' d
 noncomputable def RealAbsolutelyIntegrable.norm {d:ℕ} {f: EuclideanSpace' d → ℝ} (hf: RealAbsolutelyIntegrable f) : ℝ := hf.abs.integ
 
 
-def RealMeasurable.measurable_pos {d:ℕ} {f: EuclideanSpace' d → ℝ} (hf: RealMeasurable f) : UnsignedMeasurable (EReal.pos_fun f) := by sorry
+def RealMeasurable.measurable_pos {d:ℕ} {f: EuclideanSpace' d → ℝ} (hf: RealMeasurable f) : UnsignedMeasurable (EReal.pos_fun f) := by
+  constructor
+  · -- Unsigned: ∀ x, EReal.pos_fun f x ≥ 0
+    intro x
+    simp only [EReal.pos_fun]
+    exact EReal.coe_nonneg.mpr (le_max_right _ _)
+  · -- Exists approximating unsigned simple functions
+    obtain ⟨g, hg_simple, hg_conv⟩ := hf
+    use fun n => EReal.pos_fun (g n)
+    constructor
+    · intro n; exact (hg_simple n).pos
+    · intro x
+      simp only [EReal.pos_fun]
+      have hcont : Continuous (fun y : ℝ => (max y 0).toEReal) :=
+        continuous_coe_real_ereal.comp (continuous_max.comp (continuous_id.prodMk continuous_const))
+      exact hcont.continuousAt.tendsto.comp (hg_conv x)
 
-def RealMeasurable.measurable_neg {d:ℕ} {f: EuclideanSpace' d → ℝ} (hf: RealMeasurable f) : UnsignedMeasurable (EReal.neg_fun f) := by sorry
+def RealMeasurable.measurable_neg {d:ℕ} {f: EuclideanSpace' d → ℝ} (hf: RealMeasurable f) : UnsignedMeasurable (EReal.neg_fun f) := by
+  constructor
+  · -- Unsigned: ∀ x, EReal.neg_fun f x ≥ 0
+    intro x
+    simp only [EReal.neg_fun]
+    exact EReal.coe_nonneg.mpr (le_max_right _ _)
+  · -- Exists approximating unsigned simple functions
+    obtain ⟨g, hg_simple, hg_conv⟩ := hf
+    use fun n => EReal.neg_fun (g n)
+    constructor
+    · intro n; exact (hg_simple n).neg
+    · intro x
+      simp only [EReal.neg_fun]
+      have hcont : Continuous (fun y : ℝ => (max (-y) 0).toEReal) :=
+        continuous_coe_real_ereal.comp (continuous_max.comp (continuous_neg.prodMk continuous_const))
+      exact hcont.continuousAt.tendsto.comp (hg_conv x)
 
-def RealAbsolutelyIntegrable.pos {d:ℕ} {f: EuclideanSpace' d → ℝ} (hf: RealAbsolutelyIntegrable f) : UnsignedAbsolutelyIntegrable (EReal.pos_fun f) := by sorry
+def RealAbsolutelyIntegrable.pos {d:ℕ} {f: EuclideanSpace' d → ℝ} (hf: RealAbsolutelyIntegrable f) : UnsignedAbsolutelyIntegrable (EReal.pos_fun f) := by
+  constructor
+  · exact hf.1.measurable_pos
+  · -- UnsignedLebesgueIntegral (pos_fun f) ≤ UnsignedLebesgueIntegral (abs_fun f) < ⊤
+    have h_le : ∀ x, EReal.pos_fun f x ≤ EReal.abs_fun f x := fun x => by
+      simp only [EReal.pos_fun, EReal.abs_fun]
+      apply EReal.coe_le_coe_iff.mpr
+      rw [Real.norm_eq_abs, max_le_iff]
+      exact ⟨le_abs_self _, abs_nonneg _⟩
+    have h_mono : UnsignedLebesgueIntegral (EReal.pos_fun f) ≤ UnsignedLebesgueIntegral (EReal.abs_fun f) := by
+      apply LowerUnsignedLebesgueIntegral.mono
+      · exact hf.1.measurable_pos
+      · exact hf.abs.1
+      · exact AlmostAlways.ofAlways h_le
+    exact lt_of_le_of_lt h_mono hf.2
 
-def RealAbsolutelyIntegrable.neg {d:ℕ} {f: EuclideanSpace' d → ℝ} (hf: RealAbsolutelyIntegrable f) : UnsignedAbsolutelyIntegrable (EReal.neg_fun f) := by sorry
+def RealAbsolutelyIntegrable.neg {d:ℕ} {f: EuclideanSpace' d → ℝ} (hf: RealAbsolutelyIntegrable f) : UnsignedAbsolutelyIntegrable (EReal.neg_fun f) := by
+  constructor
+  · exact hf.1.measurable_neg
+  · -- UnsignedLebesgueIntegral (neg_fun f) ≤ UnsignedLebesgueIntegral (abs_fun f) < ⊤
+    have h_le : ∀ x, EReal.neg_fun f x ≤ EReal.abs_fun f x := fun x => by
+      simp only [EReal.neg_fun, EReal.abs_fun]
+      apply EReal.coe_le_coe_iff.mpr
+      rw [Real.norm_eq_abs, max_le_iff]
+      exact ⟨neg_le_abs _, abs_nonneg _⟩
+    have h_mono : UnsignedLebesgueIntegral (EReal.neg_fun f) ≤ UnsignedLebesgueIntegral (EReal.abs_fun f) := by
+      apply LowerUnsignedLebesgueIntegral.mono
+      · exact hf.1.measurable_neg
+      · exact hf.abs.1
+      · exact AlmostAlways.ofAlways h_le
+    exact lt_of_le_of_lt h_mono hf.2
 
 noncomputable def RealAbsolutelyIntegrable.integ {d:ℕ} {f: EuclideanSpace' d → ℝ} (hf: RealAbsolutelyIntegrable f) : ℝ := hf.pos.integ - hf.neg.integ
 
