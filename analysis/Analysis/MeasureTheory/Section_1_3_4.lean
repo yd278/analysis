@@ -636,8 +636,6 @@ lemma ComplexAbsolutelyIntegrable.zero {d:ℕ} : ComplexAbsolutelyIntegrable (0 
       · funext x; simp only [Pi.zero_apply, Finset.univ_eq_empty, Finset.sum_empty]
     rw [LowerUnsignedLebesgueIntegral.eq_simpleIntegral h_simple]
     -- The integral of the zero simple function is < ⊤
-    -- Use the fact that we constructed h_simple with k = 0, so the sum is empty
-    -- However, integ is defined with choose, so we need a different approach
     -- Key: h_simple.integ ≤ ∑ i, c_i * measure(E_i) where c_i are bounded
     -- For the zero function, each term in any representation contributes 0
     simp only [UnsignedSimpleFunction.integ]
@@ -645,11 +643,6 @@ lemma ComplexAbsolutelyIntegrable.zero {d:ℕ} : ComplexAbsolutelyIntegrable (0 
     -- Show it's < ⊤ by showing sum ≤ some finite bound
     apply lt_of_le_of_lt _ (EReal.coe_lt_top (0:ℝ))
     rw [EReal.coe_zero]
-    -- The sum is over Fin (h_simple.choose)
-    -- For each i, term is c_i * measure(E_i) where c_i ≥ 0 and measure ≥ 0
-    -- For zero function: 0 = ∑ j, c_j • indicator(E_j)
-    -- At any x ∈ E_i with indicator = 1, we get c_i ≤ 0
-    -- Combined with c_i ≥ 0, we get c_i = 0 OR E_i = ∅
     have hcond := h_simple.choose_spec.choose_spec.choose_spec.1
     have hf_eq := h_simple.choose_spec.choose_spec.choose_spec.2
     apply Finset.sum_nonpos
