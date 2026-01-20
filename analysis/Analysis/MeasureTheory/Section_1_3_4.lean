@@ -613,16 +613,140 @@ def ComplexAbsolutelyIntegrable.to_PreL1 {d:ℕ} {f: EuclideanSpace' d → ℂ} 
 
 def PreL1.conj {d:ℕ} (F: PreL1 d) : PreL1 d := ⟨ Complex.conj_fun F.f, F.integrable.conj ⟩
 
+lemma ComplexAbsolutelyIntegrable.zero {d:ℕ} : ComplexAbsolutelyIntegrable (0 : EuclideanSpace' d → ℂ) := by
+  constructor
+  · -- ComplexMeasurable 0
+    use fun _ => 0
+    constructor
+    · intro n
+      use 0, fun _ => 0, fun _ => ∅
+      constructor
+      · intro i; exact Fin.elim0 i
+      · funext x; simp only [Pi.zero_apply, Finset.univ_eq_empty, Finset.sum_empty]
+    · intro x; exact tendsto_const_nhds
+  · -- UnsignedLebesgueIntegral (EReal.abs_fun 0) < ⊤
+    have h_zero : EReal.abs_fun (0 : EuclideanSpace' d → ℂ) = 0 := by
+      funext x; simp only [EReal.abs_fun, Pi.zero_apply, norm_zero]; rfl
+    rw [h_zero, UnsignedLebesgueIntegral]
+    -- Show that 0 is an unsigned simple function
+    have h_simple : UnsignedSimpleFunction (0 : EuclideanSpace' d → EReal) := by
+      use 0, fun i => Fin.elim0 i, fun i => Fin.elim0 i
+      constructor
+      · intro i; exact Fin.elim0 i
+      · funext x; simp only [Pi.zero_apply, Finset.univ_eq_empty, Finset.sum_empty]
+    rw [LowerUnsignedLebesgueIntegral.eq_simpleIntegral h_simple]
+    -- The integral of the zero simple function is < ⊤
+    -- Key: h_simple.integ ≤ ∑ i, c_i * measure(E_i) where c_i are bounded
+    -- For the zero function, each term in any representation contributes 0
+    simp only [UnsignedSimpleFunction.integ]
+    -- The sum is over Fin (choose ...) which is some natural number
+    -- Show it's < ⊤ by showing sum ≤ some finite bound
+    apply lt_of_le_of_lt _ (EReal.coe_lt_top (0:ℝ))
+    rw [EReal.coe_zero]
+    have hcond := h_simple.choose_spec.choose_spec.choose_spec.1
+    have hf_eq := h_simple.choose_spec.choose_spec.choose_spec.2
+    apply Finset.sum_nonpos
+    intro i _
+    by_cases hci : h_simple.choose_spec.choose i = 0
+    · rw [hci, zero_mul]
+    · -- c i > 0, need to show E i is empty
+      have hci_pos : h_simple.choose_spec.choose i > 0 := lt_of_le_of_ne (hcond i).2 (Ne.symm hci)
+      have hE_empty : h_simple.choose_spec.choose_spec.choose i = ∅ := by
+        by_contra hne
+        have hne' := Set.nonempty_iff_ne_empty.mpr hne
+        obtain ⟨x, hx⟩ := hne'
+        have h1 : (0 : EuclideanSpace' d → EReal) x = 0 := rfl
+        rw [hf_eq] at h1
+        simp only [Finset.sum_apply, Pi.smul_apply, smul_eq_mul] at h1
+        have h_nonneg : ∀ j, h_simple.choose_spec.choose j * EReal.indicator (h_simple.choose_spec.choose_spec.choose j) x ≥ 0 := fun j => by
+          apply mul_nonneg (hcond j).2
+          simp only [EReal.indicator, Real.EReal_fun]
+          by_cases hjx : x ∈ h_simple.choose_spec.choose_spec.choose j
+          · simp only [Set.indicator'_of_mem hjx, EReal.coe_one]; norm_num
+          · simp only [Set.indicator'_of_notMem hjx, EReal.coe_zero, le_refl]
+        have h_all_zero : ∀ j ∈ Finset.univ, h_simple.choose_spec.choose j * EReal.indicator (h_simple.choose_spec.choose_spec.choose j) x = 0 :=
+          Finset.sum_eq_zero_iff_of_nonneg (fun j _ => h_nonneg j) |>.mp h1
+        have h_term_i_zero := h_all_zero i (Finset.mem_univ i)
+        simp only [EReal.indicator, Real.EReal_fun, Set.indicator'_of_mem hx, EReal.coe_one, mul_one] at h_term_i_zero
+        exact (ne_of_gt hci_pos) h_term_i_zero
+      rw [hE_empty, Lebesgue_measure.empty, mul_zero]
+
+-- Helper lemma: the norm of zero is zero
+lemma ComplexAbsolutelyIntegrable.norm_zero {d:ℕ} : (ComplexAbsolutelyIntegrable.zero (d:=d)).norm = 0 := by
+  simp only [ComplexAbsolutelyIntegrable.norm, UnsignedAbsolutelyIntegrable.integ]
+  have h_abs_zero : EReal.abs_fun (0 : EuclideanSpace' d → ℂ) = 0 := by
+    funext x; simp only [EReal.abs_fun, Pi.zero_apply]; norm_cast
+  have h_simple : UnsignedSimpleFunction (0 : EuclideanSpace' d → EReal) := by
+    use 0, fun i => Fin.elim0 i, fun i => Fin.elim0 i
+    constructor
+    · intro i; exact Fin.elim0 i
+    · funext x; simp only [Pi.zero_apply, Finset.univ_eq_empty, Finset.sum_empty]
+  calc (UnsignedLebesgueIntegral (EReal.abs_fun 0)).toReal
+      = (LowerUnsignedLebesgueIntegral (EReal.abs_fun 0)).toReal := rfl
+    _ = (LowerUnsignedLebesgueIntegral 0).toReal := by rw [h_abs_zero]
+    _ = h_simple.integ.toReal := by rw [LowerUnsignedLebesgueIntegral.eq_simpleIntegral h_simple]
+    _ = 0 := by
+        -- h_simple.integ is a sum over Fin (h_simple.choose) = Fin k for some k
+        -- For the zero function, each term is 0
+        simp only [UnsignedSimpleFunction.integ]
+        have hcond := h_simple.choose_spec.choose_spec.choose_spec.1
+        have hf_eq := h_simple.choose_spec.choose_spec.choose_spec.2
+        have h_sum_zero : ∑ i, h_simple.choose_spec.choose i * Lebesgue_measure (h_simple.choose_spec.choose_spec.choose i) = 0 := by
+          apply Finset.sum_eq_zero
+          intro i _
+          by_cases hci : h_simple.choose_spec.choose i = 0
+          · rw [hci, zero_mul]
+          · have hci_pos : h_simple.choose_spec.choose i > 0 := lt_of_le_of_ne (hcond i).2 (Ne.symm hci)
+            have hE_empty : h_simple.choose_spec.choose_spec.choose i = ∅ := by
+              by_contra hne
+              have hne' := Set.nonempty_iff_ne_empty.mpr hne
+              obtain ⟨x, hx⟩ := hne'
+              have h1 : (0 : EuclideanSpace' d → EReal) x = 0 := rfl
+              rw [hf_eq] at h1
+              simp only [Finset.sum_apply, Pi.smul_apply, smul_eq_mul] at h1
+              have h_nonneg : ∀ j, h_simple.choose_spec.choose j * EReal.indicator (h_simple.choose_spec.choose_spec.choose j) x ≥ 0 := fun j => by
+                apply mul_nonneg (hcond j).2
+                simp only [EReal.indicator, Real.EReal_fun]
+                by_cases hjx : x ∈ h_simple.choose_spec.choose_spec.choose j
+                · simp only [Set.indicator'_of_mem hjx, EReal.coe_one]; norm_num
+                · simp only [Set.indicator'_of_notMem hjx, EReal.coe_zero, le_refl]
+              have h_all_zero : ∀ j ∈ Finset.univ, h_simple.choose_spec.choose j * EReal.indicator (h_simple.choose_spec.choose_spec.choose j) x = 0 :=
+                Finset.sum_eq_zero_iff_of_nonneg (fun j _ => h_nonneg j) |>.mp h1
+              have h_term_i_zero := h_all_zero i (Finset.mem_univ i)
+              simp only [EReal.indicator, Real.EReal_fun, Set.indicator'_of_mem hx, EReal.coe_one, mul_one] at h_term_i_zero
+              exact (ne_of_gt hci_pos) h_term_i_zero
+            rw [hE_empty, Lebesgue_measure.empty, mul_zero]
+        simp only [h_sum_zero, EReal.toReal_zero]
+
 instance PreL1.inst_AddZeroClass {d:ℕ} : AddZeroClass (PreL1 d) := {
-  zero := ⟨ 0, by sorry ⟩
+  zero := ⟨ 0, ComplexAbsolutelyIntegrable.zero ⟩
   add F G := ⟨ F.f + G.f, F.integrable.add G.integrable ⟩
-  zero_add := by sorry
-  add_zero := by sorry
+  zero_add := fun F => by
+    apply PreL1.ext
+    funext x
+    -- Goal: (0 + F).f x = F.f x
+    -- (0 + F).f = (⟨0, _⟩ + F).f = (0 : EuclideanSpace' d → ℂ) + F.f
+    -- So goal is: (0 + F.f) x = F.f x, i.e., 0 x + F.f x = F.f x
+    show (0 : EuclideanSpace' d → ℂ) x + F.f x = F.f x
+    simp only [Pi.zero_apply, zero_add]
+  add_zero := fun F => by
+    apply PreL1.ext
+    funext x
+    show F.f x + (0 : EuclideanSpace' d → ℂ) x = F.f x
+    simp only [Pi.zero_apply, add_zero]
 }
 
 instance PreL1.inst_addCommMonoid {d:ℕ} : AddCommMonoid (PreL1 d) := {
-  add_assoc := by sorry
-  add_comm := by sorry
+  add_assoc := fun F G H => by
+    apply PreL1.ext
+    funext x
+    show (F.f + G.f) x + H.f x = F.f x + (G.f + H.f) x
+    simp only [Pi.add_apply, add_assoc]
+  add_comm := fun F G => by
+    apply PreL1.ext
+    funext x
+    show F.f x + G.f x = G.f x + F.f x
+    ring
   nsmul := nsmulRec
 }
 
@@ -630,28 +754,194 @@ instance PreL1.inst_Neg {d:ℕ} : Neg (PreL1 d) := {
   neg F := ⟨ -F.f, F.integrable.of_neg ⟩
 }
 
+instance PreL1.inst_Sub {d:ℕ} : Sub (PreL1 d) := {
+  sub F G := ⟨ F.f - G.f, F.integrable.sub G.integrable ⟩
+}
+
 instance PreL1.inst_module {d:ℕ} : Module ℂ (PreL1 d) := {
   smul c F := ⟨ c • F.f, F.integrable.smul c ⟩
-  zero_smul := by sorry
-  smul_zero := by sorry
-  one_smul := by sorry
-  mul_smul := by sorry
-  smul_add := by sorry
-  add_smul := by sorry
+  zero_smul := fun F => by
+    apply PreL1.ext
+    funext x
+    show (0 : ℂ) • F.f x = (0 : EuclideanSpace' d → ℂ) x
+    simp only [zero_smul, Pi.zero_apply]
+  smul_zero := fun c => by
+    apply PreL1.ext
+    funext x
+    show c • (0 : EuclideanSpace' d → ℂ) x = (0 : EuclideanSpace' d → ℂ) x
+    simp only [Pi.zero_apply, smul_zero]
+  one_smul := fun F => by
+    apply PreL1.ext
+    funext x
+    show (1 : ℂ) • F.f x = F.f x
+    simp only [one_smul]
+  mul_smul := fun a b F => by
+    apply PreL1.ext
+    funext x
+    show (a * b) • F.f x = a • (b • F.f x)
+    simp only [mul_smul]
+  smul_add := fun c F G => by
+    apply PreL1.ext
+    funext x
+    show c • (F.f + G.f) x = (c • F.f + c • G.f) x
+    simp only [Pi.add_apply, Pi.smul_apply, smul_add]
+  add_smul := fun a b F => by
+    apply PreL1.ext
+    funext x
+    show (a + b) • F.f x = (a • F.f + b • F.f) x
+    simp only [Pi.add_apply, Pi.smul_apply, add_smul]
 }
+
+-- Helper: integral of the zero simple function is zero
+lemma UnsignedSimpleFunction.integ_zero {d:ℕ} :
+    let h_simple : UnsignedSimpleFunction (0 : EuclideanSpace' d → EReal) := by
+      use 0, fun i => Fin.elim0 i, fun i => Fin.elim0 i
+      exact ⟨fun i => Fin.elim0 i, by funext x; simp [Finset.univ_eq_empty]⟩
+    h_simple.integ = 0 := by
+  -- Use integral_eq with k=0 to compute the integral
+  have h_simple : UnsignedSimpleFunction (0 : EuclideanSpace' d → EReal) := by
+    use 0, fun i => Fin.elim0 i, fun i => Fin.elim0 i
+    exact ⟨fun i => Fin.elim0 i, by funext x; simp [Finset.univ_eq_empty]⟩
+  have heq : (0 : EuclideanSpace' d → EReal) = ∑ i : Fin 0, ((Fin.elim0 i : EReal) • (EReal.indicator (Fin.elim0 i : Set (EuclideanSpace' d)))) := by
+    funext x; simp [Finset.univ_eq_empty]
+  have hmes : ∀ i : Fin 0, LebesgueMeasurable (Fin.elim0 i : Set (EuclideanSpace' d)) := fun i => Fin.elim0 i
+  have hnonneg : ∀ i : Fin 0, (Fin.elim0 i : EReal) ≥ 0 := fun i => Fin.elim0 i
+  have h_integ := UnsignedSimpleFunction.integral_eq h_simple hmes hnonneg heq
+  simp only [Finset.univ_eq_empty, Finset.sum_empty] at h_integ
+  exact h_integ
+
+-- Helper: integral of unsigned measurable function is nonnegative
+lemma UnsignedLebesgueIntegral.nonneg {d:ℕ} {f: EuclideanSpace' d → EReal} (hf: UnsignedMeasurable f) :
+    0 ≤ UnsignedLebesgueIntegral f := by
+  simp only [UnsignedLebesgueIntegral, LowerUnsignedLebesgueIntegral]
+  apply le_csSup_of_le ⟨⊤, fun _ _ => le_top⟩ _ (le_refl 0)
+  use 0
+  have h_simple : UnsignedSimpleFunction (0 : EuclideanSpace' d → EReal) := by
+    use 0, fun i => Fin.elim0 i, fun i => Fin.elim0 i
+    exact ⟨fun i => Fin.elim0 i, by funext x; simp [Finset.univ_eq_empty]⟩
+  use h_simple; intro x
+  constructor
+  · simp only [Pi.zero_apply]; exact hf.1 x
+  · have : h_simple.integ = 0 := UnsignedSimpleFunction.integ_zero
+    rw [this]
 
 noncomputable instance PreL1.inst_seminormedAddCommGroup {d:ℕ} : SeminormedAddCommGroup (PreL1 d) := {
   norm F := F.integrable.norm
   neg F := ⟨ -F.f, F.integrable.of_neg ⟩
   zsmul := zsmulRec
-  neg_add_cancel := by sorry
-  dist_self := by sorry
-  dist_comm := by sorry
-  dist_triangle := by sorry
+  neg_add_cancel := fun F => by
+    apply PreL1.ext
+    funext x
+    show (-F.f + F.f) x = (0 : EuclideanSpace' d → ℂ) x
+    simp only [Pi.add_apply, Pi.neg_apply, Pi.zero_apply, neg_add_cancel]
+  dist_self := fun F => by
+    -- Goal: (F - F).integrable.norm = 0
+    simp only [ComplexAbsolutelyIntegrable.norm, UnsignedAbsolutelyIntegrable.integ]
+    have h_f_eq : (F - F).f = 0 := by
+      funext x
+      show F.f x - F.f x = 0
+      ring
+    have h_abs_zero : EReal.abs_fun (F - F).f = 0 := by
+      rw [h_f_eq]; funext x; simp only [EReal.abs_fun, Pi.zero_apply]; norm_cast
+    rw [h_abs_zero]
+    -- Now need to show UnsignedLebesgueIntegral 0 = 0
+    -- Use that EReal.abs_fun 0 = 0 to relate to norm_zero
+    have h_abs_zero' : EReal.abs_fun (0 : EuclideanSpace' d → ℂ) = 0 := by
+      funext x; simp only [EReal.abs_fun, Pi.zero_apply]; norm_cast
+    calc (UnsignedLebesgueIntegral 0).toReal
+        = (UnsignedLebesgueIntegral (EReal.abs_fun 0)).toReal := by rw [h_abs_zero']
+      _ = ComplexAbsolutelyIntegrable.zero.norm := by rfl
+      _ = 0 := ComplexAbsolutelyIntegrable.norm_zero
+  dist_comm := fun F G => by
+    -- Goal: (F - G).integrable.norm = (G - F).integrable.norm
+    -- Key: ‖(G - F).f x‖ = ‖-(F - G).f x‖ = ‖(F - G).f x‖
+    simp only [ComplexAbsolutelyIntegrable.norm, UnsignedAbsolutelyIntegrable.integ]
+    congr 1
+    -- Goal: UnsignedLebesgueIntegral (EReal.abs_fun (F - G).f) = UnsignedLebesgueIntegral (EReal.abs_fun (G - F).f)
+    congr 1
+    -- Goal: EReal.abs_fun (F - G).f = EReal.abs_fun (G - F).f
+    funext x
+    simp only [EReal.abs_fun]
+    congr 1
+    -- Goal: ‖(F - G).f x‖ = ‖(G - F).f x‖
+    show ‖F.f x - G.f x‖ = ‖G.f x - F.f x‖
+    rw [norm_sub_rev]
+  dist_triangle := fun F G H => by
+    -- Goal: (F - H).integrable.norm ≤ (F - G).integrable.norm + (G - H).integrable.norm
+    -- Key: (F - H).f x = (F - G).f x + (G - H).f x
+    simp only [ComplexAbsolutelyIntegrable.norm, UnsignedAbsolutelyIntegrable.integ]
+    have h_eq : (F - H).f = (F - G).f + (G - H).f := by
+      funext x
+      show F.f x - H.f x = (F.f x - G.f x) + (G.f x - H.f x)
+      ring
+    -- Now use triangle inequality structure from ComplexAbsolutelyIntegrable.add
+    have h_le : ∀ x, EReal.abs_fun (F - H).f x ≤ (EReal.abs_fun (F - G).f + EReal.abs_fun (G - H).f) x := fun x => by
+      rw [h_eq]
+      simp only [EReal.abs_fun, Pi.add_apply]
+      rw [← EReal.coe_add]
+      exact EReal.coe_le_coe_iff.mpr (norm_add_le ((F - G).f x) ((G - H).f x))
+    have hfg_abs := (F - G).integrable.abs
+    have hgh_abs := (G - H).integrable.abs
+    have hfh_abs := (F - H).integrable.abs
+    have h_mono : UnsignedLebesgueIntegral (EReal.abs_fun (F - H).f) ≤
+                  UnsignedLebesgueIntegral (EReal.abs_fun (F - G).f + EReal.abs_fun (G - H).f) := by
+      apply LowerUnsignedLebesgueIntegral.mono hfh_abs.1 (UnsignedMeasurable.add hfg_abs.1 hgh_abs.1)
+      exact AlmostAlways.ofAlways h_le
+    have h_add : UnsignedLebesgueIntegral (EReal.abs_fun (F - G).f + EReal.abs_fun (G - H).f) =
+                 UnsignedLebesgueIntegral (EReal.abs_fun (F - G).f) + UnsignedLebesgueIntegral (EReal.abs_fun (G - H).f) := by
+      apply LowerUnsignedLebesgueIntegral.add hfg_abs.1 hgh_abs.1 (UnsignedMeasurable.add hfg_abs.1 hgh_abs.1)
+    have h_ineq : UnsignedLebesgueIntegral (EReal.abs_fun (F - H).f) ≤
+                  UnsignedLebesgueIntegral (EReal.abs_fun (F - G).f) + UnsignedLebesgueIntegral (EReal.abs_fun (G - H).f) := by
+      rw [← h_add]; exact h_mono
+    -- Now convert EReal inequality to Real inequality
+    have h_finite_fh : UnsignedLebesgueIntegral (EReal.abs_fun (F - H).f) < ⊤ := hfh_abs.2
+    have h_finite_fg : UnsignedLebesgueIntegral (EReal.abs_fun (F - G).f) < ⊤ := hfg_abs.2
+    have h_finite_gh : UnsignedLebesgueIntegral (EReal.abs_fun (G - H).f) < ⊤ := hgh_abs.2
+    -- Nonnegativity: integral of unsigned measurable function is ≥ 0, hence ≠ ⊥
+    -- Since EReal.abs_fun values ≥ 0, integral is sup of nonneg simple integrals
+    have h_nonneg_fh : UnsignedLebesgueIntegral (EReal.abs_fun (F - H).f) ≠ ⊥ := by
+      exact ne_of_gt (lt_of_lt_of_le EReal.bot_lt_zero (UnsignedLebesgueIntegral.nonneg hfh_abs.1))
+    have h_nonneg_fg : UnsignedLebesgueIntegral (EReal.abs_fun (F - G).f) ≠ ⊥ := by
+      exact ne_of_gt (lt_of_lt_of_le EReal.bot_lt_zero (UnsignedLebesgueIntegral.nonneg hfg_abs.1))
+    have h_nonneg_gh : UnsignedLebesgueIntegral (EReal.abs_fun (G - H).f) ≠ ⊥ := by
+      exact ne_of_gt (lt_of_lt_of_le EReal.bot_lt_zero (UnsignedLebesgueIntegral.nonneg hgh_abs.1))
+    have h_sum_ne_top : UnsignedLebesgueIntegral (EReal.abs_fun (F - G).f) + UnsignedLebesgueIntegral (EReal.abs_fun (G - H).f) ≠ ⊤ :=
+      (EReal.add_lt_top h_finite_fg.ne_top h_finite_gh.ne_top).ne_top
+    rw [← EReal.toReal_add h_finite_fg.ne_top h_nonneg_fg h_finite_gh.ne_top h_nonneg_gh]
+    exact EReal.toReal_le_toReal h_ineq h_nonneg_fh h_sum_ne_top
 }
 
 instance PreL1.inst_normedSpace {d:ℕ} : NormedSpace ℂ (PreL1 d) := {
-  norm_smul_le := by sorry
+  norm_smul_le := fun a F => by
+    -- Goal: ‖a • F‖ ≤ ‖a‖ * ‖F‖
+    -- ‖F‖ = F.integrable.norm for PreL1
+    show (a • F).integrable.norm ≤ ‖a‖ * F.integrable.norm
+    simp only [ComplexAbsolutelyIntegrable.norm, UnsignedAbsolutelyIntegrable.integ]
+    -- Key fact: EReal.abs_fun (a • F.f) x = ‖a‖ * EReal.abs_fun F.f x
+    have h_eq : ∀ x, EReal.abs_fun (a • F).f x = ‖a‖.toEReal * EReal.abs_fun F.f x := fun x => by
+      simp only [EReal.abs_fun]
+      -- Show ‖(a • F).f x‖ = ‖a‖ * ‖F.f x‖
+      show (‖(a • F).f x‖ : EReal) = ‖a‖.toEReal * ‖F.f x‖.toEReal
+      rw [show (a • F).f x = a * F.f x from rfl, norm_mul, EReal.coe_mul]
+    have hf_abs := ComplexAbsolutelyIntegrable.abs F.f F.integrable
+    have h_smul_eq : EReal.abs_fun (a • F).f = (fun x => ‖a‖.toEReal * EReal.abs_fun F.f x) := by
+      funext x; exact h_eq x
+    rw [h_smul_eq]
+    have h_scale : UnsignedLebesgueIntegral (fun x => ‖a‖.toEReal * EReal.abs_fun F.f x) =
+                   ‖a‖.toEReal * UnsignedLebesgueIntegral (EReal.abs_fun F.f) := by
+      have h_eq' : (fun x => ‖a‖.toEReal * EReal.abs_fun F.f x) = (‖a‖.toEReal : EReal) • EReal.abs_fun F.f := by
+        funext x; simp only [Pi.smul_apply, smul_eq_mul]
+      rw [h_eq', UnsignedLebesgueIntegral]
+      exact LowerUnsignedLebesgueIntegral.hom hf_abs.1 (norm_nonneg a)
+    rw [h_scale]
+    -- Now we have: (‖a‖.toEReal * UnsignedLebesgueIntegral (EReal.abs_fun F.f)).toReal ≤ ‖a‖ * (UnsignedLebesgueIntegral (EReal.abs_fun F.f)).toReal
+    -- We actually have equality
+    have h_finite : UnsignedLebesgueIntegral (EReal.abs_fun F.f) < ⊤ := hf_abs.2
+    have h_nonneg : 0 ≤ UnsignedLebesgueIntegral (EReal.abs_fun F.f) := UnsignedLebesgueIntegral.nonneg hf_abs.1
+    have h_ne_bot : UnsignedLebesgueIntegral (EReal.abs_fun F.f) ≠ ⊥ :=
+      ne_of_gt (lt_of_lt_of_le EReal.bot_lt_zero h_nonneg)
+    rw [EReal.toReal_mul]
+    simp only [EReal.toReal_coe, le_refl]
 }
 
 theorem PreL1.dist_eq {d:ℕ} (F G: PreL1 d) : dist F G = ‖F-G‖ := rfl
@@ -665,9 +955,45 @@ instance PreL1.inst_coeL1 {d:ℕ} : Coe (PreL1 d) (L1 d) := ⟨ PreL1.toL1 ⟩
 
 def ComplexAbsolutelyIntegrable.toL1 {d:ℕ} {f:EuclideanSpace' d → ℂ} (hf: ComplexAbsolutelyIntegrable f) : L1 d := SeparationQuotient.mk hf.to_PreL1
 
-theorem L1.dist_eq {d:ℕ} (f g: EuclideanSpace' d → ℂ) (hf: ComplexAbsolutelyIntegrable f) (hg: ComplexAbsolutelyIntegrable g) : dist hf.toL1 hg.toL1 = (hf.sub hg).norm := by sorry
+theorem L1.dist_eq {d:ℕ} (f g: EuclideanSpace' d → ℂ) (hf: ComplexAbsolutelyIntegrable f) (hg: ComplexAbsolutelyIntegrable g) : dist hf.toL1 hg.toL1 = (hf.sub hg).norm := rfl
 
-theorem L1.dist_eq_zero {d:ℕ} (f g: EuclideanSpace' d → ℂ) (hf: ComplexAbsolutelyIntegrable f) (hg: ComplexAbsolutelyIntegrable g) : dist hf.toL1 hg.toL1 = 0 ↔ AlmostEverywhereEqual f g := by sorry
+theorem L1.dist_eq_zero {d:ℕ} (f g: EuclideanSpace' d → ℂ) (hf: ComplexAbsolutelyIntegrable f) (hg: ComplexAbsolutelyIntegrable g) : dist hf.toL1 hg.toL1 = 0 ↔ AlmostEverywhereEqual f g := by
+  rw [L1.dist_eq]
+  simp only [ComplexAbsolutelyIntegrable.norm, UnsignedAbsolutelyIntegrable.integ]
+  rw [EReal.toReal_eq_zero_iff]
+  -- Eliminate ⊤ and ⊥ cases
+  have h_finite : UnsignedLebesgueIntegral (EReal.abs_fun (f - g)) < ⊤ := (hf.sub hg).2
+  have h_nonneg : UnsignedLebesgueIntegral (EReal.abs_fun (f - g)) ≥ 0 :=
+    UnsignedLebesgueIntegral.nonneg (hf.sub hg).abs.1
+  have h_ne_top : UnsignedLebesgueIntegral (EReal.abs_fun (f - g)) ≠ ⊤ := ne_of_lt h_finite
+  have h_ne_bot : UnsignedLebesgueIntegral (EReal.abs_fun (f - g)) ≠ ⊥ := by
+    intro h_eq_bot
+    rw [h_eq_bot] at h_nonneg
+    exact not_le.mpr EReal.bot_lt_zero h_nonneg
+  simp only [h_ne_top, h_ne_bot, or_false]
+  -- Now goal: UnsignedLebesgueIntegral (EReal.abs_fun (f - g)) = 0 ↔ AlmostEverywhereEqual f g
+  have h_meas : UnsignedMeasurable (EReal.abs_fun (f - g)) := (hf.sub hg).abs.1
+  rw [show UnsignedLebesgueIntegral (EReal.abs_fun (f - g)) = h_meas.integ from rfl]
+  rw [UnsignedLebesgueIntegral.eq_zero_aeZero h_meas]
+  -- Goal: AlmostAlways (fun x ↦ EReal.abs_fun (f - g) x = 0) ↔ AlmostEverywhereEqual f g
+  unfold AlmostEverywhereEqual AlmostAlways
+  -- Goal: IsNull {x | ¬EReal.abs_fun (f - g) x = 0} ↔ IsNull {x | ¬f x = g x}
+  -- Show the sets are equal
+  have h_sets_eq : {x | ¬EReal.abs_fun (f - g) x = 0} = {x | ¬f x = g x} := by
+    ext x
+    simp only [Set.mem_setOf_eq, EReal.abs_fun]
+    -- Goal: ¬‖(f - g) x‖.toEReal = 0 ↔ ¬f x = g x
+    constructor
+    · intro h hfg
+      apply h
+      simp only [Pi.sub_apply, hfg, sub_self, norm_zero, EReal.coe_zero]
+    · intro h heq
+      apply h
+      have h_norm_zero : ‖(f - g) x‖ = 0 := by
+        have : (‖(f - g) x‖ : EReal) = 0 := heq
+        exact EReal.coe_eq_zero.mp this
+      exact sub_eq_zero.mp (norm_eq_zero.mp h_norm_zero)
+  rw [h_sets_eq]
 
 /-- Exercise 1.3.19 (Integration is linear) -/
 noncomputable def L1.integ {d:ℕ} : L1 d →ₗ[ℂ] ℂ := {
