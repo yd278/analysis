@@ -34,44 +34,242 @@ abbrev Sequence.LimitPoint (a:Sequence) (x:ℝ) : Prop :=
 theorem Sequence.limit_point_def (a:Sequence) (x:ℝ) :
   a.LimitPoint x ↔ ∀ ε > 0, ∀ N ≥ a.m, ∃ n ≥ N, |a n - x| ≤ ε := by
     unfold LimitPoint Real.ContinuallyAdherent Real.Adherent
-    sorry
+    congr! 6 with ε hε N hN n
+    constructor
+    . rintro ⟨hn ,hclose⟩ 
+      simp at hn
+      simp[hn.2]
+      simpa[dist,hn] using hclose
+    rintro ⟨hn,hclose⟩ 
+    have : n ≥ a.m := by linarith
+    simpa[dist,hn,this]
 
 noncomputable abbrev Example_6_4_3 : Sequence := (fun (n:ℕ) ↦ 1 - (10:ℝ)^(-(n:ℤ)-1))
 
 /-- Example 6.4.3 -/
-example : (0.1:ℝ).Adherent Example_6_4_3 0.8 := by sorry
+example : (0.1:ℝ).Adherent Example_6_4_3 0.8 := by
+  use 0
+  simp[dist]
+  norm_num
+  rw[abs_of_pos (by positivity)]
 
 /-- Example 6.4.3 -/
-example : ¬ (0.1:ℝ).ContinuallyAdherent Example_6_4_3 0.8 := by sorry
+example : ¬ (0.1:ℝ).ContinuallyAdherent Example_6_4_3 0.8 := by
+
+  unfold Real.ContinuallyAdherent 
+  push_neg
+  use 1;simp
+  intro n hn
+  simp[dist,hn, show 0 ≤ n by linarith]
+  calc
+    _ < (1:ℝ) - 10 ^ (-(1:ℤ) - 1) - 0.8 := by norm_num
+    _ ≤ (1:ℝ) - 10 ^ (-n - 1) - 0.8 := by gcongr;simp
+    _ ≤ _ := by apply le_abs_self
 
 /-- Example 6.4.3 -/
-example : (0.1:ℝ).ContinuallyAdherent Example_6_4_3 1 := by sorry
+example : (0.1:ℝ).ContinuallyAdherent Example_6_4_3 1 := by
+  intro N hN
+  simp at hN
+  use N
+  simp[hN]
+  calc
+    _ ≤ (10:ℝ) ^ (- (0:ℤ) - 1) := by gcongr;simp
+    _ = _ := by norm_num
 
 /-- Example 6.4.3 -/
-example : Example_6_4_3.LimitPoint 1 := by sorry
+example : Example_6_4_3.LimitPoint 1 := by
+  intro ε hε 
+  intro N hN 
+  simp at hN
+  have hpow : ∃ (N:ℤ), (10:ℝ) ^(-N - 1) < ε := by
+    simp only [neg_sub_left,zpow_neg,← inv_zpow]
+    have hltone : (10:ℝ)⁻¹ < 1 := by norm_num
+    choose N' hN' using exists_pow_lt_of_lt_one hε hltone
+    use N'-1; simp_all
+  choose m hm using hpow
+  use max N m
+  split_ands
+  . simp[hN]
+  simp[dist,hN]
+  rw[abs_of_pos (by positivity)]
+  replace hm := le_of_lt hm
+  apply le_trans ?_ hm
+  simp
 
 noncomputable abbrev Example_6_4_4 : Sequence :=
   (fun (n:ℕ) ↦ (-1:ℝ)^n * (1 + (10:ℝ)^(-(n:ℤ)-1)))
 
 /-- Example 6.4.4 -/
-example : (0.1:ℝ).Adherent Example_6_4_4 1 := by sorry
+example : (0.1:ℝ).Adherent Example_6_4_4 1 := by
+  use 0
+  simp
+  norm_num
+
 
 /-- Example 6.4.4 -/
-example : (0.1:ℝ).ContinuallyAdherent Example_6_4_4 1 := by sorry
+example : (0.1:ℝ).ContinuallyAdherent Example_6_4_4 1 := by
+  intro N hN
+  simp at hN
+  lift N to ℕ using hN
+  by_cases hpar : Even N
+  . use N
+    simp[dist]
+    have :(-1:ℝ)^N = 1 := by exact Even.neg_one_pow hpar
+    simp[this]
+    calc 
+      _ ≤ |(10:ℝ) ^ ( - (0:ℤ) - 1)| := by gcongr; simp; simp
+      _ ≤ _ := by norm_num; rw[abs_of_pos (by positivity)]
+  simp at hpar
+  use (N + 1)
+  replace hpar : Even (N + 1) := by exact Odd.add_one hpar
+  simp[dist, show 0 ≤ (N:ℤ) + 1 by linarith]
+  have : (-1:ℝ) ^ (N+1) = 1 := by exact Even.neg_one_pow hpar
+  simp[this]
+  rw[abs_of_pos (by positivity)]
+  calc
+    _ ≤ (10:ℝ) ^ (-(1:ℤ) + -(0) - 1) := by gcongr; simp;simp
+    _ ≤ _ := by norm_num
 
 /-- Example 6.4.4 -/
-example : Example_6_4_4.LimitPoint 1 := by sorry
+example : Example_6_4_4.LimitPoint 1 := by
+  intro ε hε 
+  have hpow : ∃ (N:ℕ), ∀ n ≥ N, (10:ℝ) ^(-(n:ℤ) - 1) < ε := by
+    suffices h :∃(N:ℤ), ∀ n ≥ N, (10:ℝ) ^ (-n - 1) < ε from by
+      choose N hN using h
+      use N.toNat
+      intro n hn
+      apply hN n 
+      zify at hn
+      apply ge_trans hn
+      simp
+    simp only [neg_sub_left,zpow_neg,← inv_zpow]
+    have hltone : (10:ℝ)⁻¹ < 1 := by norm_num
+    choose N' hN' using exists_pow_lt_of_lt_one hε hltone
+    use N'-1
+    intro n hn
+    calc
+      _ ≤ (10:ℝ)⁻¹ ^ (1 + N' - 1:ℤ) := by
+        apply zpow_le_zpow_right_of_le_one₀
+        positivity
+        linarith
+        linarith
+      _ < _ := by field_simp;ring_nf;assumption
+  intro N hN
+  simp at hN
+  lift N to ℕ using hN
+  choose m hm using hpow
+
+  set n := max N m
+  by_cases hpar : Even n
+  . use n
+    simp[dist, show N ≤ n by simp[n]]
+    have : (-1:ℝ)^n  = 1 := by exact Even.neg_one_pow hpar
+    simp[this]
+    rw[abs_of_pos (by positivity)]
+    apply le_of_lt
+    apply hm n
+    simp[n]
+  simp at hpar
+  use (n+1)
+  have hnN : N ≤ n+1 := by
+    apply le_trans (show N ≤ n by simp[n])
+    linarith
+  zify at hnN
+  replace hpar : Even (n+1) := by exact Odd.add_one hpar
+  have :(-1:ℝ) ^ (n+1) = 1 := by exact Even.neg_one_pow hpar
+  simp[hnN, show (n:ℤ)+1 ≥ 0 by linarith,dist,this]
+  rw[abs_of_pos (by positivity)]
+  apply le_of_lt
+  have := hm (n+1) (by apply le_trans (show m ≤ n by simp[n]); linarith)
+  simpa using this
 
 /-- Example 6.4.4 -/
-example : Example_6_4_4.LimitPoint (-1) := by sorry
+example : Example_6_4_4.LimitPoint (-1) := by
+  intro ε hε 
+  have hpow : ∃ (N:ℕ), ∀ n ≥ N, (10:ℝ) ^(-(n:ℤ) - 1) < ε := by
+    suffices h :∃(N:ℤ), ∀ n ≥ N, (10:ℝ) ^ (-n - 1) < ε from by
+      choose N hN using h
+      use N.toNat
+      intro n hn
+      apply hN n 
+      zify at hn
+      apply ge_trans hn
+      simp
+    simp only [neg_sub_left,zpow_neg,← inv_zpow]
+    have hltone : (10:ℝ)⁻¹ < 1 := by norm_num
+    choose N' hN' using exists_pow_lt_of_lt_one hε hltone
+    use N'-1
+    intro n hn
+    calc
+      _ ≤ (10:ℝ)⁻¹ ^ (1 + N' - 1:ℤ) := by
+        apply zpow_le_zpow_right_of_le_one₀
+        positivity
+        linarith
+        linarith
+      _ < _ := by field_simp;ring_nf;assumption
+  intro N hN
+  simp at hN
+  lift N to ℕ using hN
+  choose m hm using hpow
 
+  set n := max N m
+  by_cases hpar : Odd n
+  . use n
+    simp[dist, show N ≤ n by simp[n]]
+    have : (-1:ℝ)^n  = -1 := by exact Odd.neg_one_pow hpar
+    simp[this]
+    rw[abs_of_pos (by positivity)]
+    apply le_of_lt
+    apply hm n
+    simp[n]
+  simp at hpar
+  use (n+1)
+  have hnN : N ≤ n+1 := by
+    apply le_trans (show N ≤ n by simp[n])
+    linarith
+  zify at hnN
+  replace hpar : Odd (n+1) := by exact Even.add_one hpar
+  have :(-1:ℝ) ^ (n+1) = -1 := by exact Odd.neg_one_pow hpar
+  simp[hnN, show (n:ℤ)+1 ≥ 0 by linarith,dist,this]
+  rw[abs_of_pos (by positivity)]
+  apply le_of_lt
+  have := hm (n+1) (by apply le_trans (show m ≤ n by simp[n]); linarith)
+  simpa using this
 /-- Example 6.4.4 -/
-example : ¬ Example_6_4_4.LimitPoint 0 := by sorry
+example : ¬ Example_6_4_4.LimitPoint 0 := by
+  unfold Sequence.LimitPoint Real.ContinuallyAdherent
+  push_neg
+  use 0.1;
+  refine ⟨by linarith, ?_⟩ 
+  use 0; simp
+  intro x hx 
+  lift x to ℕ using hx
+  simp
+  by_cases hpar : Even x
+  . observe :(-1:ℝ)^ x = 1
+    simp[this]
+    rw[abs_of_pos (by positivity)]
+    calc
+      _ < (1:ℝ) := by linarith
+      _ < _ := by simp; positivity
+  . simp at hpar
+    observe: (-1:ℝ)^x = (-1)
+    simp[this]
+    rw[← neg_add,abs_neg,abs_of_pos (by positivity)]
+    calc
+      _ < (1:ℝ) := by linarith
+      _ < _ := by simp; positivity
 
 /-- Proposition 6.4.5 / Exercise 6.4.1 -/
 theorem Sequence.limit_point_of_limit {a:Sequence} {x:ℝ} (h: a.TendsTo x) : a.LimitPoint x := by
-  sorry
-
+  peel h with ε hε h
+  intro N hN
+  choose n hn hclose using h
+  simp at hN hn
+  use max n N
+  simp[hN]
+  specialize hclose (max n N) (by simp[hn])
+  simpa[hn] using hclose
 /--
   A technical issue uncovered by the formalization: the upper and lower sequences of a real
   sequence take values in the extended reals rather than the reals, so the definitions need to be
@@ -91,7 +289,11 @@ noncomputable abbrev Example_6_4_7 : Sequence := (fun (n:ℕ) ↦ (-1:ℝ)^n * (
 
 example (n:ℕ) :
     Example_6_4_7.upperseq n = if Even n then 1 + (10:ℝ)^(-(n:ℤ)-1) else 1 + (10:ℝ)^(-(n:ℤ)-2) := by
-  sorry
+      split_ifs with h
+      . sorry
+      simp at h
+      unfold Example_6_4_7 Sequence.upperseq 
+      sorry
 
 example : Example_6_4_7.limsup = 1 := by sorry
 
