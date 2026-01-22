@@ -129,7 +129,27 @@ example : (0.1:ℝ).ContinuallyAdherent Example_6_4_4 1 := by
   calc
     _ ≤ (10:ℝ) ^ (-(1:ℤ) + -(0) - 1) := by gcongr; simp;simp
     _ ≤ _ := by norm_num
-
+lemma Real.exists_decimal_seq {ε :ℝ} (hε: ε >0) : ∃ (N:ℕ), ∀ n ≥ N, (10:ℝ) ^(-(n:ℤ) - 1) < ε := by
+    suffices h :∃(N:ℤ), ∀ n ≥ N, (10:ℝ) ^ (-n - 1) < ε from by
+      choose N hN using h
+      use N.toNat
+      intro n hn
+      apply hN n 
+      zify at hn
+      apply ge_trans hn
+      simp
+    simp only [neg_sub_left,zpow_neg,← inv_zpow]
+    have hltone : (10:ℝ)⁻¹ < 1 := by norm_num
+    choose N' hN' using exists_pow_lt_of_lt_one hε hltone
+    use N'-1
+    intro n hn
+    calc
+      _ ≤ (10:ℝ)⁻¹ ^ (1 + N' - 1:ℤ) := by
+        apply zpow_le_zpow_right_of_le_one₀
+        positivity
+        linarith
+        linarith
+      _ < _ := by field_simp;ring_nf;assumption
 /-- Example 6.4.4 -/
 example : Example_6_4_4.LimitPoint 1 := by
   intro ε hε 
@@ -286,73 +306,406 @@ noncomputable abbrev Sequence.liminf (a:Sequence) : EReal :=
   sSup { x | ∃ N ≥ a.m, x = a.lowerseq N }
 
 noncomputable abbrev Example_6_4_7 : Sequence := (fun (n:ℕ) ↦ (-1:ℝ)^n * (1 + (10:ℝ)^(-(n:ℤ)-1)))
+lemma Sequence.sup_of_max (a:Sequence) {n:ℤ} (hn : n ≥ a.m) (han : ∀ m ≥ a.m, a m ≤ a n) : a.sup = a n:= by
+  observe hle: a n ≤ a.sup 
+  have hge: a.sup ≤ a n:= by
+    apply sup_le_upper
+    peel han with m hm han
+    rw[EReal.le_iff];left
+    use a m, a n
+  apply eq_of_le_of_ge hge hle
 
-example (n:ℕ) :
+lemma Sequence.inf_of_min (a:Sequence) {n:ℤ} (hn : n ≥ a.m) (han : ∀ m ≥ a.m, a m ≥ a n) : a.inf = a n:= by
+  observe hle: a n ≥ a.inf 
+  have hge: a.inf ≥ a n:= by
+    apply inf_ge_lower
+    peel han with m hm han
+    simp[han]
+  apply eq_of_le_of_ge hle hge
+lemma Example_6_4_7.odd_lt_even {n m:ℕ} (hn:Odd n) (hm: Even m): Example_6_4_7 n < Example_6_4_7 m := by
+  simp
+  observe : (-1:ℝ) ^ n = -1
+  simp[this]
+  observe : (-1:ℝ) ^ m = 1
+  simp[this]
+  calc
+    _ < (0:ℝ)  := by simp;positivity
+    _ < _ := by positivity
+
+lemma Example_6_4_7.even_antitone (n:ℕ) (hn:Even n): Example_6_4_7 (n + 2) ≤  Example_6_4_7 n := by
+  simp [show 0 ≤ (n:ℤ)+2  by linarith,
+    show ((n:ℤ)+2).toNat = n + 2 by rfl
+  ]
+  have : Even (n+2) := by
+    apply Even.add hn
+    simp
+  observe :(-1:ℝ) ^(n+2) = 1
+  simp[this]
+  observe :(-1:ℝ) ^(n) = 1
+  simp[this]
+lemma Example_6_4_7.odd_monotone (n:ℕ) (hn:Odd n): Example_6_4_7 (n + 2) ≥   Example_6_4_7 n := by
+  simp [show 0 ≤ (n:ℤ)+2  by linarith,
+    show ((n:ℤ)+2).toNat = n + 2 by rfl
+  ]
+  have : Odd (n+2) := by
+    apply Odd.add_even hn
+    simp
+  observe :(-1:ℝ) ^(n+2) = -1
+  simp[this]
+  observe :(-1:ℝ) ^(n) = -1
+  simp[this]
+
+lemma Example_6_4_7.even_antitone_trans (n:ℕ) (hn:Even n) : ∀ m ≥ n, Even m → Example_6_4_7 n ≥ Example_6_4_7 m := by
+  suffices h: ∀ (i:ℕ), Example_6_4_7 n ≥ Example_6_4_7 (n + (i + i)) from by
+    intro m hmn hme
+    choose d hd using exists_add_of_le hmn
+    have hde: Even d := by
+      observe hd : d = m - n
+      simp[hd]
+      exact Even.tsub hme hn
+    simp[Even] at hde
+    choose i hi using hde
+    rw[hd,hi]
+    exact h i
+  -- now we can do induction
+  intro i
+  induction' i with k hind
+  . simp
+  apply ge_trans hind
+  norm_cast
+  rw[ show (n + (k + 1 + (k + 1))) = (n + (k + k)) + 2 by ring]
+  set v := n + (k + k)
+  have hve : Even v := by
+    simp[v]
+    apply Even.add hn
+    exact Even.add_self k
+  apply even_antitone v hve
+
+lemma Example_6_4_7.odd_monotone_trans (n:ℕ) (hn:Odd n) : ∀ m ≥ n, Odd m → Example_6_4_7 n ≤ Example_6_4_7 m := by
+  suffices h: ∀ (i:ℕ), Example_6_4_7 n ≤ Example_6_4_7 (n + (i + i)) from by
+    intro m hmn hme
+    choose d hd using exists_add_of_le hmn
+    have hde: Even d := by
+      observe hd : d = m - n
+      simp[hd]
+      exact Nat.Odd.sub_odd hme hn
+    simp[Even] at hde
+    choose i hi using hde
+    rw[hd,hi]
+    exact h i
+  -- now we can do induction
+  intro i
+  induction' i with k hind
+  . simp
+  apply le_trans hind
+  norm_cast
+  rw[ show (n + (k + 1 + (k + 1))) = (n + (k + k)) + 2 by ring]
+  set v := n + (k + k)
+  have hve : Odd v := by
+    simp[v]
+    apply Odd.add_even hn
+    exact Even.add_self k
+  apply odd_monotone v hve
+lemma Example_6_4_7.even_upper {n:ℕ} (hn: Even n) : ∀ m ≥ n, Example_6_4_7 m ≤ Example_6_4_7 n:= by
+  intro m hm
+  by_cases hme: Even m
+  . exact even_antitone_trans n hn m hm hme
+  simp at hme
+  apply le_of_lt
+  exact odd_lt_even hme hn
+
+
+lemma Example_6_4_7.odd_lower {n:ℕ} (hn: Odd n) : ∀ m ≥ n, Example_6_4_7 m ≥ Example_6_4_7 n:= by
+  intro m hm
+  by_cases hme: Even m
+  . apply le_of_lt
+    exact odd_lt_even hn hme
+  simp at hme
+  exact odd_monotone_trans n hn m hm hme 
+
+lemma Example_6_4_7.upperseq_fun (n:ℕ) :
     Example_6_4_7.upperseq n = if Even n then 1 + (10:ℝ)^(-(n:ℤ)-1) else 1 + (10:ℝ)^(-(n:ℤ)-2) := by
-      set f := Example_6_4_7
-      have hf12 : ∀ (n:ℕ) , Odd n → f n < f (n+1) := by
-        intro n hn
-        simp[f, show 0 ≤ (n:ℤ) + 1 by linarith]
-        observe : (-1:ℝ)^ n = -1
+      unfold Sequence.upperseq
+      set f := Example_6_4_7.from n
+      split_ifs with hpn
+      . 
+        -- show that it's exactly f(n)
+        have hfn : f n = 1 + (10:ℝ) ^ (-(n:ℤ) - 1) := by
+          simp[f]
+          observe :(-1:ℝ) ^ n = 1
+          simp[this]
+        rw[← hfn]
+        apply Sequence.sup_of_max
+        . simp[f]
+        -- show that f(n) is the largest
+        intro m hm
+        simp[f] at hm
+        rw[show f n = Example_6_4_7 n by simp[f]]
+        rw[ show f m = Example_6_4_7 m by simp [f,hm]]
+        lift m to ℕ using by linarith
+        simp at hm
+        exact Example_6_4_7.even_upper hpn m hm
+      have hfn : f (n + 1) = 1 + (10:ℝ) ^ (-(n:ℤ)-2) := by
+        simp[f]
+        have : 0 ≤ (n:ℤ)+1:=by linarith
         simp[this]
         observe : Even (n+1)
-        observe : (-1:ℝ) ^(n+1) = 1
+        observe : (-1:ℝ)^(n+1) = 1
         simp[this]
-        calc 
-          _ < (0:ℝ)  := by simp; positivity
-          _ < _ := by positivity
-      have hf02 : ∀ (n:ℕ) , Even n → f n > f (n+2) := by
-        intro n hN
-        simp[f,show 0 ≤ (n:ℤ)+2 by linarith, show ((n:ℤ) + 2).toNat = n + 2 by rfl]
-        observe :(-1:ℝ)^n = 1 
-        simp[this]
-        have : Even (n+2) := by
-          rw[Nat.even_add]
-          simpa
-        observe :(-1:ℝ)^(n+2) = 1 
-        simp[this]
-      have hf1 (n:ℕ) (hn: Odd n) : ∀ m ≥ n, f (n + 1) ≥ f m := by
-        suffices h : ∀ (i:ℕ), f (n+1) ≥ f (n + (i + i)) ∧ f (n+1) ≥ f (n + (i + i + 1)) from by
-          intro m hm
-          choose d hd using exists_add_of_le hm
-          simp[hd]
-          by_cases hpd : Even d
-          . simp[Even] at hpd
-            choose i hi using hpd
-            have hind := (h i).1
-            simp[hi,hind]
-          simp[Odd] at hpd
-          choose i hi using hpd
-          replace hi: d = i + i + 1 := by simp[hi];ring
-          have hind := (h i).2
-          simp[hi,hind]
-        intro i
-        induction' i with k hind
-        . simp; exact le_of_lt (hf12 n hn)
+        ring
+      rw[← hfn]
+      apply Sequence.sup_of_max
+      . simp[f]
+      simp at hpn
+      intro m hm
+      simp[f] at hm
+      rw[show f (n+1) = Example_6_4_7 (n+1) by simp[f]]
+      rw[ show f m = Example_6_4_7 m by simp [f,hm]]
+      lift m to ℕ using by linarith
+      observe hn : Even (n+1)
+      rw[show (n:ℤ) + 1 = (n+1:ℕ) by rfl]
+      by_cases hsp : m = n
+      . rw[hsp]; apply le_of_lt; exact Example_6_4_7.odd_lt_even hpn hn
+      simp at hm
+      push_neg at hsp
+      have hm : m ≥ n+1 := by omega
+      set n := n+1
+      exact Example_6_4_7.even_upper hn m hm
+
+
+example : Example_6_4_7.limsup = 1 := by
+  simp[Sequence.limsup]
+  apply IsGLB.sInf_eq
+  constructor
+  . intro x hx 
+    simp at hx
+    choose N hN hNx using hx
+    lift N to ℕ using hN
+    rw[Example_6_4_7.upperseq_fun N] at hNx
+    split_ifs at hNx with hpar
+    all_goals
+      simp[hNx]
+      rw[EReal.le_iff]
+      left
+      use 1
+    . use 1+(10 ^ (-(N:ℤ)-1))
+      simp;positivity
+    use 1+(10^(-(N:ℤ)-2))
+    simp;positivity
+  intro l hl
+  rw[mem_lowerBounds] at hl
+  contrapose hl
+  rw[EReal.le_iff] at hl
+  push_neg at hl
+  obtain ⟨hr,hnt,hnb⟩ := hl 
+  push_neg
+  obtain ⟨l,rfl⟩ |rfl |rfl := l.def
+  . 
+    specialize hr l 1
+    simp at hr
+    observe hε : l - 1 > 0
+    set ε := l - 1
+    choose N hN using Real.exists_decimal_seq hε 
+    set n := if Even N then N else (N+1) with hn
+    split_ifs at hn with hnp
+    . rw[← hn] at hnp
+      specialize hN n (by simp[hn])
+      use (1:ℝ)+ ((10:ℝ)^ (- (n:ℤ) -1):ℝ)
+      simp only [ Set.mem_setOf_eq]
+      split_ands
+      . use n
+        rw[Example_6_4_7.upperseq_fun n]
         split_ands
-        . rw[show (((k+1):ℕ):ℤ)+ (((k+1):ℕ):ℤ) = ((k:ℤ) + k) + 2 by norm_cast;ring]
-          sorry
-        sorry
-      unfold f Example_6_4_7 Sequence.upperseq 
-      split_ifs with h
-      . 
-        
-        sorry
-      simp at h
-      sorry
+        simp
+        simp only [hnp, ↓reduceIte,EReal.coe_add]
+      norm_cast
+      linarith
+    have hnp: Even n := by
+      simp[n,hnp]
+      exact Nat.even_add_one.mpr hnp
+    specialize hN n (by simp[hn])
+    use (1:ℝ)+ ((10:ℝ)^ (- (n:ℤ) -1):ℝ)
+    simp only [ Set.mem_setOf_eq]
+    split_ands
+    . use n
+      rw[Example_6_4_7.upperseq_fun n]
+      split_ands
+      simp
+      simp only [hnp, ↓reduceIte,EReal.coe_add]
+    norm_cast
+    linarith
+  . use Example_6_4_7.upperseq 0
+    simp
+    split_ands
+    . use 0
+    change Example_6_4_7.upperseq (0:ℕ) < ⊤ 
+    rw[Example_6_4_7.upperseq_fun 0]
+    simp
+    exact compareOfLessAndEq_eq_lt.mp rfl
+  simp at hnb
 
-example : Example_6_4_7.limsup = 1 := by sorry
 
-example (n:ℕ) :
+
+lemma Example_6_4_7.lowerseq_fun (n:ℕ) :
     Example_6_4_7.lowerseq n
     = if Even n then -(1 + (10:ℝ)^(-(n:ℤ)-2)) else -(1 + (10:ℝ)^(-(n:ℤ)-1)) := by
-  sorry
+      unfold Sequence.lowerseq 
+      set f := Example_6_4_7.from n
+      split_ifs with hpn
+      . 
+        -- show that it's exactly f(n)
+        have hfn : f (n + 1) = - (1 + (10:ℝ) ^ (-(n:ℤ)-2)) := by
+          simp[f]
+          have : 0 ≤ (n:ℤ)+1:=by linarith
+          simp[this]
+          observe : Odd (n+1)
+          observe : (-1:ℝ)^(n+1) = -1
+          simp[this]
+          ring
+        rw[← hfn]
+        apply Sequence.inf_of_min
+        . simp[f]
+        -- show that f(n+1) is the smallest
+        intro m hm
+        simp[f] at hm
+        rw[show f (n+1) = Example_6_4_7 (n+1) by simp[f]]
+        rw[ show f m = Example_6_4_7 m by simp [f,hm]]
+        lift m to ℕ using by linarith
+        observe hn : Odd (n+1)
+        rw[show (n:ℤ) + 1 = (n+1:ℕ) by rfl]
+        by_cases hsp : m = n
+        . rw[hsp]; apply le_of_lt; exact Example_6_4_7.odd_lt_even hn hpn
+        simp at hm
+        push_neg at hsp
+        have hm : m ≥ n+1 := by omega
+        set n := n+1
+        exact odd_lower hn m hm
+      simp at hpn
+      have hfn : f n = -(1 + (10:ℝ) ^ (-(n:ℤ) - 1)) := by
+        simp[f]
+        observe :(-1:ℝ) ^ n = -1
+        simp[this]
+      rw[← hfn]
+      apply Sequence.inf_of_min
+      . simp[f]
+      intro m hm
+      simp[f] at hm
+      rw[show f n = Example_6_4_7 n by simp[f]]
+      rw[ show f m = Example_6_4_7 m by simp [f,hm]]
+      lift m to ℕ using by linarith
+      simp at hm
+      exact odd_lower hpn m hm
 
-example : Example_6_4_7.liminf = -1 := by sorry
+example : Example_6_4_7.liminf = -1 := by
+  simp[Sequence.liminf]
+  apply IsLUB.sSup_eq
+  constructor
+  . intro x hx 
+    simp at hx
+    choose N hN hNx using hx
+    lift N to ℕ using hN
+    rw[Example_6_4_7.lowerseq_fun N] at hNx
+    split_ifs at hNx with hpar
+    all_goals
+      simp[hNx]
+      simp_rw[show (-1:EReal) = ((-1:ℝ):EReal) by rfl]
+      rw[← EReal.coe_neg,← EReal.coe_add]
+      apply EReal.coe_le_coe
+      simp
+      positivity
+  
+  intro l hl
+  rw[mem_upperBounds] at hl
+  obtain ⟨l,rfl⟩ |rfl | rfl := l.def 
+  . 
+    rw[← EReal.coe_one, ← EReal.coe_neg]
+    apply EReal.coe_le_coe
+    contrapose! hl
+    observe hε : -1 - l > 0
+    set ε := -1 - l 
+    choose N hN using Real.exists_decimal_seq hε 
+    set n := if Odd N then N else N + 1 with hn
+    have hnN : n ≥ N := by
+      simp[n]
+      split_ifs <;> simp
+    have hnp : Odd n := by
+      simp[n]
+      split_ifs with hNp
+      exact hNp
+      exact Nat.odd_add_one.mpr hNp
+    specialize hN n hnN
+    use (- ((1:ℝ) + ((10:ℝ)^ (-(n:ℤ) - 1):ℝ )))
+    simp
+    split_ands
+    . use n
+      rw[Example_6_4_7.lowerseq_fun n]
+      simp[show ¬ Even n by simpa]
+      simp_rw[← EReal.coe_one,
+        ← EReal.coe_add,
+        ← EReal.coe_neg,
+        ← EReal.coe_add
+      ]
+      simp
+    rw[← EReal.coe_one,← EReal.coe_add]
+    apply EReal.coe_lt_coe
+    linarith
+  . simp
+  specialize hl (-(1 + ((10:ℝ)^(-(0:ℤ)-2)):ℝ))
+  simp at hl
+  specialize hl (0:ℕ)
+  rw[Example_6_4_7.lowerseq_fun 0] at hl
+  specialize hl (by simp) (by
+    simp
+    simp_rw[← EReal.coe_one, 
+    ← EReal.coe_neg,
+    ← EReal.coe_add,
+    ← EReal.coe_neg,
+    ]
+    simp
+  )
+  contrapose! hl
+  exact Ne.symm (not_eq_of_beq_eq_false rfl)
 
-example : Example_6_4_7.sup = (1.1:ℝ) := by sorry
 
-example : Example_6_4_7.inf = (-1.01:ℝ) := by sorry
+example : Example_6_4_7.sup = (1.1:ℝ) := by
+  have : ((1.1:ℝ):EReal) = Example_6_4_7 0 := by
+    simp;
+    rw[← EReal.coe_one,
+      ← EReal.coe_add
+    ]
+    norm_num
+  rw[this]
+  apply Sequence.sup_of_max
+  . simp
+  observe : Even 0
+  have := Example_6_4_7.even_upper (this)
+  intro m hm
+  simp at hm
+  lift m to ℕ using hm
+  specialize this m (by simp)
+  assumption'
+
+example : Example_6_4_7.inf = (-1.01:ℝ) := by
+  have : ((-1.01:ℝ):EReal) = Example_6_4_7 1 := by
+    simp;
+    simp_rw[← EReal.coe_one,
+      ← EReal.coe_neg,
+      ← EReal.coe_add
+    ]
+    norm_num
+  rw[this]
+  apply Sequence.inf_of_min
+  . simp
+  observe ho1 : Odd 1
+  have := Example_6_4_7.odd_lower (ho1)
+  intro m hm
+  simp at hm
+  lift m to ℕ using hm
+  by_cases hspm : m = 0
+  . simp[hspm]
+    norm_num
+  specialize this m (by omega)
+  assumption'
 
 noncomputable abbrev Example_6_4_8 : Sequence := (fun (n:ℕ) ↦ if Even n then (n+1:ℝ) else -(n:ℝ)-1)
 
