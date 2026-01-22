@@ -289,10 +289,56 @@ noncomputable abbrev Example_6_4_7 : Sequence := (fun (n:ℕ) ↦ (-1:ℝ)^n * (
 
 example (n:ℕ) :
     Example_6_4_7.upperseq n = if Even n then 1 + (10:ℝ)^(-(n:ℤ)-1) else 1 + (10:ℝ)^(-(n:ℤ)-2) := by
+      set f := Example_6_4_7
+      have hf12 : ∀ (n:ℕ) , Odd n → f n < f (n+1) := by
+        intro n hn
+        simp[f, show 0 ≤ (n:ℤ) + 1 by linarith]
+        observe : (-1:ℝ)^ n = -1
+        simp[this]
+        observe : Even (n+1)
+        observe : (-1:ℝ) ^(n+1) = 1
+        simp[this]
+        calc 
+          _ < (0:ℝ)  := by simp; positivity
+          _ < _ := by positivity
+      have hf02 : ∀ (n:ℕ) , Even n → f n > f (n+2) := by
+        intro n hN
+        simp[f,show 0 ≤ (n:ℤ)+2 by linarith, show ((n:ℤ) + 2).toNat = n + 2 by rfl]
+        observe :(-1:ℝ)^n = 1 
+        simp[this]
+        have : Even (n+2) := by
+          rw[Nat.even_add]
+          simpa
+        observe :(-1:ℝ)^(n+2) = 1 
+        simp[this]
+      have hf1 (n:ℕ) (hn: Odd n) : ∀ m ≥ n, f (n + 1) ≥ f m := by
+        suffices h : ∀ (i:ℕ), f (n+1) ≥ f (n + (i + i)) ∧ f (n+1) ≥ f (n + (i + i + 1)) from by
+          intro m hm
+          choose d hd using exists_add_of_le hm
+          simp[hd]
+          by_cases hpd : Even d
+          . simp[Even] at hpd
+            choose i hi using hpd
+            have hind := (h i).1
+            simp[hi,hind]
+          simp[Odd] at hpd
+          choose i hi using hpd
+          replace hi: d = i + i + 1 := by simp[hi];ring
+          have hind := (h i).2
+          simp[hi,hind]
+        intro i
+        induction' i with k hind
+        . simp; exact le_of_lt (hf12 n hn)
+        split_ands
+        . rw[show (((k+1):ℕ):ℤ)+ (((k+1):ℕ):ℤ) = ((k:ℤ) + k) + 2 by norm_cast;ring]
+          sorry
+        sorry
+      unfold f Example_6_4_7 Sequence.upperseq 
       split_ifs with h
-      . sorry
+      . 
+        
+        sorry
       simp at h
-      unfold Example_6_4_7 Sequence.upperseq 
       sorry
 
 example : Example_6_4_7.limsup = 1 := by sorry
