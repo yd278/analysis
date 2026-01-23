@@ -709,13 +709,119 @@ example : Example_6_4_7.inf = (-1.01:ℝ) := by
 
 noncomputable abbrev Example_6_4_8 : Sequence := (fun (n:ℕ) ↦ if Even n then (n+1:ℝ) else -(n:ℝ)-1)
 
-example (n:ℕ) : Example_6_4_8.upperseq n = ⊤ := by sorry
+lemma Example_6_4_8.exists_larger (x:ℝ) (N:ℕ) : ∃ n ≥ N, Example_6_4_8 n > x := by
+  choose m hm using exists_nat_gt x
+  set p := max N m
+  set q := if Even p then p else p + 1
+  have hqe : Even q := by
+    simp[q]
+    split_ifs with hpe
+    . simpa
+    exact Nat.even_add_one.mpr hpe
+  have hqp : q ≥ p := by
+    simp[q];
+    split_ifs<;> simp
+  have hqm : q ≥ m := by
+    apply ge_trans hqp
+    simp[p]
+  have hqN : q ≥ N := by
+    apply ge_trans hqp
+    simp[p]
+  use q; simp[hqN,hqe]
+  apply lt_trans hm
+  norm_cast;linarith
 
-example : Example_6_4_8.limsup = ⊤ := by sorry
+lemma Example_6_4_8.succ {x:ℝ} (hx: x > 0) {n:ℕ} (hn : Even n) (hnx : Example_6_4_8 n > x):
+    Example_6_4_8 (n+1) < -x := by
+      simp[hn] at hnx
+      have : ¬ Even (n+1) := by
+        simp; exact Even.add_one hn
+      simp[this, show 0 ≤ (n:ℤ) +1 by linarith]
+      linarith
 
-example (n:ℕ) : Example_6_4_8.lowerseq n = ⊥ := by sorry
+lemma Example_6_4_8.exists_smaller (x:ℝ) (N:ℕ) : ∃ n ≥ N, Example_6_4_8 n < x := by
+  by_cases hx: x ≥ 0
+  . set n := if Odd N then N else N+1
+    have hno : ¬ Even n := by
+      simp[n];split_ifs with hNe
+      . simpa
+      exact Nat.odd_add_one.mpr hNe
+    have hnN : n ≥ N := by
+      simp[n];split_ifs <;>simp
+    use n
+    simp[hnN,hno]
+    linarith
+  choose n hnN hnx using exists_larger (-x) N
+  have : (-x) > 0 := by linarith
+  have hne : Even n := by
+    by_contra!
+    simp[this] at hnx
+    linarith
+  have := succ this hne hnx
+  use (n+1)
+  split_ands
+  . linarith
+  simp at this
+  simpa
+lemma Example_6_4_8.upperseq_fun (n:ℕ) : Example_6_4_8.upperseq n = ⊤ := by
+  unfold Sequence.upperseq
+  set f := Example_6_4_8.from n
+  obtain ⟨s, hfs⟩ | htop | hbot := f.sup.def 
+  . choose c hcn hc using Example_6_4_8.exists_larger s n
+    have hfc : Example_6_4_8 c = f c := by
+      simp[f,hcn]
+    replace hcn : c ≥ f.m := by
+      simp[f,hcn]
+    have hcon := Sequence.le_sup hcn
+    rw[← hfs] at hcon
+    simp at hcon
+    rw[hfc] at hc
+    linarith
+  . simpa
+  . have : n ≥ f.m := by simp[f]
+    have hcon := Sequence.le_sup this
+    rw[hbot] at hcon
+    simp at hcon
 
-example : Example_6_4_8.liminf = ⊥ := by sorry
+example : Example_6_4_8.limsup = ⊤ := by
+  unfold Sequence.limsup
+  rw[ sInf_eq_top]
+  intro a ha
+  simp at ha
+  choose N hN hNa using ha
+  lift N to ℕ using hN
+  rwa[Example_6_4_8.upperseq_fun N] at hNa
+
+
+lemma Example_6_4_8.lowerseq_fun (n:ℕ) : Example_6_4_8.lowerseq n = ⊥ := by
+  unfold Sequence.lowerseq
+  set f := Example_6_4_8.from n
+  obtain ⟨s, hfs⟩ | htop | hbot := f.inf.def 
+  . choose c hcn hc using Example_6_4_8.exists_smaller s n
+    have hfc : Example_6_4_8 c = f c := by
+      simp[f,hcn]
+    replace hcn : c ≥ f.m := by
+      simp[f,hcn]
+    have hcon := Sequence.ge_inf hcn
+    rw[← hfs] at hcon
+    simp at hcon
+    rw[hfc] at hc
+    linarith
+  . have : n ≥ f.m := by simp[f]
+    have hcon := Sequence.ge_inf this
+    rw[htop] at hcon
+    simp at hcon
+  . simpa
+
+
+example : Example_6_4_8.liminf = ⊥ := by
+  unfold Sequence.liminf
+  rw[ sSup_eq_bot]
+  intro a ha
+  simp at ha
+  choose N hN hNa using ha
+  lift N to ℕ using hN
+  rwa[Example_6_4_8.lowerseq_fun N] at hNa
 
 noncomputable abbrev Example_6_4_9 : Sequence :=
   (fun (n:ℕ) ↦ if Even n then (n+1:ℝ)⁻¹ else -(n+1:ℝ)⁻¹)
