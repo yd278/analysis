@@ -43,10 +43,10 @@ lemma Real.toSet_Rat_nonempty (x:Real) : x.toSet_Rat.Nonempty := by
   obtain (hx | hx | hx) := trichotomous x
   . 
     use -1;simp[hx]
-  . obtain ⟨⟨q,hq,hqx⟩, ⟨n,hn⟩ ⟩  := exists_rat_le_and_nat_ge hx
+  . obtain ⟨⟨q,hq,hqx⟩, ⟨n,hn⟩ ⟩  := exists_rat_le_and_nat_gt hx
     use q-1; simp;linarith
   have hx' : (-x).IsPos  := by exact (neg_iff_pos_of_neg x).mp hx
-  obtain ⟨⟨q,hq,hqx⟩, ⟨n,hn⟩ ⟩  := exists_rat_le_and_nat_ge hx'
+  obtain ⟨⟨q,hq,hqx⟩, ⟨n,hn⟩ ⟩  := exists_rat_le_and_nat_gt hx'
   use (-n)
   simp
   linarith
@@ -59,7 +59,7 @@ lemma Real.toSet_Rat_bounded (x:Real) : BddAbove x.toSet_Rat := by
     intro q hq
     simp[hx] at hq
     linarith
-  . obtain ⟨⟨q,hq,hqx⟩, ⟨n,hn⟩ ⟩  := exists_rat_le_and_nat_ge hx
+  . obtain ⟨⟨q,hq,hqx⟩, ⟨n,hn⟩ ⟩  := exists_rat_le_and_nat_gt hx
     use n
     rw[mem_upperBounds]
     intro r hr; simp at hr
@@ -67,7 +67,7 @@ lemma Real.toSet_Rat_bounded (x:Real) : BddAbove x.toSet_Rat := by
       simpa using h
     linarith
   have hx' : (-x).IsPos  := by exact (neg_iff_pos_of_neg x).mp hx
-  obtain ⟨⟨q,hq,hqx⟩, ⟨n,hn⟩ ⟩  := exists_rat_le_and_nat_ge hx'
+  obtain ⟨⟨q,hq,hqx⟩, ⟨n,hn⟩ ⟩  := exists_rat_le_and_nat_gt hx'
   use (-q)
   rw[mem_upperBounds]
   intro r hr
