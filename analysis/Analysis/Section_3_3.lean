@@ -669,6 +669,7 @@ theorem Function.inverse_inverse {X Y: Set} {f: Function X Y} (h: f.bijective) :
       symm
       rw[inverse_eval,inverse_comp_self]
 
+/-- Exercise 3.3.7 -/
 theorem Function.comp_bijective {X Y Z:Set} {f: Function X Y} {g : Function Y Z} (hf: f.bijective)
   (hg: g.bijective) : (g ○ f).bijective := by 
     split_ands
@@ -676,7 +677,6 @@ theorem Function.comp_bijective {X Y Z:Set} {f: Function X Y} {g : Function Y Z}
       exact comp_of_inj hf.1 hg.1
     exact comp_of_surj hf.2 hg.2
 
-/-- Exercise 3.3.7 -/
 theorem Function.inv_of_comp {X Y Z:Set} {f: Function X Y} {g : Function Y Z}
   (hf: f.bijective) (hg: g.bijective) :
     (g ○ f).inverse (Function.comp_bijective hf hg) = (f.inverse hf) ○ (g.inverse hg) := by

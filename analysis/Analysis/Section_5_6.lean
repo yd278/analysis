@@ -180,7 +180,7 @@ theorem Real.zpow_inj {x y:Real} {n:ℤ} (hx: x > 0) (hy : y > 0) (hn: n ≠ 0) 
     have hm: m ≠ 0 := by grind
     simp[hmn] at hxy
     apply (pow_left_inj₀ (by grind ) (by grind) hm).mp hxy
-    
+
 /-- Analogue of Proposition 4.3.12(d) -/
 theorem Real.zpow_abs (x:Real) (n:ℤ) : |x|^n = |x^n| := by
   obtain ⟨m, (hmn | hmn)⟩  := Int.eq_nat_or_neg n
@@ -551,14 +551,7 @@ theorem Real.root_mul {x y:Real} (hx: x ≥ 0) (hy: y ≥ 0) {n:ℕ} (hn: n ≥ 
   field_simp at this
   assumption'
 
-
-      
-      
-
-    
-    
-
-/-- Lemma 5.6.6 (f) / Exercise 5.6.1 -/
+/-- Lemma 5.6.6 (g) / Exercise 5.6.1 -/
 theorem Real.root_root {x:Real} (hx: x ≥ 0) {n m:ℕ} (hn: n ≥ 1) (hm: m ≥ 1): (x.root n).root m = x.root (n*m) := by
   observe hrn : x.root n ≥ 0
   observe hrnm : (x.root n).root m ≥ 0
@@ -669,7 +662,7 @@ theorem Real.ratPow_eq_pow {x:Real} (hx: x > 0) (n:ℤ) : x^(n:ℚ) = x^n := by
 
 
 /-- Lemma 5.6.9(a) / Exercise 5.6.2 -/
-theorem Real.ratPow_nonneg {x:Real} (hx: x > 0) (q:ℚ) : x^q > 0 := by
+theorem Real.ratPow_pos {x:Real} (hx: x > 0) (q:ℚ) : x^q > 0 := by
   choose a b hb hqab using Rat.eq_quot q
   rw[hqab, ratPow_def hx a hb]
   observe hx' : x ≥ 0
@@ -772,8 +765,8 @@ theorem Real.one_ratPow (q:ℚ) : (1:Real)^q = 1 := by
 
 theorem Real.ratPow_cmp_ratPow {x:Real} (hx : x > 0) {q r:ℚ} : x ^ q > x ^ r ↔ x ^ (q - r) > 1 := by
   have hxge0 : x ≥ 0 := by linarith
-  have hxr0 := ratPow_nonneg hx r
-  have hxq0 := ratPow_nonneg hx q
+  have hxr0 := ratPow_pos hx r
+  have hxq0 := ratPow_pos hx q
   simp
   rw[← div_lt_one₀ hxq0]
   rw[← ratPow_sub hx]
@@ -781,7 +774,7 @@ theorem Real.ratPow_cmp_ratPow {x:Real} (hx : x > 0) {q r:ℚ} : x ^ q > x ^ r �
   rw[ratPow_neg hx]
   simp
   rw[inv_lt_one₀]
-  apply ratPow_nonneg hx
+  apply ratPow_pos hx
   
 theorem Real.ratPow_gt_one_iff_gt_one {x:Real} (hx: x > 1) (q: ℚ): 
   q > 0 ↔ x ^ q > 1 := by

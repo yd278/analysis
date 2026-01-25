@@ -52,7 +52,7 @@ example (M: Real) : M ∈ upperBounds (.Icc 0 1) ↔ M ≥ 1 := by
 theorem Real.Ioi_def (x:Real) : .Ioi x = { z | z > x } := rfl
 
 /-- Example 5.5.3 -/
-example : ¬ ∃ M, M ∈ upperBounds (.Ioi (0:Real)) := by
+example : ¬ ∃ M : Real, M ∈ upperBounds (.Ioi 0) := by
   simp
   intro x
   by_contra! h
@@ -86,7 +86,7 @@ theorem Real.isGLB_def (E: Set Real) (M: Real) :
     IsGLB E M ↔ M ∈ lowerBounds E ∧ ∀ M' ∈ lowerBounds E, M' ≤ M := by rfl
 
 /-- Example 5.5.6 -/
-example : IsLUB (.Icc (0:Real) 1) 1 := by
+example : IsLUB (.Icc 0 1) (1 : Real) := by
   rw[Real.isLUB_def]
   split_ands
   . rw[Real.upperBound_def]
@@ -281,7 +281,7 @@ theorem Real.LIM_abs {a:ℕ → ℚ} (ha: (a:Sequence).IsCauchy): |LIM a| = LIM 
       rw[hLIMLIM]
       have := (neg_iff_pos_of_neg (LIM a)).mp h3
       exact (isPos_iff (-LIM a)).mp this
-    have hcau' : (a':Sequence).IsCauchy := by  simp[a'] ; apply Sequence.IsCauchy.neg ha
+    have hcau' : (a':Sequence).IsCauchy := by  simp[a'] ; apply Sequence.IsCauchy.neg _ ha
     replace h3 : LIM a < 0 := by exact (isNeg_iff (LIM a)).mp h3
     have := LIM.abs_eq_pos hpos hcau'
     rw[_root_.abs_of_neg h3]

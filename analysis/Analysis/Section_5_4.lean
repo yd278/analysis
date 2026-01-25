@@ -25,7 +25,6 @@ Users of the companion who have completed the exercises in this section are welc
 
 namespace Chapter5
 
-
 /--
   Definition 5.4.1 (sequences bounded away from zero with sign). Sequences are indexed to start
   from zero as this is more convenient for Mathlib purposes.
@@ -64,7 +63,6 @@ example : BoundedAwayZero (fun n ↦ (-1)^n) := ⟨ 1, by norm_num, by intros; s
 
 theorem BoundedAwayZero.boundedAwayPos {a:ℕ → ℚ} (ha: BoundedAwayPos a) : BoundedAwayZero a := by
   peel 3 ha with c h1 n h2; rwa [abs_of_nonneg (by linarith)]
-
 
 theorem BoundedAwayZero.boundedAwayNeg {a:ℕ → ℚ} (ha: BoundedAwayNeg a) : BoundedAwayZero a := by
   peel 3 ha with c h1 n h2; rw [abs_of_neg (by linarith)]; linarith
@@ -216,7 +214,7 @@ theorem Real.neg_iff_pos_of_neg (x:Real) : x.IsNeg ↔ (-x).IsPos := by
     simp[hrfl]
     rw[neg_LIM _ hac]
     use -a
-    refine ⟨?_, by apply IsCauchy.neg _ hac, rfl⟩ 
+    refine ⟨?_, by apply Sequence.IsCauchy.neg _ hac, rfl⟩ 
     peel hbon with b hb hbon n 
     simp;grind
 
@@ -357,7 +355,7 @@ theorem Real.not_lt_and_eq (x y:Real) : ¬ (x < y ∧ x = y):= by
   apply not_zero_neg
 
 /-- Proposition 5.4.7(b) (order is anti-symmetric) / Exercise 5.4.2 -/
-theorem Real.antisymm (x y:Real) : x < y ↔ (y - x).IsPos := by
+theorem Real.antisymm (x y:Real) : x < y ↔ y > x := by
   simp[lt_iff]
 
 /-- Proposition 5.4.7(c) (order is transitive) / Exercise 5.4.2 -/
@@ -375,7 +373,7 @@ theorem Real.add_lt_add_right {x y:Real} (z:Real) (hxy: x < y) : x + z < y + z :
 
 /-- Proposition 5.4.7(e) (positive multiplication preserves order) / Exercise 5.4.2 -/
 theorem Real.mul_lt_mul_right {x y z:Real} (hxy: x < y) (hz: z.IsPos) : x * z < y * z := by
-  rw [antisymm] at hxy ⊢; convert pos_mul hxy hz using 1; ring
+  rw [antisymm, gt_iff] at hxy ⊢; convert pos_mul hxy hz using 1; ring
 
 /-- Proposition 5.4.7(e) (positive multiplication preserves order) / Exercise 5.4.2 -/
 theorem Real.mul_le_mul_left {x y z:Real} (hxy: x ≤ y) (hz: z.IsPos) : z * x ≤ z * y := by
@@ -581,7 +579,7 @@ theorem Real.LIM_mono_fail :
     _ = _ := by rw[LIM_sub (by exact hconst) (by exact hharc)]; rfl
 
 /-- Proposition 5.4.12 (Bounding reals by rationals) -/
-theorem Real.exists_rat_le_and_nat_ge {x:Real} (hx: x.IsPos) :
+theorem Real.exists_rat_le_and_nat_gt {x:Real} (hx: x.IsPos) :
     (∃ q:ℚ, q > 0 ∧ (q:Real) ≤ x) ∧ ∃ N:ℕ, x < (N:Real) := by
   -- This proof is written to follow the structure of the original text.
   rw [isPos_def] at hx; choose a hbound hcauchy heq using hx
@@ -607,7 +605,7 @@ theorem Real.le_mul {ε:Real} (hε: ε.IsPos) (x:Real) : ∃ M:ℕ, M > 0 ∧ M 
   -- This proof is written to follow the structure of the original text.
   obtain rfl | hx | hx := trichotomous x
   . use 1; simpa [isPos_iff] using hε
-  . choose N hN using (exists_rat_le_and_nat_ge (div_of_pos hx hε)).2
+  . choose N hN using (exists_rat_le_and_nat_gt (div_of_pos hx hε)).2
     set M := N+1; refine ⟨ M, by positivity, ?_ ⟩
     replace hN : x/ε < M := hN.trans (by simp [M])
     simp
@@ -670,8 +668,8 @@ theorem Sequence.LIM_all_close {a:ℕ → ℚ} {ε :ℚ}
 /-- Proposition 5.4.14 / Exercise 5.4.5 -/
 theorem Real.rat_between {x y:Real} (hxy: x < y) : ∃ q:ℚ, x < (q:Real) ∧ (q:Real) < y := by
   set diff := y - x
-  have hdp : diff.IsPos := by simp[diff];exact (antisymm x y).mp hxy
-  obtain ⟨ε,hε, hle⟩ := (exists_rat_le_and_nat_ge hdp).1
+  have hdp : diff.IsPos := by simp[diff,isPos_iff];exact (antisymm x y).mp hxy
+  obtain ⟨ε,hε, hle⟩ := (exists_rat_le_and_nat_gt hdp).1
   obtain ⟨ax,hax,rfl⟩ := eq_lim x 
   have hes :=  hax (ε /2) (by positivity)
   choose N hN hsteady using hes
@@ -838,16 +836,6 @@ theorem Real.LIM_of_le {x:Real} {a:ℕ → ℚ} (hcauchy: (a:Sequence).IsCauchy)
       grind
     linarith
 
-lemma Sequence.IsCauchy.neg {a:ℕ → ℚ} (ha : (a:Sequence).IsCauchy) : ((-a: ℕ → ℚ ):Sequence).IsCauchy := by
-  peel ha with ε hε N hN n hn m hm ha
-  simp_all
-  lift N to ℕ using hN
-  lift n to ℕ using by grind
-  lift m to ℕ using by grind
-  simp at hn hm
-  simp[Rat.Close] at ha ⊢ 
-  rw[abs_le] at ha ⊢
-  grind
 
 /-- Exercise 5.4.8 -/
 theorem Real.LIM_of_ge {x:Real} {a:ℕ → ℚ} (hcauchy: (a:Sequence).IsCauchy) (h: ∀ n, a n ≥ x) :
@@ -856,7 +844,7 @@ theorem Real.LIM_of_ge {x:Real} {a:ℕ → ℚ} (hcauchy: (a:Sequence).IsCauchy)
     set x' := -x
     have ha' : (a':Sequence).IsCauchy := by
       simp[a']
-      apply Sequence.IsCauchy.neg hcauchy
+      apply Sequence.IsCauchy.neg _ hcauchy
     have h' : ∀n, a' n ≤ x' := by
       peel h with n h
       simp[a',x',h]
@@ -1032,6 +1020,5 @@ abbrev Real.ratCast_ordered_hom : ℚ →+*o Real where
   toRingHom := ratCast_hom
   monotone' := by
     simp[Monotone]
-
 
 end Chapter5

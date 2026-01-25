@@ -129,7 +129,7 @@ theorem Rat.exists_between_rat {x y:ℚ} (h: x < y) : ∃ z:ℚ, x < z ∧ z < y
   . convert add_lt_add_right h' (x/2) using 1 <;> ring
   convert add_lt_add_right h' (y/2) using 1 <;> ring
 
-/-- Exercise 4.4.2 -/
+/-- Exercise 4.4.2 (a) -/
 theorem Nat.no_infinite_descent : ¬ ∃ a:ℕ → ℕ, ∀ n, a (n+1) < a n := by
   by_contra h
   obtain ⟨a,ha⟩ := h 
@@ -143,11 +143,17 @@ theorem Nat.no_infinite_descent : ¬ ∃ a:ℕ → ℕ, ∀ n, a (n+1) < a n := 
   specialize hcon 0 (a 0 + 1)
   omega
 
+/-- Exercise 4.4.2 (b) -/
 def Int.infinite_descent : Decidable (∃ a:ℕ → ℤ, ∀ n, a (n+1) < a n) := by
   -- the first line of this construction should be either `apply isTrue` or `apply isFalse`.
   apply isTrue
   use fun n ↦ -(n:ℤ)
   simp
+
+/-- Exercise 4.4.2 (b) -/
+def Rat.pos_infinite_descent : Decidable (∃ a:ℕ → {x: ℚ // 0 < x}, ∀ n, a (n+1) < a n) := by
+  -- the first line of this construction should be either `apply isTrue` or `apply isFalse`.
+  sorry
 
 #check even_iff_exists_two_mul
 #check odd_iff_exists_bit1
