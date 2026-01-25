@@ -1376,12 +1376,13 @@ theorem Sequence.limit_point_of_liminf {a:Sequence} {L_minus:ℝ} (h: a.liminf =
       rw[abs_le]
       grind
 
-/-- Proposition 6.4.12(f) / Exercise 6.4.3 -/
+/-- Proposition 6.4.12(f) / Exercise 6.4.3 
 
-/--
+
   This helper lemma, implicit in the textbook proofs of Theorem 6.4.18 and Theorem 6.6.8, is made
   explicit here.
 -/
+
 theorem Sequence.finite_limsup_liminf_of_bounded {a:Sequence} (hbound: a.IsBounded) :
     (∃ L_plus:ℝ, a.limsup = L_plus) ∧ (∃ L_minus:ℝ, a.liminf = L_minus) := by
   choose M hMpos hbound using hbound
@@ -1466,38 +1467,117 @@ theorem Sequence.tendsTo_iff_eq_limsup_liminf {a:Sequence} (c:ℝ) :
     simp[abs_le]
     grind
 
-/- /-- Lemma 6.4.13 (Comparison principle) / Exercise 6.4.4 -/ -/
-/- theorem Sequence.sup_mono {a b:Sequence} (hm: a.m = b.m) (hab: ∀ n ≥ a.m, a n ≤ b n) : -/
-/-     a.sup ≤ b.sup := by sorry -/
+/-- Lemma 6.4.13 (Comparison principle) / Exercise 6.4.4 -/
+theorem Sequence.sup_mono {a b:Sequence} (hm: a.m = b.m) (hab: ∀ n ≥ a.m, a n ≤ b n) :
+    a.sup ≤ b.sup := by
+      have hmid : ∀ n ≥ a.m, b n ≤ b.sup := by
+        intro n hn
+        rw[hm] at hn
+        exact le_sup hn
+      have hab : ∀ n ≥ a.m, a n ≤ b.sup := by
+        intro n hn
+        specialize hab n hn
+        specialize hmid n hn
+        apply le_trans ?_ hmid
+        simpa
+      apply sup_le_upper hab
 
-/- /-- Lemma 6.4.13 (Comparison principle) / Exercise 6.4.4 -/ -/
-/- theorem Sequence.inf_mono {a b:Sequence} (hm: a.m = b.m) (hab: ∀ n ≥ a.m, a n ≤ b n) : -/
-/-     a.inf ≤ b.inf := by sorry -/
+/-- Lemma 6.4.13 (Comparison principle) / Exercise 6.4.4 -/
+theorem Sequence.inf_mono {a b:Sequence} (hm: a.m = b.m) (hab: ∀ n ≥ a.m, a n ≤ b n) :
+    a.inf ≤ b.inf := by
+      apply inf_ge_lower
+      intro n hn
+      simp[← hm] at hn
+      specialize hab n hn
+      apply le_trans (ge_inf hn)
+      simpa
 
-/- /-- Lemma 6.4.13 (Comparison principle) / Exercise 6.4.4 -/ -/
-/- theorem Sequence.limsup_mono {a b:Sequence} (hm: a.m = b.m) (hab: ∀ n ≥ a.m, a n ≤ b n) : -/
-/-     a.limsup ≤ b.limsup := by sorry -/
 
-/- /-- Lemma 6.4.13 (Comparison principle) / Exercise 6.4.4 -/ -/
-/- theorem Sequence.liminf_mono {a b:Sequence} (hm: a.m = b.m) (hab: ∀ n ≥ a.m, a n ≤ b n) : -/
-/-     a.liminf ≤ b.liminf := by sorry -/
+/-- Lemma 6.4.13 (Comparison principle) / Exercise 6.4.4 -/
+theorem Sequence.limsup_mono {a b:Sequence} (hm: a.m = b.m) (hab: ∀ n ≥ a.m, a n ≤ b n) :
+    a.limsup ≤ b.limsup := by
+      have hupseq : ∀ N ≥ a.m, a.upperseq N ≤ b.upperseq N := by
+        intro N hN
+        apply sup_mono
+        . simp[hm]
+        intro n hn 
+        simp at hn
+        specialize hab n hn.1
+        simp_all
+      simp
+      rintro bn n hn rfl
+      rw[← hm] at hn
+      apply sInf_le_of_le ?_ (hupseq n hn)
+      simp
+      use n
 
-/- /-- Corollary 6.4.14 (Squeeze test) / Exercise 6.4.5 -/ -/
-/- theorem Sequence.lim_of_between {a b c:Sequence} {L:ℝ} (hm: b.m = a.m ∧ c.m = a.m) -/
-/-   (hab: ∀ n ≥ a.m, a n ≤ b n ∧ b n ≤ c n) (ha: a.TendsTo L) (hb: b.TendsTo L) : -/
-/-     c.TendsTo L := by sorry -/
 
-/- /-- Example 6.4.15 -/ -/
-/- example : ((fun (n:ℕ) ↦ 2/(n+1:ℝ)):Sequence).TendsTo 0 := by -/
-/-   sorry -/
+/-- Lemma 6.4.13 (Comparison principle) / Exercise 6.4.4 -/
+theorem Sequence.liminf_mono {a b:Sequence} (hm: a.m = b.m) (hab: ∀ n ≥ a.m, a n ≤ b n) :
+    a.liminf ≤ b.liminf := by
+      simp
+      rintro an n hnn rfl
+      apply le_sSup_of_le (b:= b.lowerseq n)
+      use n; simp_all
+      apply inf_mono; simp[hm]
+      intro N hN
+      simp_all
+      apply hab
+      linarith
 
-/- /-- Example 6.4.15 -/ -/
-/- example : ((fun (n:ℕ) ↦ -2/(n+1:ℝ)):Sequence).TendsTo 0 := by -/
-/-   sorry -/
+/-- Corollary 6.4.14 (Squeeze test) / Exercise 6.4.5 -/
+theorem Sequence.lim_of_between {a b c:Sequence} {L:ℝ} (hm: b.m = a.m ∧ c.m = a.m)
+  (hac: ∀ n ≥ a.m, a n ≤ b n ∧ b n ≤ c n) (ha: a.TendsTo L) (hc: c.TendsTo L) :
+    b.TendsTo L := by
+      rw[tendsTo_iff_eq_limsup_liminf] at ha hc ⊢ 
+      have hbi : b.liminf ≥ L := by
+        rw[← ha.1]
+        apply liminf_mono hm.1.symm
+        simp_all
+      have hbs : b.limsup ≤ L := by
+        rw[← hc.2]
+        apply limsup_mono
+        <;>simp_all
+      have hbil := liminf_le_limsup b
+      split_ands <;> apply eq_of_le_of_ge
+      assumption'
+      apply le_trans hbil hbs
+      apply le_trans hbi hbil
 
-/- /-- Example 6.4.15 -/ -/
-/- example : ((fun (n:ℕ) ↦ (-1)^n/(n+1:ℝ) + 1 / (n+1)^2):Sequence).TendsTo 0 := by -/
-/-   sorry -/
+/-- Example 6.4.15 -/
+example : ((fun (n:ℕ) ↦ 2/(n+1:ℝ)):Sequence).TendsTo 0 := by
+  obtain ⟨hhcon, hhlim⟩  := Sequence.lim_harmonic
+  set a := ((fun (n:ℕ)↦ (n+1:ℝ)⁻¹):Sequence)
+  set b := ((fun (n:ℕ) ↦ 2/(n+1:ℝ)):Sequence)
+  have hb : b = a + a := by
+    ext n
+    . change 0 = min 0 0
+      simp
+    simp[a,b]
+    grind
+  have ha := Sequence.lim_def hhcon
+  rw[hhlim] at ha
+  have := Sequence.tendsTo_add ha ha
+  rw[hb]
+  simpa
+
+/-- Example 6.4.15 -/
+example : ((fun (n:ℕ) ↦ -2/(n+1:ℝ)):Sequence).TendsTo 0 := by
+  obtain ⟨hhcon, hhlim⟩  := Sequence.lim_harmonic
+  set a := ((fun (n:ℕ)↦ (n+1:ℝ)⁻¹):Sequence)
+  have ha := Sequence.lim_def hhcon
+  rw[hhlim] at ha
+  have := Sequence.tendsTo_smul (-2) ha
+  simp at this
+  convert this
+  rw[Sequence.smul_coe]
+  grind
+  
+
+
+/-- Example 6.4.15 -/
+example : ((fun (n:ℕ) ↦ (-1)^n/(n+1:ℝ) + 1 / (n+1)^2):Sequence).TendsTo 0 := by
+  sorry
 
 /- /-- Example 6.4.15 -/ -/
 /- example : ((fun (n:ℕ) ↦ (2:ℝ)^(-(n:ℤ))):Sequence).TendsTo 0 := by -/
