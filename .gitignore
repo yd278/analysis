@@ -12,4 +12,15 @@ _site/
 *.swp
 *.swo
 
-analysis/Analysis/tobeIgnored/
+# AI assistant files
+.claude/
+.cursor/
+Claude.md
+analysis/.repair
+**/.env
+**/.aider.conf.yml
+
+# miscellaneous files
+**/tobeIgnored/
+**/tmp
+**/docker/

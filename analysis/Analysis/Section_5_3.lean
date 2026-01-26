@@ -163,7 +163,6 @@ theorem Sequence.IsCauchy.add {a b:ℕ → ℚ}  (ha: (a:Sequence).IsCauchy) (hb
   convert Section_4_3.add_close h1 h2
   linarith
 
-
 /--Lemma 5.3.7 (Sum of equivalent sequences is equivalent)-/
 theorem Sequence.add_equiv_left {a a':ℕ → ℚ} (b:ℕ → ℚ) (haa': Equiv a a') :
     Equiv (a + b) (a' + b) := by
@@ -285,12 +284,12 @@ theorem Sequence.mul_equiv_right {b b':ℕ → ℚ} (a:ℕ → ℚ)  (ha : (a:Se
 
 /--Proposition 5.3.10 (Product of equivalent sequences is equivalent) / Exercise 5.3.2 -/
 theorem Sequence.mul_equiv
-{a b a' b':ℕ → ℚ}
-(ha : (a:Sequence).IsCauchy)
-(hb' : (b':Sequence).IsCauchy)
-(haa': Equiv a a')
-(hbb': Equiv b b') : Equiv (a * b) (a' * b') :=
-  equiv_trans (mul_equiv_right _ ha hbb') (mul_equiv_left _ hb' haa')
+  {a b a' b':ℕ → ℚ}
+  (ha : (a:Sequence).IsCauchy)
+  (hb' : (b':Sequence).IsCauchy)
+  (haa': Equiv a a')
+  (hbb': Equiv b b') : Equiv (a * b) (a' * b') :=
+    equiv_trans (mul_equiv_right _ ha hbb') (mul_equiv_left _ hb' haa')
 
 /-- Definition 5.3.9 (Product of reals) -/
 noncomputable instance Real.mul_inst : Mul Real where
@@ -403,7 +402,7 @@ theorem Real.neg_LIM (a:ℕ → ℚ) (ha: (a:Sequence).IsCauchy) : -LIM a = LIM 
     simp[Rat.Close] at ha ⊢ 
     rwa[add_comm,← sub_eq_add_neg, abs_sub_comm]
 
-theorem Real.IsCauchy.neg (a:ℕ → ℚ) (ha: (a:Sequence).IsCauchy) :
+theorem Sequence.IsCauchy.neg (a:ℕ → ℚ) (ha: (a:Sequence).IsCauchy) :
     ((-a:ℕ → ℚ):Sequence).IsCauchy := by
     peel ha with ε hε N hN n hn m hm ha 
     simp_all
@@ -412,7 +411,6 @@ theorem Real.IsCauchy.neg (a:ℕ → ℚ) (ha: (a:Sequence).IsCauchy) :
     lift m to ℕ using by grind
     simp[Rat.Close] at ha ⊢ 
     rwa[add_comm,← sub_eq_add_neg, abs_sub_comm]
-
 
 /-- Proposition 5.3.11 (laws of algebra) -/
 noncomputable instance Real.addGroup_inst : AddGroup Real :=
@@ -451,7 +449,7 @@ AddGroup.ofLeftAxioms (by
   intro a
   obtain ⟨a, ha, rfl⟩  := eq_lim a
   rw[neg_LIM a ha,
-    LIM_add (by apply IsCauchy.neg a ha) ha
+    LIM_add (by apply Sequence.IsCauchy.neg a ha) ha
   ]
   simp
   exact LIM.zero
@@ -462,12 +460,12 @@ theorem Real.sub_eq_add_neg (x y:Real) : x - y = x + (-y) := rfl
 theorem Sequence.IsCauchy.sub {a b:ℕ → ℚ} (ha: (a:Sequence).IsCauchy) (hb: (b:Sequence).IsCauchy) :
     ((a-b:ℕ → ℚ):Sequence).IsCauchy := by
       rw[sub_eq_add_neg]
-      apply IsCauchy.add ha (Real.IsCauchy.neg b hb)
+      apply IsCauchy.add ha (IsCauchy.neg b hb)
 
 /-- LIM distributes over subtraction -/
 theorem Real.LIM_sub {a b:ℕ → ℚ} (ha: (a:Sequence).IsCauchy) (hb: (b:Sequence).IsCauchy) :
   LIM a - LIM b = LIM (a - b) := by
-    rw[sub_eq_add_neg,neg_LIM b hb, LIM_add ha (IsCauchy.neg b hb)]
+    rw[sub_eq_add_neg,neg_LIM b hb, LIM_add ha (Sequence.IsCauchy.neg b hb)]
     rw[_root_.sub_eq_add_neg]
 
 /-- ratCast distributes over subtraction -/
@@ -478,7 +476,6 @@ theorem Real.ratCast_sub (a b:ℚ) : (a:Real) - (b:Real) = (a-b:ℚ) := by
   intro ε hε 
   use 0; intro n hn; simp at hn
   simp[hn,Rat.Close];grind
-
 
 /-- Proposition 5.3.11 (laws of algebra) -/
 noncomputable instance Real.instAddCommGroup : AddCommGroup Real where

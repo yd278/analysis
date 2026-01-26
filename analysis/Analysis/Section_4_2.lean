@@ -15,9 +15,9 @@ doing so.
 
 Main constructions and results of this section:
 
-- Definition of the "Section 4.2" rationals, `Section_4_2.Rat`, as formal differences `a // b` of
+- Definition of the "Section 4.2" rationals, `Section_4_2.Rat`, as formal quotients `a // b` of
   integers `a b:ℤ`, up to equivalence.  (This is a quotient of a scaffolding type
-  `Section_4_2.PreRat`, which consists of formal differences without any equivalence imposed.)
+  `Section_4_2.PreRat`, which consists of formal quotients without any equivalence imposed.)
 
 - Field operations and order on these rationals, as well as an embedding of ℕ and ℤ.
 
@@ -430,6 +430,9 @@ instance Rat.instField : Field Rat where
 example : (3//4) / (5//6) = 9 // 10 := by
   rw[Rat.div_eq,Rat.inv_eq,Rat.mul_eq,Rat.eq] <;> simp
 
+/-- Definition of subtraction -/
+theorem Rat.sub_eq (a b:Rat) : a - b = a + (-b) := by rfl
+
 def Rat.coe_int_hom : ℤ →+* Rat where
   toFun n := (n:Rat)
   map_zero' := rfl
@@ -606,18 +609,9 @@ theorem Rat.not_lt_and_eq (x y:Rat) : ¬ (x < y ∧ x = y):= by
   tauto
 
 /-- Proposition 4.2.9(b) (order is anti-symmetric) / Exercise 4.2.5 -/
-theorem Rat.antisymm (x y:Rat) : x < y ↔ (y - x).isPos := by
+theorem Rat.antisymm (x y:Rat) : x < y ↔ y > x := by
   have h := lt_iff x y
   simp[h]
-  constructor <;> intro hp
-  . 
-    choose v hv hxyv using hp
-    apply_fun fun exp ↦ -exp  at hxyv
-    simp at hxyv
-    simpa [ hxyv]
-  set v := y-x
-  use v
-  simp[v,hp]
 
 /-- Proposition 4.2.9(c) (order is transitive) / Exercise 4.2.5 -/
 theorem Rat.lt_trans {x y z:Rat} (hxy: x < y) (hyz: y < z) : x < z := by

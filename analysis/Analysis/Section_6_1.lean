@@ -885,6 +885,44 @@ theorem Sequence.LIM_sub {a b:Sequence} (ha: a.Convergent) (hb: b.Convergent) :
     refine ⟨hten.1,?_⟩ 
     rw[ha.2,hb.2,hten.2]
 
+instance Sequence.inst_neg : Neg Sequence where
+  neg a := {
+    m := a.m
+    seq n := - a n 
+    vanish n hn := by simp;apply a.vanish _ hn
+  }
+
+@[simp]
+theorem Sequence.neg_eval {a: Sequence} (n:ℤ) : (-a) n = - a n := rfl
+
+theorem Sequence.neg_coe (a : ℕ → ℝ) : (-a:Sequence)   = (fun n ↦ - a n) := by
+  ext n; rfl
+  by_cases h:n ≥ 0 <;> simp [h]
+
+abbrev Sequence.const (r:ℝ) (m:ℤ) : Sequence where 
+  m := m
+  seq n := if n ≥ m then r else 0
+  vanish n hn := by simp; intro; linarith 
+
+lemma Sequence.tendsTo_const (r:ℝ) (m:ℤ) : (const r m).TendsTo r := by
+  intro ε hε
+  use m;simp
+  intro n hn
+  simp at hn
+  simp[dist,hn]
+  linarith
+
+theorem Sequence.tendsTo_neg {a:Sequence} {L:ℝ} (ha: a.TendsTo L) :
+  (-a).TendsTo (-L) := by
+    have hz := tendsTo_const 0 a.m
+    have : -a = (const 0 a.m) - a := by
+      ext n
+      . change a.m = min a.m a.m
+        simp
+      simp
+    rw[this]
+    rw[show -L = 0 - L by simp]
+    apply tendsTo_sub hz ha
 noncomputable instance Sequence.inst_inv : Inv Sequence where
   inv a := {
     m := a.m
@@ -1307,31 +1345,44 @@ theorem Sequence.isBounded_of_rat (a: Chapter5.Sequence) :
       rify;linarith
 
 /-- Exercise 6.1.9 -/
-noncomputable abbrev Sequence.harmonic { k:ℝ } (hk : k>0): Sequence  := fun (n:ℕ) ↦ k / (n+1)
-  
+noncomputable abbrev Sequence.harmonic_k (k:ℝ) : Sequence  := fun (n:ℕ) ↦ k / (n+1)
 
-lemma Sequence.harmonic_tendsTo {k:ℝ }(hk:k>0): (harmonic hk).TendsTo 0 := by
-  unfold harmonic
-  intro ε hε 
-  choose N hN using exists_int_ge (k/ε)
-  use N.toNat
-  simp
-  intro n hn
-  simp at hn
-  lift n to ℕ using hn.2
-  simp[hn,abs_of_pos hk]
-  rw[abs_of_pos (by positivity)]
-  rw[div_le_comm₀ (by positivity) hε]
-  calc
-    _ ≤ (N:ℝ) := hN
-    _ ≤ (n:ℝ) := by norm_cast;exact hn.1
-    _ ≤ _ := by simp
-  
-lemma Sequence.harmonic_convergent {k:ℝ} (hk: k>0) : (harmonic hk).Convergent := by
+lemma Sequence.harmonic_k_tendsTo_zero (k:ℝ): (harmonic_k k).TendsTo 0 := by
+  wlog hk : k > 0
+  . simp at hk
+    obtain (rfl | hk ) := eq_or_lt_of_le hk
+    . simp[harmonic_k]
+      have : (fun (n:ℕ) ↦ (0:ℝ)) = const 0 0 := by simp
+      rw[this]
+      apply tendsTo_const
+    specialize this (-k) (Left.neg_pos_iff.mpr hk)
+    rw[← neg_zero]
+    have hneg : harmonic_k (k) = - harmonic_k (-k) := by
+      simp[harmonic_k];ext n
+      simp;rfl
+      by_cases hn : 0 ≤ n
+      . lift n to ℕ using hn
+        simp;ring
+      simp[hn]
+    rw[hneg] 
+    apply tendsTo_neg this
+  have h1 : (harmonic_k 1).TendsTo 0 := by
+    simp[harmonic_k]
+    obtain ⟨hhcon, hlim⟩  := lim_harmonic
+    have := lim_def hhcon
+    rwa[hlim] at this
+  have hsmul : harmonic_k k = k • (harmonic_k 1) := by
+    simp[harmonic_k];symm
+    apply smul_coe
+  rw[hsmul, show (0:ℝ) = (k * 0) by simp]
+  apply tendsTo_smul _ h1
+
+lemma Sequence.harmonic_k_convergent {k:ℝ}  : (harmonic_k k).Convergent := by
   use 0
-  exact harmonic_tendsTo hk
-lemma Sequence.harmonic_lim{k:ℝ} (hk: k>0) : lim (harmonic hk) = 0 := by
-  have := harmonic_tendsTo hk
+  exact harmonic_k_tendsTo_zero k
+
+lemma Sequence.harmonic_k_lim{k:ℝ}  : lim (harmonic_k k) = 0 := by
+  have := harmonic_k_tendsTo_zero k 
   rw[lim_eq] at this
   exact this.2
 theorem Sequence.lim_div_fail :
@@ -1339,12 +1390,10 @@ theorem Sequence.lim_div_fail :
     ∧ b.Convergent
     ∧ lim b = 0
     ∧ ¬ ((a / b).Convergent ∧ lim (a / b) = lim a / lim b) := by
-      let hka : (1:ℝ)>0 := by simp
-      let hkb : (2:ℝ)>0 := by simp
-      set a := harmonic hka
-      set b := harmonic hkb
+      set a := harmonic_k 1
+      set b := harmonic_k 2
       use a,b
-      refine ⟨harmonic_convergent hka, harmonic_convergent hkb, harmonic_lim hkb, ?_⟩ 
+      refine ⟨ harmonic_k_convergent  , harmonic_k_convergent , harmonic_k_lim , ?_⟩ 
       set c := a / b
       have hcm : c.m = 0 :=by
         simp[c]
@@ -1366,9 +1415,7 @@ theorem Sequence.lim_div_fail :
         rw[lim_eq] at this
         exact this.2
       simp[hcc,hcl]
-      have hal := harmonic_lim hka
-      have hbl := harmonic_lim hkb
-      simp[a,b,hal,hbl]
+      simp[a,b,harmonic_k_lim]
 
 theorem Chapter5.Sequence.IsCauchy_iff (a:Chapter5.Sequence) :
     a.IsCauchy ↔ ∀ ε > (0:ℝ), ∃ N ≥ a.n₀, ∀ n ≥ N, ∀ m ≥ N, |a n - a m| ≤ ε := by

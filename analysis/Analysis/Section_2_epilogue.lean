@@ -140,7 +140,7 @@ abbrev natCast (P : PeanoAxioms) : ℕ → P.Nat := fun n ↦ match n with
 
 
 /-- One can start the proof here with `unfold Function.Injective`, although it is not strictly necessary. -/
-theorem natCast_injective (P : PeanoAxioms) : Function.Injective P.natCast  := by
+theorem natCast_injective (P : PeanoAxioms) : Function.Injective P.natCast := by
     unfold Function.Injective
     intro a b p
     revert a
