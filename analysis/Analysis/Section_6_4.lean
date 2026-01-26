@@ -1545,7 +1545,7 @@ theorem Sequence.lim_of_between {a b c:Sequence} {L:ℝ} (hm: b.m = a.m ∧ c.m 
       apply le_trans hbi hbil
 
 /-- Example 6.4.15 -/
-example : ((fun (n:ℕ) ↦ 2/(n+1:ℝ)):Sequence).TendsTo 0 := by
+lemma Example_6_4_15_1 : ((fun (n:ℕ) ↦ 2/(n+1:ℝ)):Sequence).TendsTo 0 := by
   obtain ⟨hhcon, hhlim⟩  := Sequence.lim_harmonic
   set a := ((fun (n:ℕ)↦ (n+1:ℝ)⁻¹):Sequence)
   set b := ((fun (n:ℕ) ↦ 2/(n+1:ℝ)):Sequence)
@@ -1561,8 +1561,11 @@ example : ((fun (n:ℕ) ↦ 2/(n+1:ℝ)):Sequence).TendsTo 0 := by
   rw[hb]
   simpa
 
+example : ((fun (n:ℕ) ↦ 2/(n+1:ℝ)):Sequence).TendsTo 0 := by
+  exact Example_6_4_15_1
+
 /-- Example 6.4.15 -/
-example : ((fun (n:ℕ) ↦ -2/(n+1:ℝ)):Sequence).TendsTo 0 := by
+lemma Example_6_4_15_2 : ((fun (n:ℕ) ↦ -2/(n+1:ℝ)):Sequence).TendsTo 0 := by
   obtain ⟨hhcon, hhlim⟩  := Sequence.lim_harmonic
   set a := ((fun (n:ℕ)↦ (n+1:ℝ)⁻¹):Sequence)
   have ha := Sequence.lim_def hhcon
@@ -1572,86 +1575,384 @@ example : ((fun (n:ℕ) ↦ -2/(n+1:ℝ)):Sequence).TendsTo 0 := by
   convert this
   rw[Sequence.smul_coe]
   grind
-  
+
+example : ((fun (n:ℕ) ↦ -2/(n+1:ℝ)):Sequence).TendsTo 0 := by
+  exact Example_6_4_15_2
 
 
 /-- Example 6.4.15 -/
 example : ((fun (n:ℕ) ↦ (-1)^n/(n+1:ℝ) + 1 / (n+1)^2):Sequence).TendsTo 0 := by
-  sorry
+  set a := ((fun (n:ℕ) ↦ -2/(n+1:ℝ)):Sequence)
+  set c := ((fun (n:ℕ) ↦ 2/(n+1:ℝ)):Sequence)
+  set b := ((fun (n:ℕ) ↦ (-1)^n/(n+1:ℝ) + 1 / (n+1)^2):Sequence)
+  have hm : b.m = a.m ∧ c.m = a.m := by
+    simp[a,b,c]
+  apply Sequence.lim_of_between hm
+  . intro n hn 
+    simp at hn
+    lift n to ℕ using hn
+    simp[a,b,c]
+    split_ands
+    . 
+      calc
+        _ ≤ - 1 / (n+1:ℝ) + ( (n+1:ℝ)^2)⁻¹ := by
+          rw[←sub_le_iff_le_add']
+          ring_nf
+          apply le_trans (b:=0)
+          simp;positivity
+          positivity
+        _ ≤ _ := by
+            gcongr
+            rcases n.even_or_odd with h | h <;> simp [h]
+    calc
+      _ ≤ 1 / (n+1:ℝ) + ((n+1:ℝ )^2)⁻¹ := by 
+        gcongr
+        rcases n.even_or_odd with h | h <;> simp [h]
+      _ ≤ _ := by
+        rw[← le_sub_iff_add_le']
+        ring_nf
+        rw[inv_le_inv₀ (by positivity) (by positivity)]
+        norm_cast
+        omega
+  exact Example_6_4_15_2
+  exact Example_6_4_15_1
 
-/- /-- Example 6.4.15 -/ -/
-/- example : ((fun (n:ℕ) ↦ (2:ℝ)^(-(n:ℤ))):Sequence).TendsTo 0 := by -/
-/-   sorry -/
-
-/- abbrev Sequence.abs (a:Sequence) : Sequence where -/
-/-   m := a.m -/
-/-   seq n := |a n| -/
-/-   vanish n hn := by simp [a.vanish n hn] -/
-
-
-/- /-- Corollary 6.4.17 (Zero test for sequences) / Exercise 6.4.7 -/ -/
-/- theorem Sequence.tendsTo_zero_iff (a:Sequence) : -/
-/-   a.TendsTo (0:ℝ) ↔ a.abs.TendsTo (0:ℝ) := by -/
-/-   sorry -/
-
-
-/- /-- Theorem 6.4.18 (Completeness of the reals) -/ -/
-/- theorem Sequence.Cauchy_iff_convergent (a:Sequence) : -/
-/-   a.IsCauchy ↔ a.Convergent := by -/
-/-   -- This proof is written to follow the structure of the original text. -/
-/-   refine ⟨ ?_, IsCauchy.convergent ⟩; intro h -/
-/-   have ⟨ ⟨ L_plus, hL_plus ⟩, ⟨ L_minus, hL_minus ⟩ ⟩ := -/
-/-     finite_limsup_liminf_of_bounded (bounded_of_cauchy h) -/
-/-   use L_minus; simp [tendsTo_iff_eq_limsup_liminf, hL_minus, hL_plus] -/
-/-   have hlow : 0 ≤ L_plus - L_minus := by -/
-/-     have := a.liminf_le_limsup; simp [hL_minus, hL_plus] at this; grind -/
-/-   have hup (ε:ℝ) (hε: ε>0) : L_plus - L_minus ≤ 2*ε := by -/
-/-     specialize h ε hε; choose N hN hsteady using h -/
-/-     have hN0 : N ≥ (a.from N).m := by grind -/
-/-     have hN1 : (a.from N).seq N = a.seq N := by grind -/
-/-     have h1 : (a N - ε:ℝ) ≤ (a.from N).inf := by -/
-/-       apply inf_ge_lower; grind [Real.dist_eq, abs_le',EReal.coe_le_coe_iff] -/
-/-     have h2 : (a.from N).inf ≤ L_minus := by -/
-/-       simp_rw [←hL_minus, liminf, lowerseq]; apply le_sSup; simp; use N -/
-/-     have h3 : (a.from N).sup ≤ (a N + ε:ℝ) := by -/
-/-       apply sup_le_upper; grind [EReal.coe_le_coe_iff, Real.dist_eq, abs_le'] -/
-/-     have h4 : L_plus ≤ (a.from N).sup := by -/
-/-       simp_rw [←hL_plus, limsup, upperseq]; apply sInf_le; simp; use N -/
-/-     replace h1 := h1.trans h2 -/
-/-     replace h4 := h4.trans h3 -/
-/-     grind [EReal.coe_le_coe_iff] -/
-/-   obtain hlow | hlow := le_iff_lt_or_eq.mp hlow -/
-/-   . specialize hup ((L_plus - L_minus)/3) ?_ <;> linarith -/
-/-   grind -/
-
-/- /-- Exercise 6.4.6 -/ -/
-/- theorem Sequence.sup_not_strict_mono : ∃ (a b:ℕ → ℝ), (∀ n, a n < b n) ∧ (a:Sequence).sup ≠ (b:Sequence).sup := by -/
-/-   sorry -/
-
-/- /- Exercise 6.4.7 -/ -/
-/- def Sequence.tendsTo_real_iff : -/
-/-   Decidable (∀ (a:Sequence) (x:ℝ), a.TendsTo x ↔ a.abs.TendsTo x) := by -/
-/-   -- The first line of this construction should be `apply isTrue` or `apply isFalse`. -/
-/-   sorry -/
-
-/- /-- This definition is needed for Exercises 6.4.8 and 6.4.9. -/ -/
-/- abbrev Sequence.ExtendedLimitPoint (a:Sequence) (x:EReal) : Prop := if x = ⊤ then ¬ a.BddAbove else if x = ⊥ then ¬ a.BddBelow else a.LimitPoint x.toReal -/
-
-/- /-- Exercise 6.4.8 -/ -/
-/- theorem Sequence.extended_limit_point_of_limsup (a:Sequence) : a.ExtendedLimitPoint a.limsup := by sorry -/
-
-/- /-- Exercise 6.4.8 -/ -/
-/- theorem Sequence.extended_limit_point_of_liminf (a:Sequence) : a.ExtendedLimitPoint a.liminf := by sorry -/
-
-/- theorem Sequence.extended_limit_point_le_limsup {a:Sequence} {L:EReal} (h:a.ExtendedLimitPoint L): L ≤ a.limsup := by sorry -/
-
-/- theorem Sequence.extended_limit_point_ge_liminf {a:Sequence} {L:EReal} (h:a.ExtendedLimitPoint L): L ≥ a.liminf := by sorry -/
-
-/- /-- Exercise 6.4.9 -/ -/
-/- theorem Sequence.exists_three_limit_points : ∃ a:Sequence, ∀ L:EReal, a.ExtendedLimitPoint L ↔ L = ⊥ ∨ L = 0 ∨ L = ⊤ := by sorry -/
-
-/- /-- Exercise 6.4.10 -/ -/
-/- theorem Sequence.limit_points_of_limit_points {a b:Sequence} {c:ℝ} (hab: ∀ n ≥ b.m, a.LimitPoint (b n)) (hbc: b.LimitPoint c) : a.LimitPoint c := by sorry -/
+/-- Example 6.4.15 -/
+example : ((fun (n:ℕ) ↦ (2:ℝ)^(-(n:ℤ))):Sequence).TendsTo 0 := by
+  set a := ((fun (n:ℕ) ↦ (0:ℝ) ):Sequence)
+  set c := ((fun (n:ℕ) ↦ 1/(n+1:ℝ)):Sequence)
+  set b := ((fun (n:ℕ) ↦ (2:ℝ)^(-(n:ℤ))):Sequence)
+  have hm : b.m = a.m ∧ c.m = a.m := by
+    simp[a,b,c]
+  apply Sequence.lim_of_between hm
+  . intro n hn 
+    simp at hn
+    lift n to ℕ using hn
+    simp[a,b,c]
+    rw[inv_le_inv₀ (by positivity) (by positivity)]
+    norm_cast
+    induction n
+    <;> omega
+  simp[a]
+  intro ε hε 
+  use 0;simp
+  intro n hn
+  simp
+  grind
+  obtain ⟨hhcon, hhlim⟩  := Sequence.lim_harmonic
+  have:= Sequence.lim_def hhcon
+  rw[hhlim] at this
+  simpa[c]
 
 
-/- end Chapter6 -/
+abbrev Sequence.abs (a:Sequence) : Sequence where
+  m := a.m
+  seq n := |a n|
+  vanish n hn := by simp [a.vanish n hn]
+
+
+/-- Corollary 6.4.17 (Zero test for sequences) / Exercise 6.4.7 -/
+theorem Sequence.tendsTo_zero_iff (a:Sequence) :
+  a.TendsTo (0:ℝ) ↔ a.abs.TendsTo (0:ℝ) := by
+    constructor
+    . intro ha
+      peel ha with ε hε N hN n hn hclose
+      simpa[hn] using hclose 
+    intro hpos
+    have hneg : (- (a.abs)).TendsTo 0 := by
+      rw[← neg_zero]
+      apply tendsTo_neg hpos
+    apply lim_of_between (a:=-a.abs) (c:= a.abs) ?_ ?_ hneg hpos
+    . simp;rfl
+    . intro n
+      simp
+      intro h
+      refine ⟨neg_abs_le (a.seq n) , le_abs_self (a.seq n)⟩ 
+
+/-- Theorem 6.4.18 (Completeness of the reals) -/
+theorem Sequence.Cauchy_iff_convergent (a:Sequence) :
+  a.IsCauchy ↔ a.Convergent := by
+  -- This proof is written to follow the structure of the original text.
+  refine ⟨ ?_, IsCauchy.convergent ⟩; intro h
+  have ⟨ ⟨ L_plus, hL_plus ⟩, ⟨ L_minus, hL_minus ⟩ ⟩ :=
+    finite_limsup_liminf_of_bounded (bounded_of_cauchy h)
+  use L_minus; simp [tendsTo_iff_eq_limsup_liminf, hL_minus, hL_plus]
+  have hlow : 0 ≤ L_plus - L_minus := by
+    have := a.liminf_le_limsup; simp [hL_minus, hL_plus] at this; grind
+  have hup (ε:ℝ) (hε: ε>0) : L_plus - L_minus ≤ 2*ε := by
+    specialize h ε hε; choose N hN hsteady using h
+    have hN0 : N ≥ (a.from N).m := by grind
+    have hN1 : (a.from N).seq N = a.seq N := by grind
+    have h1 : (a N - ε:ℝ) ≤ (a.from N).inf := by
+      apply inf_ge_lower; grind [Real.dist_eq, abs_le',EReal.coe_le_coe_iff]
+    have h2 : (a.from N).inf ≤ L_minus := by
+      simp_rw [←hL_minus, liminf, lowerseq]; apply le_sSup; simp; use N
+    have h3 : (a.from N).sup ≤ (a N + ε:ℝ) := by
+      apply sup_le_upper; grind [EReal.coe_le_coe_iff, Real.dist_eq, abs_le']
+    have h4 : L_plus ≤ (a.from N).sup := by
+      simp_rw [←hL_plus, limsup, upperseq]; apply sInf_le; simp; use N
+    replace h1 := h1.trans h2
+    replace h4 := h4.trans h3
+    grind [EReal.coe_le_coe_iff]
+  obtain hlow | hlow := le_iff_lt_or_eq.mp hlow
+  . specialize hup ((L_plus - L_minus)/3) ?_ <;> linarith
+  grind
+
+/-- Exercise 6.4.6 -/
+lemma Sequence.neg_harmonic_sup_zero {k:ℝ} (hk : k < 0) : (harmonic_k k).sup = 0 := by
+  have hlim : lim (harmonic_k k) = 0:= by apply harmonic_k_lim
+  rw[← EReal.coe_zero,← hlim]
+  symm
+  apply lim_of_monotone  
+  . use 0
+    intro n hn
+    simp[hn]
+    apply le_of_lt 
+    apply (div_neg_of_neg_of_pos hk)
+    positivity
+  . intro n hn
+    simp[hn, show 0 ≤ n+1 by linarith]
+    simp at hn
+    lift n to ℕ using hn
+    simp
+    rw[← neg_le_neg_iff, neg_div',neg_div']
+    gcongr <;> linarith
+
+theorem Sequence.sup_not_strict_mono : ∃ (a b:ℕ → ℝ), (∀ n, a n < b n) ∧ ¬ (a:Sequence).sup < (b:Sequence).sup := by
+  set fa := (fun (n:ℕ) ↦ -(2:ℝ)/(n+1))
+  set fb := (fun (n:ℕ) ↦ -(1:ℝ)/(n+1))
+  use fa,fb
+  split_ands
+  . intro n; simp[fa,fb];gcongr;simp
+  rw[ show (fa:Sequence) = harmonic_k (-2)  by rfl,
+    show (fb:Sequence) = harmonic_k (-1)  by rfl]
+  simp[neg_harmonic_sup_zero]
+
+
+/- Exercise 6.4.7 -/
+def Sequence.tendsTo_real_iff :
+  Decidable (∀ (a:Sequence) (x:ℝ), a.TendsTo x ↔ a.abs.TendsTo x) := by
+  -- The first line of this construction should be `apply isTrue` or `apply isFalse`.
+  apply isFalse
+  push_neg
+  use const (-2) 0, -2
+  left
+  refine⟨tendsTo_const (-2) 0, ?_ ⟩ 
+  simp
+  use 1; simp
+  intro N hN
+  use N; simp[hN,dist]
+  norm_num
+
+
+/-- This definition is needed for Exercises 6.4.8 and 6.4.9. -/
+abbrev Sequence.ExtendedLimitPoint (a:Sequence) (x:EReal) : Prop := if x = ⊤ then ¬ a.BddAbove else if x = ⊥ then ¬ a.BddBelow else a.LimitPoint x.toReal
+
+/-- Exercise 6.4.8 -/
+theorem Sequence.extended_limit_point_of_limsup (a:Sequence) : a.ExtendedLimitPoint a.limsup := by
+  simp[ExtendedLimitPoint]
+  split_ifs with htop hbot
+  . have has : a.sup = ⊤ := by
+      have := limsup_le_sup a
+      simpa[htop] using this
+    rw[sSup_eq_top] at has
+    intro x; specialize has x
+    simp at has; obtain ⟨an, ⟨⟨n,hn,rfl⟩ ,han⟩ ⟩ := has  
+    use n;simp_all
+  . have hai : a.inf = ⊥ := by
+      have : a.inf ≤ ⊥ := by
+        apply le_trans (inf_le_liminf a) 
+        apply le_trans (liminf_le_limsup a)
+        simp[hbot]
+      simpa
+    rw[sInf_eq_bot] at hai
+    intro x;specialize hai x; simp at hai
+    obtain ⟨an, ⟨⟨n,hn,rfl⟩ ,han⟩ ⟩ := hai 
+    use n; simp_all
+  have : a.limsup.IsFinite := by
+    by_contra! hinfty
+    rw[← EReal.infinite_iff_not_finite] at hinfty
+    tauto
+  obtain ⟨s,hs⟩ := this 
+  simp[← hs]
+  symm at hs
+  apply limit_point_of_limsup  hs
+
+/-- Exercise 6.4.8 -/
+theorem Sequence.extended_limit_point_of_liminf (a:Sequence) : a.ExtendedLimitPoint a.liminf := by
+  simp[ExtendedLimitPoint]
+  split_ifs with htop hbot
+  . have has : a.sup = ⊤ := by
+      have : a.sup ≥ ⊤ := by
+        apply ge_trans (limsup_le_sup a) 
+        apply ge_trans (liminf_le_limsup a)
+        simp[htop]
+      simpa
+    rw[sSup_eq_top] at has
+    intro x; specialize has x
+    simp at has; obtain ⟨an, ⟨⟨n,hn,rfl⟩ ,han⟩ ⟩ := has  
+    use n;simp_all
+  . have hai : a.inf = ⊥ := by
+      have := inf_le_liminf a
+      simpa[hbot] using this
+    rw[sInf_eq_bot] at hai
+    intro x;specialize hai x; simp at hai
+    obtain ⟨an, ⟨⟨n,hn,rfl⟩ ,han⟩ ⟩ := hai 
+    use n; simp_all
+  apply limit_point_of_liminf
+  symm; exact EReal.coe_toReal htop hbot
+
+theorem Sequence.extended_limit_point_le_limsup {a:Sequence} {L:EReal} (h:a.ExtendedLimitPoint L): L ≤ a.limsup := by
+  simp[ExtendedLimitPoint] at h
+  split_ifs at h with htop hbot 
+  . rw[htop,top_le_iff]
+    apply limsup_of_unbounded_above
+    simp[h]
+  . simp[hbot]
+  have := limit_point_le_limsup h
+  rwa[EReal.coe_toReal htop hbot] at this
+
+theorem Sequence.extended_limit_point_ge_liminf {a:Sequence} {L:EReal} (h:a.ExtendedLimitPoint L): L ≥ a.liminf := by
+  simp[ExtendedLimitPoint] at h
+  split_ifs at h with htop hbot 
+  . simp[htop]
+  . simp only[hbot,le_bot_iff]
+    apply liminf_of_unbounded_below
+    simp[h]
+  have := liminf_le_limit_point h
+  rwa[EReal.coe_toReal htop hbot] at this
+
+end Chapter6
+/-- Exercise 6.4.9 -/
+abbrev Nat.NextTriple (N:ℕ) := if (N%3=0) then N + 3 else if N %3 = 1 then N+2 else N + 1
+lemma Nat.NextTriple_gt (n:ℕ) : n.NextTriple > n := by
+  simp[NextTriple];split_ifs<;>simp
+
+lemma Nat.NextTriple_triple (n:ℕ) : n.NextTriple %3 = 0 := by
+  simp[NextTriple];split_ifs<;>omega
+namespace Chapter6
+abbrev Sequence.tripod : Sequence := fun (n:ℕ) ↦ if n %3 = 0 then (0:ℝ) else if n %3 = 1 then (n) else -(n)
+lemma Sequence.tripos_unbounded_above: ¬ tripod.BddAbove := by
+  simp; intro r
+  choose N hN using exists_nat_gt r
+  set N' := N.NextTriple + 1
+  have hN'1 : N' %3 = 1 := by
+    simp[N']
+    have := N.NextTriple_triple
+    omega
+  use N'
+  have hN'N : N' > N := by
+    simp[N']
+    have := N.NextTriple_gt
+    omega
+  simp[hN'1]
+  apply lt_trans hN
+  simpa
+
+lemma Sequence.tripos_unbounded_below: ¬ tripod.BddBelow := by
+  simp; intro r
+  choose N hN using exists_nat_gt (-r)
+  rw[neg_lt] at hN
+  set N' := N.NextTriple + 2
+  have hN'2 : N' %3 = 2 := by
+    simp[N']
+    have := N.NextTriple_triple
+    omega
+  use N'
+  have hN'N : N' > N := by
+    simp[N']
+    have := N.NextTriple_gt
+    omega
+  simp[hN'2]
+  rify at hN'N
+  rw[← neg_lt_neg_iff] at hN'N
+  apply lt_trans  hN'N
+  simpa
+
+
+
+lemma Exercise_6_4_9_lt {l : ℝ} {n N : ℕ} (hl : l≠0) (hNl : |2 * l| < N) (hnN : N ≤ n) : |l / 2| < dist (n:ℝ) l := by
+  have : |l/2| < |l|:= by
+    rw[abs_div];simp[hl]
+  apply lt_trans this
+  by_cases hl0 : l > 0
+  . rw[abs_of_pos hl0]
+    rw[abs_of_pos (by positivity)] at hNl
+    have hnl : n - l > l := by
+      rify at hnN
+      linarith
+    simp[dist]
+    rwa[abs_of_pos (by linarith)]
+  replace hl0 : l < 0 := by
+    simp at hl0
+    apply lt_of_le_of_ne hl0 hl
+  set l' := -l
+  have hl' : l' > 0 := by simp[l',hl0]
+  have hll : l = -l' := by grind
+  rw[hll] at hNl ⊢ 
+  simp at hNl
+  rw[abs_of_pos (by positivity)] at hNl
+  simp[dist]
+  rw[abs_of_pos hl', abs_of_pos (by linarith)]
+  simp;rify
+  calc
+    _ < l' := hl'
+    _ < 2 * l' := by exact lt_two_mul_self hl'
+    _ < N := hNl
+    _ ≤ n := by simp[hnN]
+
+
+theorem Sequence.exists_three_limit_points : ∃ a:Sequence, ∀ L:EReal, a.ExtendedLimitPoint L ↔ L = ⊥ ∨ L = 0 ∨ L = ⊤ := by
+  use tripod;intro L
+  obtain ⟨l,rfl⟩ | rfl | rfl := L.def 
+  . simp [ExtendedLimitPoint]
+    constructor
+    . 
+      contrapose!
+      intro hl0 
+      simp
+      use |l/2|; refine ⟨by simp[hl0],?_⟩ 
+      choose N hN using exists_nat_gt |2*l|
+      use N;simp
+      intro n hn hNn
+      lift n to ℕ using hn
+      simp at hNn
+      simp[hNn]
+      split_ifs with h0 h1
+      . simp[abs_div,hl0]
+      . exact Exercise_6_4_9_lt hl0 hN hNn
+      set l' := -l
+      rw[show l = -l' by simp[l']] at hN ⊢
+      simp[neg_div]
+      simp[mul_neg] at hN
+      exact Exercise_6_4_9_lt (by simp[l',hl0]) hN hNn
+    rintro rfl
+    intro ε hε N hN
+    simp at hN
+    lift N to ℕ using hN
+    have hNle := le_of_lt (N.NextTriple_gt)
+    have hNt := N.NextTriple_triple
+    set N' := N.NextTriple ;use N'
+    simp[hNle,hNt];linarith
+  . simp[ExtendedLimitPoint,tripos_unbounded_above]
+  simp[ExtendedLimitPoint,tripos_unbounded_below]
+
+
+
+/-- Exercise 6.4.10 -/
+theorem Sequence.limit_points_of_limit_points {a b:Sequence} {c:ℝ} (hab: ∀ n ≥ b.m, a.LimitPoint (b n)) (hbc: b.LimitPoint c) : a.LimitPoint c := by
+  intro ε hε N hN
+  specialize hbc (ε/2) (half_pos hε) (max N b.m) (by simp)
+  choose n hn hclose using hbc
+  simp at hn
+  simp [hn] at hclose
+  specialize hab n hn.2 (ε/2) (half_pos hε) n (by linarith)
+  choose nn hnn hnnclose using hab
+  simp at hnn
+  simp[hnn] at hnnclose
+  use nn;split_ands
+  . grind
+  simp[hnn, show N ≤ nn by grind]
+  have :=  dist_triangle (a nn) (b n) c
+  linarith
+end Chapter6
