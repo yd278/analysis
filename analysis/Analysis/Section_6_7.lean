@@ -32,49 +32,106 @@ lemma ratPow_continuous {x α:ℝ} (hx: x > 0) {q: ℕ → ℚ}
  ((fun n ↦ x^(q n:ℝ)):Sequence).Convergent := by
   -- This proof is rearranged slightly from the original text.
   choose M hM hbound using bounded_of_convergent ⟨ α, hq ⟩
-  obtain h | rfl | h := lt_trichotomy x 1
-  . sorry
-  . simp; exact ⟨ 1, lim_of_const 1 ⟩
+  wlog h : 1 < x
+  . 
+    simp at h
+    obtain rfl| h := eq_or_lt_of_le h
+    . simp;exact ⟨ 1, lim_of_const 1 ⟩
+    set x' := x⁻¹ 
+    have hx' : x' > 0 := by positivity
+    have h' : x' > 1 := by simpa[x',one_lt_inv₀ hx]
+    specialize this hx' hq M hM hbound h'
+    set a' := (fun (n:ℕ) ↦ (x') ^ (q n:ℝ):Sequence)
+    have ha : (a'⁻¹) = (fun (n:ℕ) ↦ x ^(q n:ℝ)) := by
+      simp[a']
+      rw[inv_coe]
+      ext n; simp
+      simp
+      split_ifs with hnn
+      . lift n to ℕ using hnn
+        simp
+        rw[Real.inv_rpow]
+        simp
+        linarith
+      rfl
+    rw[← ha] 
+    choose L ha' using this
+    use L⁻¹ 
+    apply tendsTo_inv ha'
+    rintro rfl
+    specialize ha' (x' ^ (-M) / 2) (by positivity)
+    choose Ncon hNcon hNa' using ha'
+    simp at hNcon 
+    specialize hNa' Ncon (by simpa)
+    simp[hNcon,a'] at hNa'
+    rw[abs_of_pos (by positivity)] at hNa'
+    simp[a'] at hNcon
+    lift Ncon to ℕ using hNcon
+    simp at hNa'
+    have hact : x' ^ (-M) /2 < x' ^ (q Ncon :ℝ) := by
+      calc
+       _ < x' ^ (-M) := by simp; positivity
+       _ ≤ _ := by
+         rw[Real.rpow_le_rpow_left_iff h']
+         have : |(q Ncon:ℝ)| ≤ M := by
+           specialize hbound Ncon
+           simpa
+         exact neg_le_of_abs_le this
+    linarith
   have h': 1 ≤ x := by linarith
   rw [←Cauchy_iff_convergent]
   intro ε hε
+  -- Part I
+  -- wlog. qn ≥ qm dist of x^(q n) and x^(q m) is x^(q m) * (x ^ (q n - q m) - 1 ) 
+  -- which is less than x^M * (x ^ (q n - q m) - 1 )
+  -- Part II
+  -- Since (x ^ 1/K) tends to to 1, we can find (x ^ 1/K - 1) ≤ ε/(x^M)
+  -- Hence x^M * (x^1/K - 1) ≤ ε
+  -- Part III
+  -- Now we show that we can find the threshold N for all n m ≥ N, 1< (x ^ (qn - qm)) < x^1/K 
+  -- first is simple: x > 1
+  -- second can be shown by q is cauchy
+ 
+  -- this is Part II of the skeleton: 
   choose K hK hclose using lim_of_roots hx (ε*x^(-M)) (by positivity)
+  -- And Part III
   choose N hN hq using IsCauchy.convergent ⟨ α, hq ⟩ (1/(K+1:ℝ)) (by positivity)
-  simp [CloseSeq, dist_eq] at hclose hK hN
+  simp [Real.CloseSeq, Real.dist_eq] at hclose hK hN
   lift N to ℕ using hN
   lift K to ℕ using hK
   specialize hclose K (by simp) (by simp); simp at hclose
+
   use N, by simp
   intro n hn m hm; simp at hn hm
   specialize hq n (by simp [hn]) m (by simp [hm])
-  simp [Close, hn, hm, dist_eq] at hq ⊢
+  simp [hn, hm, Real.dist_eq] at hq ⊢
   have : 0 ≤ (N:ℤ) := by simp
   lift n to ℕ using by linarith
   lift m to ℕ using by linarith
   simp at hn hm hq ⊢
   obtain hqq | hqq := le_or_gt (q m) (q n)
-  . replace : x^(q m:ℝ) ≤ x^(q n:ℝ) := by rw [rpow_le_rpow_left_iff h]; norm_cast
+  . replace : x^(q m:ℝ) ≤ x^(q n:ℝ) := by rw [Real.rpow_le_rpow_left_iff h]; norm_cast
     rw [abs_of_nonneg (by linarith)]
     calc
-      _ = x^(q m:ℝ) * (x^(q n - q m:ℝ) - 1) := by ring_nf; rw [←rpow_add (by linarith)]; ring_nf
+      _ = x^(q m:ℝ) * (x^(q n - q m:ℝ) - 1) := by ring_nf; rw [←Real.rpow_add (by linarith)]; ring_nf
       _ ≤ x^M * (x^(1/(K+1:ℝ)) - 1) := by
         gcongr <;> try exact h'
-        . rw [sub_nonneg]; apply one_le_rpow h'; norm_cast; linarith
+        . rw [sub_nonneg]; apply Real.one_le_rpow h'; norm_cast; linarith
         . specialize hbound m; simp_all [abs_le']
         grind [abs_le']
       _ ≤ x^M * (ε * x^(-M)) := by gcongr; grind [abs_le']
-      _ = ε := by rw [mul_comm, mul_assoc, ←rpow_add]; simp; linarith
-  replace : x^(q n:ℝ) ≤ x^(q m:ℝ) := by rw [rpow_le_rpow_left_iff h]; norm_cast; linarith
+      _ = ε := by rw [mul_comm, mul_assoc, ←Real.rpow_add]; simp; linarith
+  replace : x^(q n:ℝ) ≤ x^(q m:ℝ) := by rw [Real.rpow_le_rpow_left_iff h]; norm_cast; linarith
   rw [abs_of_nonpos (by linarith)]
   calc
-    _ = x^(q n:ℝ) * (x^(q m - q n:ℝ) - 1) := by ring_nf; rw [←rpow_add]; ring_nf; positivity
+    _ = x^(q n:ℝ) * (x^(q m - q n:ℝ) - 1) := by ring_nf; rw [←Real.rpow_add]; ring_nf; positivity
     _ ≤ x^M * (x^(1/(K+1:ℝ)) - 1) := by
       gcongr <;> try exact h'
-      . rw [sub_nonneg]; apply one_le_rpow h'; norm_cast; linarith
+      . rw [sub_nonneg]; apply Real.one_le_rpow h'; norm_cast; linarith
       . specialize hbound n; simp_all [abs_le']
       grind [abs_le']
     _ ≤ x^M * (ε * x^(-M)) := by gcongr; simp_all [abs_le']
-    _ = ε := by rw [mul_comm, mul_assoc, ←rpow_add]; simp; positivity
+    _ = ε := by rw [mul_comm, mul_assoc, ←Real.rpow_add]; simp; positivity
 
 
 lemma ratPow_lim_uniq {x α:ℝ} (hx: x > 0) {q q': ℕ → ℚ}
@@ -89,7 +146,7 @@ lemma ratPow_lim_uniq {x α:ℝ} (hx: x > 0) {q q': ℕ → ℚ}
     convert (lim_mul (b := (fun n ↦ x^(r n:ℝ):Sequence)) (ratPow_continuous hx hq') this.1).2
     . rw [mul_coe]
       rcongr _ n
-      rw [←rpow_add (by linarith)]
+      rw [←Real.rpow_add (by linarith)]
       simp [r]
     grind
   intro ε hε
@@ -107,15 +164,15 @@ lemma ratPow_lim_uniq {x α:ℝ} (hx: x > 0) {q q': ℕ → ℚ}
   refine ⟨ N, by simp_all, ?_ ⟩
   intro n hn; simp at hn
   specialize h3 K (by simp [K]); specialize h4 K (by simp [K])
-  simp [hn, dist_eq, abs_le', K, -Nat.cast_max] at h3 h4 ⊢
+  simp [hn, Real.dist_eq, abs_le', K, -Nat.cast_max] at h3 h4 ⊢
   specialize hr n (by simp [hn])
-  simp [Close, hn, abs_le'] at hr
+  simp [Real.Close, hn, abs_le'] at hr
   obtain h | rfl | h := lt_trichotomy x 1
   . sorry
   . simp; linarith
   have h5 : x ^ (r n.toNat:ℝ) ≤ x^(K + 1:ℝ)⁻¹ := by gcongr; linarith; simp_all [r]
   have h6 : (x^(K + 1:ℝ)⁻¹)⁻¹ ≤ x ^ (r n.toNat:ℝ) := by
-    rw [←rpow_neg (by linarith)]
+    rw [←Real.rpow_neg (by linarith)]
     gcongr; linarith
     simp [r]; linarith
   split_ands <;> linarith
@@ -160,7 +217,7 @@ theorem Real.ratPow_add {x:ℝ} (hx: x > 0) (q r:ℝ) : rpow x (q+r) = rpow x q 
   have h1 := ratPow_continuous hx hq'
   have h2 := ratPow_continuous hx hr'
   rw [rpow_eq_lim_ratPow hx hq', rpow_eq_lim_ratPow hx hr', rpow_eq_lim_ratPow hx hq'r', ←(lim_mul h1 h2).2, mul_coe]
-  rcongr n; rw [←rpow_add]; simp; linarith
+  rcongr n; rw [←Real.rpow_add]; simp; linarith
 
 
 /-- Proposition 6.7.3(b) / Exercise 6.7.1 -/
