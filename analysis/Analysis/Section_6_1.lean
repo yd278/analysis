@@ -538,7 +538,7 @@ abbrev Sequence.IsBounded (a:Sequence) : Prop := ∃ M ≥ 0, a.BoundedBy M
 /-- Definition 6.1.16 -/
 lemma Sequence.isBounded_def (a:Sequence) :
   a.IsBounded ↔ ∃ M ≥ 0, a.BoundedBy M := by rfl
-lemma Sequence.IsBounded.steady {a: Sequence} {ε :ℝ }(ha: ε.Steady a) (hε : ε ≥ 0) : ∃M ≥ 0 , a.BoundedBy M := by
+lemma Sequence.IsBounded.steady {a: Sequence} {ε :ℝ }(ha: ε.Steady a) (hε : ε ≥ 0) : a.IsBounded := by
   specialize ha a.m (by simp)
   set a₀ := |a a.m|
   observe ha₀: a₀ ≥ 0
@@ -598,43 +598,56 @@ lemma Sequence.IsBounded.finite {N:ℕ} (a: ℕ → ℝ) (ha : ∀ n ≥ N, a n 
     . right; simp[hnk]
     left; simpa[hnk] using hMb
   simp[hn] at hMb ⊢ 
+lemma Sequence.unbounded_trans {a:Sequence} (ha : ¬ a.IsBounded ) {n :ℤ} (hn : n ≥ a.m ):
+    ¬ (a.from n).IsBounded := by
+      induction' n,hn using Int.le_induction with k hk hind
+      . have :a.from a.m = a := by 
+          ext m
+          . simp
+          simp
+          intro h
+          have := a.vanish m h
+          simp[this]
+        rwa[this]
+      contrapose! hind
+      choose bon hbon habon using hind
+      use max bon |a k|
+      split_ands
+      . simp[hbon]
+      intro n 
+      by_cases hnk : n = k
+      . simp[hnk]
+        split_ifs with hkam
+        <;>right<;>simp
+      by_cases hnk1 : n ≥ k+1
+      . 
+        specialize habon n
+        calc
+          _ = |(a.from (k+1)) n| := by
+            rw[abs_eq_abs];left
+            simp[hnk1]
+            split_ifs with hamkn hamn hnam
+            . rfl
+            . apply a.vanish
+              linarith
+            . simp[hnam] at hamkn
+              omega
+            rfl
+          _ ≤ bon := habon
+          _ ≤ _ := by simp
+      replace hnk1 : ¬ k ≤ n := by omega
+      simp[hnk1]
 
+lemma Sequence.IsBounded.trans {a:Sequence}  {n :ℤ} (hn : n ≥ a.m )(ha :  (a.from n).IsBounded ):
+    a.IsBounded  := by
+      contrapose ha
+      exact unbounded_trans ha hn
 theorem Sequence.bounded_of_cauchy {a:Sequence} (h: a.IsCauchy) : a.IsBounded := by
   specialize h 1 (by simp)
   choose N hN hste using h
-  rw[ge_iff_le,le_iff_exists_nonneg_add] at hN
-  choose c hc hdiff using hN
-  lift c to ℕ using hc
   have hbon1 := Sequence.IsBounded.steady (hste) (by simp)
-  obtain ⟨u1, hu1, hbon1⟩ := hbon1
-  set a' : ℕ  → ℝ := fun i ↦ if i < c then a (a.m +i) else 0
-  have ha' : ∀ n > c, a' n = 0 := by simp[a'];intro n hn hn';linarith
-  choose u2 hu2 hbon2 using Sequence.IsBounded.finite a' ha'
-  use max u1 u2
-  split_ands
-  . simp;tauto
-  intro i
-  by_cases hi : i >= N
-  . specialize hbon1 i
-    rw[from_eval _ hi] at hbon1
-    simp;left;assumption
-  push_neg at hi
-  by_cases hi' : i >= a.m
-  . 
-    rw[ge_iff_le,le_iff_exists_nonneg_add] at hi'
-    choose c' hc hca using hi'
-    lift c' to ℕ using hc
-    have hcc': c' < c := by
-      simpa[← hca,← hdiff] using hi
-    have : a i = a' c' := by
-      simp[a',hca]
-      intro hcon;linarith
-    simp[this];right
-    specialize hbon2 c' 
-    assumption
-  push_neg at hi'
-  have := a.vanish i hi'
-  simp[this];tauto
+  exact IsBounded.trans hN hbon1
+
 
 
 /-- Corollary 6.1.17 -/

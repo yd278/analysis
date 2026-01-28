@@ -335,10 +335,8 @@ lemma Sequence.sup_of_unbounded_above {a:Sequence} (ha : ¬ a.BddAbove) : a.sup 
   have := le_sup (show a.m ≥ a.m by simp)
   rw[hbot] at this
   simp at this
-lemma Sequence.upperseq_of_unbounded_above {a:Sequence} (ha : ¬ a.BddAbove) {n:ℤ} (hn : n ≥ a.m):
-    a.upperseq n = ⊤ := by
-      unfold Sequence.upperseq
-      apply Sequence.sup_of_unbounded_above
+lemma Sequence.unbounded_above_trans {a : Sequence } (ha : ¬ a.BddAbove) (n:ℤ) (hn: n ≥ a.m):
+    ¬ (a.from n).BddAbove := by
       induction' n,hn using Int.le_induction with k hk hind
       . have :a.from a.m = a := by 
           ext m
@@ -368,6 +366,12 @@ lemma Sequence.upperseq_of_unbounded_above {a:Sequence} (ha : ¬ a.BddAbove) {n:
       rw[this] at hbon
       apply le_trans hbon
       simp
+
+lemma Sequence.upperseq_of_unbounded_above {a:Sequence} (ha : ¬ a.BddAbove) {n:ℤ} (hn : n ≥ a.m):
+    a.upperseq n = ⊤ := by
+      unfold Sequence.upperseq
+      apply Sequence.sup_of_unbounded_above
+      apply unbounded_above_trans ha _ hn
 lemma Sequence.limsup_of_unbounded_above { a:Sequence} (ha : ¬ a.BddAbove):
     a.limsup = ⊤ := by
       unfold limsup
