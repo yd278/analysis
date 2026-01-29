@@ -168,7 +168,18 @@ lemma ratPow_lim_uniq {x α:ℝ} (hx: x > 0) {q q': ℕ → ℚ}
   specialize hr n (by simp [hn])
   simp [Real.Close, hn, abs_le'] at hr
   obtain h | rfl | h := lt_trichotomy x 1
-  . sorry
+  . 
+    have h5 : x ^ (r n.toNat:ℝ) ≥ x^(K + 1:ℝ)⁻¹ := by
+      simp
+      rw[Real.rpow_le_rpow_left_iff_of_base_lt_one hx h]
+      simp_all[r]
+    have h6 : (x^(K + 1:ℝ)⁻¹)⁻¹ ≥ x ^ (r n.toNat:ℝ) := by
+      simp
+      rw [←Real.rpow_neg (by linarith)]
+      rw[Real.rpow_le_rpow_left_iff_of_base_lt_one hx h]
+      simp_all[r]
+      linarith
+    split_ands <;> linarith
   . simp; linarith
   have h5 : x ^ (r n.toNat:ℝ) ≤ x^(K + 1:ℝ)⁻¹ := by gcongr; linarith; simp_all [r]
   have h6 : (x^(K + 1:ℝ)⁻¹)⁻¹ ≤ x ^ (r n.toNat:ℝ) := by
@@ -204,7 +215,23 @@ lemma Real.rpow_of_rat_eq_ratPow {x:ℝ} (hx: x > 0) {q: ℚ} :
 
 /-- Proposition 6.7.3(a) / Exercise 6.7.1 -/
 theorem Real.ratPow_nonneg {x:ℝ} (hx: x > 0) (q:ℝ) : rpow x q ≥ 0 := by
-  sorry
+  choose q' hq' using eq_lim_of_rat q
+  rw[rpow_eq_lim_ratPow hx hq']
+  wlog h : ((fun (n:ℕ) ↦ x ^ (q' n:ℝ):Sequence).Convergent)
+  . simp[lim,h]
+  have := lim_def h
+  by_contra! hcon
+  set L := lim (fun (n:ℕ) ↦ x ^ (q' n:ℝ):Sequence) 
+  specialize this (-L/2) (by simpa)
+  choose N hN hclose using this
+  simp at hN
+  lift N to ℕ using hN
+  specialize hclose N
+  simp[dist] at hclose
+  have hcon : |x ^ (q' N:ℝ) - L| > -L := by
+    simp[lt_abs];left
+    positivity
+  linarith
 
 /-- Proposition 6.7.3(b) -/
 theorem Real.ratPow_add {x:ℝ} (hx: x > 0) (q r:ℝ) : rpow x (q+r) = rpow x q * rpow x r := by
