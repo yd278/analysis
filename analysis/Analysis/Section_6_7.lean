@@ -253,22 +253,6 @@ theorem Real.ratPow_add {x:ℝ} (hx: x > 0) (q r:ℝ) : rpow x (q+r) = rpow x q 
   rw [rpow_eq_lim_ratPow hx hq', rpow_eq_lim_ratPow hx hr', rpow_eq_lim_ratPow hx hq'r', ←(lim_mul h1 h2).2, mul_coe]
   rcongr n; rw [←Real.rpow_add]; simp; linarith
 
-/-- Proposition 6.7.3(c) / Exercise 6.7.1 -/
-theorem Real.ratPow_neg {x:ℝ} (hx: x > 0) (q:ℝ) : rpow x (-q) = 1 / rpow x q := by
-  sorry
-
-/-- Proposition 6.7.3(d) / Exercise 6.7.1 -/
-theorem Real.ratPow_mono {x y:ℝ} (hx: x > 0) (hy: y > 0) {q:ℝ} (h: q > 0) : x > y ↔ rpow x q > rpow y q := by
-  sorry
-
-/-- Proposition 6.7.3(e) / Exercise 6.7.1 -/
-theorem Real.ratPow_mono_of_gt_one {x:ℝ} (hx: x > 1) {q r:ℝ} : rpow x q > rpow x r ↔ q > r := by
-  sorry
-
-/-- Proposition 6.7.3(e) / Exercise 6.7.1 -/
-theorem Real.ratPow_mono_of_lt_one {x:ℝ} (hx0: 0 < x) (hx: x < 1) {q r:ℝ} : rpow x q < rpow x r ↔ q < r := by
-  sorry
-
 /-- Proposition 6.7.3(b) / Exercise 6.7.1 -/
 lemma Sequence.lim_pos_of_bounded_away {a : ℕ → ℝ} (ha: (a:Sequence).Convergent) {M : ℝ} (hM : M > 0) (haM : ∀n, a n ≥ M):
     lim (a:Sequence) > 0 := by
@@ -308,8 +292,264 @@ lemma Real.ratPow_pos {x:ℝ} (hx: x > 0) (q:ℝ) : rpow x q > 0 := by
   map_tacs[rw[Real.rpow_le_rpow_left_iff_of_base_lt_one hx h]; rw[Real.rpow_le_rpow_left_iff (by linarith)]]
   assumption'
 
+theorem Real.ratPow_neg {x:ℝ} (hx: x > 0) (q:ℝ) : rpow x (-q) = 1 / rpow x q := by
+  choose q' hq' using eq_lim_of_rat q
+  have hnq' := tendsTo_neg hq'
+  rw[neg_coe] at hnq'
+  norm_cast at hnq'
+  have hxq : rpow x q ≠ 0 := by
+    apply ne_of_gt
+    exact ratPow_pos hx q
+  have hconv := ratPow_continuous hx hq'
+  rw[rpow_eq_lim_ratPow hx hq'] at hxq ⊢
+  rw[rpow_eq_lim_ratPow hx hnq']
+  rw[one_div]
+  obtain ⟨_, heq⟩ := lim_inv hconv hxq 
+  rw[←heq]
+  congr
+  ext n; rfl
+  simp; split_ifs; rw[Real.rpow_neg]
+  linarith; simp
+  
+
+/-- Proposition 6.7.3(d) / Exercise 6.7.1 -/
+
+lemma Real.eq_lim_of_pos_rat_of_pos {x:ℝ} (hx : x > 0): ∃ q: ℕ → ℚ, ((fun n ↦ (q n:ℝ)):Sequence).TendsTo x ∧ ∀ n, q n > 0 := by
+  choose q' hq' using eq_lim_of_rat x
+  have hpos := hq' (x/2) (half_pos hx)
+  choose N hN hclose using hpos
+  simp at hN
+  lift N to ℕ using hN
+  have hres2 : ∀ n, 0 < q' (n + N) := by
+    intro n
+    specialize hclose (n + N) (by simp)
+    norm_cast at hclose
+    rw[Real.Close,Real.dist_eq, Sequence.from_eval,Sequence.eval_coe, abs_le ] at hclose
+    obtain ⟨hup, _ ⟩:= hclose 
+    rw[le_sub_iff_add_le'] at hup
+    ring_nf at hup
+    rify
+    apply lt_of_lt_of_le ?_ hup
+    simpa
+    simp
+  use fun n ↦ q' (n + N)
+  refine ⟨?_, by simpa⟩ 
+  rw[tendsTo_of_shift N] at hq'
+  convert hq'
+  simp; ext n
+  split_ifs with hn hN
+  . lift n to ℕ using hn
+    simp; norm_cast
+  . simp at hN;omega
+  simp
+
+lemma Real.eq_lim_of_rat_above (x:ℝ) :∃ q: ℕ → ℚ, ((fun n ↦ (q n:ℝ)):Sequence).TendsTo x ∧ ∀ n, q n ≥ x := by
+  have hpick (r:ℚ) : ∃ (p:ℚ), p ≥ x ∧ dist (p:ℝ) x ≤ dist (r:ℝ) x := by
+    by_cases hpos: r ≥ x
+    . use r
+    set ε := x - r
+    have hε : ε > 0 := by
+      simp[ε]
+      simpa using hpos
+    observe hu : x < x + ε 
+    choose p hpu hpl using exists_rat_btwn hu
+    use p;split_ands
+    linarith
+    simp[dist]
+    rw[← sub_pos] at hpu
+    rw[abs_sub_comm (r:ℝ) x, abs_of_pos hε,abs_of_pos hpu] 
+    linarith
+  choose r hr' using eq_lim_of_rat x
+  use fun n ↦ (hpick (r n)).choose 
+  split_ands
+  . peel hr' with ε hε N hN n hn hclose
+    simp at hN hn
+    lift N to ℕ using hN
+    lift n to ℕ using hn.1
+    simp[hn] at hclose ⊢ 
+    have hspec := ((hpick (r n)).choose_spec).2
+    linarith
+  intro n
+  have hspec := ((hpick (r n)).choose_spec).1
+  simpa
+
+lemma Real.eq_lim_of_rat_below (x:ℝ) :∃ q: ℕ → ℚ, ((fun n ↦ (q n:ℝ)):Sequence).TendsTo x ∧ ∀ n, q n ≤ x := by
+  have hpick (r:ℚ) : ∃ (p:ℚ), p ≤ x ∧ dist (p:ℝ) x ≤ dist (r:ℝ) x := by
+    by_cases hpos: r ≤ x
+    . use r
+    set ε := r - x
+    have hε : ε > 0 := by
+      simp[ε]
+      simpa using hpos
+    observe hu : x - ε < x
+    choose p hpu hpl using exists_rat_btwn hu
+    use p;split_ands
+    linarith
+    simp[dist]
+    rw[← sub_pos] at hpl
+    rw[abs_of_pos hε,abs_sub_comm,abs_of_pos hpl]
+    linarith
+  choose r hr' using eq_lim_of_rat x
+  use fun n ↦ (hpick (r n)).choose 
+  split_ands
+  . peel hr' with ε hε N hN n hn hclose
+    simp at hN hn
+    lift N to ℕ using hN
+    lift n to ℕ using hn.1
+    simp[hn] at hclose ⊢ 
+    have hspec := ((hpick (r n)).choose_spec).2
+    linarith
+  intro n
+  have hspec := ((hpick (r n)).choose_spec).1
+  simpa
+
+lemma Real.exists_two_rat_between {x y:ℝ} (hxy : x < y): ∃ p q:ℚ, x < p ∧ p < q ∧ q < y := by
+  choose p hpx hpy using exists_rat_btwn hxy
+  use p
+  choose q hpq hqy using exists_rat_btwn hpy
+  use q
+  simp_all
+  
+
+/-- Proposition 6.7.3(e) / Exercise 6.7.1 -/
+lemma Real.ratPow_lt_of_lt_of_gt_one {x:ℝ} (hx: x > 1) {q r:ℝ} (hqr: q < r) : rpow x q < rpow x r:= by
+  have hx0 : x > 0 := by linarith
+  choose q' hq' hqbelow using eq_lim_of_rat_below q
+  choose r' hr' hrabove using eq_lim_of_rat_above r
+  have hconvq := ratPow_continuous hx0 hq'
+  have hconvr := ratPow_continuous hx0 hr'
+  rw[rpow_eq_lim_ratPow hx0 hq', rpow_eq_lim_ratPow hx0 hr']
+  rw[← sub_pos]
+  choose hconvs hlimsub using lim_sub hconvr hconvq
+  rw [← hlimsub]
+  rw[sub_coe] at ⊢ hconvs
+  choose u v hqu huv hvr using exists_two_rat_between hqr
+  have hgap (n:ℕ): x ^ (r' n:ℝ) - x ^ (q' n:ℝ) ≥ x ^ (v:ℝ) - x ^ (u:ℝ) := by
+    specialize hqbelow n
+    specialize hrabove n
+    apply sub_le_sub
+    all_goals
+      rw[Real.rpow_le_rpow_left_iff hx]
+      linarith
+  apply lim_pos_of_bounded_away hconvs ?_ hgap
+  simp
+  rw[Real.rpow_lt_rpow_left_iff hx]
+  simpa
+
+
+
+lemma Real.ratPow_gt_of_lt_of_lt_one {x:ℝ} (hx0: 0 < x) (hx: x < 1) {q r:ℝ} (hqr: q < r) : rpow x q > rpow x r:= by
+  choose q' hq' hqbelow using eq_lim_of_rat_below q
+  choose r' hr' hrabove using eq_lim_of_rat_above r
+  have hconvq := ratPow_continuous hx0 hq'
+  have hconvr := ratPow_continuous hx0 hr'
+  rw[rpow_eq_lim_ratPow hx0 hq', rpow_eq_lim_ratPow hx0 hr']
+  simp[← sub_pos]
+  choose hconvs hlimsub using lim_sub hconvq hconvr
+  rw [← hlimsub]
+  rw[sub_coe] at ⊢ hconvs
+  choose u v hqu huv hvr using exists_two_rat_between hqr
+  have hgap (n:ℕ): x ^ (q' n:ℝ) - x ^ (r' n:ℝ) ≥ x ^ (u:ℝ) - x ^ (v:ℝ) := by
+    specialize hqbelow n
+    specialize hrabove n
+    apply sub_le_sub
+    all_goals
+      rw[Real.rpow_le_rpow_left_iff_of_base_lt_one hx0 hx]
+      linarith
+  simp
+  apply lim_pos_of_bounded_away hconvs ?_ hgap
+  simp
+  rw[Real.rpow_lt_rpow_left_iff_of_base_lt_one hx0 hx]
+  simpa
+theorem Real.ratPow_mono_of_gt_one {x:ℝ} (hx: x > 1) {q r:ℝ} : rpow x q > rpow x r ↔ q > r := by
+  constructor <;> intro h
+  . contrapose! h
+    obtain rfl | hlt := h.eq_or_lt
+    . simp
+    apply le_of_lt
+    exact ratPow_lt_of_lt_of_gt_one hx hlt
+  exact ratPow_lt_of_lt_of_gt_one hx h
+  
+
+/-- Proposition 6.7.3(e) / Exercise 6.7.1 -/
+theorem Real.ratPow_mono_of_lt_one {x:ℝ} (hx0: 0 < x) (hx: x < 1) {q r:ℝ} : rpow x q < rpow x r ↔ r < q := by
+  constructor <;> intro h
+  . contrapose! h
+    obtain rfl | hlt := h.eq_or_lt
+    . simp
+    apply le_of_lt
+    exact ratPow_gt_of_lt_of_lt_one hx0 hx hlt
+  exact ratPow_gt_of_lt_of_lt_one hx0 hx h
+
+/-- Proposition 6.7.3(f) / Exercise 6.7.1 -/
+theorem Real.ratPow_mul {x y:ℝ} (hx: x > 0) (hy: y > 0) (q:ℝ) : rpow (x*y) q = rpow x q * rpow y q := by
+  choose q' hq' using eq_lim_of_rat q
+  observe hxy : x * y > 0
+  rw[rpow_eq_lim_ratPow hx hq', rpow_eq_lim_ratPow hy hq', rpow_eq_lim_ratPow hxy hq']
+  have hxconv := ratPow_continuous hx hq'
+  have hyconv := ratPow_continuous hy hq'
+  choose hsconv hlimeq using lim_mul hxconv hyconv
+  rw[← hlimeq]
+  congr
+  ext n; rfl
+  simp;split_ifs with hn
+  rw[Real.mul_rpow]
+  linarith
+  linarith
+  simp
+
+/-- Proposition 6.7.3(e) / Exercise 6.7.1 -/
+theorem Real.ratPow_mono {x y:ℝ} (hx: x > 0) (hy: y > 0) {q:ℝ} (h: q > 0) : x > y ↔ rpow x q > rpow y q := by
+  choose q' hq' hqp using eq_lim_of_pos_rat_of_pos h
+  constructor <;> intro hgt
+  . observe hr0 : y/x > 0
+    observe hr1 : y/x < 1
+    set r := y / x
+    have hxy : y = r * x:= by
+      simp[r]
+      rw[div_mul_cancel₀]
+      linarith
+    rw[hxy,ratPow_mul hr0 hx]
+    apply mul_lt_of_lt_one_left (ratPow_pos hx q)
+    have hbase: rpow r (0:ℚ) = 1 := by
+      rw[rpow_of_rat_eq_ratPow hr0];simp
+    simp at hbase
+    rw[← hbase]
+    rw[ ratPow_mono_of_lt_one hr0 hr1]
+    assumption
+  contrapose! hgt with hle
+  have hconvx := ratPow_continuous hx hq'
+  have hconvy := ratPow_continuous hy hq'
+  rw[rpow_eq_lim_ratPow hx hq']
+  rw[rpow_eq_lim_ratPow hy hq']
+  apply le_of_sub_nonneg
+  choose hconvs hlimsub using lim_sub hconvy hconvx
+  rw[← hlimsub]
+  rw[sub_coe] at ⊢ hconvs
+  apply lim_of_nonneg ?_ hconvs
+  intro n
+  simp
+  apply Real.rpow_le_rpow
+  linarith
+  linarith
+  specialize hqp n
+  simp
+  linarith
+
 lemma Real.ratPow_inv {x:ℝ} (hx: x > 0) (q:ℝ) : rpow x⁻¹ q = 1 / rpow x q := by
-  sorry
+  choose q' hq' using eq_lim_of_rat q
+  simp
+  have hx' : x⁻¹ > 0 := by exact Right.inv_pos.mpr hx
+  have hxq : rpow x q ≠ 0 := by
+    apply ne_of_gt
+    exact ratPow_pos hx q
+  have hconv := ratPow_continuous hx hq'
+  rw[rpow_eq_lim_ratPow hx' hq']  
+  rw[rpow_eq_lim_ratPow hx hq'] at hxq ⊢ 
+  choose hconv hlimeq using lim_inv hconv hxq
+  rw[← hlimeq,inv_coe]
+  congr! 3 with n
+  rw[Real.inv_rpow (by linarith)]
 lemma Sequence.tendsTo_iff_div_lim_tendsTo_one {a : ℕ → ℝ} {L:ℝ} (hL: L ≠ 0):
     (a:Sequence).TendsTo L ↔ ((fun n ↦ a n / L):Sequence).TendsTo 1:= by
   have hconst : ((fun (n:ℕ) ↦ L):Sequence).TendsTo L := tendsTo_const L 0
@@ -471,7 +711,7 @@ lemma Sequence.rat_envelop {x': ℕ → ℝ} (hx' : (x':Sequence).TendsTo 0):
       simpa
       specialize hspec (show |x' n| > 0 by simpa)
       linarith
-          
+
 
 
 lemma Real.rpow_of_one {r:ℝ} : rpow 1 r = 1 := by 
@@ -486,7 +726,7 @@ lemma Real.rpow_zero {x:ℝ} (hx: x > 0): rpow x 0 = 1 := by
     simp
   rw[this,rpow_of_rat_eq_ratPow hx]
   simp
-  
+
 lemma Real.rpow_tendsTo_one_of_tendsTo_zero {x:ℝ} (hx : x > 0) {r' : ℕ → ℝ} (hr : (r':Sequence).TendsTo 0):
     ((fun n ↦ rpow x (r' n)):Sequence).TendsTo 1 := by
       wlog hx1 : x > 1
@@ -553,47 +793,44 @@ lemma Real.rpow_tendsTo_one_of_tendsTo_zero {x:ℝ} (hx : x > 0) {r' : ℕ → �
       simp[upp]
       simp only[rpow_of_rat_eq_ratPow hx]
       assumption
-          
-
-/- lemma Real.tendsTo_rpow {x α:ℝ} (hx: x > 0) {q: ℕ → ℝ} -/
-/-  (hq: (q:Sequence).TendsTo α) : -/
-/-     ((fun n ↦ rpow x (q n)):Sequence).TendsTo (rpow x α) := by -/
-/-       observe hxa : rpow x α > 0  -/
-/-       have hconst : ((fun (n:ℕ) ↦ rpow x α):Sequence).TendsTo (rpow x α) := lim_of_const _ -/
-/-       suffices hdif : ((fun n ↦ rpow x (q n - α)):Sequence).TendsTo 1 from by -/
-/-         have hmul := tendsTo_mul hdif hconst -/
-/-         simp only[mul_coe, one_mul] at hmul -/
-/-         convert hmul using 3 with n -/
-/-         rw[← ratPow_add hx] -/
-/-         simp -/
-/-       apply rpow_tendsTo_one_of_tendsTo_zero hx -/
-/-       rw[tendsTo_iff_lim_sub_tendsTo_zero] at hq -/
-/-       convert tendsTo_neg hq -/
-/-       . ext n; rfl -/
-/-         simp; split_ifs with hn <;> simp -/
-/-       simp -/
 
 
+lemma Real.tendsTo_rpow {x α:ℝ} (hx: x > 0) {q: ℕ → ℝ}
+ (hq: (q:Sequence).TendsTo α) :
+    ((fun n ↦ rpow x (q n)):Sequence).TendsTo (rpow x α) := by
+      observe hxa : rpow x α > 0 
+      have hconst : ((fun (n:ℕ) ↦ rpow x α):Sequence).TendsTo (rpow x α) := lim_of_const _
+      suffices hdif : ((fun n ↦ rpow x (q n - α)):Sequence).TendsTo 1 from by
+        have hmul := tendsTo_mul hdif hconst
+        simp only[mul_coe, one_mul] at hmul
+        convert hmul using 3 with n
+        rw[← ratPow_add hx]
+        simp
+      apply rpow_tendsTo_one_of_tendsTo_zero hx
+      rw[tendsTo_iff_lim_sub_tendsTo_zero] at hq
+      convert tendsTo_neg hq
+      . ext n; rfl
+        simp; split_ifs with hn <;> simp
+      simp
 
-/- lemma Real.lim_rpow {x α:ℝ} (hx: x > 0) {q: ℕ → ℝ} -/
-/-  (hq: (q:Sequence).TendsTo α) : -/
-/-     lim ((fun n ↦ rpow x (q n)):Sequence) = rpow x α := by -/
-/-       have htend := tendsTo_rpow hx hq -/
-/-       rw[lim_eq] at htend;tauto -/
-
-/- theorem Real.ratPow_ratPow {x:ℝ} (hx: x > 0) (q r:ℝ) : rpow (rpow x q) r = rpow x (q*r) := by -/
-/-   -- unfold lhs -/
-/-   observe hxq : rpow x q > 0  -/
-/-   choose r' hr' using eq_lim_of_rat r -/
-/-   rw[rpow_eq_lim_ratPow hxq hr'] -/
-/-   simp only [rpow_ratPow hx] -/
-/-   apply lim_rpow hx -/
-/-   have hsmul := tendsTo_smul q hr' -/
-/-   rwa[smul_coe] at hsmul -/
 
 
-/- /-- Proposition 6.7.3(f) / Exercise 6.7.1 -/ -/
-/- theorem Real.ratPow_mul {x y:ℝ} (hx: x > 0) (hy: y > 0) (q:ℝ) : rpow (x*y) q = rpow x q * rpow y q := by -/
-/-   sorry -/
+lemma Real.lim_rpow {x α:ℝ} (hx: x > 0) {q: ℕ → ℝ}
+ (hq: (q:Sequence).TendsTo α) :
+    lim ((fun n ↦ rpow x (q n)):Sequence) = rpow x α := by
+      have htend := tendsTo_rpow hx hq
+      rw[lim_eq] at htend;tauto
+
+theorem Real.ratPow_ratPow {x:ℝ} (hx: x > 0) (q r:ℝ) : rpow (rpow x q) r = rpow x (q*r) := by
+  -- unfold lhs
+  observe hxq : rpow x q > 0 
+  choose r' hr' using eq_lim_of_rat r
+  rw[rpow_eq_lim_ratPow hxq hr']
+  simp only [rpow_ratPow hx]
+  apply lim_rpow hx
+  have hsmul := tendsTo_smul q hr'
+  rwa[smul_coe] at hsmul
+
+
 
 end Chapter6

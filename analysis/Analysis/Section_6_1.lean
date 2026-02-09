@@ -889,7 +889,7 @@ theorem Sequence.tendsTo_sub {a b:Sequence} {L M:ℝ} (ha: a.TendsTo L) (hb: b.T
       apply tendsTo_add ha
       apply tendsTo_smul _ hb
 
-theorem Sequence.LIM_sub {a b:Sequence} (ha: a.Convergent) (hb: b.Convergent) :
+theorem Sequence.lim_sub {a b:Sequence} (ha: a.Convergent) (hb: b.Convergent) :
     (a - b).Convergent ∧ lim (a - b) = lim a - lim b := by
     choose L ha using ha
     choose M hb using hb
