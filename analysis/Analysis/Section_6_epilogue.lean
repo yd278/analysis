@@ -93,20 +93,82 @@ theorem Chapter6.Sequence.isBounded_iff_isBounded_range (a:ℕ → ℝ):
   positivity
 
 theorem Chapter6.Sequence.sup_eq_sSup (a:ℕ → ℝ):
-    (a:Sequence).sup = sSup (Set.range (fun n ↦ (a n:EReal))) := by sorry
+    (a:Sequence).sup = sSup (Set.range (fun n ↦ (a n:EReal))) := by
+      congr!;ext x;simp
+      constructor
+      . rintro ⟨n,hn,hx⟩ 
+        grind
+      rintro ⟨n,rfl⟩ 
+      use n;simp
 
 theorem Chapter6.Sequence.inf_eq_sInf (a:ℕ → ℝ):
-    (a:Sequence).inf = sInf (Set.range (fun n ↦ (a n:EReal))) := by sorry
+    (a:Sequence).inf = sInf (Set.range (fun n ↦ (a n:EReal))) := by
+      congr!;ext x;simp
+      constructor
+      . rintro ⟨n,hn,hx⟩ 
+        grind
+      rintro ⟨n,rfl⟩ 
+      use n;simp
 
 theorem Chapter6.Sequence.bddAbove_iff (a:ℕ → ℝ):
-    (a:Sequence).BddAbove ↔ _root_.BddAbove (Set.range a) := by sorry
+    (a:Sequence).BddAbove ↔ _root_.BddAbove (Set.range a) := by
+      constructor
+      . rintro ⟨M,hM⟩ 
+        use M
+        rintro x ⟨n,hn⟩ 
+        specialize hM n (by simp)
+        rw[eval_coe] at hM;grind
+      rintro ⟨x,hx⟩ 
+      use x
+      intro n hn
+      simp at hn
+      lift n to ℕ using hn
+      rw[mem_upperBounds] at hx
+      specialize hx (a n) (by simp)
+      grind
 
 theorem Chapter6.Sequence.bddBelow_iff (a:ℕ → ℝ):
-    (a:Sequence).BddBelow ↔ _root_.BddBelow (Set.range a) := by sorry
+    (a:Sequence).BddBelow ↔ _root_.BddBelow (Set.range a) := by
+      constructor
+      . rintro ⟨M,hM⟩ 
+        use M
+        rintro x ⟨n,hn⟩ 
+        specialize hM n (by simp)
+        rw[eval_coe] at hM;grind
+      rintro ⟨x,hx⟩ 
+      use x
+      intro n hn
+      simp at hn
+      lift n to ℕ using hn
+      rw[mem_lowerBounds] at hx
+      specialize hx (a n) (by simp)
+      grind
 
-theorem Chapter6.Sequence.Monotone_iff (a:ℕ → ℝ): (a:Sequence).IsMonotone ↔ Monotone a := by sorry
+theorem Chapter6.Sequence.Monotone_iff (a:ℕ → ℝ): (a:Sequence).IsMonotone ↔ Monotone a := by
+  constructor <;> intro h
+  . intro x y hxy
+    zify at hxy
+    have hxm : x ≥ (a:Sequence).m := by simp
+    have := monotone_trans h hxm hxy
+    simpa
+  intro x hx 
+  simp at hx
+  lift x to ℕ using hx
+  specialize h (show x ≤ x + 1 by omega)
+  simp;norm_cast
 
-theorem Chapter6.Sequence.Antitone_iff (a:ℕ → ℝ): (a:Sequence).IsAntitone ↔ Antitone a := by sorry
+theorem Chapter6.Sequence.Antitone_iff (a:ℕ → ℝ): (a:Sequence).IsAntitone ↔ Antitone a := by
+  constructor <;> intro h
+  . intro x y hxy
+    zify at hxy
+    have hxm : x ≥ (a:Sequence).m := by simp
+    have := antitone_trans h hxm hxy
+    simpa
+  intro x hx 
+  simp at hx
+  lift x to ℕ using hx
+  specialize h (show x ≤ x + 1 by omega)
+  simp;norm_cast
 
 /-- Identification with `MapClusterPt` -/
 theorem Chapter6.Sequence.limit_point_iff (a:ℕ → ℝ) (L:ℝ) :
@@ -128,14 +190,76 @@ theorem Chapter6.Sequence.limit_point_iff (a:ℕ → ℝ) (L:ℝ) :
 theorem Chapter6.Sequence.limsup_eq (a:ℕ → ℝ) :
     (a:Sequence).limsup = atTop.limsup (fun n ↦ (a n:EReal)) := by
   simp_rw [Filter.limsup_eq, eventually_atTop]
-  sorry
+  unfold limsup
+  apply eq_of_le_of_ge
+  . apply sInf_le_sInf_of_isCoinitialFor
+    intro x hx
+    simp at hx
+    choose N hN using hx
+    use (a:Sequence).upperseq N
+    split_ands
+    . simp;use N;simp
+    rw[upperseq]
+    apply sup_le_upper
+    intro n hn 
+    simp at hn
+    lift n to ℕ using by linarith
+    simp at hn
+    specialize hN n (by simpa)
+    simpa[hn]
+  apply sInf_le_sInf
+  rintro x ⟨N,hN,hup⟩ 
+  simp at hN; lift N to ℕ using hN
+  simp;use N
+  intro n hn
+  rw[hup,upperseq]
+  have hnm : ((a:Sequence).from N).m ≤ n := by simpa
+  convert le_sup hnm
+  simp[hn]
 
 /-- Identification with `Filter.liminf` -/
 theorem Chapter6.Sequence.liminf_eq (a:ℕ → ℝ) :
     (a:Sequence).liminf = atTop.liminf (fun n ↦ (a n:EReal)) := by
   simp_rw [Filter.liminf_eq, eventually_atTop]
-  sorry
+  unfold liminf
+  apply eq_of_le_of_ge
+  . apply sSup_le_sSup
+    rintro x ⟨N,hN,hlo⟩ 
+    simp at hN; lift N to ℕ using hN
+    simp;use N
+    intro n hn
+    rw[hlo,lowerseq]
+    have hnm : ((a:Sequence).from N).m ≤ n := by simpa
+    rw[← ge_iff_le]
+    convert ge_inf hnm
+    simp[hn]
+  apply sSup_le_sSup_of_isCofinalFor
+  intro x hx
+  simp at hx
+  choose N hN using hx
+  use (a:Sequence).lowerseq N
+  split_ands
+  . simp;use N;simp
+  rw[lowerseq]
+  apply inf_ge_lower
+  intro n hn 
+  simp at hn
+  lift n to ℕ using by linarith
+  simp at hn
+  specialize hN n (by simpa)
+  simpa[hn]
 
 /-- Identification of `rpow` and Mathlib exponentiation -/
-theorem Chapter6.Real.rpow_eq_rpow (x:ℝ) (α:ℝ) : rpow x α = x^α := by
-  sorry
+theorem Chapter6.Real.rpow_eq_rpow (x:ℝ) (hx:x > 0) (α:ℝ) : rpow x α = x^α := by
+  choose q hq using eq_lim_of_rat α
+  have htends := ratPow_tendsto_rpow hx hq
+  by_contra! hcon
+  apply Sequence.tendsTo_unique _ hcon ⟨htends, ?_⟩ 
+  observe hne : x ≠ 0
+  have hcont := Real.continuous_const_rpow hne
+  rw[Sequence.tendsto_iff_Tendsto] at hq ⊢ 
+  exact hcont.tendsto α |>.comp hq
+
+
+
+
