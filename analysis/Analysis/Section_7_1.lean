@@ -234,8 +234,61 @@ theorem finite_series_of_rearrange {n:ℕ} {X':Type*} (X: Finset X') (hcard: X.c
   set htil : Icc (1:ℤ) n → X.erase x :=
     fun i ↦ ⟨ (h' i).val, by simp [mem_erase, Subtype.val_inj, h'_ne_x] ⟩
   set ftil : X.erase x → ℝ := fun y ↦ f y.val
-  have why : Function.Bijective gtil := by sorry
-  have why2 : Function.Bijective htil := by sorry
+  have hπinj {i j:ℤ} (hi: i ∈ Icc (1:ℤ) (n+1)) (hj: j ∈ Icc (1:ℤ) (n+1)) (heq: π i = π j): i= j := by 
+    simpa[π, -mem_Icc, hi,hj] using heq
+  
+  have why : Function.Bijective gtil := by
+    have hcoe (i) : (gtil i).val = (g (π i)).val := by rfl
+    constructor
+    . intro i j heq
+      apply congrArg Subtype.val at heq
+      simp[hcoe] at heq
+      apply Subtype.eq at heq
+      replace heq := hg.injective heq
+      replace heq := hπinj (by simp;have hi := i.prop; rw[mem_Icc] at hi;omega) (by simp;have hj := j.prop; rw[mem_Icc] at hj;omega) heq
+      exact Subtype.eq heq
+    intro x
+    obtain ⟨val, prop⟩ := x 
+    simp at prop
+    set x': X := ⟨val,prop.2⟩ 
+    obtain ⟨⟨a,ha⟩,hag⟩ := hg.surjective x'
+    simp at ha
+    have han : a ≠ n+1 := by
+      by_contra!
+      have hxcon : x' = x := by
+        simp[x,← hag,this]
+        congr 1
+        rw[← Subtype.val_inj]
+        simp[π]
+      rw[← Subtype.val_inj] at hxcon
+      simp[x'] at hxcon
+      simp[hxcon] at prop
+    use ⟨a,by simp;omega⟩ 
+    rw[← Subtype.val_inj]
+    simp[hcoe]
+    suffices hgpa : g (π a) = x' from by
+      simp[x'] at hgpa
+      simpa[← Subtype.val_inj] using hgpa
+    rw[← hag]
+    congr 1
+    simp[π,ha]
+
+
+  have why2 : Function.Bijective htil := by
+    constructor
+    . intro a b heq
+      simp[htil] at heq
+      rw[Subtype.val_inj] at heq
+      simp[h'] at heq
+      split_ifs at heq with ha hb
+      . replace heq := hh.injective heq 
+        replace heq := hπinj (by simp;have ha := a.prop; rw[mem_Icc] at ha;omega) (by simp;have hb := b.prop; rw[mem_Icc] at hb;omega) heq
+        exact Subtype.eq heq
+      . sorry
+      . sorry
+      sorry
+    
+    sorry
   calc
     _ = ∑ i ∈ Icc (1:ℤ) n, if hi: i ∈ Icc (1:ℤ) n then ftil (gtil ⟨ i, hi ⟩ ) else 0 := by
       apply sum_congr rfl; grind
