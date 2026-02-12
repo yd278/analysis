@@ -85,27 +85,89 @@ example (a: ℤ → ℝ) (m n:ℤ) : ∑ i ∈ Icc m n, a i = ∑ j ∈ Icc m n,
 
 /-- Lemma 7.1.4(a) / Exercise 7.1.1 -/
 theorem concat_finite_series {m n p:ℤ} (hmn: m ≤ n+1) (hpn : n ≤ p) (a: ℤ → ℝ) :
-  ∑ i ∈ Icc m n, a i + ∑ i ∈ Icc (n+1) p, a i = ∑ i ∈ Icc m p, a i := by sorry
+  ∑ i ∈ Icc m n, a i + ∑ i ∈ Icc (n+1) p, a i = ∑ i ∈ Icc m p, a i := by
+    replace hmn : m - 1 ≤ n := by omega
+    induction' n, hmn using Int.le_induction with k hk hind
+    . simp
+    specialize hind (by omega)
+    rw[sum_of_nonempty hk a,← hind,add_assoc]
+    congr;symm
+    convert sum_insert _
+    . ext;simp;omega
+    . infer_instance
+    simp
 
 /-- Lemma 7.1.4(b) / Exercise 7.1.1 -/
 theorem shift_finite_series {m n k:ℤ} (a: ℤ → ℝ) :
-  ∑ i ∈ Icc m n, a i = ∑ i ∈ Icc (m+k) (n+k), a (i-k) := by sorry
+  ∑ i ∈ Icc m n, a i = ∑ i ∈ Icc (m+k) (n+k), a (i-k) := by
+    by_cases hnm : n < m
+    . observe hnm' : (n+k) < (m+k)
+      rw[sum_of_empty hnm,sum_of_empty hnm']
+    simp at hnm
+    induction' n,hnm using Int.le_induction with n hn hind
+    . simp
+    rw[sum_of_nonempty (by omega),hind,add_comm _ (a (n+1)),show a (n+1) = a (n + 1 + k - k) by simp]
+    symm
+    convert sum_insert _
+    . ext;simp;omega
+    . infer_instance
+    simp
 
 /-- Lemma 7.1.4(c) / Exercise 7.1.1 -/
 theorem finite_series_add {m n:ℤ} (a b: ℤ → ℝ) :
-  ∑ i ∈ Icc m n, (a i + b i) = ∑ i ∈ Icc m n, a i + ∑ i ∈ Icc m n, b i := by sorry
+  ∑ i ∈ Icc m n, (a i + b i) = ∑ i ∈ Icc m n, a i + ∑ i ∈ Icc m n, b i := by
+    by_cases hnm : n < m
+    . simp[sum_of_empty hnm]
+    simp at hnm
+    induction' n,hnm using Int.le_induction with n hn hind
+    . simp
+    have hnm' : n ≥ m-1 := by omega
+    simp[sum_of_nonempty hnm', hind]
+    ring
 
 /-- Lemma 7.1.4(d) / Exercise 7.1.1 -/
 theorem finite_series_const_mul {m n:ℤ}  (a: ℤ → ℝ) (c:ℝ) :
-  ∑ i ∈ Icc m n, c * a i = c * ∑ i ∈ Icc m n, a i := by sorry
+  ∑ i ∈ Icc m n, c * a i = c * ∑ i ∈ Icc m n, a i := by
+    by_cases hnm : n < m
+    . simp[sum_of_empty hnm]
+    simp at hnm
+    induction' n,hnm using Int.le_induction with n hn hind
+    . simp
+    have hnm' : n ≥ m-1 := by omega
+    simp[sum_of_nonempty hnm', hind]
+    ring
 
 /-- Lemma 7.1.4(e) / Exercise 7.1.1 -/
-theorem abs_finite_series_le {m n:ℤ}   (a: ℤ → ℝ) (c:ℝ) :
-  |∑ i ∈ Icc m n, a i| ≤ ∑ i ∈ Icc m n, |a i| := by sorry
+theorem abs_finite_series_le {m n:ℤ}   (a: ℤ → ℝ)  :
+  |∑ i ∈ Icc m n, a i| ≤ ∑ i ∈ Icc m n, |a i| := by
+    by_cases hnm : n < m
+    . simp[sum_of_empty hnm]
+    simp at hnm
+    induction' n,hnm using Int.le_induction with n hn hind
+    . simp
+    have hnm' : n ≥ m-1 := by omega
+    simp_rw[sum_of_nonempty hnm']
+    calc
+      _ ≤ |∑ i ∈ Icc m n, a i| + |a (n+1)| := by apply abs_add_le
+      _ ≤ _ := by gcongr
 
 /-- Lemma 7.1.4(f) / Exercise 7.1.1 -/
 theorem finite_series_of_le {m n:ℤ}  {a b: ℤ → ℝ} (h: ∀ i, m ≤ i → i ≤ n → a i ≤ b i) :
-  ∑ i ∈ Icc m n, a i ≤ ∑ i ∈ Icc m n, b i := by sorry
+  ∑ i ∈ Icc m n, a i ≤ ∑ i ∈ Icc m n, b i := by
+    by_cases hnm : n < m
+    . simp[sum_of_empty hnm]
+    simp at hnm
+    induction' n,hnm using Int.le_induction with n hn hind
+    . simp[h m]
+    specialize hind (by
+      peel h with i hm h
+      intro hn
+      exact h (by omega)
+    )
+    have hnm' : n ≥ m-1 := by omega
+    simp_rw[sum_of_nonempty hnm']
+    specialize h (n+1) (by linarith) (by simp)
+    linarith
 
 #check sum_congr
 
