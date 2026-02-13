@@ -170,7 +170,6 @@ theorem finite_series_of_le {m n:ℤ}  {a b: ℤ → ℝ} (h: ∀ i, m ≤ i →
     linarith
 
 #check sum_congr
-
 /--
   Proposition 7.1.8.
 -/
@@ -236,59 +235,94 @@ theorem finite_series_of_rearrange {n:ℕ} {X':Type*} (X: Finset X') (hcard: X.c
   set ftil : X.erase x → ℝ := fun y ↦ f y.val
   have hπinj {i j:ℤ} (hi: i ∈ Icc (1:ℤ) (n+1)) (hj: j ∈ Icc (1:ℤ) (n+1)) (heq: π i = π j): i= j := by 
     simpa[π, -mem_Icc, hi,hj] using heq
-  
+  -- gtil is basically g, so simply use hg 
   have why : Function.Bijective gtil := by
-    have hcoe (i) : (gtil i).val = (g (π i)).val := by rfl
+    have hmap {x} {hx}: (gtil ⟨x,hx⟩).val = (g ( π x)).val := by
+      simp[gtil]
     constructor
-    . intro i j heq
-      apply congrArg Subtype.val at heq
-      simp[hcoe] at heq
-      apply Subtype.eq at heq
-      replace heq := hg.injective heq
-      replace heq := hπinj (by simp;have hi := i.prop; rw[mem_Icc] at hi;omega) (by simp;have hj := j.prop; rw[mem_Icc] at hj;omega) heq
-      exact Subtype.eq heq
-    intro x
-    obtain ⟨val, prop⟩ := x 
-    simp at prop
-    set x': X := ⟨val,prop.2⟩ 
-    obtain ⟨⟨a,ha⟩,hag⟩ := hg.surjective x'
-    simp at ha
-    have han : a ≠ n+1 := by
-      by_contra!
-      have hxcon : x' = x := by
-        simp[x,← hag,this]
-        congr 1
-        rw[← Subtype.val_inj]
-        simp[π]
-      rw[← Subtype.val_inj] at hxcon
-      simp[x'] at hxcon
-      simp[hxcon] at prop
-    use ⟨a,by simp;omega⟩ 
-    rw[← Subtype.val_inj]
-    simp[hcoe]
-    suffices hgpa : g (π a) = x' from by
-      simp[x'] at hgpa
-      simpa[← Subtype.val_inj] using hgpa
-    rw[← hag]
-    congr 1
-    simp[π,ha]
-
-
+    . rintro ⟨a,ha⟩ ⟨b,hb⟩ heq  
+      have ha' : a ∈ Icc (1:ℤ) (n+1) := by 
+        apply mem_of_subset ?_ ha
+        apply Icc_subset_Icc_right
+        simp
+      have hb' : b ∈ Icc (1:ℤ) (n+1) := by 
+        apply mem_of_subset ?_ hb
+        apply Icc_subset_Icc_right
+        simp
+      simp_rw[← Subtype.val_inj,hmap,Subtype.val_inj] at heq
+      simp[← Subtype.val_inj]
+      apply hπinj ha' hb'
+      apply hg.injective heq
+    rintro ⟨x',hx'E⟩ 
+    obtain ⟨⟨a,ha⟩,ha'⟩ := hg.surjective ⟨x',mem_of_mem_erase hx'E⟩ 
+    suffices han : a ∈ Icc (1:ℤ) n from by
+      use ⟨a,han⟩ 
+      push_cast at ha
+      simp[← Subtype.val_inj] at ha'
+      simp[← Subtype.val_inj,hmap,← ha']
+      simp[π, -mem_Icc,Subtype.val_inj]
+      simp[ha]
+    simp at ⊢ ha
+    suffices han : a ≠ n+1 from by 
+      refine ⟨ha.1,?_⟩ 
+      rw[Int.le_iff_lt_add_one]
+      apply lt_of_le_of_ne ha.2 han
+    by_contra! han
+    have hx'N := ne_of_mem_erase hx'E
+    simp[← Subtype.val_inj] at ha'
+    simp[x,π,← han,ha,← ha'] at hx'N
+  -- 
   have why2 : Function.Bijective htil := by
     constructor
-    . intro a b heq
-      simp[htil] at heq
-      rw[Subtype.val_inj] at heq
-      simp[h'] at heq
-      split_ifs at heq with ha hb
-      . replace heq := hh.injective heq 
-        replace heq := hπinj (by simp;have ha := a.prop; rw[mem_Icc] at ha;omega) (by simp;have hb := b.prop; rw[mem_Icc] at hb;omega) heq
-        exact Subtype.eq heq
-      . sorry
-      . sorry
-      sorry
-    
-    sorry
+    . rintro ⟨a,ha⟩  ⟨b,hb⟩  heq
+      have ha' : a ∈ Icc (1:ℤ) (n+1) := by 
+        simp at ha ⊢
+        omega
+      have hb' : b ∈ Icc (1:ℤ) (n+1) := by 
+        simp at hb ⊢
+        omega
+      have ha'1 : (a+1) ∈ Icc (1:ℤ) (n+1) := by
+        simp at ha ⊢ 
+        omega
+      have hb'1 : (b+1) ∈ Icc (1:ℤ) (n+1) := by 
+        simp at hb ⊢
+        omega
+      simp[htil,Subtype.val_inj] at heq
+      apply Subtype.eq;simp
+      simp[h'] at heq;split_ifs at heq with haj hbj
+      . have := hh.injective heq
+        simpa[π,-mem_Icc,ha',hb'] using this
+      . have := hh.injective heq
+        simp[π,-mem_Icc,ha',hb'1] at this
+        omega
+      . have := hh.injective heq
+        simp[π,-mem_Icc,ha'1,hb'] at this
+        omega
+      . have := hh.injective heq
+        simpa[π,-mem_Icc,ha'1,hb'1] using this
+    rintro ⟨x',hx'⟩ 
+    unfold htil h'
+    simp[← Subtype.val_inj,-mem_Icc]
+    obtain ⟨⟨a,ha⟩,ha'⟩ := hh.surjective ⟨x', mem_of_mem_erase hx'⟩ 
+    push_cast at ha
+    simp[← Subtype.val_inj] at ha'
+    by_cases haj : a < j
+    . use a; constructor; simp at ha ⊢; omega
+      simp[haj,π,-mem_Icc,ha,← ha']
+    use a-1
+    suffices hanj : a ≠ j from by
+      constructor
+      . simp at ha ⊢
+        omega
+      push_neg at haj
+      have : ¬  a - 1 < j := by
+        simp[Int.le_sub_one_iff]
+        apply lt_of_le_of_ne haj hanj.symm
+      simp[this,π,-mem_Icc,ha,← ha']
+    by_contra! han
+    have hx'N := ne_of_mem_erase hx'
+    rw[← Subtype.val_inj] at hj
+    simp[← hj,← ha',han] at hx'N
   calc
     _ = ∑ i ∈ Icc (1:ℤ) n, if hi: i ∈ Icc (1:ℤ) n then ftil (gtil ⟨ i, hi ⟩ ) else 0 := by
       apply sum_congr rfl; grind
