@@ -349,14 +349,13 @@ theorem finite_series_eq {n:ℕ} {Y:Type*} (X: Finset Y) (f: Y → ℝ) (g: Icc 
   . aesop
   . intro _ _ _ _ h; simpa [Subtype.val_inj, hg.injective.eq_iff] using h
   . intro b hb; have := hg.surjective ⟨ b, hb ⟩; grind
-  intros; simp_all
+  intros; simp_all?
 
 /-- Proposition 7.1.11(a) / Exercise 7.1.2 -/
-theorem finite_series_of_empty {X':Type*} (f: X' → ℝ) : ∑ i ∈ ∅, f i = 0 := by sorry
+theorem finite_series_of_empty {X':Type*} (f: X' → ℝ) : ∑ i ∈ ∅, f i = 0 := by simp
 
 /-- Proposition 7.1.11(b) / Exercise 7.1.2 -/
-theorem finite_series_of_singleton {X':Type*} (f: X' → ℝ) (x₀:X') : ∑ i ∈ {x₀}, f i = f x₀ := by
-  sorry
+theorem finite_series_of_singleton {X':Type*} (f: X' → ℝ) (x₀:X') : ∑ i ∈ {x₀}, f i = f x₀ := by simp
 
 /--
   A technical lemma relating a sum over a finset with a sum over a fintype. Combines well with
@@ -366,9 +365,38 @@ theorem finite_series_of_fintype {X':Type*} (f: X' → ℝ) (X: Finset X') :
     ∑ x ∈ X, f x = ∑ x:X, f x.val := (sum_coe_sort X f).symm
 
 /-- Proposition 7.1.11(c) / Exercise 7.1.2 -/
-theorem map_finite_series {X:Type*} [Fintype X] [Fintype Y] (f: X → ℝ) {g:Y → X}
+theorem map_finite_series {X Y:Type*} [Fintype X] [Fintype Y] (f: X → ℝ) {g:Y → X}
   (hg: Function.Bijective g) :
-    ∑ x, f x = ∑ y, f (g y) := by sorry
+    ∑ x, f x = ∑ y, f (g y) := by
+      set n := Fintype.card X with hn
+      symm at hn
+      choose hx hhx using exist_bijection Finset.univ hn
+      have hyn : Fintype.card Y = Fintype.card X := Fintype.card_of_bijective hg
+      rw[hn] at hyn
+      rw[finite_series_eq Finset.univ f hx hhx]
+      set f' := f ∘ g
+      simp only [show ∀ y, f (g y) = f' y by exact fun y ↦ rfl]
+      choose hy hhy using exist_bijection Finset.univ hyn
+      rw[finite_series_eq Finset.univ f' hy hhy]
+      unfold f' 
+      set hxx :  Icc 1 (n:ℤ)  → Finset.univ (α := X) := fun i ↦ ⟨ g (hy i), by simp⟩ 
+      have hhxx : Function.Bijective hxx := by
+        constructor
+        . intro i1 i2 heq
+          simp[hxx] at heq
+          replace heq := hg.injective heq
+          rw[Subtype.coe_inj] at heq
+          apply hhy.injective heq
+        rintro ⟨x,hx⟩ 
+        unfold hxx
+        simp only [Subtype.eq_iff]
+        choose hyav hhyav using hg.surjective x
+        set hya : Finset.univ (α:=Y) := ⟨hyav, by simp⟩ 
+        choose a ha using hhy.surjective hya
+        use a;rw[ha]
+        simpa[hya]
+      convert finite_series_of_rearrange _ hn f hx hxx hhx hhxx using 2 with i hi
+
 
 -- Proposition 7.1.11(d) is `rfl` in our formalism and is therefore omitted.
 
