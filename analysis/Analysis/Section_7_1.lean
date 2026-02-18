@@ -349,7 +349,7 @@ theorem finite_series_eq {n:ℕ} {Y:Type*} (X: Finset Y) (f: Y → ℝ) (g: Icc 
   . aesop
   . intro _ _ _ _ h; simpa [Subtype.val_inj, hg.injective.eq_iff] using h
   . intro b hb; have := hg.surjective ⟨ b, hb ⟩; grind
-  intros; simp_all?
+  intros; simp_all
 
 /-- Proposition 7.1.11(a) / Exercise 7.1.2 -/
 theorem finite_series_of_empty {X':Type*} (f: X' → ℝ) : ∑ i ∈ ∅, f i = 0 := by simp
@@ -395,30 +395,147 @@ theorem map_finite_series {X Y:Type*} [Fintype X] [Fintype Y] (f: X → ℝ) {g:
         choose a ha using hhy.surjective hya
         use a;rw[ha]
         simpa[hya]
-      convert finite_series_of_rearrange _ hn f hx hxx hhx hhxx using 2 with i hi
+      exact finite_series_of_rearrange _ hn f hx hxx hhx hhxx
 
 
 -- Proposition 7.1.11(d) is `rfl` in our formalism and is therefore omitted.
 
 /-- Proposition 7.1.11(e) / Exercise 7.1.2 -/
 theorem finite_series_of_disjoint_union {Z:Type*} {X Y: Finset Z} (hdisj: Disjoint X Y) (f: Z → ℝ) :
-    ∑ z ∈ X ∪ Y, f z = ∑ z ∈ X, f z + ∑ z ∈ Y, f z := by sorry
+    ∑ z ∈ X ∪ Y, f z = ∑ z ∈ X, f z + ∑ z ∈ Y, f z := by
+      set nx := #X with hnx
+      set ny := #Y with hny
+      choose gx hgx using exist_bijection X hnx.symm
+      choose gy hgy using exist_bijection Y hny.symm
+      have hiy (i:ℤ) (hi : i∈ Icc (1:ℤ) (ny + nx:ℕ)) (nhix : ¬ i ∈ Icc 1 (nx:ℤ)) : i - nx ∈ Icc (1:ℤ) ny := by
+        simp at hi nhix ⊢
+        omega
+      set gz : {x // x ∈ Icc (1:ℤ) (ny + nx:ℕ) } → {x // x ∈ X ∪ Y} := fun ⟨i,hixy⟩  ↦ 
+        if hix : i ∈ Icc 1 (nx:ℤ) then ⟨gx ⟨i,hix⟩, by simp ⟩ else ⟨gy ⟨i - nx, hiy i hixy hix⟩, by simp⟩ 
+      have hcon (i) (j) : (gx i).val ≠ (gy j).val := by
+        have gxx : (gx i).val ∈ X := by simp
+        have gyy : (gy j).val ∈ Y := by simp
+        by_contra! hcon
+        rw[hcon] at gxx
+        have hxy : (gy j).val ∈ X ∩ Y := by simpa
+        have hxyn : (X ∩ Y).Nonempty := by use (gy j).val
+        rw[← not_disjoint_iff_nonempty_inter] at hxyn
+        contradiction
+      have hgz : Function.Bijective gz := by
+        constructor
+        . intro i1 i2 heq
+          simp[gz] at heq
+          split_ifs at heq with hx1 hx2
+          . simp[Subtype.coe_inj] at heq
+            apply hgx.injective at heq
+            simpa[Subtype.coe_inj] using heq
+          . simp at heq
+            contrapose! heq
+            apply hcon
+          . simp at heq
+            contrapose! heq
+            symm
+            apply hcon
+          . simp[Subtype.coe_inj] at heq
+            apply hgy.injective at heq
+            simpa[Subtype.coe_inj] using heq
+        rintro ⟨z,hz⟩ 
+        simp at hz
+        obtain hix | hiy := hz 
+        . obtain ⟨⟨a,hai⟩ ,ha⟩ :=   hgx.surjective ⟨z,hix⟩ 
+          simp at hai
+          use ⟨a, by simp;omega⟩
+          simp[gz,hai]
+          simpa[← Subtype.coe_inj] using ha
+        obtain ⟨⟨a,hai⟩ ,ha⟩ :=   hgy.surjective ⟨z,hiy⟩ 
+        simp at hai
+        use ⟨a+nx,by simp;omega⟩ 
+        have hc : ¬ a ≤ 0 := by omega
+        simp[gz,hc]
+        simpa[← Subtype.coe_inj] using ha
+      rw[finite_series_eq X f gx hgx,
+         finite_series_eq Y f gy hgy,
+         finite_series_eq (X ∪ Y) f gz hgz
+      ]
+      push_cast
+      set αx : ℤ → ℝ := fun i ↦ if hi : i ∈ Icc (1:ℤ) nx then  f (gx ⟨i,hi⟩) else 0 
+      set αy : ℤ → ℝ := fun i ↦ if hi : i ∈ Icc (1:ℤ) ny then  f (gy ⟨i,hi⟩) else 0 
+      rw[← concat_finite_series (m:=1) (n:=nx) (p:= ny + nx) (by simp) (by simp)]
+      set αz : ℤ → ℝ := fun i ↦ if hi : i ∈ Icc (1:ℤ) (ny + nx) then  f (gz ⟨i,hi⟩) else 0 
+      have hxz : (∑ i ∈ Icc (1:ℤ) nx, (αx i)) = ∑ i ∈ Icc (1:ℤ) nx, (αz i) := by
+        apply sum_congr rfl
+        intro x hx
+        unfold αx αz
+        have hx' : x ∈ Icc (1:ℤ) (ny + nx) := by
+          apply Icc_subset_Icc_right ?_ hx
+          linarith
+        simp[-mem_Icc,hx,hx',gz]
+      rw[hxz]
+      congr 1
+      rw[shift_finite_series (k:=nx) αy,add_comm (1:ℤ) nx]
+      apply sum_congr rfl
+      intro x hx
+      simp at hx
+      unfold αy αz
+      have hx1 : 1 ≤ x := by omega
+      have hxy : 1 ≤ x - nx := by omega
+      have hxx : ¬ x ≤ nx := by omega
+      simp[hx,hx1,hxy,gz,hxx]
 
 /-- Proposition 7.1.11(f) / Exercise 7.1.2 -/
 theorem finite_series_of_add {X':Type*} (f g: X' → ℝ) (X: Finset X') :
-    ∑ x ∈ X, (f + g) x = ∑ x ∈ X, f x + ∑ x ∈ X, g x := by sorry
+    ∑ x ∈ X, (f + g) x = ∑ x ∈ X, f x + ∑ x ∈ X, g x := by
+      set nx := #X with hnx
+      choose hx hhx using exist_bijection X hnx.symm
+      rw[finite_series_eq X f hx hhx,
+         finite_series_eq X g hx hhx,
+         finite_series_eq X (f + g) hx hhx,
+      ]
+      rw[← finite_series_add]
+      apply sum_congr rfl
+      intro x hx
+      simp[hx]
 
 /-- Proposition 7.1.11(g) / Exercise 7.1.2 -/
 theorem finite_series_of_const_mul {X':Type*} (f: X' → ℝ) (X: Finset X') (c:ℝ) :
-    ∑ x ∈ X, c * f x = c * ∑ x ∈ X, f x := by sorry
+    ∑ x ∈ X, c * f x = c * ∑ x ∈ X, f x := by
+      set nx := #X with hnx
+      choose hx hhx using exist_bijection X hnx.symm
+      rw[finite_series_eq X f hx hhx]
+      rw[← finite_series_const_mul]
+      calc
+       _ = ∑ x ∈ X, (c • f) x := by simp
+       _ = _ := by
+        rw[finite_series_eq X _ hx hhx]
+        apply sum_congr rfl
+        simp
+        
 
 /-- Proposition 7.1.11(h) / Exercise 7.1.2 -/
 theorem finite_series_of_le' {X':Type*} (f g: X' → ℝ) (X: Finset X') (h: ∀ x ∈ X, f x ≤ g x) :
-    ∑ x ∈ X, f x ≤ ∑ x ∈ X, g x := by sorry
+    ∑ x ∈ X, f x ≤ ∑ x ∈ X, g x := by
+      set nx := #X with hnx
+      choose hx hhx using exist_bijection X hnx.symm
+      rw[finite_series_eq X f hx hhx,
+         finite_series_eq X g hx hhx,
+        ]
+      apply finite_series_of_le
+      intro i hi1 hix
+      simp[hi1,hix]
+      exact h (hx ⟨i,by simp;omega⟩) (by simp) 
 
 /-- Proposition 7.1.11(i) / Exercise 7.1.2 -/
 theorem abs_finite_series_le' {X':Type*} (f: X' → ℝ) (X: Finset X') :
-    |∑ x ∈ X, f x| ≤ ∑ x ∈ X, |f x| := by sorry
+    |∑ x ∈ X, f x| ≤ ∑ x ∈ X, |f x| := by 
+      set nx := #X with hnx
+      choose hx hhx using exist_bijection X hnx.symm
+      set f' : X' → ℝ := fun x ↦ |f x|
+      rw[finite_series_eq X f hx hhx,finite_series_eq X f' hx hhx]
+      apply le_of_le_of_eq (abs_finite_series_le _)
+      apply sum_congr rfl
+      intro x hx
+      split_ifs
+      simp[f']
 
 /-- Lemma 7.1.13 --/
 theorem finite_series_of_finite_series {XX YY:Type*} (X: Finset XX) (Y: Finset YY)
@@ -426,7 +543,7 @@ theorem finite_series_of_finite_series {XX YY:Type*} (X: Finset XX) (Y: Finset Y
     ∑ x ∈ X, ∑ y ∈ Y, f (x, y) = ∑ z ∈ X.product Y, f z := by
   generalize h: X.card = n
   revert X; induction' n with n hn
-  . sorry
+  . simp
   intro X hX
   have hnon : X.Nonempty := by grind [card_ne_zero]
   choose x₀ hx₀ using hnon.exists_mem
@@ -454,8 +571,13 @@ theorem finite_series_of_finite_series {XX YY:Type*} (X: Finset XX) (Y: Finset Y
       simp at hz ⊢; grind
     _ = _ := by
       symm; convert finite_series_of_disjoint_union _ _
-      . sorry
-      sorry
+      . rw[hunion]
+        calc
+          _ = (X' ∪ {x₀}) ×ˢ Y := by rfl
+          _ =  X' ×ˢ  Y ∪ {x₀} ×ˢ Y := by exact union_product
+          _ = _ := by congr!
+      suffices h:  Disjoint (X' ×ˢ  Y) ({x₀} ×ˢ Y) from by convert h
+      rw[disjoint_product];tauto
 
 /-- Corollary 7.1.14 (Fubini's theorem for finite series)-/
 theorem finite_series_refl {XX YY:Type*} (X: Finset XX) (Y: Finset YY) (f: XX × YY → ℝ) :
