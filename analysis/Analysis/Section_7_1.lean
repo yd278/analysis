@@ -1119,6 +1119,20 @@ lemma sum_of_nonempty_nat {n m:ℕ} (h: n ≥ m-1) (a: ℕ → ℝ) :
   . ext; simp; omega
   . infer_instance
   simp
+theorem shift_finite_series_nat {m n k:ℕ} (a: ℕ → ℝ) :
+  ∑ i ∈ Icc m n, a i = ∑ i ∈ Icc (m+k) (n+k), a (i-k) := by
+    by_cases hnm : n < m
+    . observe hnm' : (n+k) < (m+k)
+      rw[sum_of_empty_nat hnm,sum_of_empty_nat hnm']
+    simp at hnm
+    induction' n,hnm using Nat.le_induction with n hn hind
+    . simp
+    rw[sum_of_nonempty_nat (by omega),hind,add_comm _ (a (n+1)),show a (n+1) = a (n + 1 + k - k) by simp]
+    symm
+    convert sum_insert _
+    . ext;simp;omega
+    . infer_instance
+    simp
 lemma finite_series_const_mul_nat {m n:ℕ}  (a: ℕ → ℝ) (c:ℝ) :
   ∑ i ∈ Icc m n, c * a i = c * ∑ i ∈ Icc m n, a i := by
     by_cases hnm : n < m
@@ -1129,14 +1143,46 @@ lemma finite_series_const_mul_nat {m n:ℕ}  (a: ℕ → ℝ) (c:ℝ) :
     have hnm' : n ≥ m-1 := by omega
     simp[sum_of_nonempty_nat hnm', hind]
     ring
+theorem finite_series_add_nat {m n:ℕ} (a b: ℕ → ℝ) :
+  ∑ i ∈ Icc m n, (a i + b i) = ∑ i ∈ Icc m n, a i + ∑ i ∈ Icc m n, b i := by
+    by_cases hnm : n < m
+    . simp[sum_of_empty_nat hnm]
+    simp at hnm
+    induction' n,hnm using Nat.le_induction with n hn hind
+    . simp
+    have hnm' : n ≥ m-1 := by omega
+    simp[sum_of_nonempty_nat hnm', hind]
+    ring
+noncomputable abbrev combo (k j: ℕ) : ℝ := k.factorial  / (j.factorial * (k-j).factorial )
+lemma pascal_idententy {k j:ℕ} : combo k (j-1) + combo k j = combo (k+1) j := by sorry
+lemma combo_self {k:ℕ} : combo k k = 1 := by sorry
+lemma combo_zero {k:ℕ} : combo k 0 = 1 := by sorry
 lemma binomial_theorem_nat (x y:ℝ) (n:ℕ) :
     (x + y)^n
     = ∑ j ∈ Icc 0 n,
-    n.factorial / (j.factorial * (n-j).factorial) * x^j * y^(n - j) := by
-      induction' n with k hind
-      . simp
-      rw[pow_succ,hind,mul_add]
-      sorry
+    n.factorial / (j.factorial * (n-j).factorial) * x^j * y^(n - j) := by sorry
+/-       induction' n with k hind -/
+/-       . simp -/
+/-       rw[pow_succ,hind,mul_add] -/
+/-       have claim1: (∑ j ∈ Icc 0 k, (combo k j) * x ^ j * y ^ (k - j)) * x   -/
+/-          = (combo k k) * x ^ (k+1) * y ^ 0 + (∑ j ∈ Icc 1 k, (combo k (j-1)) * x ^ j * y ^ (k - (j-1)))  := by -/
+/-            sorry -/
+/-       have claim2: (∑ j ∈ Icc 0 k, (combo k j) * x ^ j * y ^ (k - j)) * y -/
+/-          = (combo k 0) * x ^ 0 * y ^ (k+1) + ∑ j ∈ Icc 1 k, (combo k j) * x ^ j * y ^ (k - (j-1))  := by -/
+/-            sorry -/
+/-       have rearrange (a b c d:ℝ) : b + a + (d + c) = (a + c) + b + d := by ring -/
+/-       have claim3:  ∑ j ∈ Icc 0 (k + 1), (combo (k+1) j) * x ^ j * y ^ (k + 1 - j) -/
+/-         = (∑ j ∈ Icc 1 k, (combo (k+1) j) * x^j * y^(k+1-j))  -/
+/-           + (combo (k+1) (k+1)) * x^(k+1) * y ^ 0  -/
+/-           + (combo (k+1) 0) * x ^ 0 * y^(k+1):= by -/
+/-           sorry -/
+/-       rw[claim1,claim2,rearrange,claim3] -/
+/-       congr 2 -/
+/-       . rw[← finite_series_add_nat] -/
+/-         simp[mul_assoc,← add_mul,pascal_idententy] -/
+/-       . simp[combo_self] -/
+/-       simp[combo_zero] -/
+
 lemma sum_intCast (n:ℕ) (f:ℕ → ℝ) (g:ℤ → ℝ) (hfg: ∀ i ∈ Icc 0 n, f i = g i):
 ∑ i ∈ Icc (0:ℤ) n, g i = ∑ i ∈ Icc 0 n, f i := by
   induction' n with k hind
@@ -1155,13 +1201,14 @@ theorem binomial_theorem (x y:ℝ) (n:ℕ) :
     (x + y)^n
     = ∑ j ∈ Icc (0:ℤ) n,
     n.factorial / (j.toNat.factorial * (n-j).toNat.factorial) * x^j * y^(n - j) := by
-      have nat := binomial_theorem_nat x y n
-      convert nat
-      apply sum_intCast
-      intro i hi
-      simp at hi
-      simp;left
-      norm_cast
+
+      /- have nat := binomial_theorem_nat x y n -/
+      /- convert nat -/
+      /- apply sum_intCast -/
+      /- intro i hi -/
+      /- simp at hi -/
+      /- simp;left -/
+      /- norm_cast -/
 
 /-- Exercise 7.1.5 -/
 theorem lim_of_finite_series {X:Type*} [Fintype X] (a: X → ℕ → ℝ) (L : X → ℝ)
