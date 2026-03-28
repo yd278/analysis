@@ -1042,9 +1042,9 @@ theorem prod_abs_finite_series_eq' {X':Type*} (f: X' → ℝ) (X: Finset X') :
       simp[f']
 
 /-- Lemma 7.1.13 --/
-theorem finite_series_of_finite_series {XX YY:Type*} (X: Finset XX) (Y: Finset YY)
+theorem prod_finite_series_of_finite_series {XX YY:Type*} (X: Finset XX) (Y: Finset YY)
   (f: XX × YY → ℝ) :
-    ∑ x ∈ X, ∑ y ∈ Y, f (x, y) = ∑ z ∈ X.product Y, f z := by
+    ∏ x ∈ X, ∏ y ∈ Y, f (x, y) = ∏ z ∈ X.product Y, f z := by
   generalize h: X.card = n
   revert X; induction' n with n hn
   . simp
@@ -1056,25 +1056,25 @@ theorem finite_series_of_finite_series {XX YY:Type*} (X: Finset XX) (Y: Finset Y
   have hunion : X = X' ∪ {x₀} := by ext x; by_cases x = x₀ <;> grind
   have hdisj : Disjoint X' {x₀} := by simp [X']
   calc
-    _ = ∑ x ∈ X', ∑ y ∈ Y, f (x, y) + ∑ x ∈ {x₀}, ∑ y ∈ Y, f (x, y) := by
-      convert finite_series_of_disjoint_union hdisj _
-    _ = ∑ x ∈ X', ∑ y ∈ Y, f (x, y) + ∑ y ∈ Y, f (x₀, y) := by
-      rw [finite_series_of_singleton]
-    _ = ∑ z ∈ X'.product Y, f z + ∑ y ∈ Y, f (x₀, y) := by rw [hn X' hcard]
-    _ = ∑ z ∈ X'.product Y, f z + ∑ z ∈ .product {x₀} Y, f z := by
+    _ = (∏ x ∈ X', ∏ y ∈ Y, f (x, y) )* ∏ x ∈ {x₀}, ∏ y ∈ Y, f (x, y) := by
+      convert prod_finite_series_of_disjoint_union hdisj _
+    _ = (∏ x ∈ X', ∏ y ∈ Y, f (x, y) )* ∏ y ∈ Y, f (x₀, y) := by
+      rw [prod_finite_series_of_singleton]
+    _ = (∏ z ∈ X'.product Y, f z) * ∏ y ∈ Y, f (x₀, y) := by rw [hn X' hcard]
+    _ = (∏ z ∈ X'.product Y, f z) * ∏ z ∈ .product {x₀} Y, f z := by
       congr 1
-      rw [finite_series_of_fintype, finite_series_of_fintype f]
+      rw [prod_finite_series_of_fintype, prod_finite_series_of_fintype f]
       set π : Finset.product {x₀} Y → Y :=
         fun z ↦ ⟨ z.val.2, by obtain ⟨ z, hz ⟩ := z; simp at hz ⊢; grind ⟩
       have hπ : Function.Bijective π := by
         constructor
         . intro ⟨ ⟨ x, y ⟩, hz ⟩ ⟨ ⟨ x', y' ⟩, hz' ⟩ hzz'; simp [π] at hz hz' hzz' ⊢; grind
         intro ⟨ y, hy ⟩; use ⟨ (x₀, y), by simp [hy] ⟩
-      convert map_finite_series _ hπ with z
+      convert prod_map_finite_series _ hπ with z
       obtain ⟨⟨x, y⟩, hz ⟩ := z
       simp at hz ⊢; grind
     _ = _ := by
-      symm; convert finite_series_of_disjoint_union _ _
+      symm; convert prod_finite_series_of_disjoint_union _ _
       . rw[hunion]
         calc
           _ = (X' ∪ {x₀}) ×ˢ Y := by rfl
@@ -1084,8 +1084,8 @@ theorem finite_series_of_finite_series {XX YY:Type*} (X: Finset XX) (Y: Finset Y
       rw[disjoint_product];tauto
 
 /-- Corollary 7.1.14 (Fubini's theorem for finite series)-/
-theorem finite_series_refl {XX YY:Type*} (X: Finset XX) (Y: Finset YY) (f: XX × YY → ℝ) :
-    ∑ z ∈ X.product Y, f z = ∑ z ∈ Y.product X, f (z.2, z.1) := by
+theorem prod_finite_series_refl {XX YY:Type*} (X: Finset XX) (Y: Finset YY) (f: XX × YY → ℝ) :
+    ∏ z ∈ X.product Y, f z = ∏ z ∈ Y.product X, f (z.2, z.1) := by
   set h : Y.product X → X.product Y :=
     fun z ↦ ⟨ (z.val.2, z.val.1), by obtain ⟨ z, hz ⟩ := z; simp at hz ⊢; tauto ⟩
   have hh : Function.Bijective h := by
@@ -1094,14 +1094,15 @@ theorem finite_series_refl {XX YY:Type*} (X: Finset XX) (Y: Finset YY) (f: XX ×
       simp_all [h]
     intro ⟨ z, hz ⟩; simp at hz
     use ⟨ (z.2, z.1), by simp [hz] ⟩
-  rw [finite_series_of_fintype]
-  nth_rewrite 2 [finite_series_of_fintype]
-  convert map_finite_series _ hh with z
+  rw [prod_finite_series_of_fintype]
+  nth_rewrite 2 [prod_finite_series_of_fintype]
+  convert prod_map_finite_series _ hh with z
 
-theorem finite_series_comm {XX YY:Type*} (X: Finset XX) (Y: Finset YY) (f: XX × YY → ℝ) :
-    ∑ x ∈ X, ∑ y ∈ Y, f (x, y) = ∑ y ∈ Y, ∑ x ∈ X, f (x, y) := by
-  rw [finite_series_of_finite_series, finite_series_refl,
-      finite_series_of_finite_series _ _ (fun z ↦ f (z.2, z.1))]
+theorem prod_finite_series_comm {XX YY:Type*} (X: Finset XX) (Y: Finset YY) (f: XX × YY → ℝ) :
+    ∏ x ∈ X, ∏ y ∈ Y, f (x, y) = ∏ y ∈ Y, ∏ x ∈ X, f (x, y) := by
+  rw [prod_finite_series_of_finite_series, prod_finite_series_refl,
+      prod_finite_series_of_finite_series _ _ (fun z ↦ f (z.2, z.1))]
+
 #check Nat.factorial_zero
 #check Nat.factorial_succ
 
@@ -1109,11 +1110,58 @@ theorem finite_series_comm {XX YY:Type*} (X: Finset XX) (Y: Finset YY) (f: XX ×
   Exercise 7.1.4. Note: there may be some technicalities passing back and forth between natural
   numbers and integers. Look into the tactics `zify`, `norm_cast`, and `omega`
 -/
+lemma sum_of_empty_nat {n m:ℕ} (h: n < m) (a: ℕ → ℝ) : ∑ i ∈ Icc m n, a i = 0 := by
+  rw [sum_eq_zero]; intro _; rw [mem_Icc]; grind
+lemma sum_of_nonempty_nat {n m:ℕ} (h: n ≥ m-1) (a: ℕ → ℝ) :
+    ∑ i ∈ Icc m (n+1), a i = ∑ i ∈ Icc m n, a i + a (n+1) := by
+  rw [add_comm _ (a (n+1))]
+  convert sum_insert _
+  . ext; simp; omega
+  . infer_instance
+  simp
+lemma finite_series_const_mul_nat {m n:ℕ}  (a: ℕ → ℝ) (c:ℝ) :
+  ∑ i ∈ Icc m n, c * a i = c * ∑ i ∈ Icc m n, a i := by
+    by_cases hnm : n < m
+    . simp[sum_of_empty_nat hnm]
+    simp at hnm
+    induction' n,hnm using Nat.le_induction with n hn hind
+    . simp
+    have hnm' : n ≥ m-1 := by omega
+    simp[sum_of_nonempty_nat hnm', hind]
+    ring
+lemma binomial_theorem_nat (x y:ℝ) (n:ℕ) :
+    (x + y)^n
+    = ∑ j ∈ Icc 0 n,
+    n.factorial / (j.factorial * (n-j).factorial) * x^j * y^(n - j) := by
+      induction' n with k hind
+      . simp
+      rw[pow_succ,hind,mul_add]
+      sorry
+lemma sum_intCast (n:ℕ) (f:ℕ → ℝ) (g:ℤ → ℝ) (hfg: ∀ i ∈ Icc 0 n, f i = g i):
+∑ i ∈ Icc (0:ℤ) n, g i = ∑ i ∈ Icc 0 n, f i := by
+  induction' n with k hind
+  . simp[hfg 0]
+  specialize hind (by
+    intro i' hi'
+    apply hfg
+    simp_all
+    omega
+  )
+  simp[sum_of_nonempty_nat,sum_of_nonempty,hind]
+  specialize hfg (k+1) (by simp)
+  simp[hfg]
+        
 theorem binomial_theorem (x y:ℝ) (n:ℕ) :
     (x + y)^n
     = ∑ j ∈ Icc (0:ℤ) n,
     n.factorial / (j.toNat.factorial * (n-j).toNat.factorial) * x^j * y^(n - j) := by
-  sorry
+      have nat := binomial_theorem_nat x y n
+      convert nat
+      apply sum_intCast
+      intro i hi
+      simp at hi
+      simp;left
+      norm_cast
 
 /-- Exercise 7.1.5 -/
 theorem lim_of_finite_series {X:Type*} [Fintype X] (a: X → ℕ → ℝ) (L : X → ℝ)
