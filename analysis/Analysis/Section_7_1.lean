@@ -1110,111 +1110,222 @@ theorem prod_finite_series_comm {XX YY:Type*} (X: Finset XX) (Y: Finset YY) (f: 
   Exercise 7.1.4. Note: there may be some technicalities passing back and forth between natural
   numbers and integers. Look into the tactics `zify`, `norm_cast`, and `omega`
 -/
-lemma sum_of_empty_nat {n m:ℕ} (h: n < m) (a: ℕ → ℝ) : ∑ i ∈ Icc m n, a i = 0 := by
-  rw [sum_eq_zero]; intro _; rw [mem_Icc]; grind
-lemma sum_of_nonempty_nat {n m:ℕ} (h: n ≥ m-1) (a: ℕ → ℝ) :
-    ∑ i ∈ Icc m (n+1), a i = ∑ i ∈ Icc m n, a i + a (n+1) := by
-  rw [add_comm _ (a (n+1))]
-  convert sum_insert _
-  . ext; simp; omega
-  . infer_instance
-  simp
-theorem shift_finite_series_nat {m n k:ℕ} (a: ℕ → ℝ) :
-  ∑ i ∈ Icc m n, a i = ∑ i ∈ Icc (m+k) (n+k), a (i-k) := by
-    by_cases hnm : n < m
-    . observe hnm' : (n+k) < (m+k)
-      rw[sum_of_empty_nat hnm,sum_of_empty_nat hnm']
-    simp at hnm
-    induction' n,hnm using Nat.le_induction with n hn hind
-    . simp
-    rw[sum_of_nonempty_nat (by omega),hind,add_comm _ (a (n+1)),show a (n+1) = a (n + 1 + k - k) by simp]
-    symm
-    convert sum_insert _
-    . ext;simp;omega
-    . infer_instance
+noncomputable abbrev cni (k:ℕ ) (j: ℤ) : ℝ := k.factorial  / (j.toNat.factorial * (k-j).toNat.factorial )
+lemma combo_self {k:ℕ} : cni k k = 1 := by
+  simp[cni]
+  apply div_self
+  norm_cast
+  exact Nat.factorial_ne_zero k
+lemma combo_zero {k:ℕ} : cni k 0 = 1 := by
+  simp[cni]
+  apply div_self
+  norm_cast
+  exact Nat.factorial_ne_zero k
+lemma pascal_idententy {k:ℕ} {j:ℤ} (hj : j ≥ 1) (hkj : j ≤ k): cni k (j-1) + cni k j = cni (k+1) j := by
+  unfold cni
+  lift j to ℕ using by omega
+  simp_all
+  simp[show ((k:ℤ) - (j - (1:ℤ)) = ((k +1 - j:ℕ):ℤ)) by omega]
+  rw[div_add_div,div_eq_div_iff]
+  . norm_cast
+    ring_nf
+    set K := k.factorial 
+    set P := j.factorial 
+    set Q := (k-j).factorial
+    set P' := (j - 1).factorial 
+    set Q' := (1+k-j).factorial 
+    set K' := (1+k).factorial 
+    have hP : P = (j) * P' := by
+      simp[P,P'];
+      convert Nat.factorial_succ (j-1)
+      <;> omega
+    have hQ : Q' =(1+k-j) *  Q := by
+      simp[Q,Q']
+      convert Nat.factorial_succ (k - j) using 2
+      <;> omega
+    have hK : K' = (1+k) * K := by
+      simp[K,K']
+      convert Nat.factorial_succ (k) using 2
+      <;> omega
+    rw[hQ,hK,hP]
+    ring_nf
+    calc
+      _ = (K * j * P' ^ 2 * (1 + k - j)) * (Q^2) * ((1+k-j) + j) := by ring
+      _ = (K * j * P' ^ 2 * (1 + k - j)) * (Q^2) * (1+k) := by
+        congr 1
+        omega
+      _ = _ := by
+        rw[mul_add]
+        simp
+        ring
+  all_goals
     simp
-lemma finite_series_const_mul_nat {m n:ℕ}  (a: ℕ → ℝ) (c:ℝ) :
-  ∑ i ∈ Icc m n, c * a i = c * ∑ i ∈ Icc m n, a i := by
-    by_cases hnm : n < m
-    . simp[sum_of_empty_nat hnm]
-    simp at hnm
-    induction' n,hnm using Nat.le_induction with n hn hind
-    . simp
-    have hnm' : n ≥ m-1 := by omega
-    simp[sum_of_nonempty_nat hnm', hind]
-    ring
-theorem finite_series_add_nat {m n:ℕ} (a b: ℕ → ℝ) :
-  ∑ i ∈ Icc m n, (a i + b i) = ∑ i ∈ Icc m n, a i + ∑ i ∈ Icc m n, b i := by
-    by_cases hnm : n < m
-    . simp[sum_of_empty_nat hnm]
-    simp at hnm
-    induction' n,hnm using Nat.le_induction with n hn hind
-    . simp
-    have hnm' : n ≥ m-1 := by omega
-    simp[sum_of_nonempty_nat hnm', hind]
-    ring
-noncomputable abbrev combo (k j: ℕ) : ℝ := k.factorial  / (j.factorial * (k-j).factorial )
-lemma pascal_idententy {k j:ℕ} : combo k (j-1) + combo k j = combo (k+1) j := by sorry
-lemma combo_self {k:ℕ} : combo k k = 1 := by sorry
-lemma combo_zero {k:ℕ} : combo k 0 = 1 := by sorry
-lemma binomial_theorem_nat (x y:ℝ) (n:ℕ) :
-    (x + y)^n
-    = ∑ j ∈ Icc 0 n,
-    n.factorial / (j.factorial * (n-j).factorial) * x^j * y^(n - j) := by sorry
-/-       induction' n with k hind -/
-/-       . simp -/
-/-       rw[pow_succ,hind,mul_add] -/
-/-       have claim1: (∑ j ∈ Icc 0 k, (combo k j) * x ^ j * y ^ (k - j)) * x   -/
-/-          = (combo k k) * x ^ (k+1) * y ^ 0 + (∑ j ∈ Icc 1 k, (combo k (j-1)) * x ^ j * y ^ (k - (j-1)))  := by -/
-/-            sorry -/
-/-       have claim2: (∑ j ∈ Icc 0 k, (combo k j) * x ^ j * y ^ (k - j)) * y -/
-/-          = (combo k 0) * x ^ 0 * y ^ (k+1) + ∑ j ∈ Icc 1 k, (combo k j) * x ^ j * y ^ (k - (j-1))  := by -/
-/-            sorry -/
-/-       have rearrange (a b c d:ℝ) : b + a + (d + c) = (a + c) + b + d := by ring -/
-/-       have claim3:  ∑ j ∈ Icc 0 (k + 1), (combo (k+1) j) * x ^ j * y ^ (k + 1 - j) -/
-/-         = (∑ j ∈ Icc 1 k, (combo (k+1) j) * x^j * y^(k+1-j))  -/
-/-           + (combo (k+1) (k+1)) * x^(k+1) * y ^ 0  -/
-/-           + (combo (k+1) 0) * x ^ 0 * y^(k+1):= by -/
-/-           sorry -/
-/-       rw[claim1,claim2,rearrange,claim3] -/
-/-       congr 2 -/
-/-       . rw[← finite_series_add_nat] -/
-/-         simp[mul_assoc,← add_mul,pascal_idententy] -/
-/-       . simp[combo_self] -/
-/-       simp[combo_zero] -/
+    split_ands
+    <;> apply Nat.factorial_ne_zero
 
-lemma sum_intCast (n:ℕ) (f:ℕ → ℝ) (g:ℤ → ℝ) (hfg: ∀ i ∈ Icc 0 n, f i = g i):
-∑ i ∈ Icc (0:ℤ) n, g i = ∑ i ∈ Icc 0 n, f i := by
-  induction' n with k hind
-  . simp[hfg 0]
-  specialize hind (by
-    intro i' hi'
-    apply hfg
-    simp_all
-    omega
-  )
-  simp[sum_of_nonempty_nat,sum_of_nonempty,hind]
-  specialize hfg (k+1) (by simp)
-  simp[hfg]
-        
+
+
+lemma finite_series_ext {n m:ℤ} {f g: ℤ → ℝ} (hfg : ∀ i ∈ Icc n m, f i = g i) :
+    ∑ i∈ Icc n m, f i = ∑ i ∈ Icc n m ,g i := by
+      by_cases hnm : n > m
+      . simp[sum_of_empty hnm]
+      simp at hnm
+      induction' m,hnm using Int.le_induction with k hnk hind
+      . simp
+        apply hfg n
+        simp
+      specialize hind (by
+        intro i hi
+        apply hfg i (by simp_all;omega)
+      )
+      specialize hfg (k+1) (by simp;omega)
+      rw[sum_of_nonempty (by linarith), hind,hfg,add_comm]
+      symm
+      convert sum_insert _
+      . ext;simp;omega
+      . infer_instance
+      simp
+
 theorem binomial_theorem (x y:ℝ) (n:ℕ) :
     (x + y)^n
     = ∑ j ∈ Icc (0:ℤ) n,
     n.factorial / (j.toNat.factorial * (n-j).toNat.factorial) * x^j * y^(n - j) := by
+      induction' n with k hind
+      . simp
+      rw[pow_succ,hind,mul_add]
+      have claim1: (∑ j ∈ Icc (0:ℤ) k, (cni k j) * x ^ j * y ^ (k - j)) * x  
+         = (cni k k) * x ^ (k+1) * y ^ 0 + (∑ j ∈ Icc (1:ℤ) k, (cni k (j-1)) * x ^ j * y ^ (k + 1 - j))  := by
+           rw[shift_finite_series (k:=1),mul_comm,← finite_series_const_mul]
+           calc
+            _ = (∑ j ∈ Icc (1:ℤ) (k+1), (cni k (j-1)) * x ^ j * y ^ (k + 1 - j)) := by
+              apply finite_series_ext
+              intro i hi
+              simp at hi
+              have rea (a b c d:ℝ): a * (b * c * d) = b * (c * a) * d := by ring
+              simp[rea]
+              lift i to ℕ using by omega
+              have : i - (1:ℤ) = ((i - 1:ℕ):ℤ ):= by omega
+              congr 2
+              .
+                rw[this]
+                norm_cast
+                rw[← pow_succ]
+                congr;omega
+              . rw[this]
+                omega
+            _ = cni k ((k+1) - 1) * x ^ (k + 1) * y ^ 0 + ∑ j ∈ Icc (1:ℤ) k, cni k (j - 1) * x ^ j * y ^ (↑k + 1 - j) := by
+              convert sum_insert _
+              . ext;simp;omega
+              . simp
+              . exact instDecidableEqOfLawfulBEq
+              . simp
+            _ = _ := by congr;simp
 
-      /- have nat := binomial_theorem_nat x y n -/
-      /- convert nat -/
-      /- apply sum_intCast -/
-      /- intro i hi -/
-      /- simp at hi -/
-      /- simp;left -/
-      /- norm_cast -/
+      have claim2: (∑ j ∈ Icc (0:ℤ) k, (cni k j) * x ^ j * y ^ (k - j)) * y
+         = (cni k 0) * x ^ 0 * y ^ (k+1) + (∑ j ∈ Icc (1:ℤ) k, (cni k j) * x ^ j * y ^ (k +1 - j))  := by
+           calc
+            _ =  (∑ j ∈ Icc (0:ℤ) k, (cni k j) * x ^ j * y ^ (k + 1 - j)) := by
+              rw[mul_comm,← finite_series_const_mul]
+              apply finite_series_ext
+              intro i hi
+              simp at hi
+              lift i to ℕ using by omega
+              have coe1: (k+(1:ℤ)-i) = ((k-i+1:ℕ):ℤ) := by omega
+              have coe2: (k-(i:ℤ)) = ((k-i:ℕ):ℤ) := by omega
+              simp_rw[coe1,coe2,zpow_natCast]
+              ring
+            _ = _ := by
+              convert sum_insert _
+              . ext;simp;omega
+              . infer_instance
+              . simp
+      have rearrange (a b c d:ℝ) : b + a + (d + c) = (a + c) + b + d := by ring
+      have claim3:  ∑ j ∈ Icc (0:ℤ) (k+1:ℕ), (cni (k+1) j) * x ^ j * y ^ ((k + 1:ℕ) - j)
+        = (∑ j ∈ Icc (1:ℤ) k, (cni (k+1) j) * x^j * y^((k+1:ℕ)-j)) 
+          + (cni (k+1) (k+1:ℕ)) * x^(k+1) * y ^ 0 
+          + (cni (k+1) 0) * x ^ 0 * y^(k+1):= by
+            calc
+              _ = ∑ j ∈ Icc (1:ℤ) (k+1:ℕ), (cni (k+1) j) * x ^ j * y ^ ((k + 1:ℕ) - j) + (cni (k+1) 0) * x ^ 0 * y^(k+1) := by
+                rw[add_comm _ (_ * _)]
+                convert sum_insert _
+                . ext;simp;omega
+                . infer_instance
+                simp
+              _ = _ := by
+                congr 1
+                rw[add_comm _ (_ * _)]
+                convert sum_insert _
+                . ext;simp;omega
+                . simp
+                . exact instDecidableEqOfLawfulBEq
+                simp
+
+      rw[claim1,claim2,rearrange,claim3]
+      congr 3
+      . rw[← finite_series_add]
+        simp[mul_assoc,← add_mul]
+        apply finite_series_ext
+        intro i hi; simp at hi
+        rw[pascal_idententy]
+        <;>omega
+      . 
+        simp_rw[combo_self]
+      simp[combo_zero]
 
 /-- Exercise 7.1.5 -/
+lemma lim_of_finite_sum {c:ℤ} {a:ℤ → ℕ → ℝ} {L: ℤ → ℝ}  (h: ∀ x ∈ Icc 1 c, Filter.atTop.Tendsto (a x) (nhds (L x))):
+  Filter.atTop.Tendsto (fun n ↦ ∑ i ∈ Icc 1 c, a i n)  (nhds (∑ i ∈ Icc 1 c, L i ) ):= by
+    by_cases hpos : c < 0
+    . 
+      have hint : ¬ 1 ≤ c := by omega
+      have hemp : Icc 1 c = ∅ := Finset.Icc_eq_empty hint
+      simp[hemp]
+    simp at hpos
+    induction' c,hpos using Int.le_induction with k hk hind
+    . have hemp : Icc 1 0 = ∅ := Finset.Icc_eq_empty (by omega)
+      simp
+    set f := fun n ↦ ∑ i ∈ Icc 1 k, a i n
+    set g := fun n ↦ a (k+1) n
+    set s := fun n ↦ ∑ i ∈ Icc 1 (k+1), a i n
+    have hfgs : s = f + g := by
+      ext n
+      simp[f,g,s]
+      set f : ℤ → ℝ := fun i ↦ a i n
+      rw[show a (k+1) n = f (k+1) by simp[f]]
+      apply sum_of_nonempty (by omega)
+    specialize hind (by
+      intro x hxk
+      exact h x (by simp at ⊢ hxk; omega)
+    )
+    have hg : Filter.atTop.Tendsto g (nhds (L (k+1))) := by
+      simp[g]
+      apply h (k+1) 
+      simp[hk]
+    rw[sum_of_nonempty (by omega),hfgs]
+    exact hind.add hg
+
+
+
 theorem lim_of_finite_series {X:Type*} [Fintype X] (a: X → ℕ → ℝ) (L : X → ℝ)
   (h: ∀ x, Filter.atTop.Tendsto (a x) (nhds (L x))) :
     Filter.atTop.Tendsto (fun n ↦ ∑ x, a x n) (nhds (∑ x, L x)) := by
-  sorry
+    generalize hcard: Fintype.card X = c
+    choose g hg using exist_bijection Finset.univ hcard
+    rw[finite_series_eq (g:=g) (hg:=hg)]
+    have hfeq : (fun n ↦ ∑ x, a x n) = fun n ↦ ∑ i ∈ Icc (1:ℤ) c, if hi : i ∈ Icc (1:ℤ) c then a (g ⟨i, hi⟩) n else 0 := by
+      ext n
+      set f : X → ℝ:= fun x ↦ a x n
+      rw[finite_series_eq (g:=g) (hg:=hg)]
+    rw[hfeq]
+    apply lim_of_finite_sum
+    intro x hx 
+    simp[hx]
+    apply h
+
+
+
+
+
 
 
 
