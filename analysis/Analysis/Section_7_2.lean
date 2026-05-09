@@ -1,6 +1,6 @@
 import Mathlib.Tactic
 import Mathlib.Algebra.Field.Power
-
+import Analysis.Section_7_1
 /-!
 # Analysis I, Section 7.2: Infinite series
 
@@ -91,11 +91,67 @@ theorem Series.convergesTo_sum {s : Series} (h: s.converges) : s.convergesTo s.s
 noncomputable abbrev Series.example_7_2_4 := mk' (m := 1) (fun n ↦ (2:ℝ)^(-n:ℤ))
 
 theorem Series.example_7_2_4a {N:ℤ} (hN: N ≥ 1) : example_7_2_4.partial N = 1 - (2:ℝ)^(-N) := by
-  sorry
+  unfold Series.partial
+  induction' N,hN using Int.le_induction with k hk hind
+  . norm_num
+  simp at hind ⊢ 
+  rw[Finset.sum_of_nonempty (by omega)]
+  simp[show 0 ≤ k by omega]
+  rw[hind,sub_add]
+  congr
+  field_simp
+  ring_nf
+  calc
+    _ = (2:ℝ) ^ k := by 
+      rw[add_comm,zpow_add_one₀ (by simp),mul_two];simp
+    _ = _ := by
+      rw[← zpow_add₀ (by simp), ← zpow_add₀  (by simp)]
+      simp
 
-theorem Series.example_7_2_4b : example_7_2_4.convergesTo 1 := by sorry
+theorem Series.example_7_2_4b : example_7_2_4.convergesTo 1 := by
+  unfold convergesTo
+  have h : example_7_2_4.partial = fun n ↦ if h : n ≥ 1 then  1 - (2:ℝ)^(-n) else 0 := by
+    ext N
+    split_ifs with hn
+    . rw[example_7_2_4a hn]
+    apply partial_of_lt
+    simp; omega
+  rw[h,Metric.tendsto_atTop]
+  intro ε hε
+  set m := - Real.logb 2 ε
+  set mc := max ⌈m⌉ 1
+  use (mc+1)
+  intro n hnmc
+  have hn1 : 1 ≤ n := by omega
+  have hmc : 2 ^ (-mc) ≤ ε := by
+    have hnegm : 2^(-m) = ε := by 
+      simp[m]
+      refine Real.rpow_logb (by simp) (by simp) hε
+    have hnegmc : -mc ≤ -m := by
+      simp[mc];left
+      exact Int.le_ceil m
+    have : (2:ℝ) ^ (-mc) = (2:ℝ) ^ (- (mc:ℝ)) := by norm_cast
+    rw[this,← hnegm]
+    simp[hnegmc]
+      
+  have hni : 2 ^ (-n) < ε := by
+    rw[ge_iff_le,← neg_le_neg_iff] at hnmc
+    calc
+      _ ≤ (2:ℝ) ^ (-(mc + 1)) := by 
+        apply zpow_le_zpow_right₀
+        simp
+        assumption
+      _ < (2:ℝ) ^ (-mc) := by
+        apply zpow_lt_zpow_right₀
+        simp
+        omega
+      _ ≤ _ := by assumption
+  simp only [ge_iff_le, hn1, ↓reduceDIte,  dist_self_sub_left , norm_zpow,
+    Real.norm_ofNat, hni]
 
-theorem Series.example_7_2_4c : example_7_2_4.sum = 1 := by sorry
+
+theorem Series.example_7_2_4c : example_7_2_4.sum = 1 := by
+  apply sum_of_converges example_7_2_4b
 
 noncomputable abbrev Series.example_7_2_4' := mk' (m := 1) (fun n ↦ (2:ℝ)^(n:ℤ))
 
