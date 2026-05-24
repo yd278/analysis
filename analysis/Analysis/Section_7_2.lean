@@ -208,9 +208,103 @@ theorem Series.example_7_2_4'b : example_7_2_4'.diverges := by
   linarith
 
 /-- Proposition 7.2.5 / Exercise 7.2.2 -/
+lemma Series.interval_eq_partial_sub (s:Series) (p q : ℤ) (hpq: p ≤ q) : ∑ n ∈ Finset.Icc p q, s.seq n = s.partial q - s.partial (p-1):= by
+  induction' q,hpq using Int.le_induction with k hk hind
+  . simp
+    by_cases hq : p < s.m
+    . rw[s.vanish,partial_of_lt,partial_of_lt]
+      simp
+      linarith
+      assumption'
+    symm
+    rw[sub_eq_iff_eq_add]
+    set p' := p-1
+    rw[show p = p'+1 by linarith,add_comm _ (s.partial p')]
+    apply partial_succ
+    linarith
+  rw[Finset.sum_of_nonempty (by linarith)] 
+  rw[hind]
+  rw[add_comm,add_sub_assoc']
+  congr
+  symm
+  by_cases hkm : k ≥ s.m - 1
+  . rw[add_comm _ (s.partial k)]
+    apply partial_succ _ hkm
+  simp at hkm
+  rw[s.vanish _ hkm]
+  rw[partial_of_lt hkm]
+  have hkm' : k < s.m := by omega
+  rw[partial_of_lt hkm']
+  simp
+  
+lemma Series.tail_decay_iff_CauchySeq (s:Series) : 
+  (∀ ε > 0, ∃ N ≥ s.m, ∀ p ≥ N, ∀ q ≥ N, |∑ n ∈ Finset.Icc p q, s.seq n| ≤ ε) ↔ CauchySeq s.partial := by
+    rw[cauchySeq_iff_tendsto_dist_atTop_0,Metric.tendsto_atTop]
+    constructor
+    . 
+      rintro hseg ε hε 
+      specialize hseg (ε/2) (half_pos hε )
+      choose N hN hpqs using hseg
+      use (N,N)
+      intro n hn
+      wlog hpq : n.1 < n.2
+      .
+        by_cases heq : n.1 = n.2
+        . simp[heq,hε]
+        specialize this s ε hε N hN hpqs (n.2,n.1)
+        simp at this
+        rw[dist_comm] at this
+        rw[Real.dist_0_eq_abs,abs_of_nonneg (by simp) ]
+        specialize this hn.2 hn.1 
+        apply this
+        simp at hpq 
+        apply lt_of_le_of_ne hpq
+        symm;assumption
+      set p := n.1 + 1
+      have hpn1 : n.1 = p - 1 := by linarith
+      rw[hpn1]
+      set q := n.2
+      simp[Real.dist_eq]
+      have hpN : p ≥ N := by 
+        have := hn.1
+        linarith
+      have hqN : q ≥ N :=hn.2
+      specialize hpqs p hpN q hqN
+      rw[interval_eq_partial_sub _ _ _ (by linarith)] at hpqs
+      calc
+         _ ≤ ε/2 := by rwa[abs_sub_comm]
+         _ < _ := by apply div_two_lt_of_pos hε
+    intro hcau ε hε 
+    specialize hcau ε hε 
+    choose N hN  using hcau
+    use max s.m (max (N.1+1) (N.2+1))
+    simp
+    intro p hp hpn q hq hqn
+    have hpqn : (p-1, q) ≥ N := by
+      constructor
+      . simp
+        apply le_sub_left_of_add_le
+        omega
+      . simp
+        omega
+    specialize hN (p-1,q) hpqn
+    simp at hN
+    by_cases hpq : p ≤ q
+    . rw[interval_eq_partial_sub _ _ _ hpq]
+      rw[Real.dist_eq,abs_sub_comm] at hN
+      apply le_of_lt hN
+    rw[Finset.sum_of_empty]
+    simp;apply le_of_lt hε 
+    simp at hpq
+    assumption
+
+
+
 theorem Series.converges_iff_tail_decay (s:Series) :
     s.converges ↔ ∀ ε > 0, ∃ N ≥ s.m, ∀ p ≥ N, ∀ q ≥ N, |∑ n ∈ Finset.Icc p q, s.seq n| ≤ ε := by
-  sorry
+      rw[tail_decay_iff_CauchySeq ]
+      exact (cauchy_iff_exists_le_nhds).symm
+       
 
 /-- Corollary 7.2.6 (Zero test) / Exercise 7.2.3 -/
 theorem Series.decay_of_converges {s:Series} (h: s.converges) :
