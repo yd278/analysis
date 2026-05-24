@@ -156,9 +156,56 @@ theorem Series.example_7_2_4c : example_7_2_4.sum = 1 := by
 noncomputable abbrev Series.example_7_2_4' := mk' (m := 1) (fun n ↦ (2:ℝ)^(n:ℤ))
 
 theorem Series.example_7_2_4'a {N:ℤ} (hN: N ≥ 1) : example_7_2_4'.partial N = (2:ℝ)^(N+1) - 2 := by
-  sorry
-
-theorem Series.example_7_2_4'b : example_7_2_4'.diverges := by sorry
+  induction' N,hN using Int.le_induction with k hk hind
+  . simp[Series.partial]
+    norm_num
+  rw[Series.partial_succ]
+  . simp[example_7_2_4', show 0 ≤ k by omega,hind]
+    nth_rw 3 [zpow_add_one₀]
+    rw[sub_add_eq_add_sub,mul_two]
+    simp
+  simp
+  omega
+theorem Series.example_7_2_4'b : example_7_2_4'.diverges := by
+  simp[convergesTo]
+  intro x hx
+  set g:= example_7_2_4'.partial
+  set f:ℕ → ℝ := fun n ↦ (2:ℝ)^(n+1) - 2
+  have hfg : ∀ (n:ℕ), n ≥ 1 → f n = g (n:ℤ) := by
+    intro n hn
+    zify at hn
+    simp[f,g]
+    rw[example_7_2_4'a hn]
+    norm_cast
+  have htop : Filter.Tendsto f Filter.atTop (nhds x) := by
+    have : ∀ᶠ (n : ℕ) in Filter.atTop, f n = g n := by
+      refine Filter.eventually_atTop.mpr ⟨1, fun n hn => hfg n hn⟩
+    rw[Filter.tendsto_congr' this]
+    apply hx.comp
+    exact tendsto_natCast_atTop_atTop
+  have hbdda := htop.bddAbove_range
+  choose M hM using hbdda
+  have hM' (n : ℕ) : f n ≤ M :=
+    hM (Set.mem_range_self n)
+  have h_pow_ge (n:ℕ): f n ≥ (n:ℝ) := by
+    induction' n with k hind
+    . simp[f]
+    simp[f] at ⊢ hind
+    ring_nf at hind ⊢ 
+    calc
+      _ ≤ (1:ℝ) + (-2 + 2 ^ k * 2) := by linarith
+      _ ≤ _ := by
+        simp
+        rw[← add_assoc,← add_assoc]
+        nlinarith
+  specialize hM' (Nat.ceil M + 1)
+  specialize h_pow_ge (Nat.ceil M + 1)
+  have hcon : (Nat.ceil  M + 1) > M := by
+    calc
+      _ ≥ M + 1 := by gcongr; exact Nat.le_ceil M
+      _ > _ := by simp
+  simp at h_pow_ge
+  linarith
 
 /-- Proposition 7.2.5 / Exercise 7.2.2 -/
 theorem Series.converges_iff_tail_decay (s:Series) :
