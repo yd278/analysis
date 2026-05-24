@@ -309,11 +309,25 @@ theorem Series.converges_iff_tail_decay (s:Series) :
 /-- Corollary 7.2.6 (Zero test) / Exercise 7.2.3 -/
 theorem Series.decay_of_converges {s:Series} (h: s.converges) :
     Filter.atTop.Tendsto s.seq (nhds 0) := by
-  sorry
+      rw[converges_iff_tail_decay] at h
+      rw[Metric.tendsto_atTop]
+      intro ε hε
+      specialize h (ε /2 ) (half_pos hε)
+      choose N hN hdecay using h
+      use N
+      intro n hn
+      simp
+      specialize hdecay n hn n hn
+      simp at hdecay
+      linarith
+      
 
 theorem Series.diverges_of_nodecay {s:Series} (h: ¬ Filter.atTop.Tendsto s.seq (nhds 0)) :
     s.diverges := by
-  sorry
+      contrapose h
+      simp at h
+      simp
+      apply decay_of_converges h
 
 /-- Example 7.2.7 -/
 theorem Series.example_7_2_7 : ((fun n:ℕ ↦ (1:ℝ)):Series).diverges := by
