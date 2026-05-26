@@ -510,13 +510,43 @@ theorem Series.converges_of_alternating {m:ℤ} {a: { n // n ≥ m} → ℝ} (ha
 noncomputable abbrev Series.example_7_2_13 : Series := (mk' (m:=1) (fun n ↦ (-1:ℝ)^(n:ℤ) / (n:ℤ)))
 
 theorem Series.example_7_2_13a : example_7_2_13.converges := by
-  sorry
+  set a := fun n : {n// n≥ (1:ℤ)} ↦ (1:ℝ) / (n:ℤ)
+  have heq : example_7_2_13 = (mk' fun n ↦ (-1)^(n:ℤ) * a n) := by
+    ext x
+    . simp
+    simp;split_ifs
+    . field_simp[a]
+    simp
+  rw[heq,converges_of_alternating]
+  . 
+    have hne : Nonempty {n // n ≥ (1:ℤ)} := by use 1
+    rw[Metric.tendsto_atTop]
+    intro ε hε
+    set N := ⌈ε⁻¹⌉
+    have hN : N ≥ 1 := by simp[N,hε]
+    use ⟨N+1,by grind⟩ 
+    rintro ⟨n,hn⟩ hnN
+    simp at hnN
+    simp[a]
+    apply inv_lt_of_inv_lt₀ hε 
+    have :ε⁻¹ ≤ N := by apply Int.le_ceil
+    apply lt_of_le_of_lt this
+    rw[abs_of_pos] <;> simp<;> linarith
+  . rintro ⟨x,hx⟩ 
+    simp[a]
+    linarith
+  rintro ⟨x1,hx1⟩ ⟨x2,hx2⟩ hle
+  simp at hle
+  simp[a]
+  rw[inv_le_inv₀]
+  <;> simp <;> linarith
 
-theorem Series.example_7_2_13b : ¬ example_7_2_13.absConverges := by
-  sorry
+/- theorem Series.example_7_2_13b : ¬ example_7_2_13.absConverges := by -/
+/-   -- See Corollary 7.3.7 -/
+/-   sorry -/
 
-theorem Series.example_7_2_13c :  example_7_2_13.condConverges := by
-  sorry
+/- theorem Series.example_7_2_13c :  example_7_2_13.condConverges := by -/
+/-   refine ⟨example_7_2_13a,example_7_2_13b⟩  -/
 
 instance Series.inst_add : Add Series where
   add a b := {
@@ -532,7 +562,26 @@ theorem Series.add_coe (a b: ℕ → ℝ) : (a:Series) + (b:Series) = (fun n ↦
 /-- Proposition 7.2.14 (a) (Series laws) / Exercise 7.2.5.  The `convergesTo` form can be more convenient for applications. -/
 theorem Series.convergesTo.add {s t:Series} {L M: ℝ} (hs: s.convergesTo L) (ht: t.convergesTo M) :
     (s + t).convergesTo (L + M) := by
-  sorry
+      sorry
+      /- unfold convergesTo at hs ht ⊢  -/
+      /- suffices hadd : ∀ᶠ (n:ℤ) in Filter.atTop, (s + t).partial n = s.partial n + t.partial n from by -/
+      /-   rw[Filter.tendsto_congr' hadd] -/
+      /-   apply hs.add ht -/
+      /- rw[Filter.eventually_atTop] -/
+      /- use (max s.m t.m) -/
+      /- intro x hx -/
+      /- induction' x,hx using Int.le_induction with k hk hind -/
+      /- .  -/
+      /-   simp[Series.partial, show (s+t).m = max s.m t.m by rfl] -/
+
+
+
+      
+
+
+
+
+
 
 theorem Series.add {s t:Series} (hs: s.converges) (ht: t.converges) :
     (s + t).converges ∧ (s+t).sum = s.sum + t.sum := by sorry
