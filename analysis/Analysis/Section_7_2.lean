@@ -332,11 +332,21 @@ theorem Series.diverges_of_nodecay {s:Series} (h: ¬ Filter.atTop.Tendsto s.seq 
 /-- Example 7.2.7 -/
 theorem Series.example_7_2_7 : ((fun n:ℕ ↦ (1:ℝ)):Series).diverges := by
   apply diverges_of_nodecay
-  sorry
+  intro h
+  rw[Metric.tendsto_atTop] at h
+  specialize h 1 (by simp)
+  choose N hN using h
+  specialize hN (max N 0) (by simp)
+  simp at hN
 
 theorem Series.example_7_2_7' : ((fun n:ℕ ↦ (-1:ℝ)^n):Series).diverges := by
   apply diverges_of_nodecay
-  sorry
+  intro h
+  rw[Metric.tendsto_atTop] at h
+  specialize h 1 (by simp)
+  choose N hN using h
+  specialize hN (max N 0) (by simp)
+  simp at hN
 
 /-- Definition 7.2.8 (Absolute convergence) -/
 abbrev Series.abs (s:Series) : Series := mk' (m:=s.m) (fun n ↦ |s.seq n|)
@@ -347,10 +357,50 @@ abbrev Series.condConverges (s:Series) : Prop := s.converges ∧ ¬ s.absConverg
 
 /-- Proposition 7.2.9 (Absolute convergence test) / Example 7.2.4 -/
 theorem Series.converges_of_absConverges {s:Series} (h : s.absConverges) : s.converges := by
-  sorry
+  simp[absConverges ] at h
+  rw[ converges_iff_tail_decay] at h ⊢ 
+  peel h with ε hε N hN 
+  rw [show s.abs.m = s.m by rfl] at hN
+  simp[hN.left]
+  replace hN := hN.right
+  peel hN with p hp q hq hsum
+  have hrep (p q:ℤ): ∑ n ∈ Finset.Icc p q,s.abs.seq n = ∑ n ∈ Finset.Icc p q,|s.seq n| := by
+    apply Finset.sum_congr
+    simp
+    intro x hx
+    simp
+    intro hxsm
+    rw[s.vanish _ hxsm]
+    simp
+  apply le_trans _ hsum
+  rw[hrep]
+  refine le_trans ?_ (le_abs_self _)
+  apply Finset.abs_finite_series_le
 
 theorem Series.abs_le {s:Series} (h : s.absConverges) : |s.sum| ≤ s.abs.sum := by
-  sorry
+  have hconv := converges_of_absConverges h
+  choose L hL using hconv
+  choose R hR using h
+  rw[sum_of_converges hL, sum_of_converges hR]
+  have hLabs := Filter.Tendsto.abs hL
+
+  apply le_of_tendsto_of_tendsto' hLabs hR
+  intro x
+  by_cases hx : x ≥ s.m
+  . 
+    induction' x,hx using Int.le_induction with k hk hind
+    . simp[Series.partial]
+    rw[partial_succ _ (by linarith)]
+    rw[partial_succ _ (by linarith)]
+    rw[show s.abs.seq (k+1) = |s.seq (k+1)| by simp[show s.m ≤ k+1 by linarith] ]
+    calc
+      _ ≤ |s.partial k| + |s.seq (k+1)| := by apply abs_add_le
+      _ ≤ _ := by gcongr
+  rw[partial_of_lt, partial_of_lt]
+  simp
+  linarith
+  linarith
+
 
 /-- Proposition 7.2.12 (Alternating series test) -/
 theorem Series.converges_of_alternating {m:ℤ} {a: { n // n ≥ m} → ℝ} (ha: ∀ n, a n ≥ 0)
@@ -379,14 +429,77 @@ theorem Series.converges_of_alternating {m:ℤ} {a: { n // n ≥ m} → ℝ} (ha
     simp [claim1 hN, h'.add_one.neg_one_zpow]; apply ha'; simp
   have claim3 {N:ℤ} (hN: N ≥ m) (h': Even N) : S (N+2) ≤ S N := by
     simp [claim1 hN, h'.add_one.neg_one_zpow]; apply ha'; simp
-  have why1 {N:ℤ} (hN: N ≥ m) (h': Even N) (k:ℕ) : S (N+2*k) ≤ S N := by sorry
-  have why2 {N:ℤ} (hN: N ≥ m) (h': Even N) (k:ℕ) : S (N+2*k+1) ≥ S N - a ⟨ N+1, by grind ⟩ := by sorry
-  have why3 {N:ℤ} (hN: N ≥ m) (h': Even N) (k:ℕ) : S (N+2*k+1) ≤ S (N+2*k) := by sorry
+  have why1 {N:ℤ} (hN: N ≥ m) (h': Even N) (k:ℕ) : S (N+2*k) ≤ S N := by
+    induction' k with k hind
+    . simp
+    rify;rw[mul_add,← add_assoc];norm_num
+    have hev : Even (N + 2 * k) := by grind
+    have hn' : (N + 2 * k) ≥ m := by grind
+    have := claim3 hn' hev
+    linarith
+    
+  have why2 {N:ℤ} (hN: N ≥ m) (h': Even N) (k:ℕ) : S (N+2*k+1) ≥ S N - a ⟨ N+1, by grind ⟩ := by
+    have claim0' : S (N + 1) = S N - a ⟨N + 1, by grind⟩ := by
+      rw[claim0 hN];
+      have : (-1:ℝ) ^ (N+1) = -1 := by
+        apply Odd.neg_one_zpow
+        apply h'.add_one
+      rw[this];simp;ring
+    rw[← claim0']
+    induction' k with k hind
+    . simp
+    zify
+    rw[show N + (2:ℤ) * (k + 1) + 1 = N + (2:ℤ) * k + 1 + 2 by ring]
+    have hodd : Odd (N + 2 * k + 1) := by
+      apply Even.add_one
+      apply Even.add h'
+      simp
+    have hnm : (N + 2 * k + 1) ≥ m := by grind
+    apply le_trans (hind claim0')
+    apply claim2 hnm hodd
+
+  have why3 {N:ℤ} (hN: N ≥ m) (h': Even N) (k:ℕ) : S (N+2*k+1) ≤ S (N+2*k) := by
+    have hodd : Odd (N+2*k+1) := by grind
+    have hnm : N+2*k ≥ m := by grind
+    have claim0' := claim0 hnm
+    rw[Odd.neg_one_zpow  hodd] at claim0'
+    rw[claim0']
+    simp;apply ha
   have claim4 {N:ℤ} (hN: N ≥ m) (h': Even N) (k:ℕ) : S N -
  a ⟨ N+1, by grind ⟩ ≤ S (N + 2*k + 1) ∧ S (N + 2*k + 1) ≤ S (N + 2*k) ∧ S (N + 2*k) ≤ S N := ⟨ ge_iff_le.mp (why2 hN h' k), why3 hN h' k, why1 hN h' k ⟩
   have why4 {N n:ℤ} (hN: N ≥ m) (h': Even N) (hn: n ≥ N) : S N - a ⟨ N+1, by grind ⟩ ≤ S n ∧ S n ≤ S N := by
-    sorry
-  have why5 {ε:ℝ} (hε: ε > 0) : ∃ N, ∀ n ≥ N, ∀ m ≥ N, |S n - S m| ≤ ε := by sorry
+    set d := (n - N).toNat
+    have hd : n = N + d := by
+      simp[d, show max (n - N) 0 = (n - N) by simp[hn]]
+    rw[show S n = S (N + d) by rw[hd]]
+    specialize claim4 hN h'
+    obtain ⟨k,(hk|hk)⟩ :=  d.even_or_odd'
+    <;> specialize claim4 k
+    <;> simp only[hk, Nat.cast_mul,Nat.cast_add,Nat.cast_ofNat,← add_assoc]
+    . refine ⟨le_trans claim4.1 claim4.2.1,claim4.2.2⟩ 
+    refine ⟨claim4.1, le_trans claim4.2.1 claim4.2.2⟩ 
+  have why5 {ε:ℝ} (hε: ε > 0) : ∃ N, ∀ n ≥ N, ∀ m ≥ N, |S n - S m| ≤ ε := by
+    have hne : Nonempty { n // n ≥ m } := by use m
+    rw[Metric.tendsto_atTop] at h
+    specialize h ε hε 
+    obtain ⟨⟨T,hT⟩ ,hTa⟩ := h 
+    set N := if Even T then T else (T + 1)
+    have hNT : N ≥ T := by 
+      simp[N];split_ifs<;>simp
+    have hN: N ≥ m := by linarith
+    have h' : Even N := by
+        simp[N]; split_ifs with hT
+        . assumption
+        simp at hT
+        exact hT.add_one
+    use N
+    intro n1 hn1 n2 hn2
+    have hr1 := why4 hN h' hn1
+    have hr2 := why4 hN h' hn2
+    specialize hTa ⟨N+1,by grind⟩ (by simp;linarith)
+    rw[Real.dist_eq,sub_zero,abs_of_nonneg (by apply ha)] at hTa
+    rw[abs_sub_le_iff]
+    split_ands <;> linarith
   have : CauchySeq S := by
     rw [Metric.cauchySeq_iff']
     intro ε hε; choose N hN using why5 (half_pos hε); use N
