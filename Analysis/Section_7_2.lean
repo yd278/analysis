@@ -630,10 +630,36 @@ theorem Series.smul_coe (a: ℕ → ℝ) (c: ℝ) : (c • a:Series) = (fun n �
 /-- Proposition 7.2.14 (b) (Series laws) / Exercise 7.2.5.  The {name}`convergesTo` form can be more convenient for applications. -/
 theorem Series.convergesTo.smul {s:Series} {L c: ℝ} (hs: s.convergesTo L) :
     (c • s).convergesTo (c * L) := by
-  sorry
+      unfold convergesTo at hs  ⊢ 
+      suffices hsc : (c • s).partial = fun n ↦  s.partial n * c from by
+        rw[hsc]
+        rw[mul_comm,← smul_eq_mul]
+        apply hs.smul_const c
+      ext n
+      obtain (hlt|hge) := lt_or_ge n s.m
+      . rw[partial_of_lt (by omega)]
+        rw[partial_of_lt hlt]
+        simp
+      replace hge : n ≥ s.m - 1 := by omega
+      induction' n,hge using Int.le_induction with k hk hind 
+      . rw[partial_of_lt (by change s.m - 1 < s.m; simp), partial_of_lt (by simp)];simp
+      rw[partial_succ _ (by omega), partial_succ _ (by omega)]
+      simp[hind,add_mul]
+      rw[mul_comm]
+      change( if (k+1) ≥ s.m then c * s.seq (k+1) else 0)  = c * s.seq (k+1)
+      simp;intro
+      linarith
 
 theorem Series.smul {c:ℝ} {s:Series} (hs: s.converges) :
-    (c • s).converges ∧ (c • s).sum = c * s.sum := by sorry
+    (c • s).converges ∧ (c • s).sum = c * s.sum := by
+      choose L hL using hs
+      rw[sum_of_converges hL]
+      split_ands
+      . use c*L
+        unfold convergesTo 
+        exact convergesTo.smul hL
+      apply sum_of_converges 
+      exact convergesTo.smul hL
 
 /-- The corresponding API for subtraction was not in the textbook, but is useful in later sections, so is included here. -/
 instance Series.inst_sub : Sub Series where
@@ -647,13 +673,57 @@ theorem Series.sub_coe (a b: ℕ → ℝ) : (a:Series) - (b:Series) = (fun n ↦
   ext n; rfl
   change (a:Series).seq n - (b:Series).seq n = _
   by_cases h:n ≥ 0 <;> simp [h]
+lemma Series.partial_succ' {s:Series}  {N:ℤ} : s.partial (N+1) = s.partial N + s.seq (N+1) := by
+  by_cases hN: N ≥ s.m - 1
+  . apply partial_succ _ hN
+  unfold Series.partial
+  simp at hN
+  rw[Finset.sum_of_empty hN]
+  rw[Finset.sum_of_empty (by omega)]
+  simp;symm
+  apply s.vanish _ hN
 
 theorem Series.convergesTo.sub {s t:Series} {L M: ℝ} (hs: s.convergesTo L) (ht: t.convergesTo M) :
     (s - t).convergesTo (L - M) := by
-  sorry
+    unfold convergesTo at hs ht ⊢ 
+    set m := min s.m t.m
+    have hsubm : (s - t).m = m := by rfl
+    suffices hsub : (s-t).partial = s.partial - t.partial from by
+      rw[hsub]
+      apply hs.sub ht
+    ext n
+    simp
+    by_cases hnm : n < m
+    . repeat rw[partial_of_lt (by omega)]
+      simp
+    simp at hnm
+    induction' n,hnm using Int.le_induction with k hk hind
+    . simp[Series.partial,hsubm]
+      rw[show (s-t).seq m = s.seq m - t.seq m by rfl]
+      obtain (hle|heq|hge) := lt_trichotomy s.m t.m
+      . have hm : m = s.m := by omega
+        rw[hm];simp;rw[Finset.sum_of_empty hle]
+        apply t.vanish _ hle
+      . have hm : m = t.m := by omega
+        simp[hm,heq]
+      . have hm : m=t.m :=by omega
+        rw[hm];simp;rw[Finset.sum_of_empty hge]
+        apply s.vanish _ hge
+    repeat rw[partial_succ']
+    simp[hind]
+    have hst: (s-t).seq (k+1) = s.seq (k+1) - t.seq (k+1) := by rfl
+    linarith
 
 theorem Series.sub {s t:Series} (hs: s.converges) (ht: t.converges) :
-    (s - t).converges ∧ (s-t).sum = s.sum - t.sum := by sorry
+    (s - t).converges ∧ (s-t).sum = s.sum - t.sum := by
+      choose L hL using hs
+      choose M hM using ht
+      split_ands
+      . use L-M
+        apply convergesTo.sub hL hM
+      apply sum_of_converges 
+      rw[sum_of_converges hL, sum_of_converges hM]
+      apply convergesTo.sub hL hM
 
 abbrev Series.from (s:Series) (m₁:ℤ) : Series := mk' (m := max s.m m₁) (fun n ↦ s.seq (n:ℤ))
 
