@@ -16,9 +16,10 @@ _site/
 .claude/
 .cursor/
 Claude.md
-analysis/.repair
+.repair
 **/.env
 **/.aider.conf.yml
+**/.formalize
 
 # miscellaneous files
 **/tobeIgnored/
