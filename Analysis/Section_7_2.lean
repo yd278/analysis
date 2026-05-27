@@ -1,5 +1,6 @@
 import Mathlib.Tactic
 import Mathlib.Algebra.Field.Power
+import Mathlib.Analysis.SpecialFunctions.Log.Base
 import Analysis.Section_7_1
 /-!
 # Analysis I, Section 7.2: Infinite series
@@ -128,7 +129,8 @@ theorem Series.example_7_2_4b : example_7_2_4.convergesTo 1 := by
       simp[m]
       refine Real.rpow_logb (by simp) (by simp) hε
     have hnegmc : -mc ≤ -m := by
-      simp[mc];left
+      simp[mc]
+      left
       exact Int.le_ceil m
     have : (2:ℝ) ^ (-mc) = (2:ℝ) ^ (- (mc:ℝ)) := by norm_cast
     rw[this,← hnegm]
@@ -279,11 +281,11 @@ lemma Series.tail_decay_iff_CauchySeq (s:Series) :
     choose N hN  using hcau
     use max s.m (max (N.1+1) (N.2+1))
     simp
-    intro p hp hpn q hq hqn
+    intro p hpm hpn1 hpn2 q hqm hqn1 hqn2
+
     have hpqn : (p-1, q) ≥ N := by
       constructor
       . simp
-        apply le_sub_left_of_add_le
         omega
       . simp
         omega
@@ -325,8 +327,6 @@ theorem Series.decay_of_converges {s:Series} (h: s.converges) :
 theorem Series.diverges_of_nodecay {s:Series} (h: ¬ Filter.atTop.Tendsto s.seq (nhds 0)) :
     s.diverges := by
       contrapose h
-      simp at h
-      simp
       apply decay_of_converges h
 
 /-- Example 7.2.7 -/
@@ -455,7 +455,7 @@ theorem Series.converges_of_alternating {m:ℤ} {a: { n // n ≥ m} → ℝ} (ha
       apply Even.add h'
       simp
     have hnm : (N + 2 * k + 1) ≥ m := by grind
-    apply le_trans (hind claim0')
+    apply le_trans hind
     apply claim2 hnm hodd
 
   have why3 {N:ℤ} (hN: N ≥ m) (h': Even N) (k:ℕ) : S (N+2*k+1) ≤ S (N+2*k) := by
@@ -515,7 +515,7 @@ theorem Series.example_7_2_13a : example_7_2_13.converges := by
     ext x
     . simp
     simp;split_ifs
-    . field_simp[a]
+    . simp[a];field_simp
     simp
   rw[heq,converges_of_alternating]
   . 
@@ -560,32 +560,61 @@ theorem Series.add_coe (a b: ℕ → ℝ) : (a:Series) + (b:Series) = (fun n ↦
   change (a:Series).seq n + (b:Series).seq n = _
   by_cases h:n ≥ 0 <;> simp [h]
 
+
 /-- Proposition 7.2.14 (a) (Series laws) / Exercise 7.2.5.  The {name}`convergesTo` form can be more convenient for applications. -/
 theorem Series.convergesTo.add {s t:Series} {L M: ℝ} (hs: s.convergesTo L) (ht: t.convergesTo M) :
     (s + t).convergesTo (L + M) := by
-      sorry
-      /- unfold convergesTo at hs ht ⊢  -/
-      /- suffices hadd : ∀ᶠ (n:ℤ) in Filter.atTop, (s + t).partial n = s.partial n + t.partial n from by -/
-      /-   rw[Filter.tendsto_congr' hadd] -/
-      /-   apply hs.add ht -/
-      /- rw[Filter.eventually_atTop] -/
-      /- use (max s.m t.m) -/
-      /- intro x hx -/
-      /- induction' x,hx using Int.le_induction with k hk hind -/
-      /- .  -/
-      /-   simp[Series.partial, show (s+t).m = max s.m t.m by rfl] -/
-
-
-
-      
-
-
-
-
+      unfold convergesTo at hs ht ⊢ 
+      suffices hadd : (s+t).partial = s.partial + t.partial from by
+        rw[hadd]
+        apply hs.add ht
+      wlog hst : s.m ≤ t.m
+      . simp at hst
+        specialize this ht hs (le_of_lt hst)
+        have hcomm : s + t = t + s:= by
+          ext m
+          . apply min_comm
+          apply add_comm _ _
+        rwa[hcomm,add_comm]
+      ext n
+      simp
+      by_cases hn : n < s.m
+      . rw[partial_of_lt (by change n < min s.m t.m; omega)]
+        rw[partial_of_lt (by omega)]
+        rw[partial_of_lt (by omega)]
+        simp
+      simp at hn
+      induction' n,hn using Int.le_induction with k hk hind
+      . simp[Series.partial]
+        simp[show (s+t).m = s.m by change min s.m t.m = s.m; omega]
+        obtain (heq|hlt) := hst.eq_or_lt
+        . simp[heq];rfl
+        simp[hlt]
+        change s.seq s.m + t.seq s.m = s.seq s.m
+        simp;apply t.vanish _ hlt
+      rw[partial_succ _ (by change k ≥ min s.m t.m -1;omega)]
+      rw[partial_succ _ (by omega)]
+      rw[hind]
+      rw[show (s+t).seq (k+1) = s.seq (k+1) + t.seq (k+1) by rfl]
+      suffices ht_succ : t.partial (k+1) = t.partial (k) + t.seq (k+1) from by linarith
+      by_cases hkt : k ≥ t.m - 1
+      . apply partial_succ _ hkt
+      simp at hkt
+      simp[Series.partial]
+      rw[t.vanish _ hkt]
+      have : k < t.m := by omega
+      simp[hkt,this]
 
 
 theorem Series.add {s t:Series} (hs: s.converges) (ht: t.converges) :
-    (s + t).converges ∧ (s+t).sum = s.sum + t.sum := by sorry
+    (s + t).converges ∧ (s+t).sum = s.sum + t.sum := by
+      choose L hL using hs
+      choose M hM using ht
+      rw[ sum_of_converges hL, sum_of_converges hM]
+      have hsum := hL.add hM
+      split_ands
+      . use L+M
+      exact sum_of_converges hsum
 
 instance Series.inst.smul : SMul ℝ Series where
   smul c s := {
