@@ -51,7 +51,6 @@ example : (0.1:ℝ).Adherent Example_6_4_3 0.8 := by
   use 0
   simp[dist]
   norm_num
-  rw[abs_of_pos (by positivity)]
 
 /-- Example 6.4.3 -/
 example : ¬ (0.1:ℝ).ContinuallyAdherent Example_6_4_3 0.8 := by
@@ -91,7 +90,6 @@ example : Example_6_4_3.LimitPoint 1 := by
   split_ands
   . simp[hN]
   simp[dist,hN]
-  rw[abs_of_pos (by positivity)]
   replace hm := le_of_lt hm
   apply le_trans ?_ hm
   simp
@@ -117,15 +115,14 @@ example : (0.1:ℝ).ContinuallyAdherent Example_6_4_4 1 := by
     have :(-1:ℝ)^N = 1 := by exact Even.neg_one_pow hpar
     simp[this]
     calc 
-      _ ≤ |(10:ℝ) ^ ( - (0:ℤ) - 1)| := by gcongr; simp; simp
-      _ ≤ _ := by norm_num; rw[abs_of_pos (by positivity)]
+      _ ≤ (10:ℝ) ^ ( - (0:ℤ) - 1) := by gcongr; simp; simp
+      _ ≤ _ := by norm_num
   simp at hpar
   use (N + 1)
   replace hpar : Even (N + 1) := by exact Odd.add_one hpar
   simp[dist, show 0 ≤ (N:ℤ) + 1 by linarith]
   have : (-1:ℝ) ^ (N+1) = 1 := by exact Even.neg_one_pow hpar
   simp[this]
-  rw[abs_of_pos (by positivity)]
   calc
     _ ≤ (10:ℝ) ^ (-(1:ℤ) + -(0) - 1) := by gcongr; simp;simp
     _ ≤ _ := by norm_num
@@ -149,7 +146,7 @@ lemma Real.exists_decimal_lt {ε :ℝ} (hε: ε >0) : ∃ (N:ℕ), ∀ n ≥ N, 
         positivity
         linarith
         linarith
-      _ < _ := by field_simp;ring_nf;assumption
+      _ < _ := by field_simp;ring_nf at hN' ⊢;assumption
 /-- Example 6.4.4 -/
 example : Example_6_4_4.LimitPoint 1 := by
   intro ε hε 
@@ -173,7 +170,7 @@ example : Example_6_4_4.LimitPoint 1 := by
         positivity
         linarith
         linarith
-      _ < _ := by field_simp;ring_nf;assumption
+      _ < _ := by field_simp;ring_nf at hN' ⊢;assumption
   intro N hN
   simp at hN
   lift N to ℕ using hN
@@ -185,7 +182,6 @@ example : Example_6_4_4.LimitPoint 1 := by
     simp[dist, show N ≤ n by simp[n]]
     have : (-1:ℝ)^n  = 1 := by exact Even.neg_one_pow hpar
     simp[this]
-    rw[abs_of_pos (by positivity)]
     apply le_of_lt
     apply hm n
     simp[n]
@@ -198,7 +194,6 @@ example : Example_6_4_4.LimitPoint 1 := by
   replace hpar : Even (n+1) := by exact Odd.add_one hpar
   have :(-1:ℝ) ^ (n+1) = 1 := by exact Even.neg_one_pow hpar
   simp[hnN, show (n:ℤ)+1 ≥ 0 by linarith,dist,this]
-  rw[abs_of_pos (by positivity)]
   apply le_of_lt
   have := hm (n+1) (by apply le_trans (show m ≤ n by simp[n]); linarith)
   simpa using this
@@ -226,7 +221,7 @@ example : Example_6_4_4.LimitPoint (-1) := by
         positivity
         linarith
         linarith
-      _ < _ := by field_simp;ring_nf;assumption
+      _ < _ := by field_simp;ring_nf at hN' ⊢ ;assumption
   intro N hN
   simp at hN
   lift N to ℕ using hN
@@ -238,7 +233,6 @@ example : Example_6_4_4.LimitPoint (-1) := by
     simp[dist, show N ≤ n by simp[n]]
     have : (-1:ℝ)^n  = -1 := by exact Odd.neg_one_pow hpar
     simp[this]
-    rw[abs_of_pos (by positivity)]
     apply le_of_lt
     apply hm n
     simp[n]
@@ -251,7 +245,6 @@ example : Example_6_4_4.LimitPoint (-1) := by
   replace hpar : Odd (n+1) := by exact Even.add_one hpar
   have :(-1:ℝ) ^ (n+1) = -1 := by exact Odd.neg_one_pow hpar
   simp[hnN, show (n:ℤ)+1 ≥ 0 by linarith,dist,this]
-  rw[abs_of_pos (by positivity)]
   apply le_of_lt
   have := hm (n+1) (by apply le_trans (show m ≤ n by simp[n]); linarith)
   simpa using this
@@ -267,18 +260,17 @@ example : ¬ Example_6_4_4.LimitPoint 0 := by
   simp
   by_cases hpar : Even x
   . have :(-1:ℝ)^ x = 1 := by exact Even.neg_one_pow hpar
-    simp[this]
+    simp
     rw[abs_of_pos (by positivity)]
     calc
       _ < (1:ℝ) := by linarith
       _ < _ := by simp; positivity
   . simp at hpar
     have: (-1:ℝ)^x = (-1) := by exact Odd.neg_one_pow hpar
-    simp[this]
-    rw[← neg_add,abs_neg,abs_of_pos (by positivity)]
+    simp
     calc
       _ < (1:ℝ) := by linarith
-      _ < _ := by simp; positivity
+      _ < _ := by rw[abs_of_pos (by positivity)];norm_num;positivity
 
 /-- Proposition 6.4.5 / Exercise 6.4.1 -/
 theorem Sequence.limit_point_of_limit {a:Sequence} {x:ℝ} (h: a.TendsTo x) : a.LimitPoint x := by
@@ -375,11 +367,13 @@ lemma Sequence.upperseq_of_unbounded_above {a:Sequence} (ha : ¬ a.BddAbove) {n:
 lemma Sequence.limsup_of_unbounded_above { a:Sequence} (ha : ¬ a.BddAbove):
     a.limsup = ⊤ := by
       unfold limsup
+      erw[sInf_eq_top]
       simp
       intro ub n hn
       have := upperseq_of_unbounded_above ha hn
       rw[this]
-      simp
+      tauto
+      
 lemma Sequence.inf_of_unbounded_below {a:Sequence} (ha : ¬ a.BddBelow) : a.inf = ⊥ := by
   contrapose! ha
   obtain ⟨l,hr⟩|htop|hbot := a.inf.def 
@@ -390,7 +384,7 @@ lemma Sequence.inf_of_unbounded_below {a:Sequence} (ha : ¬ a.BddBelow) : a.inf 
     simpa using this
   . have := ge_inf (show a.m ≥ a.m by simp)
     rw[htop] at this
-    simp at this
+    tauto
   contradiction
 lemma Sequence.lowerseq_of_unbounded_below {a:Sequence} (ha : ¬ a.BddBelow) {n:ℤ} (hn : n ≥ a.m):
     a.lowerseq n = ⊥ := by
@@ -428,6 +422,7 @@ lemma Sequence.lowerseq_of_unbounded_below {a:Sequence} (ha : ¬ a.BddBelow) {n:
 lemma Sequence.liminf_of_unbounded_below { a:Sequence} (ha : ¬ a.BddBelow ):
     a.liminf = ⊥ := by
       unfold liminf
+      rw[sSup_eq_bot]
       simp
       intro ub n hn
       have := lowerseq_of_unbounded_below ha hn
@@ -874,7 +869,7 @@ example : Example_6_4_7.liminf = -1 := by
     simp_rw[← EReal.coe_one, ← EReal.coe_add,← EReal.coe_neg, EReal.coe_lt_coe_iff]
     linarith
   .
-    simp
+    apply le_top
   specialize hx (Example_6_4_7 1)
   simp at hx
   specialize hx 1
@@ -1101,7 +1096,7 @@ example : Example_6_4_9.liminf = 0 := by
     norm_cast;linarith
     linarith
     simp[hN]
-  . simp
+  . apply le_top
   specialize hx (- (1+1:ℝ )⁻¹ )
   simp at hx
   specialize hx 1
@@ -1138,7 +1133,7 @@ example (n:ℕ) : Example_6_4_10.lowerseq n = n+1 := by
   exact Example_6_4_10.lowerseq_def n
 example : Example_6_4_10.liminf = ⊤ := by
   unfold Sequence.liminf
-  rw[sSup_eq_top]
+  erw[sSup_eq_top]
   intro b hb
   obtain ⟨b,rfl⟩ | rfl | rfl := b.def
   . choose N hN using exists_nat_gt b
@@ -1185,7 +1180,7 @@ theorem Sequence.gt_limsup_bounds {a:Sequence} {x:EReal} (h: x > a.limsup) :
 theorem Sequence.lt_liminf_bounds {a:Sequence} {y:EReal} (h: y < a.liminf) :
     ∃ N ≥ a.m, ∀ n ≥ N, a n > y := by
     simp[liminf, lt_sSup_iff] at h
-    obtain ⟨_, ⟨N, ⟨hN, rfl⟩ ⟩ , ha⟩ := h; use N
+    choose N hN ha using h; use N
     simp [hN,lowerseq] at ha ⊢ ;intro n _
     have hn' : n ≥ (a.from N).m := by grind
     apply lt_of_lt_of_le ha
@@ -1760,11 +1755,13 @@ theorem Sequence.extended_limit_point_of_limsup (a:Sequence) : a.ExtendedLimitPo
   split_ifs with htop hbot
   . have has : a.sup = ⊤ := by
       have := limsup_le_sup a
-      simpa[htop] using this
-    rw[sSup_eq_top] at has
+      simp[htop] at this
+      apply top_unique this
+    erw[sSup_eq_top] at has
     intro x; specialize has x
-    simp at has; obtain ⟨an, ⟨⟨n,hn,rfl⟩ ,han⟩ ⟩ := has  
-    use n;simp_all
+    simp at has; specialize has (by tauto)
+    choose n hn han using has
+    use n
   . have hai : a.inf = ⊥ := by
       have : a.inf ≤ ⊥ := by
         apply le_trans (inf_le_liminf a) 
@@ -1773,10 +1770,10 @@ theorem Sequence.extended_limit_point_of_limsup (a:Sequence) : a.ExtendedLimitPo
       simpa
     rw[sInf_eq_bot] at hai
     intro x;specialize hai x; simp at hai
-    obtain ⟨an, ⟨⟨n,hn,rfl⟩ ,han⟩ ⟩ := hai 
-    use n; simp_all
+    choose n hn han using hai
+    use n
   have : a.limsup.IsFinite := by
-    by_contra! hinfty
+    by_contra hinfty
     rw[← EReal.infinite_iff_not_finite] at hinfty
     tauto
   obtain ⟨s,hs⟩ := this 
@@ -1793,25 +1790,26 @@ theorem Sequence.extended_limit_point_of_liminf (a:Sequence) : a.ExtendedLimitPo
         apply ge_trans (limsup_le_sup a) 
         apply ge_trans (liminf_le_limsup a)
         simp[htop]
-      simpa
-    rw[sSup_eq_top] at has
+      apply top_unique this
+    erw[sSup_eq_top] at has
     intro x; specialize has x
-    simp at has; obtain ⟨an, ⟨⟨n,hn,rfl⟩ ,han⟩ ⟩ := has  
-    use n;simp_all
+    simp at has; specialize has (by tauto)
+    choose n _ _ using has
+    use n
   . have hai : a.inf = ⊥ := by
       have := inf_le_liminf a
       simpa[hbot] using this
     rw[sInf_eq_bot] at hai
     intro x;specialize hai x; simp at hai
-    obtain ⟨an, ⟨⟨n,hn,rfl⟩ ,han⟩ ⟩ := hai 
-    use n; simp_all
+    choose n _ _ using hai
+    use n 
   apply limit_point_of_liminf
   symm; exact EReal.coe_toReal htop hbot
 
 theorem Sequence.extended_limit_point_le_limsup {a:Sequence} {L:EReal} (h:a.ExtendedLimitPoint L): L ≤ a.limsup := by
   simp[ExtendedLimitPoint] at h
   split_ifs at h with htop hbot 
-  . rw[htop,top_le_iff]
+  . erw[htop,top_le_iff]
     apply limsup_of_unbounded_above
     simp[h]
   . simp[hbot]
@@ -1822,6 +1820,8 @@ theorem Sequence.extended_limit_point_ge_liminf {a:Sequence} {L:EReal} (h:a.Exte
   simp[ExtendedLimitPoint] at h
   split_ifs at h with htop hbot 
   . simp[htop]
+    intro _ _ _ _
+    apply le_top
   . simp only[hbot,le_bot_iff]
     apply liminf_of_unbounded_below
     simp[h]
@@ -1930,7 +1930,7 @@ theorem Sequence.exists_three_limit_points : ∃ a:Sequence, ∀ L:EReal, a.Exte
       set l' := -l
       rw[show l = -l' by simp[l']] at hN ⊢
       simp[neg_div]
-      simp[mul_neg] at hN
+      simp only [mul_neg, abs_neg  ] at hN
       exact Exercise_6_4_9_lt (by simp[l',hl0]) hN hNn
     rintro rfl
     intro ε hε N hN
@@ -1942,7 +1942,7 @@ theorem Sequence.exists_three_limit_points : ∃ a:Sequence, ∀ L:EReal, a.Exte
     simp[hNle,hNt];linarith
   . simp[ExtendedLimitPoint,tripos_unbounded_above]
   simp[ExtendedLimitPoint,tripos_unbounded_below]
-
+  intro; contradiction
 
 
 /-- Exercise 6.4.10 -/

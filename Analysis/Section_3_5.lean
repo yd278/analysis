@@ -169,13 +169,38 @@ theorem SetTheory.Set.fst_of_mk_cartesian {X Y:Set} (x:X) (y:Y) :
   let z := mk_cartesian x y; have := (mem_cartesian _ _ _).mp z.property
   obtain ⟨ y', hy: z.val = (⟨ fst z, y' ⟩:OrderedPair) ⟩ := this.choose_spec
   simp [z, mk_cartesian, Subtype.val_inj] at *; rw [←hy.1]
-
+@[simp]
+theorem SetTheory.Set.fst_of_OrderedPair {X Y:Set} {x: X} {y: Y} :
+  fst ⟨OrderedPair.toObject { fst := x, snd := y }, by simp; exact subtype_property Y y⟩ = x  := by
+    have := fst_of_mk_cartesian x y
+    unfold mk_cartesian  at this
+    simpa
+@[simp]
+theorem SetTheory.Set.fst_of_OrderedPair' {X Y:Set} {x y:Object} (hx : x ∈ X) (hy : y ∈ Y) :
+  fst ⟨OrderedPair.toObject { fst := x, snd := y }, by simp;refine ⟨hx,hy⟩  ⟩  = ⟨x,hx⟩   := by
+    have := fst_of_mk_cartesian ⟨x,hx⟩ ⟨y,hy⟩  
+    unfold mk_cartesian  at this
+    simp_all
 @[simp]
 theorem SetTheory.Set.snd_of_mk_cartesian {X Y:Set} (x:X) (y:Y) :
     snd (mk_cartesian x y) = y := by
   let z := mk_cartesian x y; have := (mem_cartesian _ _ _).mp z.property
   obtain ⟨ x', hx: z.val = (⟨ x', snd z ⟩:OrderedPair) ⟩ := (exists_comm.mp this).choose_spec
   simp [z, mk_cartesian, Subtype.val_inj] at *; rw [←hx.2]
+
+@[simp]
+theorem SetTheory.Set.snd_of_OrderedPair {X Y:Set} {x: X} {y:Y} :
+  snd ⟨OrderedPair.toObject { fst := x, snd := y }, by simp;exact subtype_property X x⟩ = y  := by
+    have := snd_of_mk_cartesian x y
+    unfold mk_cartesian  at this
+    simpa
+    
+@[simp]
+theorem SetTheory.Set.snd_of_OrderedPair' {X Y:Set} {x y:Object} (hx : x ∈ X) (hy : y ∈ Y) :
+  snd ⟨OrderedPair.toObject { fst := x, snd := y }, by simp;refine ⟨hx,hy⟩  ⟩  = ⟨y,hy⟩   := by
+    have := snd_of_mk_cartesian ⟨x,hx⟩ ⟨y,hy⟩  
+    unfold mk_cartesian  at this
+    simp_all
 
 @[simp]
 theorem SetTheory.Set.mk_cartesian_fst_snd_eq {X Y: Set} (z: X ×ˢ Y) :
@@ -207,9 +232,9 @@ example : ({1, 2}: Set) ×ˢ ({3, 4, 5}: Set) = ({
 
 /-- Example 3.5.5 / Exercise 3.6.5. There is a bijection between {lean}`X ×ˢ Y` and {lean}`Y ×ˢ X`. -/
 noncomputable abbrev SetTheory.Set.prod_commutator (X Y:Set) : X ×ˢ Y ≃ Y ×ˢ X where
-  toFun := fun z ↦ 
+  toFun z := 
   ⟨(⟨ snd z, fst z⟩:OrderedPair) , by simp ⟩  
-  invFun := fun z ↦ 
+  invFun z :=  
   ⟨(⟨ snd z, fst z⟩:OrderedPair) , by simp ⟩  
   left_inv z := by
     rw[← mk_cartesian_fst_snd_eq z,mk_cartesian ]
@@ -1081,12 +1106,12 @@ theorem SetTheory.Set.iUnion_inter_iUnion {I J: Set} (A: I → Set) (B: J → Se
         use (⟨i,j⟩:OrderedPair )
         simp
         use ⟨hi, hj⟩ 
-        rw[fst_of_mk_cartesian ⟨i, hi⟩ ⟨j, hj⟩ ]
-        rw[snd_of_mk_cartesian ⟨i, hi⟩ ⟨j, hj⟩ ]
+        rw[fst_of_OrderedPair'  hi  hj ]
+        rw[snd_of_OrderedPair'  hi  hj ]
         exact ⟨hia, hjb⟩ 
       rintro ⟨p,⟨a,hai,b,hbj,rfl⟩ ,⟨hvA,hvB⟩ ⟩ 
-      rw[fst_of_mk_cartesian ⟨a, hai⟩ ⟨b, hbj⟩ ] at hvA
-      rw[snd_of_mk_cartesian ⟨a, hai⟩ ⟨b, hbj⟩ ] at hvB
+      rw[fst_of_OrderedPair'  hai  hbj ] at hvA
+      rw[snd_of_OrderedPair' hai  hbj ] at hvB
       split_ands
       . 
         use a, hai 

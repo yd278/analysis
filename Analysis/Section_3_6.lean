@@ -1699,7 +1699,7 @@ lemma SetTheory.Set.iUnion_pred_disjoint_last { n: ℕ } {S : Fin (n+1) → Set}
       have sne := Fin.castSucc_ne i'
       set i := Fin.castSucc i'
       set j := Fin.last n
-      have : (j:ℕ) = n := by simp
+      have : (j:ℕ) = n := by simp[j,Fin.last];
       have hne : i ≠ j := by
         contrapose! sne
         rwa [Fin.coe_inj, this] at sne
@@ -1830,12 +1830,12 @@ noncomputable def SetTheory.Set.equiv_shink {n:ℕ} {i : Fin (n + 1)} (e: Fin (n
     by_contra hei
     rw[← he] at hei
     apply e.injective at hei
-    simp at hei
+    simp[Fin.last] at hei
   ) 
   invFun y := Fin.castPred (e.symm (Fin.succAbove i y)) (by
     by_contra eq
     have eq2 : e.symm (Fin.succAbove i y) = Fin.last n := by
-      simpa
+      simpa[Fin.last]
     rw[← eq2] at he
     simp at he
   )
@@ -1846,10 +1846,11 @@ noncomputable def SetTheory.Set.equiv_shink {n:ℕ} {i : Fin (n + 1)} (e: Fin (n
 
 open Classical in
 noncomputable def SetTheory.Set.equiv_expand {n:ℕ} (i : Fin (n+1)) (e : Fin n ≃ Fin n) : Fin (n + 1) ≃ Fin (n + 1) :={
-  toFun x := if hi : x = Fin.last n then i else Fin.succAbove i (e ( Fin.castPred x (by simp at hi; simp[hi] )))
+  toFun x := if hi : x = Fin.last n then i else Fin.succAbove i (e ( Fin.castPred x (by simp[Fin.last] at hi; simp[hi] )))
   invFun y := if hi : y = i then Fin.last n else Fin.castSucc ( e.symm (Fin.predAbove i y (by simp[hi] ) ))
   left_inv x := by aesop
-  right_inv y := by aesop
+  right_inv y := by simp_all[Fin.last]
+
 }
 lemma SetTheory.Set.equiv_expand_pin {n: ℕ } (i : Fin (n+1)) (e: Fin n ≃ Fin n ) :
     equiv_expand i e (Fin.last n) = i := by
@@ -1859,8 +1860,8 @@ lemma  SetTheory.Set.equiv_expand_shink {n:ℕ} {i : Fin (n + 1)} (e: Fin (n+1) 
     equiv_expand i (equiv_shink e he) = e := by
       ext x
       by_cases hx : x = n
-      <;> simp[hx, equiv_expand,equiv_shink]
-      have : x = Fin.last n := by simpa
+      <;> simp[hx, equiv_expand,equiv_shink,Fin.last]
+      have : x = Fin.last n := by simpa[Fin.last]
       simp only [← this] at he
       congr; symm ; assumption
 
@@ -1868,7 +1869,7 @@ lemma  SetTheory.Set.equiv_expand_shink {n:ℕ} {i : Fin (n + 1)} (e: Fin (n+1) 
 lemma SetTheory.Set.equiv_shink_expand {n:ℕ} (i : Fin (n+1)) (e : Fin n ≃ Fin n) : 
     equiv_shink (equiv_expand i e) (equiv_expand_pin i e)  = e := by
       ext x
-      simp[equiv_shink,equiv_expand]
+      simp[equiv_shink,equiv_expand,Fin.last]
 
 theorem SetTheory.Set.Permutations_ih (n: ℕ):
     (Permutations (n + 1)).card = (n + 1) * (Permutations n).card := by
@@ -1918,10 +1919,8 @@ theorem SetTheory.Set.Permutations_ih (n: ℕ):
         . rintro ⟨i,⟨⟨hx,hbij⟩ ,hpin⟩ ⟩ 
           use hx
         rintro ⟨hx,hbij⟩ 
-        use pow_fun_equiv ⟨x,hx⟩ (Fin.last n) , by use hx
-        simp
-
-      
+        use pow_fun_equiv ⟨x,hx⟩ (Fin.last n), (by use hx)
+        aesop
       have hSCard : ∀ i , (S i).has_card ((Permutations n).card) := by
         intro i
         have pfin : (Permutations n).finite  := Permutations_finite n

@@ -922,14 +922,8 @@ example : ({3,5,9}:Set).replace (P := fun x y ↦ ∃ (n:ℕ), x.val = n ∧ y =
         simp [← hn3] at hny
         tauto
       .
-        choose n hn5 hny using h5
-        rw[SetTheory.Object.ofnat_eq', SetTheory.Object.natCast_inj ] at hn5
-        simp [← hn5] at hny
         tauto
       .
-        choose n hn9 hny using h9
-        rw[SetTheory.Object.ofnat_eq', SetTheory.Object.natCast_inj ] at hn9
-        simp [← hn9] at hny
         tauto
     .
       intro hy
@@ -943,14 +937,10 @@ example : ({3,5,9}:Set).replace (P := fun x y ↦ ∃ (n:ℕ), x.val = n ∧ y =
         right
         left
         rw[y5]
-        use 5
-        simp
       .
         right
         right
         rw[y9]
-        use 9
-        simp
 
 /-- Example 3.1.31 -/
 example : ({3,5,9}:Set).replace (P := fun _ y ↦ y=1) (by aesop) = {1} := by
@@ -1124,8 +1114,7 @@ theorem SetTheory.Set.specification_from_replacement {A:Set} {P: A → Prop} :
       . rw[subset_def]
         intro x
         simp
-        intro x1 hx1
-        intro hqx
+        intro x1 hx1 hqx
         unfold Q at hqx
         have: x1 = x := by tauto
         rw[this] at hx1

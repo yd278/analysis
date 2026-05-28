@@ -172,7 +172,6 @@ theorem Sequence.lim_of_geometric'' {x:ℝ} (hx: x = -1 ∨ |x| > 1) :
 lemma Sequence.unbounded_above_of_divergent_monotone {a:Sequence} (had : a.Divergent) (ham : a.IsMonotone):
     ¬ a.BddAbove := by
       contrapose! had
-      rw[divergent_def];push_neg
       exact convergent_of_monotone had ham
 lemma Sequence.root_eventually_lt_of_gt_one {x ε:ℝ} (hx : x > 1) (hε:ε >0):
   ∃N : ℕ,∀ n ≥ N, x ^ (1/(n+1:ℝ)) ≤ 1+ε := by 
@@ -248,8 +247,10 @@ theorem Sequence.lim_of_roots {x:ℝ} (hx: x > 0) :
             rw[Real.lt_rpow_inv_iff_of_pos]
             <;> simp_all
             <;> linarith
+          simp[Real.dist_eq,hn,abs_le]
+          ring_nf at ⊢ helt hxp
+          refine ⟨?_,helt⟩ 
           linarith
-        linarith
       simp at hx1
       wlog hε1 : ε<1
       . 
@@ -268,13 +269,16 @@ theorem Sequence.lim_of_roots {x:ℝ} (hx: x > 0) :
       specialize hegt n hn
       field_simp [hn,dist,abs_le]
       split_ands
-      . linarith
-      . have hxp : x ^ (1/ (n+1:ℝ))  ≤ 1 := by
-          simp
-          rw[Real.rpow_inv_le_iff_of_pos]
-          <;> simp_all
-          <;> linarith
+      . simp[hn,Real.dist_eq,abs_le]
+        ring_nf at ⊢ hegt
+        split_ands
+        . linarith
+        have : x ^ (1+(n:ℝ))⁻¹ ≤ 1 := by
+          apply Real.rpow_le_one _ hx1 
+          positivity
+          linarith
         linarith
+        
 
 /-- Exercise 6.5.1 -/
 lemma Sequence.tendsTo_zero_pow {a :Sequence}  {k:ℕ} (hk: k > 0)(ha : a.TendsTo 0):

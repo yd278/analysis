@@ -241,7 +241,7 @@ theorem Sequence.subseq_of_unbounded {a:ℕ → ℝ} (ha: ¬ (a:Sequence).IsBoun
           lift x to ℕ using hx0.1
           simp at hx ⊢
           simp[a']
-          rw[abs_inv,inv_le_comm₀ (by apply lt_trans ?_ hx; positivity) (by positivity)]
+          rw[inv_le_comm₀ (by apply lt_trans ?_ hx; positivity) (by positivity)]
           apply le_of_lt hx
         all_goals
           simp at hx;linarith

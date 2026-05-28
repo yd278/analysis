@@ -678,21 +678,20 @@ instance Rat.decidableRel : DecidableRel (· ≤ · : Rat → Rat → Prop) := b
     -- It may be more convenient to avoid formal division and work directly with `Quotient.mk`.
     cases (0:ℤ).decLe (b*d) with
       | isTrue hbd =>
-        cases (a * d).decLe (b * c) with
+        cases (a * d).decLe (c * b) with
           | isTrue h =>
             apply isTrue
             rw[le_iff]
-            by_cases heq : a * d = b * c
+            by_cases heq : a * d = c * b
             . 
               right
-              simp
-              change (⟨a,b,hb⟩: PreRat) ≈ ⟨c,d,hd⟩  
-              simpa[PreRat.eq,mul_comm]
+              rw[← PreRat.eq (hb := hb) (hd := hd) ] at heq
+              exact Quotient.sound heq
             . 
               left
               have hbd' : 0 ≠ b * d := by
                 simp;tauto
-              have hlt : a * d < b * c := by omega
+              have hlt : a * d < c * b := by omega
               simp[lt_iff]
               set x: PreRat := ⟨a,b,hb⟩ 
               set y: PreRat := ⟨c,d,hd⟩ 
@@ -700,15 +699,17 @@ instance Rat.decidableRel : DecidableRel (· ≤ · : Rat → Rat → Prop) := b
               set yr : Rat := ⟦y⟧ 
               use yr  + (- xr)
               split_ands
-              use b * c - a * d, b*d
+              use c * b - a * d, b*d
               split_ands
               . omega
               . omega
               have : xr = a // b := by
-                simp[xr,hb,x] ;rfl
+                unfold Rat.formalDiv 
+                simp[xr,x,hb]
               rw[this]
               have : yr = c // d := by
-                simp[yr,hd,y] ;rfl
+                unfold Rat.formalDiv 
+                simp[yr,hd,y] 
               rw[this]
               rw[neg_eq,add_eq,div_eq_formal_div,eq]
               ring
@@ -733,9 +734,9 @@ instance Rat.decidableRel : DecidableRel (· ≤ · : Rat → Rat → Prop) := b
               apply_fun fun exp ↦ exp - y
               simp;tauto
 
-            have :y = c // d := by simp[y,hd];rfl
+            have :y = c // d := by unfold Rat.formalDiv; simp[y,hd]
             rw[this]
-            have :x = a // b := by simp[x,hb];rfl
+            have :x = a // b := by unfold Rat.formalDiv;simp[x,hb]
             rw[this]
             rw[
               neg_eq _ hd,
@@ -744,8 +745,8 @@ instance Rat.decidableRel : DecidableRel (· ≤ · : Rat → Rat → Prop) := b
             use (a * d + b * -c) , (b * d)
             split_ands
             . calc
-                _ > ( b * c) + (b * -c) := by simp[h]
-                _ = _ := by simp
+                _ > (c * b) + (b * -c) := by simp[h]
+                _ = _ := by ring
             simpa
             rw[div_eq_formal_div hbd'.symm]
       | isFalse hbd =>
@@ -766,9 +767,9 @@ instance Rat.decidableRel : DecidableRel (· ≤ · : Rat → Rat → Prop) := b
             by_contra hcon
             obtain ⟨ca, cb, hca, hcb, hcabv⟩ := hcon 
             rw[sub_eq_add_neg] at hcabv
-            have :y = c // d := by simp[y,hd];rfl
+            have :y = c // d := by unfold Rat.formalDiv;simp[y,hd]
             rw[this] at hcabv
-            have :x = a // b := by simp[x,hb];rfl
+            have :x = a // b := by unfold Rat.formalDiv;simp[x,hb]
             rw[this] at hcabv
             rw[
               neg_eq _ hd,
@@ -801,9 +802,9 @@ instance Rat.decidableRel : DecidableRel (· ≤ · : Rat → Rat → Prop) := b
               have npz := not_zero_and_pos (x-y) 
               apply_fun fun exp ↦ exp - y
               simp;tauto
-            have :y = c // d := by simp[y,hd];rfl
+            have :y = c // d := by unfold Rat.formalDiv;simp[y,hd]
             rw[this] 
-            have :x = a // b := by simp[x,hb];rfl
+            have :x = a // b := by unfold Rat.formalDiv;simp[x,hb]
             rw[this] 
             rw[
               neg_eq _ hd,
@@ -893,12 +894,12 @@ instance Rat.instIsStrictOrderedRing : IsStrictOrderedRing Rat where
     right;simp[heq]
   mul_lt_mul_of_pos_left := by
       
-    intro a b c lt hc
+    intro c hc a b lt 
     have hc := (isPos_iff_gt_0).mpr hc
     have con:= mul_lt_mul_right lt hc 
     simpa[ mul_comm] using con
   mul_lt_mul_of_pos_right := by
-    intro a b c hab hc
+    intro c hc a b hab 
     have hc := (isPos_iff_gt_0).mpr hc
     exact mul_lt_mul_right hab hc 
   le_of_add_le_add_left := by
@@ -978,7 +979,7 @@ abbrev Rat.equivRat_ring : Rat ≃+* ℚ where
     obtain ⟨b1,b2,hb,rfl⟩ := eq_diff b
     rw[add_eq _ _ ha hb]
     simp[ha,hb]
-    field_simp; ring
+    field_simp
 
   map_mul' := by 
     intro a b

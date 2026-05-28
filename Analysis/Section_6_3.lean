@@ -123,7 +123,7 @@ example : ((fun (n:ℕ) ↦ 1/((n:ℝ)+1)):Sequence).inf = 0 := by
     . linarith
     simp[hnp]
     norm_cast
-  . simp
+  . exact le_top
   specialize hu (-1) (by simp;use 0;simp)
   simp at hu;contradiction
 
@@ -133,7 +133,7 @@ example : ((fun (n:ℕ) ↦ (n+1:ℝ)):Sequence).sup = ⊤ := by
   apply IsLUB.sSup_eq
   constructor
   . intro u hu
-    simp
+    exact le_top
   intro u hu
   rw[mem_upperBounds] at hu
   obtain ⟨u,rfl⟩ | rfl | rfl := u.def 
@@ -213,7 +213,7 @@ theorem Sequence.bounded_iff (a:Sequence) : a.IsBounded ↔ a.BddAbove ∧ a.Bdd
   lemma EReal.finite_of_bounded {s:EReal} {l u : ℝ } (hsl: s ≥ l) (hsu : s ≤ u) : s.IsFinite := by
     obtain ⟨s,rfl⟩ | rfl | rfl := s.def 
     . use s
-    . simp at hsu
+    . tauto
     . simp at hsl
 theorem Sequence.sup_of_bounded {a:Sequence} (h: a.IsBounded) : a.sup.IsFinite := by
   have hsl : a.sup ≥ a a.m := by
@@ -284,7 +284,8 @@ theorem Sequence.exists_between_lt_sup {a:Sequence} {y:EReal} (h: y < a.sup ) :
           use (a n),y
         rw[lt_iff_not_ge] at h
         contradiction
-      . simp at h
+      . exfalso
+        apply not_lt_of_ge le_top h
       use a.m
       simp
       apply le_sup

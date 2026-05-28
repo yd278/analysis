@@ -195,8 +195,8 @@ lemma Nat.mul_cancel_right {a b c: Nat} (h: a * c = b * c) (hc: c.IsPos) : a = b
   apply ne_of_gt at hgt
   contradiction
 
-theorem Nat.mul_le_mul_of_nonneg_left : ∀ (a b c : Nat), a ≤ b → 0 ≤ c → c * a ≤ c * b := by
-    intro a b c hab hc
+theorem Nat.mul_le_mul_of_nonneg_left : ∀ (c:Nat), 0 ≤ c → ∀ ( a b : Nat), a ≤ b  → c * a ≤ c * b := by
+    intro c hc a b hab 
     rw[le_iff_lt_or_eq] at *
     obtain nez | ez := hc
     . replace nez: c ≠ 0 := nez.2.symm
@@ -287,7 +287,9 @@ lemma Nat.pow_two (m : Nat) : m ^ (2: Nat) = m * m := by
 theorem Nat.sq_add_eq (a b: Nat) :
     (a + b) ^ (2 : Nat) = a ^ (2 : Nat) + 2 * a * b + b ^ (2 : Nat) := by
       rw[pow_two, pow_two, pow_two]
-      ring
+      ring_nf
+      rfl
+
 
 
 end Chapter2

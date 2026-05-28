@@ -515,6 +515,7 @@ theorem Real.ratPow_mono {x y:ℝ} (hx: x > 0) (hy: y > 0) {q:ℝ} (h: q > 0) : 
       rw[rpow_of_rat_eq_ratPow hr0];simp
     simp at hbase
     rw[← hbase]
+    rw[← gt_iff_lt]
     rw[ ratPow_mono_of_lt_one hr0 hr1]
     assumption
   contrapose! hgt with hle
