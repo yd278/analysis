@@ -24,7 +24,12 @@ open Real
 
 abbrev Series.nonneg (s: Series) : Prop := ∀ n, s.seq n ≥ 0
 
-abbrev Series.partial_of_nonneg {s: Series} (h: s.nonneg) : Monotone s.partial := by sorry
+abbrev Series.partial_of_nonneg {s: Series} (h: s.nonneg) : Monotone s.partial := by
+  apply monotone_int_of_le_succ
+  intro n
+  rw[Series.partial_succ']
+  simp[h]
+  
 
 /-- Proposition 7.3.1 -/
 theorem Series.converges_of_nonneg_iff {s: Series} (h: s.nonneg) : s.converges ↔ ∃ M, ∀ N, s.partial N ≤ M := by
@@ -65,9 +70,43 @@ theorem Series.sum_of_nonneg {s:Series} (hnon: s.nonneg) : 0 ≤ s.sum := by
   exact ge_of_tendsto' h.choose_spec (partial_nonneg hnon)
 
 /-- Corollary 7.3.2 (Comparison test) / Exercise 7.3.1 -/
-theorem Series.converges_of_le {s t: Series} (hm: s.m = t.m) (hcomp: ∀ n ≥ s.m, |s.seq n| ≤ t.seq n) (hconv : t.converges) : s.absConverges ∧ |s.sum| ≤ s.abs.sum ∧ s.abs.sum ≤ t.sum := by sorry
+theorem Series.converges_of_le {s t: Series} (hm: s.m = t.m) (hcomp: ∀ n ≥ s.m, |s.seq n| ≤ t.seq n) (hconv : t.converges) : s.absConverges ∧ |s.sum| ≤ s.abs.sum ∧ s.abs.sum ≤ t.sum := by
+  have htnonneg : t.nonneg := by
+    rw[hm] at hcomp
+    peel hcomp with n hcomp
+    by_cases hn : n ≥ t.m
+    . simp[hn] at hcomp
+      apply le_trans' hcomp;simp
+    simp at hn
+    apply ge_of_eq (t.vanish n hn)
+  have htp := partial_le_sum_of_nonneg htnonneg hconv
+  have hstp : ∀ n,s.abs.partial n ≤ t.partial n := by
+    intro n
+    simp[Series.partial,hm]
+    apply Finset.sum_le_sum
+    intro i hi ;simp at hi
+    simp[hi];rw[hm] at hcomp
+    exact hcomp i hi.1
+  have hsptsum : ∀ n, s.abs.partial n ≤ t.sum := by
+    peel htp with n htp
+    specialize hstp n
+    linarith
+  have hsann : s.abs.nonneg := by
+    simp[nonneg];intro x
+    split_ifs <;> simp
+  have hsac : s.absConverges := by 
+    unfold absConverges 
+    rw[converges_of_nonneg_iff hsann]
+    use t.sum
+  have hsts : s.abs.sum ≤ t.sum := by
+    apply sum_of_nonneg_lt hsann hsptsum
+  refine ⟨hsac,abs_le hsac,hsts⟩ 
 
-theorem Series.diverges_of_ge {s t: Series} (hm: s.m = t.m) (hcomp: ∀ n ≥ s.m, |s.seq n| ≤ t.seq n) (hdiv: ¬ s.absConverges) : t.diverges := by sorry
+
+theorem Series.diverges_of_ge {s t: Series} (hm: s.m = t.m) (hcomp: ∀ n ≥ s.m, |s.seq n| ≤ t.seq n) (hdiv: ¬ s.absConverges) : t.diverges := by
+  contrapose! hdiv
+  exact (converges_of_le hm hcomp hdiv).1
+
 
 /-- Lemma 7.3.3 (Geometric series) / Exercise 7.3.2 -/
 theorem Series.converges_geom {x: ℝ} (hx: |x| < 1) : (fun n ↦ x ^ n : Series).convergesTo (1 / (1 - x)) := by sorry
