@@ -729,11 +729,63 @@ abbrev Series.from (s:Series) (m₁:ℤ) : Series := mk' (m := max s.m m₁) (fu
 
 /-- Proposition 7.2.14 (c) (Series laws) / Exercise 7.2.5 -/
 theorem Series.converges_from (s:Series) (k:ℕ) : s.converges ↔ (s.from (s.m+k)).converges := by
-  sorry
+  repeat rw[converges_iff_tail_decay]
+  constructor <;> intro hconv <;> peel hconv with ε hε htail
+  . choose N hN htail using htail
+    use max N (s.m + k);simp
+    intro n hnN hnm m hmN hmm
+    specialize htail n hnN m hmN
+    suffices heq: (∑ n ∈ Finset.Icc n m, s.seq n) = (∑ x ∈ Finset.Icc n m, if (s.m + k ≤ x) then s.seq x else 0) from by
+      rwa[← heq]
+    congr! with x hx
+    simp at hx
+    have : x ≥ s.m + k := by linarith
+    simp[this]
+  choose N hN htail using htail
+  use N
+  simp at hN
+  refine ⟨by omega, ?_⟩ 
+  peel htail with n hn m hm htail
+  simp at htail
+  suffices heq: (∑ n ∈ Finset.Icc n m, s.seq n) = (∑ x ∈ Finset.Icc n m, if (s.m + k ≤ x) then s.seq x else 0) from by
+    rwa[heq]
+  congr! with x hx
+  simp at hx
+  simp;intro ;linarith
+
 
 theorem Series.sum_from {s:Series} (k:ℕ) (h: s.converges) :
     s.sum = ∑ n ∈ Finset.Ico s.m (s.m+k), s.seq n + (s.from (s.m+k)).sum := by
-  sorry
+      set D := ∑ n ∈ Finset.Ico s.m (s.m+k),s.seq n
+      rw[add_comm]
+      set t := s.from (s.m + k)
+      have ht : t.converges := by exact (converges_from s k).mp h
+      choose M hM using ht
+      rw[sum_of_converges hM]
+      choose L hL using h
+      rw[sum_of_converges hL]
+      unfold Series.convergesTo  at hM hL
+      suffices heq: ∀ᶠ x in Filter.atTop,s.partial x = t.partial x + D from by
+        have := hM.add_const D
+        rw[Filter.tendsto_congr' heq] at hL
+        apply tendsto_nhds_unique hL this
+      rw[Filter.eventually_atTop]
+      use s.m+k
+      intro n hn
+      unfold Series.partial D
+      apply eq_add_of_sub_eq
+      have hstm : t.m = s.m + k := by simp[t]
+      rw[hstm] 
+      have hcongr : ∑ x ∈ Finset.Icc (s.m + k) n, s.seq x = ∑ x ∈ Finset.Icc (s.m + k) n, t.seq x := by
+        congr! 1 with x hx
+        simp at hx
+        simp[t];intro;omega
+      rw[← hcongr]
+      apply sub_eq_of_eq_add'
+      symm
+      convert  (Finset.concat_finite_series (m:=s.m) (n:= s.m + k - 1) (p:=n) (by simp) (by linarith) s.seq) using 3
+      . ext x;simp
+      simp
 
 /-- Proposition 7.2.14 (d) (Series laws) / Exercise 7.2.5 -/
 theorem Series.shift {s:Series} {x:ℝ} (h: s.convergesTo x) (L:ℤ) :
