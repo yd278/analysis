@@ -807,8 +807,26 @@ theorem Series.shift {s:Series} {x:ℝ} (h: s.convergesTo x) (L:ℤ) :
 /-- Lemma 7.2.15 (telescoping series) / Exercise 7.2.6 -/
 theorem Series.telescope {a:ℕ → ℝ} (ha: Filter.atTop.Tendsto a (nhds 0)) :
     ((fun n:ℕ ↦ a n - a (n+1)):Series).convergesTo (a 0) := by
-  sorry
-
+      set s:= ((fun n:ℕ ↦ a n - a (n+1)):Series)
+      have hsp (n:ℕ) : s.partial n = (a 0) - a (n+1) := by
+        induction' n with k hind
+        . simp[Series.partial,s]
+        simp[partial_succ',hind]
+        have :s.seq (k+1) = a (k+1) - a (k+1+1) := by
+          simp[s];omega
+        rw[this]
+        simp
+      unfold convergesTo 
+      rw[Metric.tendsto_atTop] at ha ⊢ 
+      peel ha with ε hε hconv
+      choose N hconv using hconv
+      use N;intro n hnN
+      lift n to ℕ using by omega
+      specialize hconv (n+1) (by omega)
+      rw[hsp n]
+      rw[Real.dist_eq] at hconv ⊢
+      simp at hconv
+      simpa
 /- Exercise 7.2.1  -/
 
 def Series.exercise_7_2_1_convergent :
