@@ -790,7 +790,19 @@ theorem Series.sum_from {s:Series} (k:ℕ) (h: s.converges) :
 /-- Proposition 7.2.14 (d) (Series laws) / Exercise 7.2.5 -/
 theorem Series.shift {s:Series} {x:ℝ} (h: s.convergesTo x) (L:ℤ) :
     (mk' (m := s.m + L) (fun n ↦ s.seq (n - L))).convergesTo x := by
-  sorry
+      unfold convergesTo at h ⊢
+      have hk : Filter.Tendsto (fun x : ℤ => x - L) Filter.atTop Filter.atTop := by
+        exact Filter.tendsto_atTop_add_const_right Filter.atTop (-L) fun ⦃U⦄ a ↦ a
+      have := h.comp hk
+      convert this
+      ext x
+      set x' := x - L
+      rw[show x = x'+L by omega]
+      simp[Series.partial]
+      nth_rw 2 [Finset.shift_finite_series (k:=L)]
+      congr! with n hn
+      simp at hn
+      simp;intro;omega
 
 /-- Lemma 7.2.15 (telescoping series) / Exercise 7.2.6 -/
 theorem Series.telescope {a:ℕ → ℝ} (ha: Filter.atTop.Tendsto a (nhds 0)) :
