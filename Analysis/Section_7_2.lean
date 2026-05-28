@@ -832,7 +832,14 @@ theorem Series.telescope {a:ℕ → ℝ} (ha: Filter.atTop.Tendsto a (nhds 0)) :
 def Series.exercise_7_2_1_convergent :
   Decidable ( (mk' (m := 1) (fun n ↦ (-1:ℝ)^(n:ℤ))).converges ) := by
   -- The first line of this proof should be `apply isTrue` or `apply isFalse`.
-  sorry
-
+  apply isFalse
+  intro h
+  rw[converges_iff_tail_decay] at h
+  have hcont := h (0.5) (by linarith)
+  simp at hcont
+  choose N hN hcont using hcont
+  specialize hcont N (by simp) N (by simp)
+  simp[hN] at hcont
+  linarith
 
 end Chapter7
