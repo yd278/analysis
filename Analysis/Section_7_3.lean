@@ -109,14 +109,87 @@ theorem Series.diverges_of_ge {s t: Series} (hm: s.m = t.m) (hcomp: ∀ n ≥ s.
 
 
 /-- Lemma 7.3.3 (Geometric series) / Exercise 7.3.2 -/
-theorem Series.converges_geom {x: ℝ} (hx: |x| < 1) : (fun n ↦ x ^ n : Series).convergesTo (1 / (1 - x)) := by sorry
+theorem Series.converges_geom {x: ℝ} (hx: |x| < 1) : (fun n ↦ x ^ n : Series).convergesTo (1 / (1 - x)) := by
+  set g := (fun n ↦ x ^ n : Series)
+  have hx' : 1 - x ≠ 0 := by
+    simp[abs_lt] at hx;linarith
+  have hgp  : g.partial = fun n ↦ if n ≥ 0 then (1 - x ^ (n+1)) / (1 - x) else 0:= by
+    ext n
+    split_ifs with hn
+    . lift n to ℕ using hn
+      induction' n with k hind
+      . simp[hx',Series.partial,g]
+      have : (0:ℤ) ≤ k+1 := by omega
+      simp[partial_succ',hind,g,this]
+      field_simp;norm_cast
+      ring
+    simp at hn
+    apply Series.partial_of_lt
+    simp[g,hn]
+  unfold convergesTo 
+  set g' := fun (n:ℤ) ↦ (1 - x ^ (n+1))/(1-x)
+  suffices hg' : Filter.Tendsto g' Filter.atTop (nhds (1 / (1-x))) from by
+    have htop :∀ᶠ n in Filter.atTop, g' n = g.partial n := by
+      rw[Filter.eventually_atTop]
+      use 0;intro n hn
+      rw[hgp];simp[hn,g']
+    rwa[← Filter.tendsto_congr' htop]
+  set f := fun (n:ℤ) ↦ (1 - x ^ (n+1))
+  have hfg : g'  = fun n ↦ f n / (1-x) := by
+    simp[g',f]
+  rw[hfg];apply Filter.Tendsto.div_const
+  rw[Metric.tendsto_atTop]
+  intro ε hε
+  simp[f]
+  by_cases hx0 : x = 0
+  . simp[hx0]
+    use 1;intro n hn
+    have :(n+1) ≠ 0:= by omega
+    simp[zero_zpow_eq,this,hε]
+  have : |x| > 0 := by grind
+  choose N hN using exists_pow_lt_of_lt_one hε hx
+  use N;intro n hn
+  apply lt_trans ?_ hN
+  erw[ zpow_lt_zpow_iff_right_of_lt_one₀ this hx (m:= n+1) (n:=N)]
+  omega
 
-theorem Series.absConverges_geom {x: ℝ} (hx: |x| < 1) : (fun n ↦ x ^ n : Series).absConverges := by sorry
+theorem Series.absConverges_geom {x: ℝ} (hx: |x| < 1) : (fun n ↦ x ^ n : Series).absConverges := by
+  set g := (fun n ↦ x ^ n : Series)
+  set t := (fun n ↦ |x| ^ n: Series)
+  have hm : g.m = t.m := by simp[g,t]
+  have hcomp : ∀ n ≥ g.m, |g.seq n| ≤ t.seq n := by grind
+  have ht : t.converges  := by
+    simp[t]
+    have habs : |(|x|)| < 1 := by grind
+    have := converges_geom habs
+    apply converges_of_convergesTo this
+  have := converges_of_le hm hcomp ht
+  tauto
 
-theorem Series.diverges_geom {x: ℝ} (hx: |x| ≥ 1) : (fun n ↦ x ^ n : Series).diverges := by sorry
+theorem Series.diverges_geom {x: ℝ} (hx: |x| ≥ 1) : (fun n ↦ x ^ n : Series).diverges := by
+  set g := (fun n ↦ x ^ n : Series)
+  by_contra hconv
+  rw[converges_iff_tail_decay] at hconv
+  specialize hconv (1/2) (by simp)
+  choose N hN hconv using hconv
+  specialize hconv N (by simp) (N) (by simp)
+  contrapose! hconv
+  simp[g] at hN
+  simp[g,hN]
+  lift N to ℕ using hN
+  simp
+  have : |x| ^ N ≥ 1 := by exact one_le_pow₀ hx
+  linarith
 
-theorem Series.converges_geom_iff (x: ℝ) : (fun n ↦ x ^ n : Series).converges ↔ |x| < 1 := by sorry
-
+theorem Series.converges_geom_iff (x: ℝ) : (fun n ↦ x ^ n : Series).converges ↔ |x| < 1 := by
+  set g := (fun n ↦ x ^ n : Series)
+  constructor
+  . contrapose
+    intro h;simp at h
+    exact diverges_geom h
+  intro h
+  have := converges_geom h
+  apply converges_of_convergesTo this
 /-- Proposition 7.3.4 (Cauchy criterion) -/
 theorem Series.cauchy_criterion {s:Series} (hm: s.m = 1) (hs:s.nonneg) (hmono: ∀ n ≥ 1, s.seq (n+1) ≤ s.seq n) : s.converges ↔ (fun k ↦ 2^k * s.seq (2^k): Series).converges := by
   -- This proof is written to follow the structure of the original text.
@@ -237,7 +310,36 @@ theorem Series.Basel_problem :  (mk' (m := 1) fun n ↦ 1 / (n:ℝ) ^ 2 : Series
   simpa [←Complex.ofReal_inj]
 
 /-- Exercise 7.3.3 -/
-theorem Series.nonneg_sum_zero {a:ℕ → ℝ} (ha: (a:Series).nonneg) (hconv: (a:Series).converges) : (a:Series).sum = 0 ↔ ∀ n, a n = 0 := by sorry
-
+theorem Series.nonneg_sum_zero {a:ℕ → ℝ} (ha: (a:Series).nonneg) (hconv: (a:Series).converges) : (a:Series).sum = 0 ↔ ∀ n, a n = 0 := by
+  set s := (a:Series)
+  have partial_succ'' (n:ℤ): s.seq n = s.partial n - s.partial (n-1):=by
+    set n' := n-1
+    rw[show n = n'+1 by omega]
+    rw[partial_succ']
+    simp
+  constructor
+  . intro hsum
+    have hup := partial_le_sum_of_nonneg ha hconv
+    rw[hsum] at hup
+    have hlo := partial_nonneg ha
+    have hp0 : ∀ N, s.partial N = 0 := by grind
+    intro n
+    rw[ show a n = s.seq n by simp[s]]
+    rw[partial_succ'']
+    simp[hp0]
+  intro ha
+  have hp0 :  s.partial = fun n ↦ 0 := by
+    ext n
+    by_cases hn : n ≥ 0
+    . induction' n,hn using Int.le_induction with k hk hind
+      . unfold Series.partial;simp[s,ha]
+      rw[partial_succ',hind]
+      simp[s, show 0 ≤ k+1 by omega,ha]
+    apply partial_of_lt
+    simp[s];linarith
+  apply sum_of_converges
+  unfold convergesTo 
+  rw[hp0]
+  exact tendsto_const_nhds
 
 end Chapter7
