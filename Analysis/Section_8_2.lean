@@ -220,67 +220,101 @@ theorem sum_of_sum_of_AbsConvergent_nonneg {f:ℕ × ℕ → ℝ} (hf:AbsConverg
       _ ≤ _ := partial_le_sum_of_nonneg hnon' hconv' _
   simp [a, hconv, ← this, Series.convergesTo_sum hconv']
 
--- /-- Theorem 8.2.2, second version -/
--- theorem sum_of_sum_of_AbsConvergent {f:ℕ × ℕ → ℝ} (hf:AbsConvergent f) :
---   (∀ n, ((fun m ↦ f (n, m)):Series).absConverges) ∧
---   (fun n ↦ ((fun m ↦ f (n, m)):Series).sum:Series).convergesTo (Sum f) := by
---   set fplus := max f 0
---   set fminus := max (-f) 0
---   have hfplus_nonneg : ∀ n m, 0 ≤ fplus (n, m) := by intro n m; simp [fplus]
---   have hfminus_nonneg : ∀ n m, 0 ≤ fminus (n, m) := by intro n m; simp [fminus]
---   have hdiff : f = fplus - fminus := by sorry
---   have hfplus_conv : AbsConvergent fplus := by sorry
---   have hfminus_conv : AbsConvergent fminus := by sorry
---   choose hfplus_conv' hfplus_sum using sum_of_sum_of_AbsConvergent_nonneg hfplus_conv hfplus_nonneg
---   choose hfminus_conv' hfminus_sum using sum_of_sum_of_AbsConvergent_nonneg hfminus_conv hfminus_nonneg
---   split_ands
---   . intro n
---     sorry
---   convert convergesTo.sub hfplus_sum hfminus_sum using 1
---   . -- encountered surprising difficulty with definitional equivalence here
---     simp [hdiff]
---     change (fun n ↦ ((fun m ↦ (fplus - fminus) (n, m)):Series).sum:Series) =
---       (fun n ↦ ((fun m ↦ fplus (n, m)):Series).sum:Series)
---       - (fun n ↦ ((fun m ↦ (fminus) (n, m)):Series).sum:Series)
---     convert_to (fun n ↦ ((fun m ↦ (fplus - fminus) (n, m)):Series).sum:Series) =
---       (((fun n ↦ ((fun m ↦ fplus (n, m)):Series).sum) - (fun n ↦ ((fun m ↦ (fminus) (n, m)):Series).sum):ℕ → ℝ):Series)
---     . convert sub_coe _ _
---     rcongr _ n; simp
---     convert (sub _ _).2 with m; rfl
---     split_ifs with h <;> simp [h, HSub.hSub, Sub.sub]
---     . solve_by_elim
---     convert hfminus_conv' n.toNat
---   have ⟨ g, hg, _ ⟩ := hf
---   have h1 := Sum.eq hg (hf.comp hg)
---   have hplus := Sum.eq hg (hfplus_conv.comp hg)
---   have hminus := Sum.eq hg (hfminus_conv.comp hg)
---   apply convergesTo_uniq h1 _
---   convert (convergesTo.sub hplus hminus) using 3 with n
---   split_ifs with h <;> simp [h, hdiff, HSub.hSub, Sub.sub]
---
--- /-- Theorem 8.2.2, third version -/
--- theorem sum_of_sum_of_AbsConvergent' {f:ℕ × ℕ → ℝ} (hf:AbsConvergent f) :
---   (∀ m, ((fun n ↦ f (n, m)):Series).absConverges) ∧
---   (fun m ↦ ((fun n ↦ f (n, m)):Series).sum:Series).convergesTo (Sum f) := by
---   set π: ℕ × ℕ → ℕ × ℕ := fun p ↦ (p.2, p.1)
---   have hπ: Bijective π := Involutive.bijective (congrFun rfl)
---   have ⟨ g, hg, hconv ⟩ := hf
---   convert sum_of_sum_of_AbsConvergent (f := f ∘ π) _ using 2
---   . exact (Sum.of_comp hf hπ).2
---   refine ⟨ _, hπ.comp hg, ?_ ⟩
---   convert hconv using 2
---
--- /-- Theorem 8.2.2, fourth version -/
--- theorem sum_comm {f:ℕ × ℕ → ℝ} (hf:AbsConvergent f) :
---   (fun n ↦ ((fun m ↦ f (n, m)):Series).sum:Series).sum = (fun m ↦ ((fun n ↦ f (n, m)):Series).sum:Series).sum := by
---   simp [sum_of_converges (sum_of_sum_of_AbsConvergent hf).2,
---         sum_of_converges (sum_of_sum_of_AbsConvergent' hf).2]
---
--- /-- Lemma 8.2.3 / Exercise 8.2.1 -/
--- theorem AbsConvergent.iff {X:Type} (hX:CountablyInfinite X) (f : X → ℝ) :
---   AbsConvergent f ↔ BddAbove ( (fun A ↦ ∑ x ∈ A, |f x|) '' .univ ) := by
---     sorry
---
+/-- Theorem 8.2.2, second version -/
+theorem sum_of_sum_of_AbsConvergent {f:ℕ × ℕ → ℝ} (hf:AbsConvergent f) :
+  (∀ n, ((fun m ↦ f (n, m)):Series).absConverges) ∧
+  (fun n ↦ ((fun m ↦ f (n, m)):Series).sum:Series).convergesTo (Sum f) := by
+  set fplus := max f 0
+  set fminus := max (-f) 0
+  have hfplus_nonneg : ∀ n m, 0 ≤ fplus (n, m) := by intro n m; simp [fplus]
+  have hfminus_nonneg : ∀ n m, 0 ≤ fminus (n, m) := by intro n m; simp [fminus]
+  have hdiff : f = fplus - fminus := by 
+    ext n
+    simp[fplus,fminus]
+  have hfplus_conv : AbsConvergent fplus := by 
+    choose g hgbij hconv using hf
+    use g;simp only [hgbij, true_and]
+    unfold absConverges  at hconv 
+    set t := (f ∘ g:Series)
+    set s := (fplus ∘ g:Series)
+    have hm :s.m = t.abs.m := by simp[s,t]
+    refine (converges_of_le  hm ?_ hconv).1
+    intro n hn; simp[s] at hn
+    lift n to ℕ using hn
+    simp[s,t,fplus]
+    grind
+  have hfminus_conv : AbsConvergent fminus := by 
+    choose g hgbij hconv using hf
+    use g;simp only [hgbij, true_and]
+    unfold absConverges  at hconv 
+    set t := (f ∘ g:Series)
+    set s := (fminus ∘ g:Series)
+    have hm :s.m = t.abs.m := by simp[s,t]
+    refine (converges_of_le  hm ?_ hconv).1
+    intro n hn; simp[s] at hn
+    lift n to ℕ using hn
+    simp[s,t,fminus]
+    grind
+  choose hfplus_conv' hfplus_sum using sum_of_sum_of_AbsConvergent_nonneg hfplus_conv hfplus_nonneg
+  choose hfminus_conv' hfminus_sum using sum_of_sum_of_AbsConvergent_nonneg hfminus_conv hfminus_nonneg
+  split_ands
+  . intro n
+    specialize hfplus_conv' n
+    specialize hfminus_conv' n
+    unfold absConverges
+    set splus := (fun m ↦ fplus (n,m))
+    set sminus := (fun m ↦ fminus (n,m))
+    convert (Series.add hfplus_conv' hfminus_conv').1 using 1
+    unfold Series.abs
+    rw[add_coe]
+    ext m;.simp
+    simp[splus,sminus,fplus,fminus]
+    grind
+  convert convergesTo.sub hfplus_sum hfminus_sum using 1
+  . -- encountered surprising difficulty with definitional equivalence here
+    simp [hdiff]
+    change (fun n ↦ ((fun m ↦ (fplus - fminus) (n, m)):Series).sum:Series) =
+      (fun n ↦ ((fun m ↦ fplus (n, m)):Series).sum:Series)
+      - (fun n ↦ ((fun m ↦ (fminus) (n, m)):Series).sum:Series)
+    convert_to (fun n ↦ ((fun m ↦ (fplus - fminus) (n, m)):Series).sum:Series) =
+      (((fun n ↦ ((fun m ↦ fplus (n, m)):Series).sum) - (fun n ↦ ((fun m ↦ (fminus) (n, m)):Series).sum):ℕ → ℝ):Series)
+    . convert sub_coe _ _
+    rcongr _ n; simp
+    convert (sub _ _).2 with m; rfl
+    split_ifs with h <;> simp [h, HSub.hSub, Sub.sub]
+    . solve_by_elim
+    convert hfminus_conv' n.toNat
+  have ⟨ g, hg, _ ⟩ := hf
+  have h1 := Sum.eq hg (hf.comp hg)
+  have hplus := Sum.eq hg (hfplus_conv.comp hg)
+  have hminus := Sum.eq hg (hfminus_conv.comp hg)
+  apply convergesTo_uniq h1 _
+  convert (convergesTo.sub hplus hminus) using 3 with n
+  split_ifs with h <;> simp [h, hdiff, HSub.hSub, Sub.sub]
+
+/-- Theorem 8.2.2, third version -/
+theorem sum_of_sum_of_AbsConvergent' {f:ℕ × ℕ → ℝ} (hf:AbsConvergent f) :
+  (∀ m, ((fun n ↦ f (n, m)):Series).absConverges) ∧
+  (fun m ↦ ((fun n ↦ f (n, m)):Series).sum:Series).convergesTo (Sum f) := by
+  set π: ℕ × ℕ → ℕ × ℕ := fun p ↦ (p.2, p.1)
+  have hπ: Bijective π := Involutive.bijective (congrFun rfl)
+  have ⟨ g, hg, hconv ⟩ := hf
+  convert sum_of_sum_of_AbsConvergent (f := f ∘ π) _ using 2
+  . exact (Sum.of_comp hf hπ).2
+  refine ⟨ _, hπ.comp hg, ?_ ⟩
+  convert hconv using 2
+
+/-- Theorem 8.2.2, fourth version -/
+theorem sum_comm {f:ℕ × ℕ → ℝ} (hf:AbsConvergent f) :
+  (fun n ↦ ((fun m ↦ f (n, m)):Series).sum:Series).sum = (fun m ↦ ((fun n ↦ f (n, m)):Series).sum:Series).sum := by
+  simp [sum_of_converges (sum_of_sum_of_AbsConvergent hf).2,
+        sum_of_converges (sum_of_sum_of_AbsConvergent' hf).2]
+
+/-- Lemma 8.2.3 / Exercise 8.2.1 -/
+theorem AbsConvergent.iff {X:Type} (hX:CountablyInfinite X) (f : X → ℝ) :
+  AbsConvergent f ↔ BddAbove ( (fun A ↦ ∑ x ∈ A, |f x|) '' .univ ) := by
+    sorry
+
 -- abbrev AbsConvergent' {X:Type} (f: X → ℝ) : Prop := BddAbove ( (fun A ↦ ∑ x ∈ A, |f x|) '' .univ )
 --
 -- theorem AbsConvergent'.of_finite {X:Type} [Finite X] (f:X → ℝ) : AbsConvergent' f := by
