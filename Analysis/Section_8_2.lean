@@ -617,6 +617,26 @@ theorem Sum'.eq_tsum {X:Type} (f:X → ℝ) (h: AbsConvergent' f) :
   rw [of_finsupp (A := E.toFinite.toFinset)]; symm; apply tsum_eq_sum
   all_goals simp [E]
 
+lemma permuted_abs {X:Type} {f:X → ℝ} {g h:ℕ → X} (hg : Bijective g) (hh : Bijective h)
+    (hf : (f ∘ g:Series).absConverges) {L:ℝ} (hfL: (f ∘ g:Series).convergesTo L): (f ∘ h:Series).absConverges ∧ (f ∘ h:Series).convergesTo L:= by
+  let e : ℕ → ℕ := g.invFun ∘ h
+  have he : Bijective e := .comp
+    ⟨(Function.rightInverse_invFun hg.surjective).injective,
+      (Function.leftInverse_invFun hg.injective).surjective⟩ hh
+  have hperm := Series.absConverges_of_permute hf he
+  have hseries : (f ∘ h:Series) = (fun n ↦ (f ∘ g) (e n):Series) := by
+    ext z
+    · rfl
+    · by_cases hz : z ≥ 0
+      · simp [hz, e, Function.rightInverse_invFun hg.surjective (h z.toNat)]
+      · simp [hz]
+  rw [hseries]
+  refine ⟨ hperm.1 , ?_ ⟩ 
+  apply sum_of_converges at hfL
+  rw[hperm.2] at hfL
+  rw[← hfL]
+  apply convergesTo_sum
+  apply converges_of_absConverges hperm.1
 
 /-- Proposition 8.2.6 (a) (Absolutely convergent series laws) / Exercise 8.2.3 -/
 lemma Sum.add {X:Type}  {f₁ f₂:X → ℝ} (hf₁ : AbsConvergent f₁) (hf₂ : AbsConvergent f₂) (hf₁f₂ : AbsConvergent (f₁ + f₂)):
@@ -632,28 +652,26 @@ lemma Sum.add {X:Type}  {f₁ f₂:X → ℝ} (hf₁ : AbsConvergent f₁) (hf�
   set s₂' := (f₂ ∘ g₁:Series)
   set s₁₂ := ((f₁ + f₂) ∘ g₁₂:Series)
   set s₁₂' := ((f₁ + f₂) ∘ g₁:Series)
-  have permuted_abs {f:X → ℝ} {g h:ℕ → X} (hg : Bijective g) (hh : Bijective h)
-      (hf : (f ∘ g:Series).absConverges) : (f ∘ h:Series).absConverges := by
-    let e : ℕ → ℕ := g.invFun ∘ h
-    have he : Bijective e := .comp
-      ⟨(Function.rightInverse_invFun hg.surjective).injective,
-        (Function.leftInverse_invFun hg.injective).surjective⟩ hh
-    have hperm := Series.absConverges_of_permute hf he
-    have hseries : (f ∘ h:Series) = (fun n ↦ (f ∘ g) (e n):Series) := by
-      ext z
-      · rfl
-      · by_cases hz : z ≥ 0
-        · simp [hz, e, Function.rightInverse_invFun hg.surjective (h z.toNat)]
-        · simp [hz]
-    rw [hseries]
-    exact hperm.1
+  -- have permuted_abs {f:X → ℝ} {g h:ℕ → X} (hg : Bijective g) (hh : Bijective h)
+  --     (hf : (f ∘ g:Series).absConverges) : (f ∘ h:Series).absConverges := by
+  --   let e : ℕ → ℕ := g.invFun ∘ h
+  --   have he : Bijective e := .comp
+  --     ⟨(Function.rightInverse_invFun hg.surjective).injective,
+  --       (Function.leftInverse_invFun hg.injective).surjective⟩ hh
+  --   have hperm := Series.absConverges_of_permute hf he
+  --   have hseries : (f ∘ h:Series) = (fun n ↦ (f ∘ g) (e n):Series) := by
+  --     ext z
+  --     · rfl
+  --     · by_cases hz : z ≥ 0
+  --       · simp [hz, e, Function.rightInverse_invFun hg.surjective (h z.toNat)]
+  --       · simp [hz]
+  --   rw [hseries]
+  --   exact hperm.1
   have ⟨hs₂', hsum₂'⟩  : s₂'.absConverges ∧ s₂'.convergesTo (Sum f₂) := by
-    have hs₂' : (f₂ ∘ g₁:Series).absConverges := permuted_abs hg₂ hg₁ hs₂
-    exact ⟨by simpa [s₂'] using hs₂', by simpa [s₂'] using Sum.eq hg₁ hs₂'⟩
+    exact permuted_abs hg₂ hg₁ hs₂ hsum₂
   symm; apply Series.convergesTo_uniq (hsum₁.add hsum₂')
   have ⟨hs₁₂', hsum₁₂'⟩  : s₁₂'.absConverges ∧ s₁₂'.convergesTo (Sum (f₁ + f₂)) := by
-    have hs₁₂' : ((f₁ + f₂) ∘ g₁:Series).absConverges := permuted_abs hg₁₂ hg₁ hs₁₂
-    exact ⟨by simpa [s₁₂'] using hs₁₂', by simpa [s₁₂'] using Sum.eq hg₁ hs₁₂'⟩
+    exact permuted_abs hg₁₂ hg₁ hs₁₂ hsum₁₂
   convert hsum₁₂'
   unfold s₁ s₂' s₁₂'
   rw[Series.add_coe]
@@ -706,9 +724,52 @@ theorem Sum'.add {X:Type} {f g:X → ℝ} (hf: AbsConvergent' f) (hg: AbsConverg
 
 
 /-- Proposition 8.2.6 (b) (Absolutely convergent series laws) / Exercise 8.2.3 -/
+lemma Sum.smul {X:Type} {f:X → ℝ} (hf: AbsConvergent f) (c: ℝ) (hsmul: AbsConvergent (c • f) ) :
+  Sum (c • f) = c * Sum f := by
+    choose g hg hs using hf
+    choose gsmul hgsmul hssmul using hsmul
+    have hsum := Sum.eq hg hs
+    have hsum_smul := Sum.eq hgsmul hssmul
+    have hsum_smul' : ((c • f) ∘ g:Series).convergesTo (Sum (c • f)) := by
+      have := permuted_abs hgsmul hg hssmul hsum_smul
+      exact this.2
+    apply convergesTo_uniq hsum_smul'
+    have := hsum.smul (c:=c)
+    rw[smul_coe] at this
+    convert this
 theorem Sum'.smul {X:Type} {f:X → ℝ} (hf: AbsConvergent' f) (c: ℝ) :
   AbsConvergent' (c • f) ∧ Sum' (c • f) = c * Sum' f := by
-  sorry
+    have hf' := hf
+    choose U hU using hf'
+    simp[mem_upperBounds] at hU
+    have hconv' : AbsConvergent' (c • f) := by
+      use |c| * U;simp[mem_upperBounds]
+      peel hU with a hfU
+      simp_rw[← smul_eq_mul]
+      rw[← smul_sum]
+      simp;apply mul_le_mul_of_nonneg_left hfU
+      simp
+    refine ⟨hconv', ?_⟩ 
+    set A := {x:X | f x ≠ 0}
+    have hA : AtMostCountable A := hf.countable_supp
+    have hAf : ∀ x ∉ A, f x = 0 := by grind
+    have hAs : ∀ x ∉ A, (c • f) x = 0 := by
+      intro x; simp[A];tauto
+    obtain hcont | hfin := hA
+    . 
+      have ⟨hfc,hf⟩ := (Sum'.of_countable_supp hcont hAf hf)
+      have ⟨hfs,hs⟩ := (Sum'.of_countable_supp hcont hAs hconv')
+      rw[hf,hs]
+      rw[AbsConvergent'.of_countable hcont] at hfc hfs
+      exact Sum.smul hfc c hfs
+    set E := A.toFinite.toFinset
+    have hEf : ∀ x ∉ E, f x = 0 := by simpa[E]
+    have hEs : ∀ x ∉ E, (c • f) x = 0 := by simp[E];tauto
+    rw[Sum'.of_finsupp hEs]
+    rw[Sum'.of_finsupp hEf]
+    simp only [Pi.smul_apply]
+    rw[ ← smul_sum]
+    simp
 
 -- /-- This law is not explicitly stated in Proposition 8.2.6, but follows easily from parts (a) and (b).-/
 -- theorem Sum'.sub {X:Type} {f g:X → ℝ} (hf: AbsConvergent' f) (hg: AbsConvergent' g) :
