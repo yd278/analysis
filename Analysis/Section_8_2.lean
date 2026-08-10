@@ -412,6 +412,10 @@ lemma AbsConvergent'.of_AbsConvergent {X:Type} {f: X → ℝ} (hf: AbsConvergent
     apply Equiv.bijective
   rwa[AbsConvergent'.of_countable hX]
 
+lemma AbsConvergent'.of_finite_diff {X:Type} {f: X → ℝ} {D:ℕ } {d : Fin D → X} 
+  (hconv : AbsConvergent' (fun x : {x : X | ∀ i : (Fin D), d i ≠ x} ↦ f x)):
+    AbsConvergent' f := by
+      sorry
 
 /-- Lemma 8.2.5 / Exercise 8.2.2-/
 theorem AbsConvergent'.countable_supp {X:Type} {f:X → ℝ} (hf: AbsConvergent' f) :
@@ -841,165 +845,17 @@ theorem Sum'.of_comp {X Y:Type} {f:X → ℝ} (hf: AbsConvergent' f) {φ: Y → 
       simp[esp,heXY]
 
 /-- Lemma 8.2.7 / Exercise 8.2.4 -/
-
-lemma converges_of_supp_Absconverges {a f: ℕ → ℝ} {p : ℕ → Prop} (haf : ∀ n, p n → |a n| = f n) (haf0 : ∀ n, ¬ p n → f n = 0)
-  (has : AbsConvergent (fun n : {n | p n} ↦ a n)) :(f:Series).converges := by 
-  obtain ⟨g,hg, hconv ⟩:= has
-  unfold absConverges at hconv
-  rw[converges_of_nonneg_iff (by simp[nonneg];grind)] at hconv
-  choose M hM using hconv
-  have hnonneg : (f:Series).nonneg := by
-    simp[nonneg]
-    intro n; split_ifs with hn; swap;simp
-    lift n to ℕ using hn
-    by_cases hpn : p n
-    . simp[← haf _ hpn]
-    simp[haf0 _ hpn]
-  rw[converges_of_nonneg_iff hnonneg]
-  use M
-  intro n
-  by_cases! hn : n ≥ 0; swap
-  . rw[partial_of_lt (by simp[hn])]
-    specialize hM (-1); rwa[partial_of_lt (by simp)] at hM
-  lift n to ℕ using hn
-  set g' := open Classical in fun n ↦  if hn : p n then g.invFun ⟨n,hn⟩ else 0 
-  set N :=  ((Icc 0 n).image g').max' (by simp)
-  specialize hM N
-  unfold Series.partial at hM ⊢ 
-  simp at hM ⊢ 
-  apply le_trans' hM
-  have : ∑ x ∈ Icc (0:ℕ) N, |a (g x)| = ∑ x ∈ Icc (0:ℕ) N, f (g x) := by
-    apply sum_congr;simp
-    intro x hx
-    have hpgx : p (g x) := by grind
-    rw[haf _ hpgx]
-  rw[this]
-  nth_rw 2 [<- sum_image ]; swap
-  . intro n1 hn1 n2 hn2 heq;simp at heq
-    rw[Subtype.coe_inj] at heq
-    apply hg.1 heq
-  have hfnn {x}: f x ≥ 0 := by
-    by_cases hx : p x
-    . simp[← haf _ hx]
-    simp [haf0 _ hx]
-  set f' : ℕ → NNReal := fun n ↦ ⟨(f n), hfnn ⟩ 
-  have hcongr {s} :∑ x ∈ s , f x = ∑ x ∈ s, f' x := by
-    simp;apply sum_congr;simp
-    intro x hx
-    simp[f']
-  rw[hcongr,hcongr,NNReal.coe_le_coe]
-  apply sum_le_sum_of_ne_zero
-  intro x hx hxp
-  simp at hx
-  replace hxp : f x ≠ 0 := by simp[f'] at hxp; contrapose hxp;simp[hxp];grind
-  replace hxp : p x := by
-    contrapose! hxp; apply haf0 _ hxp;
-  simp[N]; have := hg.2 ⟨ x,hxp⟩ 
-  choose a ha using this
-  use a; split_ands
-  . apply le_max'
-    simp;use x;simp[hx,g',hxp ]
-    suffices h: g.invFun (g a) = a from by
-      convert h;simp[ha]
-    apply hg.injective
-    apply invFun_eq
-    use a
-    
-  simp[ha]
-
+lemma divergent_parts_of_conditional_convergent {a: ℕ → ℝ} (ha: (a:Series).converges)
+  (ha' : ¬ (a:Series).absConverges) : 
+  ¬ AbsConvergent' (fun n : {n | a n ≥ 0} ↦ a n) ∧ ¬ AbsConvergent' (fun n : {n | a n < 0} ↦ a n) :=by sorry
 theorem divergent_parts_of_divergent {a: ℕ → ℝ} (ha: (a:Series).converges)
   (ha': ¬ (a:Series).absConverges) :
   ¬ AbsConvergent (fun n : {n | a n ≥ 0} ↦ a n) ∧ ¬ AbsConvergent (fun n : {n | a n < 0} ↦ a n)
-  := by
-    set aplus := max a 0
-    set aminus := max (-a) 0
-    have hdiff : (aminus:Series) = (aplus:Series) - (a:Series) := by
-      simp[sub_coe]
-      ext n
-      split_ifs with hn
-      <;> simp[aplus,aminus]
-      grind
-    have habs : (a:Series).abs = (a:Series) + (aminus:Series) + (aminus:Series) := by
-      rw[add_coe,add_coe (fun n ↦ a n + aminus n) aminus]
-      ext n ; .simp
-      simp[aminus];split_ifs;swap;simp
-      by_cases! hpos : a n.toNat ≥ 0
-      . simp [hpos]
-      have hmax :max (- (a n.toNat) ) 0 = (- a n.toNat) := by
-        simp;linarith
-      rw[abs_of_neg hpos];simp[hmax]
-    have h_nconv_minus : ¬ (aminus : Series).converges := by 
-      by_contra! hconv
-      choose M hM using hconv
-      choose L hL using ha
-      have hconv1 := hL.add hM
-      have hconv2 := hconv1.add hM
-      rw[← habs] at hconv2
-      simp at ha';tauto
-    have h_conv_imp : (aplus :Series).converges → (aminus:Series).converges  := by
-      intro hplus_conv
-      choose L hL using hplus_conv
-      choose M hM using ha
-      have := hL.sub hM
-      rw[← hdiff] at this
-      use (L - M)
-    have h_nconv_plus : ¬ (aplus:Series).converges  := by contrapose h_nconv_minus; exact h_conv_imp h_nconv_minus
-    split_ands; map_tacs [contrapose! h_nconv_plus; contrapose! h_nconv_minus]
-    . refine converges_of_supp_Absconverges ?_ ?_ h_nconv_plus
-      <;> intro n han<;> simp[han,aplus];linarith
-    . refine converges_of_supp_Absconverges ?_ ?_ h_nconv_minus
-      <;>intro n han<;>simp[aminus];grind;linarith
-lemma absConverges_of_converges_of_eventually_nonneg {a : Series} (ha : a.converges)
-  (N:ℤ) (heve : ∀ n ≥ N, 0 ≤ a.seq n) : a.absConverges := by
-    rw [Series.converges_iff_tail_decay] at ha
-    unfold absConverges
-    rw [Series.converges_iff_tail_decay]
-    intro ε hε
-    obtain ⟨M, hM, hdecay⟩ := ha ε hε
-    use max M (N + 1)
-    constructor
-    · simp;tauto
-    intro p hp q hq
-    have hpM : p ≥ M := le_trans (le_max_left _ _) hp
-    have hqM : q ≥ M := le_trans (le_max_left _ _) hq
-    have hsum : ∑ n ∈ Finset.Icc p q, (a.abs).seq n =
-         ∑ n ∈ Finset.Icc p q, a.seq n := by
-      calc
-        _ = ∑ n ∈ Finset.Icc p q,   a.seq n := by
-          apply Finset.sum_congr rfl
-          intro n hn
-          simp only [Finset.mem_Icc] at hn
-          have hnN : n ≥ (N + 1 : ℤ) := le_trans (le_max_right _ _) (by linarith [hp, hn.1])
-          simp;split_ifs with hmn
-          . rw[abs_of_nonneg]; apply heve; omega
-          rw[a.vanish];omega
-        _ = _ := by
-          apply sum_congr rfl
-          intro x hx; rfl
-    rw [hsum]
-    exact hdecay p hpM q hqM
-  
-lemma absConverges_of_converges_of_eventually_nonpos {a : Series} (ha : a.converges)
-  (N:ℤ) (heve : ∀ n ≥ N, a.seq n ≤ 0) : a.absConverges := by
-    set a' := (-1:ℝ) • a
-    choose L hL using ha
-    have ha' : a'.converges := by
-      use -1 * L; unfold a'; apply Series.convergesTo.smul hL 
-    have hmeq : a.m = a'.m := by rfl
-    have hseq (n:ℤ) : a.seq n = - (a'.seq n) := by
-      by_cases! hnm : a.m ≤ n
-      . change a.seq n = - if n ≥ a.m then (-1:ℝ) * a.seq n else 0;simp[hnm]
-      rw[a.vanish _ hnm]
-      rw[hmeq] at hnm
-      rw[a'.vanish _ hnm]
-      simp
-    have heq : a.abs = a'.abs := by
-      simp[hmeq,hseq]
-    unfold absConverges;rw[heq]
-    have heve' : ∀ n ≥ N, 0 ≤ a'.seq n := by
-      peel heve with n hn heve;grind
-    apply absConverges_of_converges_of_eventually_nonneg ha' N heve'
-
+  := by 
+  choose h1 h2 using divergent_parts_of_conditional_convergent ha ha'
+  constructor
+  . contrapose! h1; exact AbsConvergent'.of_AbsConvergent h1
+  contrapose! h2; apply AbsConvergent'.of_AbsConvergent h2
 
 lemma Nat.exists_mem_range_of_eventually_min {A : Set ℕ} {u : ℕ → ℕ}
     (hu : Injective u) (K : ℕ)
@@ -1044,47 +900,174 @@ lemma Finset.exists_bound_of_mem_range {α : Type} {u : ℕ → α} (T : Finset 
       Finset.mem_image.2 ⟨⟨x, hx⟩, hxU, rfl⟩
     exact Nat.lt_succ_of_le (Finset.le_max' _ _ hjmem)⟩, hj x hx⟩
 
+lemma Finset.sum_le_sum_of_seen {u : ℕ → ℕ} (hu : Injective u) (T : Finset ℕ)
+    {f : ℕ → ℝ} (hf : ∀ n, 0 ≤ f n)
+    (hseen : ∀ x ∈ T, ∃ j, u j = x) :
+    ∃ J, ∑ x ∈ T, f x ≤ ∑ i : Fin J, f (u i) := by
+  obtain ⟨J, hJ⟩ := Finset.exists_bound_of_mem_range T hseen
+  let e : Fin J ↪ ℕ := ⟨fun i ↦ u i, fun i j hij ↦ by
+    apply Fin.ext
+    exact hu hij⟩
+  refine ⟨J, ?_⟩
+  calc
+    ∑ x ∈ T, f x ≤ ∑ x ∈ (Finset.univ.map e), f x := by
+      apply Finset.sum_le_sum_of_subset_of_nonneg
+      · intro x hx
+        obtain ⟨i, hi⟩ := hJ x hx
+        exact Finset.mem_map.mpr ⟨i, by simp, hi⟩
+      · intro x _ _
+        exact hf x
+    _ = ∑ i : Fin J, f (u i) := by
+      simp [e]
+
+lemma abs_partial_bound_of_eventually_neg {a : ℕ → ℝ} {u : ℕ → ℕ} {K : ℕ} {L : ℝ}
+    (hpartial_ge : ∀ {j : ℕ}, K < j → L ≤ ∑ i : Fin j, a (u i))
+    (htail_neg : ∀ {j : ℕ}, K < j → a (u j) < 0) :
+    ∃ M, ∀ J, ∑ i : Fin J, |a (u i)| ≤ M := by
+  let P : ℕ → ℝ := fun J ↦ ∑ i ∈ Finset.range J, a (u i)
+  let Q : ℕ → ℝ := fun J ↦ ∑ i ∈ Finset.range J, |a (u i)|
+  let M : ℝ := Q (K + 1) + P (K + 1) - L
+  have hP_eq (J : ℕ) : (∑ i : Fin J, a (u i)) = P J :=
+    Fin.sum_univ_eq_sum_range (fun i ↦ a (u i)) J
+  have hQ_eq (J : ℕ) : (∑ i : Fin J, |a (u i)|) = Q J :=
+    Fin.sum_univ_eq_sum_range (fun i ↦ |a (u i)|) J
+  have hpartial_geP {j : ℕ} (hj : K < j) : L ≤ P j := by
+    simpa [hP_eq j] using hpartial_ge hj
+  have hQ_formula : ∀ J ≥ K + 1, Q J = Q (K + 1) + P (K + 1) - P J := by
+    intro J hJ
+    exact Nat.le_induction (m := K + 1) (n := J)
+      (by simp [P, Q])
+      (by
+        intro J hKJ hJformula
+        have hJgt : K < J := by omega
+        have hneg : a (u J) < 0 := htail_neg hJgt
+        simp [P, Q, Finset.sum_range_succ, hJformula, abs_of_neg hneg]
+        ring)
+      hJ
+  have hQ_bound (J : ℕ) : Q J ≤ M := by
+    by_cases hJ : J ≤ K + 1
+    · calc
+        Q J ≤ Q (K + 1) := by
+          apply Finset.sum_le_sum_of_subset_of_nonneg
+          · intro x hx
+            simp only [Finset.mem_range] at hx ⊢
+            omega
+          · intro x _ _
+            exact abs_nonneg _
+        _ ≤ M := by
+          have hge : L ≤ P (K + 1) := hpartial_geP (by omega)
+          simp [M]
+          linarith
+    · have hJ' : K + 1 ≤ J := by omega
+      rw [hQ_formula J hJ']
+      have hge : L ≤ P J := hpartial_geP (by omega)
+      simp [M]
+      linarith
+  exact ⟨M, fun J ↦ (hQ_eq J).trans_le (hQ_bound J)⟩
+
+lemma abs_partial_bound_of_eventually_nonneg {a : ℕ → ℝ} {u : ℕ → ℕ} {K : ℕ} {L : ℝ}
+    (hpartial_lt : ∀ {j : ℕ}, K < j → ∑ i : Fin j, a (u i) < L)
+    (htail_nonneg : ∀ {j : ℕ}, K < j → 0 ≤ a (u j)) :
+    ∃ M, ∀ J, ∑ i : Fin J, |a (u i)| ≤ M := by
+  let P : ℕ → ℝ := fun J ↦ ∑ i ∈ Finset.range J, a (u i)
+  let Q : ℕ → ℝ := fun J ↦ ∑ i ∈ Finset.range J, |a (u i)|
+  let M : ℝ := Q (K + 1) + L - P (K + 1)
+  have hP_eq (J : ℕ) : (∑ i : Fin J, a (u i)) = P J :=
+    Fin.sum_univ_eq_sum_range (fun i ↦ a (u i)) J
+  have hQ_eq (J : ℕ) : (∑ i : Fin J, |a (u i)|) = Q J :=
+    Fin.sum_univ_eq_sum_range (fun i ↦ |a (u i)|) J
+  have hpartial_ltP {j : ℕ} (hj : K < j) : P j < L := by
+    simpa [hP_eq j] using hpartial_lt hj
+  have hQ_formula : ∀ J ≥ K + 1, Q J = Q (K + 1) + P J - P (K + 1) := by
+    intro J hJ
+    exact Nat.le_induction (m := K + 1) (n := J)
+      (by simp [P, Q])
+      (by
+        intro J hKJ hJformula
+        have hJgt : K < J := by omega
+        have hnonneg : 0 ≤ a (u J) := htail_nonneg hJgt
+        simp [P, Q, Finset.sum_range_succ, hJformula, abs_of_nonneg hnonneg]
+        ring)
+      hJ
+  have hQ_bound (J : ℕ) : Q J ≤ M := by
+    by_cases hJ : J ≤ K + 1
+    · calc
+        Q J ≤ Q (K + 1) := by
+          apply Finset.sum_le_sum_of_subset_of_nonneg
+          · intro x hx
+            simp only [Finset.mem_range] at hx ⊢
+            omega
+          · intro x _ _
+            exact abs_nonneg _
+        _ ≤ M := by
+          have hlt : P (K + 1) < L := hpartial_ltP (by omega)
+          simp [M]
+          linarith
+    · have hJ' : K + 1 ≤ J := by omega
+      rw [hQ_formula J hJ']
+      have hlt : P J < L := hpartial_ltP (by omega)
+      simp [M]
+      linarith
+  exact ⟨M, fun J ↦ (hQ_eq J).trans_le (hQ_bound J)⟩
+
+lemma AbsConvergent'.of_seen_partial_abs_bound {A : Set ℕ} {a : ℕ → ℝ} {u : ℕ → ℕ}
+    (hu : Injective u) (g : ℕ → A) (hg : Bijective g)
+    (hseen : ∀ x ∈ A, ∃ j, u j = x)
+    (hbound : ∃ M, ∀ J, ∑ i : Fin J, |a (u i)| ≤ M) :
+  AbsConvergent' (fun n : A ↦ a n) := by
+  have hA_count : CountablyInfinite A := by
+    let e := Equiv.ofBijective g hg
+    use e.symm
+    exact e.symm.bijective
+  rw [AbsConvergent'.of_countable hA_count]
+  use g
+  simp [hg]
+  unfold absConverges
+  rw [converges_of_nonneg_iff (by simp [nonneg]; intro n; split_ifs <;> simp)]
+  obtain ⟨M, hM⟩ := hbound
+  use M
+  intro N
+  by_cases hN : N ≥ 0
+  · lift N to ℕ using hN
+    let T : Finset ℕ := (Finset.range (N + 1)).image (fun i ↦ (g i : ℕ))
+    have hseen_T : ∀ x ∈ T, ∃ j, u j = x := by
+      intro x hx
+      simp [T] at hx
+      obtain ⟨i, _, rfl⟩ := hx
+      exact hseen (g i) (g i).2
+    obtain ⟨J, hJ⟩ := Finset.sum_le_sum_of_seen hu T (fun n ↦ abs_nonneg (a n)) hseen_T
+    calc
+      ((fun n ↦ a ↑(g n) : Series).abs).partial (N : ℤ)
+          = ∑ x ∈ T, |a x| := by
+        simp [Series.partial, Finset.Icc_eq_cast, T]
+        have hIcc : Finset.Icc 0 N = Finset.range (N + 1) := by
+          ext x
+          simp
+        rw [hIcc]
+        rw [Finset.sum_image]
+        intro x hx y hy hxy
+        exact hg.injective (Subtype.ext hxy)
+      _ ≤ ∑ i : Fin J, |a (u i)| := hJ
+      _ ≤ M := hM J
+  · calc
+      ((fun n ↦ a ↑(g n) : Series).abs).partial N = 0 := by
+        apply Series.partial_of_lt
+        simpa using hN
+      _ ≤ M := by
+        have hM0 := hM 0
+        simp at hM0
+        exact hM0
+
 /-- Theorem 8.2.8 (Riemann rearrangement theorem) / Exercise 8.2.5 -/
 theorem permute_convergesTo_of_divergent {a: ℕ → ℝ} (ha: (a:Series).converges)
   (ha': ¬ (a:Series).absConverges) (L:ℝ) :
   ∃ f : ℕ → ℕ, Bijective f ∧ (a ∘ f:Series).convergesTo L := by
   -- This proof is written to follow the structure of the original text.
-  choose h1 h2 using divergent_parts_of_divergent ha ha'
+  choose h1 h2 using divergent_parts_of_conditional_convergent ha ha'
   set A_plus := { n | a n ≥ 0 }
   set A_minus := {n | a n < 0 }
-  -- have hdisj : Disjoint A_plus A_minus := by
-  --   rw [Set.disjoint_iff_inter_eq_empty]; ext; simp [A_plus, A_minus]
-  -- have hunion : A_plus ∪ A_minus = .univ := by
-  --   ext; simp [A_plus, A_minus]; grind
-  have hA_plus_inf : Infinite A_plus := by
-    contrapose! ha' with hfin
-    have hfin' : Set.Finite A_plus := Set.finite_coe_iff.mp hfin
-    set E := hfin'.toFinset
-    set N := E.sup id
-    apply absConverges_of_converges_of_eventually_nonpos ha (N+1)
-    intro n hn
-    lift n to ℕ using by omega
-    simp at hn
-    by_contra! hpos
-    simp at hpos
-    have hnE : n ∈ E := by simp [E, A_plus] ;grind
-    have hnN : n ≤ N := by simpa [N] using Finset.le_sup (f := id) hnE
-    omega
-  have hA_minus_inf : Infinite A_minus := by
-    contrapose! ha' with hfin
-    have hfin' : Set.Finite A_minus := Set.finite_coe_iff.mp hfin
-    set E := hfin'.toFinset
-    set N := E.sup id
-    apply absConverges_of_converges_of_eventually_nonneg ha (N+1)
-    intro n hn
-    lift n to ℕ using by omega
-    simp at hn
-    by_contra! hneg
-    have hnE : n ∈ E := by simpa [E, A_minus] using hneg
-    have hnN : n ≤ N := by simpa [N] using Finset.le_sup (f := id) hnE
-    omega
-  obtain ⟨ a_plus, ha_plus_bij, ha_plus_mono ⟩ := (Nat.monotone_enum_of_infinite A_plus).exists
-  obtain ⟨ a_minus, ha_minus_bij, ha_minus_mono ⟩ := (Nat.monotone_enum_of_infinite A_minus).exists
+  have hunion : A_plus ∪ A_minus = .univ := by
+    ext; simp [A_plus, A_minus]; grind
   let F : (n : ℕ) → ((m : ℕ) → m < n → ℕ) → ℕ :=
     fun j n' ↦ if ∑ i:Fin j, a (n' i (by simp)) < L then
       Nat.min { n ∈ A_plus | ∀ i:Fin j, n ≠ n' i (by simp) }
@@ -1096,7 +1079,12 @@ theorem permute_convergesTo_of_divergent {a: ℕ → ℝ} (ha: (a:Series).conver
     else
       Nat.min { n ∈ A_minus | ∀ i:Fin j, n ≠ n' i }
     := Nat.strongRec.eq_def _ j
-
+  have hA_plus_inf : Infinite A_plus := by
+    contrapose! h1
+    apply AbsConvergent'.of_finite
+  have hA_minus_inf : Infinite A_minus := by
+    contrapose! h2
+    apply AbsConvergent'.of_finite
   have infinite_without_seen (A : Set ℕ) (hA : Infinite A) (j : ℕ) :
       Infinite {n ∈ A | ∀ i : Fin j, n ≠ n' i} := by
     rw [Set.infinite_coe_iff] at hA ⊢
@@ -1130,168 +1118,110 @@ theorem permute_convergesTo_of_divergent {a: ℕ → ℝ} (ha: (a:Series).conver
     <;> have := hn'_ne_seen hlt
     . symm; assumption
     assumption
-  have finite_abs_sum_le_range (A : Set ℕ) (hseen : ∀ x : A, ∃ j, n' j = x)
-      (N : ℕ) (T : Finset A) :
-      ∃ M ≥ N, ∑ x ∈ T, |a x| ≤ ∑ i ∈ Finset.range M, |a (n' i)| := by
-    set Tval : Finset ℕ := T.map (Embedding.subtype _)
-    have hTseen : ∀ x ∈ Tval, ∃ j, n' j = x := by
-      intro x hx
-      obtain ⟨x', hxT, hxval⟩ := Finset.mem_map.mp hx
-      obtain ⟨j, hj⟩ := hseen x'
-      exact ⟨j, by rw [hj]; simpa using hxval⟩
-    obtain ⟨J, hJ⟩ := Finset.exists_bound_of_mem_range Tval hTseen
-    let M := max J N
-    refine ⟨M, le_max_right _ _, ?_⟩
-    have hTsub : Tval ⊆ (Finset.range M).image n' := by
-      intro x hx
-      obtain ⟨i, hi⟩ := hJ x hx
-      refine Finset.mem_image.2 ⟨i, ?_, hi⟩
-      exact Finset.mem_range.2 (lt_of_lt_of_le i.2 (le_max_left _ _))
-    calc
-      ∑ x ∈ T, |a x| = ∑ x ∈ Tval, |a x| := by
-        simp [Tval]
-      _ ≤ ∑ x ∈ (Finset.range M).image n', |a x| := by
-        apply Finset.sum_le_sum_of_subset_of_nonneg hTsub
-        intro x _ _
-        exact abs_nonneg _
-      _ = ∑ i ∈ Finset.range M, |a (n' i)| := by
-        rw [Finset.sum_image]
-        intro i _ j _ hij
-        exact hn'_inj hij
+  obtain ⟨ a_plus, ha_plus_bij, ha_plus_mono ⟩ := (Nat.monotone_enum_of_infinite A_plus).exists
+  obtain ⟨ a_minus, ha_minus_bij, ha_minus_mono ⟩ := (Nat.monotone_enum_of_infinite A_minus).exists
   have h_case_I : Infinite { j | ∑ i:Fin j, a (n' i) < L } := by
-    by_contra! hfin
-    have hbounded : BddAbove { j | ∑ i:Fin j, a (n' i) < L } :=
-      Set.Finite.bddAbove hfin
-    rw [bddAbove_def] at hbounded
-    obtain ⟨N₀, hN₀⟩ := hbounded
-    let N := N₀ + 1
-    have h_not_lt (i : ℕ) (hi : i ≥ N) : ¬ ∑ k : Fin i, a (n' k) < L := by
-      intro hlt
-      have : i ≤ N₀ := hN₀ i hlt
-      omega
-    have h_evenually_minus : ∀ i ≥ N, n' i ∈ A_minus := by
-      intro i hi
-      rw [hn' i]
-      rw [if_neg (h_not_lt i hi)]
-      exact (Nat.min_spec (Set.Nonempty.of_subtype :
-        { n ∈ A_minus | ∀ k : Fin i, n ≠ n' k }.Nonempty)).1.1
-    have hmin_minus : ∀ j ≥ N, n' j =
-        Nat.min {n ∈ A_minus | ∀ i : Fin j, n ≠ n' i} := by
-      intro j hj
+    contrapose! h2
+    have hSbdd : BddAbove { j | ∑ i:Fin j, a (n' i) < L } := Set.Finite.bddAbove h2
+    rw [bddAbove_def] at hSbdd
+    obtain ⟨K, hK⟩ := hSbdd
+    have hpartial_ge {j : ℕ} (hj : K < j) : L ≤ ∑ i : Fin j, a (n' i) := by
+      by_contra! hjL
+      exact (not_lt_of_ge (hK j hjL)) hj
+    have hminus_choice (j : ℕ) (hj : K < j) :
+        n' j = Nat.min { n ∈ A_minus | ∀ i : Fin j, n ≠ n' i } := by
       rw [hn' j]
-      rw [if_neg (h_not_lt j hj)]
-    have hseen_minus (x : {n | a n < 0}) : ∃ j, n' j = x := by
-      exact Nat.exists_mem_range_of_eventually_min hn'_inj N (fun j hj ↦ hmin_minus j (by omega)) x.2
-    have h_contra : AbsConvergent (fun (n:A_minus) ↦ a n) := by
-      rw [AbsConvergent.iff]
-      · rw [bddAbove_def]
-        set C := (∑ i ∈ Finset.range N, |a (n' i)|) + (∑ i : Fin N, a (n' i)) - L
-        use C
-        intro y hy
-        simp only [Set.mem_image, Set.mem_univ, true_and] at hy
-        obtain ⟨T, rfl⟩ := hy
-        obtain ⟨M, hNM, hsum_le_range⟩ := finite_abs_sum_le_range A_minus hseen_minus N T
-        have hrange_bound :
-            ∑ i ∈ Finset.range M, |a (n' i)| ≤ C := by
-          have hsplit :
-              ∑ i ∈ Finset.range M, |a (n' i)|
-                = ∑ i ∈ Finset.range N, |a (n' i)|
-                  + ∑ i ∈ Finset.Ico N M, |a (n' i)| := by
-            exact (Finset.sum_range_add_sum_Ico (fun i ↦ |a (n' i)|) hNM).symm
-          have htail_abs :
-              ∑ i ∈ Finset.Ico N M, |a (n' i)|
-                = - ∑ i ∈ Finset.Ico N M, a (n' i) := by
-            rw [← Finset.sum_neg_distrib]
-            apply Finset.sum_congr rfl
-            intro i hi
-            have hmem : N ≤ i ∧ i < M := by simpa [Finset.mem_Ico] using hi
-            have hiN : i ≥ N := hmem.1
-            have hneg : a (n' i) < 0 := by
-              simpa [A_minus] using h_evenually_minus i hiN
-            rw [abs_of_neg hneg]
-          have hsum_tail :
-              ∑ i ∈ Finset.Ico N M, a (n' i)
-                = (∑ i : Fin M, a (n' i)) - (∑ i : Fin N, a (n' i)) := by
-            rw [Finset.sum_Ico_eq_sub _ hNM]
-            rw [← Fin.sum_univ_eq_sum_range (fun i ↦ a (n' i)) M,
-              ← Fin.sum_univ_eq_sum_range (fun i ↦ a (n' i)) N]
-          have hM_not_lt : ¬ ∑ i : Fin M, a (n' i) < L := h_not_lt M hNM
-          rw [hsplit, htail_abs, hsum_tail]
-          unfold C
-          linarith
-        calc
-          ∑ x ∈ T, |a x| ≤ ∑ i ∈ Finset.range M, |a (n' i)| := hsum_le_range
-          _ ≤ C := hrange_bound
-      · let e := Equiv.ofBijective a_minus ha_minus_bij
-        exact ⟨e.symm, e.symm.bijective⟩
-    contradiction
+      have hjL : ¬ ∑ i : Fin j, a (n' i) < L := not_lt.mpr (hpartial_ge hj)
+      simp [hjL]
+    have hminus_seen {x : ℕ} (hx : x ∈ A_minus) : ∃ j, n' j = x :=
+      Nat.exists_mem_range_of_eventually_min hn'_inj K hminus_choice hx
+    have htail_minus {j : ℕ} (hj : K < j) : n' j ∈ A_minus := by
+      rw [hminus_choice j hj]
+      have hmin := Nat.min_spec (by
+        observe hnone : ({ n ∈ A_minus | ∀ i : Fin j, n ≠ n' i } : Set ℕ).Nonempty
+        exact hnone)
+      exact hmin.1.1
+    have hbound : ∃ M, ∀ J, ∑ i : Fin J, |a (n' i)| ≤ M :=
+      abs_partial_bound_of_eventually_neg (a := a) (u := n') (K := K) (L := L)
+        hpartial_ge (by
+          intro j hj
+          simpa [A_minus] using htail_minus hj)
+    exact AbsConvergent'.of_seen_partial_abs_bound hn'_inj a_minus ha_minus_bij
+      (fun x hx ↦ hminus_seen hx) hbound
   have h_case_II : Infinite { j | ∑ i:Fin j, a (n' i) ≥ L } := by
-    by_contra! hfin
-    have hbounded : BddAbove { j | ∑ i:Fin j, a (n' i) ≥ L } :=
-      Set.Finite.bddAbove hfin
-    rw [bddAbove_def] at hbounded
-    obtain ⟨N₀, hN₀⟩ := hbounded
-    let N := N₀ + 1
-    have h_not_ge (i : ℕ) (hi : i ≥ N) : ¬ ∑ k : Fin i, a (n' k) ≥ L := by
-      intro hge
-      have : i ≤ N₀ := hN₀ i hge
-      omega
-    have h_eventually_plus : ∀ i ≥ N, n' i ∈ A_plus := by
-      intro i hi
-      rw [hn' i]
-      rw [if_pos (lt_of_not_ge (h_not_ge i hi))]
-      exact (Nat.min_spec (Set.Nonempty.of_subtype :
-        { n ∈ A_plus | ∀ k : Fin i, n ≠ n' k }.Nonempty)).1.1
-    have hmin_plus : ∀ j ≥ N, n' j =
-        Nat.min {n ∈ A_plus | ∀ i : Fin j, n ≠ n' i} := by
-      intro j hj
+    contrapose! h1
+    have hSbdd : BddAbove { j | ∑ i:Fin j, a (n' i) ≥ L } := Set.Finite.bddAbove h1
+    rw [bddAbove_def] at hSbdd
+    obtain ⟨K, hK⟩ := hSbdd
+    have hpartial_lt {j : ℕ} (hj : K < j) : ∑ i : Fin j, a (n' i) < L := by
+      by_contra! hjL
+      exact (not_lt_of_ge (hK j hjL)) hj
+    have hplus_choice (j : ℕ) (hj : K < j) :
+        n' j = Nat.min { n ∈ A_plus | ∀ i : Fin j, n ≠ n' i } := by
       rw [hn' j]
-      rw [if_pos (lt_of_not_ge (h_not_ge j hj))]
-    have hseen_plus (x : {n | a n ≥ 0}) : ∃ j, n' j = x := by
-      exact Nat.exists_mem_range_of_eventually_min hn'_inj N (fun j hj ↦ hmin_plus j (by omega)) x.2
-    have h_contra : AbsConvergent (fun (n:A_plus) ↦ a n) := by
-      rw [AbsConvergent.iff]
-      · rw [bddAbove_def]
-        set C := (∑ i ∈ Finset.range N, |a (n' i)|) + L - (∑ i : Fin N, a (n' i))
-        use C
-        intro y hy
-        simp only [Set.mem_image, Set.mem_univ, true_and] at hy
-        obtain ⟨T, rfl⟩ := hy
-        obtain ⟨M, hNM, hsum_le_range⟩ := finite_abs_sum_le_range A_plus hseen_plus N T
-        have hrange_bound :
-            ∑ i ∈ Finset.range M, |a (n' i)| ≤ C := by
-          have hsplit :
-              ∑ i ∈ Finset.range M, |a (n' i)|
-                = ∑ i ∈ Finset.range N, |a (n' i)|
-                  + ∑ i ∈ Finset.Ico N M, |a (n' i)| := by
-            exact (Finset.sum_range_add_sum_Ico (fun i ↦ |a (n' i)|) hNM).symm
-          have htail_abs :
-              ∑ i ∈ Finset.Ico N M, |a (n' i)|
-                = ∑ i ∈ Finset.Ico N M, a (n' i) := by
-            apply Finset.sum_congr rfl
-            intro i hi
-            have hmem : N ≤ i ∧ i < M := by simpa [Finset.mem_Ico] using hi
-            have hnonneg : 0 ≤ a (n' i) := by
-              simpa [A_plus] using h_eventually_plus i hmem.1
-            rw [abs_of_nonneg hnonneg]
-          have hsum_tail :
-              ∑ i ∈ Finset.Ico N M, a (n' i)
-                = (∑ i : Fin M, a (n' i)) - (∑ i : Fin N, a (n' i)) := by
-            rw [Finset.sum_Ico_eq_sub _ hNM]
-            rw [← Fin.sum_univ_eq_sum_range (fun i ↦ a (n' i)) M,
-              ← Fin.sum_univ_eq_sum_range (fun i ↦ a (n' i)) N]
-          have hM_lt : ∑ i : Fin M, a (n' i) < L :=
-            lt_of_not_ge (h_not_ge M hNM)
-          rw [hsplit, htail_abs, hsum_tail]
-          unfold C
-          linarith
-        calc
-          ∑ x ∈ T, |a x| ≤ ∑ i ∈ Finset.range M, |a (n' i)| := hsum_le_range
-          _ ≤ C := hrange_bound
-      · let e := Equiv.ofBijective a_plus ha_plus_bij
-        exact ⟨e.symm, e.symm.bijective⟩
-    contradiction
-  have hn'_surj : Surjective n' := by sorry
+      have hjL : ∑ i : Fin j, a (n' i) < L := hpartial_lt hj
+      simp [hjL]
+    have hplus_seen {x : ℕ} (hx : x ∈ A_plus) : ∃ j, n' j = x :=
+      Nat.exists_mem_range_of_eventually_min hn'_inj K hplus_choice hx
+    have htail_plus {j : ℕ} (hj : K < j) : n' j ∈ A_plus := by
+      rw [hplus_choice j hj]
+      have hmin := Nat.min_spec (by
+        observe hnone : ({ n ∈ A_plus | ∀ i : Fin j, n ≠ n' i } : Set ℕ).Nonempty
+        exact hnone)
+      exact hmin.1.1
+    have hbound : ∃ M, ∀ J, ∑ i : Fin J, |a (n' i)| ≤ M :=
+      abs_partial_bound_of_eventually_nonneg (a := a) (u := n') (K := K) (L := L)
+        hpartial_lt (by
+          intro j hj
+          simpa [A_plus] using htail_plus hj)
+    exact AbsConvergent'.of_seen_partial_abs_bound hn'_inj a_plus ha_plus_bij
+      (fun x hx ↦ hplus_seen hx) hbound
+  have hn'_surj : Surjective n' := by
+    have hplus_seen {x : ℕ} (hx : x ∈ A_plus) : ∃ j, n' j = x := by
+      by_contra! hxseen
+      have htail : ∀ j ∈ {j | ∑ i : Fin j, a (n' i) < L}, n' j ≤ x := by
+        intro j hj
+        change ∑ i : Fin j, a (n' i) < L at hj
+        rw [hn' j]
+        simp only [if_pos hj]
+        have hxmem : x ∈ {n ∈ A_plus | ∀ i : Fin j, n ≠ n' i} := by
+          exact ⟨hx, fun i ↦ (hxseen i).symm⟩
+        exact (Nat.min_spec ⟨x, hxmem⟩).2 x hxmem
+      have hinj : Set.InjOn n' {j | ∑ i : Fin j, a (n' i) < L} :=
+        fun _ _ _ _ h ↦ hn'_inj h
+      have hinfinite : (n' '' {j | ∑ i : Fin j, a (n' i) < L}).Infinite :=
+        (Set.infinite_image_iff hinj).mpr (Set.infinite_coe_iff.mp h_case_I)
+      have hfinite : (n' '' {j | ∑ i : Fin j, a (n' i) < L}).Finite :=
+        (Set.finite_Iic x).subset (by
+          rintro y ⟨j, hj, rfl⟩
+          exact htail j hj)
+      exact hinfinite hfinite
+    have hminus_seen {x : ℕ} (hx : x ∈ A_minus) : ∃ j, n' j = x := by
+      by_contra! hxseen
+      have htail : ∀ j ∈ {j | ∑ i : Fin j, a (n' i) ≥ L}, n' j ≤ x := by
+        intro j hj
+        change ∑ i : Fin j, a (n' i) ≥ L at hj
+        rw [hn' j]
+        simp only [if_neg (not_lt.mpr hj)]
+        have hxmem : x ∈ {n ∈ A_minus | ∀ i : Fin j, n ≠ n' i} := by
+          exact ⟨hx, fun i ↦ (hxseen i).symm⟩
+        exact (Nat.min_spec ⟨x, hxmem⟩).2 x hxmem
+      have hinj : Set.InjOn n' {j | ∑ i : Fin j, a (n' i) ≥ L} :=
+        fun _ _ _ _ h ↦ hn'_inj h
+      have hinfinite : (n' '' {j | ∑ i : Fin j, a (n' i) ≥ L}).Infinite :=
+        (Set.infinite_image_iff hinj).mpr (Set.infinite_coe_iff.mp h_case_II)
+      have hfinite : (n' '' {j | ∑ i : Fin j, a (n' i) ≥ L}).Finite :=
+        (Set.finite_Iic x).subset (by
+          rintro y ⟨j, hj, rfl⟩
+          exact htail j hj)
+      exact hinfinite hfinite
+    intro x
+    have hx : x ∈ A_plus ∪ A_minus := by
+      rw [hunion]
+      exact Set.mem_univ x
+    rcases hx with hx | hx
+    · exact hplus_seen hx
+    · exact hminus_seen hx
   have hconv : atTop.Tendsto (a ∘ n') (nhds 0) := by sorry
   have hsum : (a ∘ n':Series).convergesTo L := by sorry
   use n'
