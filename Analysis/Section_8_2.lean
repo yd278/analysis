@@ -1222,16 +1222,134 @@ theorem permute_convergesTo_of_divergent {a: ℕ → ℝ} (ha: (a:Series).conver
     rcases hx with hx | hx
     · exact hplus_seen hx
     · exact hminus_seen hx
-  have hconv : atTop.Tendsto (a ∘ n') (nhds 0) := by sorry
-  have hsum : (a ∘ n':Series).convergesTo L := by sorry
+  have hconv : atTop.Tendsto (a ∘ n') (nhds 0) := by
+    have : atTop.Tendsto n' atTop := by
+      exact Injective.nat_tendsto_atTop hn'_inj
+    have ha0 : atTop.Tendsto a (nhds 0) := by
+      rw[Metric.tendsto_atTop] 
+      rw[converges_iff_tail_decay] at ha
+      intro ε hε 
+      specialize ha (ε/2) (half_pos hε)
+      simp at ha
+      choose N hN hdecay using ha
+      lift N to ℕ using hN
+      use N;intro n hn
+      specialize hdecay n (by simp[hn]) n (by simp[hn])
+      simp at hdecay
+      simp
+      linarith
+    apply ha0.comp this
+  have hsum : (a ∘ n':Series).convergesTo L := by
+    let P : ℕ → ℝ := fun j ↦ ∑ i : Fin j, a (n' i)
+    have hPstep (j : ℕ) : P (j + 1) = P j + a (n' j) := by
+      simp only [P]
+      rw [Fin.sum_univ_castSucc]
+      simp
+    have hplus {j : ℕ} (hj : P j < L) : 0 ≤ a (n' j) := by
+      rw [hn' j, if_pos hj]
+      have hnone : ({n ∈ A_plus | ∀ i : Fin j, n ≠ n' i} : Set ℕ).Nonempty := by
+        exact (Set.infinite_coe_iff.mp (hn'_plus_inf j)).nonempty
+      simpa [A_plus] using (Nat.min_spec hnone).1.1
+    have hminus {j : ℕ} (hj : L ≤ P j) : a (n' j) < 0 := by
+      rw [hn' j, if_neg (not_lt.mpr hj)]
+      have hnone : ({n ∈ A_minus | ∀ i : Fin j, n ≠ n' i} : Set ℕ).Nonempty := by
+        exact (Set.infinite_coe_iff.mp (hn'_minus_inf j)).nonempty
+      simpa [A_minus] using (Nat.min_spec hnone).1.1
+    have hPconv : atTop.Tendsto P (nhds L) := by
+      rw [Metric.tendsto_atTop]
+      intro ε hε
+      obtain ⟨K, hK⟩ := (Metric.tendsto_atTop.1 hconv) ε hε
+      have hsmall {j : ℕ} (hj : K ≤ j) : |a (n' j)| < ε := by
+        simpa [Real.dist_eq] using hK j hj
+      obtain ⟨p, hp, hKp⟩ := (Set.infinite_coe_iff.mp h_case_I).exists_gt K
+      change P p < L at hp
+      obtain ⟨q, hq, hpq⟩ := (Set.infinite_coe_iff.mp h_case_II).exists_gt p
+      change L ≤ P q at hq
+      have hcross : ∃ j, p < j ∧ L ≤ P j := ⟨q, hpq, hq⟩
+      let t := Nat.find hcross
+      have ht : p < t ∧ L ≤ P t := Nat.find_spec hcross
+      have hprev : P (t - 1) < L := by
+        by_contra! hprev
+        by_cases htp : t - 1 = p
+        · rw [htp] at hprev
+          exact (not_le_of_gt hp) hprev
+        · have hpt : p < t - 1 := by omega
+          exact (Nat.find_min hcross (by omega)) ⟨hpt, hprev⟩
+      have htK : K ≤ t - 1 := by omega
+      have hinit : |P t - L| < ε := by
+        rw [show t = (t - 1) + 1 by omega, hPstep]
+        rw [abs_lt]
+        have hsmall' := (abs_lt.mp (hsmall htK))
+        have htL : L ≤ P (t - 1) + a (n' (t - 1)) := by
+          calc
+            L ≤ P t := ht.2
+            _ = P (t - 1) + a (n' (t - 1)) := by
+              rw [← hPstep]
+              congr
+              omega
+        constructor <;> linarith
+      use t
+      intro j hj
+      induction j, hj using Nat.le_induction with
+      | base => exact hinit
+      | succ j hj hind =>
+          rw [hPstep]
+          change |P j + a (n' j) - L| < ε
+          have hsmallj := hsmall (by omega : K ≤ j)
+          have hsmallj' := abs_lt.mp hsmallj
+          have hind' := abs_lt.mp hind
+          rw [abs_lt]
+          rcases lt_or_ge (P j) L with hbelow | habove
+          · have hnonneg := hplus hbelow
+            constructor <;> linarith [le_abs_self (a (n' j))]
+          · have hneg := hminus habove
+            constructor <;> linarith
+    unfold Series.convergesTo
+    rw [Filter.Tendsto.int_natCast_atTop]
+    convert hPconv.comp (tendsto_add_atTop_nat 1) using 1
+    ext N
+    change (a ∘ n' : Series).partial (N : ℤ) = P (N + 1)
+    simp [P, Series.partial, Finset.Icc_eq_cast]
+    have hIcc : Finset.Icc 0 N = Finset.range (N + 1) := by
+      ext x
+      simp
+    rw [hIcc, ← Fin.sum_univ_eq_sum_range]
+
   use n'
   refine ⟨ ⟨ hn'_inj, hn'_surj ⟩, ?_ ⟩; convert hsum
 
--- /-- Exercise 8.2.6 -/
--- theorem permute_diverges_of_divergent {a: ℕ → ℝ} (ha: (a:Series).converges)
---   (ha': ¬ (a:Series).absConverges)  :
---   ∃ f : ℕ → ℕ,  Bijective f ∧ atTop.Tendsto (fun N ↦ ((a ∘ f:Series).partial N : EReal)) (nhds ⊤) := by
---   sorry
+/-- Exercise 8.2.6 -/
+theorem permute_diverges_of_divergent {a: ℕ → ℝ} (ha: (a:Series).converges)
+  (ha': ¬ (a:Series).absConverges)  :
+  ∃ f : ℕ → ℕ,  Bijective f ∧ atTop.Tendsto (fun N ↦ ((a ∘ f:Series).partial N : EReal)) (nhds ⊤) := by
+  choose hplus_div hminus_div using divergent_parts_of_conditional_convergent ha ha'
+  let A_plus : Set ℕ := {n | 0 ≤ a n}
+  let A_minus : Set ℕ := {n | a n < 0}
+  have hA_plus_inf : Infinite A_plus := by
+    contrapose! hplus_div
+    apply AbsConvergent'.of_finite
+  have hA_minus_inf : Infinite A_minus := by
+    contrapose! hminus_div
+    apply AbsConvergent'.of_finite
+  obtain ⟨a_plus, ha_plus_bij, ha_plus_mono⟩ :=
+    (Nat.monotone_enum_of_infinite A_plus).exists
+  obtain ⟨a_minus, ha_minus_bij, ha_minus_mono⟩ :=
+    (Nat.monotone_enum_of_infinite A_minus).exists
+  have hpos_unbdd (M : ℝ) : ∃ J, M < ∑ i : Fin J, a (a_plus i) := by
+    by_contra! hbound
+    apply hplus_div
+    refine AbsConvergent'.of_seen_partial_abs_bound (u := fun i ↦ (a_plus i : ℕ))
+      (fun i j hij ↦ ha_plus_bij.injective (Subtype.ext hij)) a_plus ha_plus_bij ?_ ?_
+    · intro x hx
+      obtain ⟨j, hj⟩ := ha_plus_bij.surjective ⟨x, hx⟩
+      exact ⟨j, congrArg Subtype.val hj⟩
+    · refine ⟨M, ?_⟩
+      intro J
+      convert hbound J using 1
+      apply Finset.sum_congr rfl
+      intro i hi
+      exact abs_of_nonneg (a_plus i).2
+  sorry
 --
 -- theorem permute_diverges_of_divergent' {a: ℕ → ℝ} (ha: (a:Series).converges)
 --   (ha': ¬ (a:Series).absConverges)  :
